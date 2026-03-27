@@ -1,0 +1,196 @@
+import { NextRequest } from "next/server";
+import { z } from "zod";
+import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { db } from "@/lib/db";
+import {
+  users,
+  studentProfiles,
+  subscriptions,
+  subscriptionPlans,
+  accounts,
+  accountMembers,
+} from "@/lib/db/schema";
+import { eq } from "drizzle-orm";
+import { successResponse, errorResponse } from "@/lib/api/response";
+import { rateLimit } from "@/lib/api/rate-limit";
+
+const signupSchema = z.object({
+  email: z.string().email("Invalid email address"),
+  password: z.string().min(8, "Password must be at least 8 characters"),
+  date_of_birth: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Date must be YYYY-MM-DD format"),
+  role: z.enum(["student", "parent", "counselor"]),
+  name: z.string().min(1).max(200).optional(),
+});
+
+function calculateAge(dateOfBirth: string): number {
+  const today = new Date();
+  const dob = new Date(dateOfBirth);
+  let age = today.getFullYear() - dob.getFullYear();
+  const monthDiff = today.getMonth() - dob.getMonth();
+  if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < dob.getDate())) {
+    age--;
+  }
+  return age;
+}
+
+export async function POST(request: NextRequest) {
+  try {
+    // Rate limit: 5 requests/minute per IP
+    const ip = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? "unknown";
+    const rateLimitResult = await rateLimit(`auth:signup:${ip}`, 5, 60);
+    if (!rateLimitResult.success) {
+      return errorResponse(
+        "RATE_LIMITED",
+        `Rate limit exceeded. Try again in ${rateLimitResult.resetAt - Math.floor(Date.now() / 1000)} seconds.`,
+        429,
+        { retry_after: rateLimitResult.resetAt - Math.floor(Date.now() / 1000) }
+      );
+    }
+
+    const body = await request.json();
+    const parsed = signupSchema.safeParse(body);
+    if (!parsed.success) {
+      return errorResponse(
+        "VALIDATION_ERROR",
+        parsed.error.issues.map((i) => i.message).join("; "),
+        400
+      );
+    }
+
+    const { email, password, date_of_birth, role, name } = parsed.data;
+
+    // COPPA check: must be 13 or older
+    const age = calculateAge(date_of_birth);
+    if (age < 13) {
+      return errorResponse(
+        "COPPA_BLOCKED",
+        "Users must be at least 13 years old to create an account.",
+        403
+      );
+    }
+
+    // Create user via Supabase Auth
+    const supabase = await createSupabaseServerClient();
+    const { data: authData, error: authError } = await supabase.auth.signUp({
+      email,
+      password,
+    });
+
+    if (authError) {
+      if (authError.message.includes("already registered")) {
+        return errorResponse("EMAIL_EXISTS", "An account with this email already exists.", 409);
+      }
+      return errorResponse("AUTH_ERROR", authError.message, 400);
+    }
+
+    if (!authData.user) {
+      return errorResponse("AUTH_ERROR", "Failed to create user account.", 500);
+    }
+
+    const userId = authData.user.id;
+
+    // Insert into users table
+    await db.insert(users).values({
+      id: userId,
+      email,
+      role,
+      dateOfBirth: date_of_birth,
+      isEmailVerified: false,
+    });
+
+    if (role === "student") {
+      // ── Student signup: create account, membership, profile, subscription ──
+
+      // Derive student name from the `name` field or email prefix
+      const studentName = name ?? email.split("@")[0];
+
+      // Default graduation year: current year + 4 (assumed grade 9)
+      const currentYear = new Date().getFullYear();
+      const defaultGradYear = currentYear + 4;
+
+      // Create the student-centric account
+      const [newAccount] = await db
+        .insert(accounts)
+        .values({
+          studentName,
+          studentDateOfBirth: date_of_birth,
+          gradeLevel: 9,
+          graduationYear: defaultGradYear,
+          studentUserId: userId,
+          createdBy: userId,
+          claimedAt: new Date(),
+        })
+        .returning({ id: accounts.id });
+
+      // Create account membership (student role)
+      await db.insert(accountMembers).values({
+        accountId: newAccount.id,
+        userId,
+        role: "student",
+        canEdit: true,
+      });
+
+      // Insert into student_profiles (as before)
+      await db.insert(studentProfiles).values({
+        userId,
+        graduationYear: defaultGradYear,
+        currentGradeLevel: 9,
+      });
+
+      // Create subscription on the account: 14-day trial on elite plan
+      const elitePlan = await db
+        .select({ id: subscriptionPlans.id })
+        .from(subscriptionPlans)
+        .where(eq(subscriptionPlans.name, "elite"))
+        .limit(1)
+        .then((rows) => rows[0]);
+
+      if (elitePlan) {
+        const trialEndsAt = new Date();
+        trialEndsAt.setDate(trialEndsAt.getDate() + 14);
+
+        await db.insert(subscriptions).values({
+          userId,
+          accountId: newAccount.id,
+          subscriptionPlanId: elitePlan.id,
+          status: "trialing",
+          trialEndsAt,
+        });
+      }
+
+      return successResponse(
+        {
+          user: {
+            id: userId,
+            email,
+            role,
+          },
+          account: {
+            id: newAccount.id,
+            student_name: studentName,
+          },
+        },
+        undefined,
+        201
+      );
+    }
+
+    // ── Parent / Counselor signup: create user only, no account or subscription ──
+    // Parents will either create an account for their child or join an existing one.
+
+    return successResponse(
+      {
+        user: {
+          id: userId,
+          email,
+          role,
+        },
+      },
+      undefined,
+      201
+    );
+  } catch (error) {
+    console.error("[signup] Unexpected error:", error);
+    return errorResponse("INTERNAL_ERROR", "An unexpected error occurred.", 500);
+  }
+}

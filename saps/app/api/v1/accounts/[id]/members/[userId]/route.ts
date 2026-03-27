@@ -1,0 +1,81 @@
+import { NextRequest } from "next/server";
+import { db } from "@/lib/db";
+import { accounts, accountMembers } from "@/lib/db/schema";
+import { eq, and } from "drizzle-orm";
+import { successResponse, errorResponse } from "@/lib/api/response";
+import { requireAuth, getAccountContext } from "@/lib/auth/get-user";
+
+interface RouteContext {
+  params: Promise<{ id: string; userId: string }>;
+}
+
+/**
+ * DELETE /api/v1/accounts/:id/members/:userId
+ * Remove a member from the account.
+ * Cannot remove the student (the account subject).
+ */
+export async function DELETE(request: NextRequest, context: RouteContext) {
+  try {
+    const user = await requireAuth();
+    if (user instanceof Response) return user;
+
+    const { id: accountId, userId: targetUserId } = await context.params;
+
+    // Verify the requesting user is an account member
+    const accountCtx = await getAccountContext(user.id, accountId);
+    if (!accountCtx) {
+      return errorResponse("FORBIDDEN", "Not a member of this account.", 403);
+    }
+
+    // Fetch the account to check the student
+    const [account] = await db
+      .select({ studentUserId: accounts.studentUserId })
+      .from(accounts)
+      .where(eq(accounts.id, accountId))
+      .limit(1);
+
+    if (!account) {
+      return errorResponse("NOT_FOUND", "Account not found.", 404);
+    }
+
+    // Cannot remove the student (the account subject)
+    if (account.studentUserId === targetUserId) {
+      return errorResponse(
+        "CONFLICT",
+        "Cannot remove the student from their own account.",
+        409
+      );
+    }
+
+    // Verify the target user is actually a member
+    const [targetMember] = await db
+      .select({ userId: accountMembers.userId })
+      .from(accountMembers)
+      .where(
+        and(
+          eq(accountMembers.accountId, accountId),
+          eq(accountMembers.userId, targetUserId)
+        )
+      )
+      .limit(1);
+
+    if (!targetMember) {
+      return errorResponse("NOT_FOUND", "Member not found.", 404);
+    }
+
+    // Remove the member
+    await db
+      .delete(accountMembers)
+      .where(
+        and(
+          eq(accountMembers.accountId, accountId),
+          eq(accountMembers.userId, targetUserId)
+        )
+      );
+
+    return successResponse({ deleted: true });
+  } catch (error) {
+    console.error("[accounts/:id/members/:userId] DELETE error:", error);
+    return errorResponse("INTERNAL_ERROR", "An unexpected error occurred.", 500);
+  }
+}

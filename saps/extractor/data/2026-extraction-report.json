@@ -1,0 +1,56 @@
+{
+  "catalog_year": 2026,
+  "extracted_at": "2026-03-23T01:40:43.176743+00:00",
+  "pdf_path": "/Users/arun/nithya/Krishna/course-extractor/data/Coursebook2026-27INTERACTIVE012826.pdf",
+  "total_courses": 315,
+  "validation_passed": true,
+  "validation_errors": [],
+  "warnings": [],
+  "unresolved_prerequisite_references": [],
+  "stats": {
+    "by_division": {
+      "Applied Arts": 44,
+      "Communication Arts": 32,
+      "Computer Science, Engineering and Technology": 34,
+      "Fine Arts": 80,
+      "Mathematics": 16,
+      "Multilingual Learning": 37,
+      "Physical Welfare": 16,
+      "Science": 18,
+      "Social Studies": 38
+    },
+    "by_department": {
+      "Business Education": 20,
+      "Computer Science": 8,
+      "Dance": 10,
+      "Driver Education": 2,
+      "Engineering and Technology": 26,
+      "English": 25,
+      "English Language Development": 6,
+      "Family and Consumer Sciences": 22,
+      "French": 4,
+      "German": 4,
+      "Hebrew": 4,
+      "Journalism": 7,
+      "Latin": 4,
+      "Mandarin Chinese": 6,
+      "Mathematics": 16,
+      "Music": 22,
+      "Physical Education": 16,
+      "Science": 18,
+      "Social Studies": 38,
+      "Spanish": 9,
+      "Theatre": 14,
+      "Visual Arts": 34
+    },
+    "by_credit_type": {
+      "AP": 45,
+      "Accelerated": 32,
+      "CP": 217,
+      "Honors": 21
+    },
+    "ap_courses": 45,
+    "dual_credit_courses": 33
+  },
+  "heuristic_fallback_courses": []
+}

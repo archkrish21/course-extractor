@@ -1,0 +1,713 @@
+"use client";
+
+import { useState, useRef, useCallback, useEffect } from "react";
+import { PlanCourseCard } from "./plan-course-card";
+import type { PlanCourse, Violation } from "./plan-course-card";
+import { calculateGPA, formatGPA } from "@/lib/gpa/calc";
+
+export type { PlanCourse, Violation };
+
+interface PlannerGridProps {
+  planId: string;
+  courses: PlanCourse[];
+  currentGradeLevel: number;
+  onAddCourse: (gradeLevel: number, semester: number) => void;
+  onRemoveCourse: (planCourseId: string) => void;
+  onCourseClick: (planCourse: PlanCourse) => void;
+  onStatusChange?: (planCourseId: string, status: PlanCourse["status"]) => void;
+  onGradeChange?: (planCourseId: string, grade: string | null) => void;
+  onClearSemester?: (gradeLevel: number, semester: number) => void;
+  onClearGrade?: (gradeLevel: number) => void;
+  onViewDetails?: (courseId: string) => void;
+  violations: Record<string, Violation[]>;
+  readOnly?: boolean;
+}
+
+const GRADE_LEVELS = [9, 10, 11, 12];
+const SEMESTERS = [1, 2];
+
+// Sort order for courses within a semester cell:
+// 1. Early Bird  2. Language Arts (Communication Arts)  3. Math  4. Science
+// 5. World Language (Multilingual Learning)  6. Electives  7. PE (Physical Welfare)
+function getCourseSortOrder(course: PlanCourse): number {
+  const name = (course.name ?? "").toLowerCase();
+  const code = (course.code ?? "").toUpperCase();
+  const div = (course.divisionName ?? "").toLowerCase();
+
+  // 1. Early Bird courses (code contains E1/E2 pattern or name contains "early bird")
+  if (name.includes("early bird") || /E\d$/.test(code) || /E\d\//.test(code)) return 0;
+
+  // 2. Language Arts = Communication Arts division
+  if (div.includes("communication arts")) return 1;
+
+  // 3. Math
+  if (div.includes("mathematics")) return 2;
+
+  // 4. Science
+  if (div.includes("science") && !div.includes("computer")) return 3;
+
+  // 5. World Language = Multilingual Learning
+  if (div.includes("multilingual")) return 4;
+
+  // 7. PE = Physical Welfare (placed last)
+  if (div.includes("physical welfare")) return 7;
+
+  // 8. Social Studies
+  if (div.includes("social studies")) return 5;
+
+  // 6. Everything else = Electives (Applied Arts, CS/Engineering, Fine Arts)
+  return 6;
+}
+
+function sortCourses(courses: PlanCourse[]): PlanCourse[] {
+  return [...courses].sort((a, b) => getCourseSortOrder(a) - getCourseSortOrder(b));
+}
+
+function getSemesterCourses(
+  courses: PlanCourse[],
+  gradeLevel: number,
+  semester: number
+): PlanCourse[] {
+  return courses.filter(
+    (c) => c.gradeLevel === gradeLevel && c.semester === semester
+  );
+}
+
+function getFullYearCourses(
+  courses: PlanCourse[],
+  gradeLevel: number
+): PlanCourse[] {
+  return courses.filter(
+    (c) => c.gradeLevel === gradeLevel && c.semester === null
+  );
+}
+
+// Keep for backward compat with mobile accordion
+function getCoursesForCell(
+  courses: PlanCourse[],
+  gradeLevel: number,
+  semester: number
+): PlanCourse[] {
+  return courses.filter(
+    (c) =>
+      c.gradeLevel === gradeLevel &&
+      (c.semester === semester || c.semester === null)
+  );
+}
+
+// ---- Desktop Grid ----
+
+function DesktopGrid({
+  planId,
+  courses,
+  currentGradeLevel,
+  onAddCourse,
+  onRemoveCourse,
+  onCourseClick,
+  onStatusChange,
+  onGradeChange,
+  onClearSemester,
+  onClearGrade,
+  onViewDetails,
+  violations,
+  readOnly,
+}: PlannerGridProps) {
+  const gridRef = useRef<HTMLDivElement>(null);
+  const [collapsedGrades, setCollapsedGrades] = useState<Set<number>>(
+    () => new Set(GRADE_LEVELS.filter((g) => g !== currentGradeLevel))
+  );
+  const [focusedCell, setFocusedCell] = useState<{
+    row: number;
+    col: number;
+  }>({ row: 0, col: 0 });
+
+  const cellRefs = useRef<Map<string, HTMLDivElement>>(new Map());
+
+  const setCellRef = useCallback(
+    (row: number, col: number, el: HTMLDivElement | null) => {
+      const key = `${row}-${col}`;
+      if (el) {
+        cellRefs.current.set(key, el);
+      } else {
+        cellRefs.current.delete(key);
+      }
+    },
+    []
+  );
+
+  const focusCell = useCallback((row: number, col: number) => {
+    const key = `${row}-${col}`;
+    const cell = cellRefs.current.get(key);
+    if (cell) {
+      cell.focus();
+      setFocusedCell({ row, col });
+    }
+  }, []);
+
+  const handleKeyDown = useCallback(
+    (e: React.KeyboardEvent, row: number, col: number) => {
+      let newRow = row;
+      let newCol = col;
+      let handled = false;
+
+      switch (e.key) {
+        case "ArrowUp":
+          newRow = Math.max(0, row - 1);
+          handled = true;
+          break;
+        case "ArrowDown":
+          newRow = Math.min(GRADE_LEVELS.length - 1, row + 1);
+          handled = true;
+          break;
+        case "ArrowLeft":
+          newCol = Math.max(0, col - 1);
+          handled = true;
+          break;
+        case "ArrowRight":
+          newCol = Math.min(SEMESTERS.length - 1, col + 1);
+          handled = true;
+          break;
+        case "Enter":
+        case " ":
+          // Open course picker for this cell
+          e.preventDefault();
+          if (!readOnly) {
+            onAddCourse(GRADE_LEVELS[row], SEMESTERS[col]);
+          }
+          handled = true;
+          break;
+      }
+
+      if (handled) {
+        e.preventDefault();
+        if (newRow !== row || newCol !== col) {
+          focusCell(newRow, newCol);
+        }
+      }
+    },
+    [focusCell, onAddCourse, readOnly]
+  );
+
+  return (
+    <div
+      ref={gridRef}
+      role="grid"
+      aria-label="Four-year course planner"
+      className="hidden md:block"
+    >
+      {/* No separate column headers needed — semester labels are inside each expanded cell */}
+
+      {/* Grade rows */}
+      {GRADE_LEVELS.map((grade, rowIdx) => {
+        const isCurrentGrade = grade === currentGradeLevel;
+        const isCollapsed = collapsedGrades.has(grade);
+        const gradeCourses = courses.filter((c) => c.gradeLevel === grade);
+        const gradeCourseCount = gradeCourses.length;
+        const gradePlannedCredits = gradeCourses
+          .filter((c) => c.status !== "dropped")
+          .reduce((sum, c) => sum + (parseFloat(c.creditValue) || 0), 0);
+        const gradeEarnedCredits = gradeCourses
+          .filter((c) => c.status === "completed")
+          .reduce((sum, c) => sum + (parseFloat(c.creditValue) || 0), 0);
+        const gradeProjectedGPA = calculateGPA(gradeCourses, "projected");
+        const gradeActualGPA = calculateGPA(gradeCourses, "actual");
+        const gradeViolationCount = courses
+          .filter((c) => c.gradeLevel === grade)
+          .reduce((count, c) => count + (violations[c.courseId]?.length ?? 0), 0);
+
+        // Compute per-semester counts for underload/overload warnings at grade level
+        const gradeFullYear = getFullYearCourses(courses, grade);
+        const sem1Total = gradeFullYear.length + getSemesterCourses(courses, grade, 1).length;
+        const sem2Total = gradeFullYear.length + getSemesterCourses(courses, grade, 2).length;
+        const sem1HasEarlyBird = [...gradeFullYear, ...getSemesterCourses(courses, grade, 1)].some(
+          (c) => (c.name ?? "").toLowerCase().includes("early bird") || /E\d$/.test(c.code ?? "") || /E\d\//.test(c.code ?? "")
+        );
+        const sem2HasEarlyBird = [...gradeFullYear, ...getSemesterCourses(courses, grade, 2)].some(
+          (c) => (c.name ?? "").toLowerCase().includes("early bird") || /E\d$/.test(c.code ?? "") || /E\d\//.test(c.code ?? "")
+        );
+        const sem1Underload = sem1Total > 0 && sem1Total < 5;
+        const sem2Underload = sem2Total > 0 && sem2Total < 5;
+        const sem1Overload = sem1Total > (sem1HasEarlyBird ? 8 : 7);
+        const sem2Overload = sem2Total > (sem2HasEarlyBird ? 8 : 7);
+        const hasScheduleWarning = sem1Underload || sem2Underload || sem1Overload || sem2Overload;
+
+        // Build warning messages
+        const gradeWarnings: string[] = [];
+        if (sem1Underload) gradeWarnings.push(`Sem 1: ${sem1Total} courses (min 5)`);
+        if (sem2Underload) gradeWarnings.push(`Sem 2: ${sem2Total} courses (min 5)`);
+        if (sem1Overload) gradeWarnings.push(`Sem 1: ${sem1Total} courses (max ${sem1HasEarlyBird ? 8 : 7})`);
+        if (sem2Overload) gradeWarnings.push(`Sem 2: ${sem2Total} courses (max ${sem2HasEarlyBird ? 8 : 7})`);
+
+        const totalWarnings = gradeViolationCount + gradeWarnings.length;
+
+        const toggleCollapse = () =>
+          setCollapsedGrades((prev) => {
+            if (prev.has(grade)) {
+              // Expanding this grade — collapse all others
+              return new Set(GRADE_LEVELS.filter((g) => g !== grade));
+            } else {
+              // Collapsing this grade — all collapsed
+              return new Set(GRADE_LEVELS);
+            }
+          });
+
+        return (
+          <div key={grade} role="row" className="mb-3">
+            {/* Grade header — full width, clickable toggle */}
+            <button
+              type="button"
+              role="rowheader"
+              aria-expanded={!isCollapsed}
+              onClick={toggleCollapse}
+              className={`flex w-full items-center gap-2 rounded-lg px-3 py-2.5 text-sm font-semibold text-left
+                min-h-[44px] cursor-pointer transition-colors duration-150
+                focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring
+                ${isCurrentGrade ? "bg-primary-light text-primary" : "bg-muted/50 text-foreground hover:bg-muted"}`}
+            >
+              <svg
+                aria-hidden="true"
+                className={`h-4 w-4 shrink-0 transition-transform duration-200 ${isCollapsed ? "" : "rotate-90"}`}
+                fill="none"
+                viewBox="0 0 24 24"
+                strokeWidth={2}
+                stroke="currentColor"
+              >
+                <path strokeLinecap="round" strokeLinejoin="round" d="m8.25 4.5 7.5 7.5-7.5 7.5" />
+              </svg>
+              <span>Grade {grade}</span>
+              {isCurrentGrade && (
+                <span className="text-[10px] font-normal text-primary/70">(current)</span>
+              )}
+
+              {/* Warning icon with tooltip on hover */}
+              {totalWarnings > 0 && (
+                <span
+                  className="relative group/warn flex items-center gap-1 text-warning"
+                  title={[...gradeWarnings, ...(gradeViolationCount > 0 ? [`${gradeViolationCount} prerequisite warning${gradeViolationCount !== 1 ? "s" : ""}`] : [])].join(" · ")}
+                >
+                  <svg aria-hidden="true" className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126ZM12 15.75h.007v.008H12v-.008Z" />
+                  </svg>
+                  <span className="text-[10px] font-normal">{totalWarnings}</span>
+
+                  {/* Tooltip */}
+                  <span className="pointer-events-none absolute left-1/2 top-full z-50 mt-2 -translate-x-1/2 whitespace-nowrap rounded-lg border border-warning/30 bg-card px-3 py-2 text-xs font-medium text-warning shadow-lg opacity-0 transition-opacity group-hover/warn:opacity-100">
+                    {[...gradeWarnings, ...(gradeViolationCount > 0 ? [`${gradeViolationCount} prerequisite warning${gradeViolationCount !== 1 ? "s" : ""}`] : [])].map((msg, i) => (
+                      <span key={i} className="block">{msg}</span>
+                    ))}
+                  </span>
+                </span>
+              )}
+
+              {/* Clear grade button */}
+              {!readOnly && onClearGrade && gradeCourseCount > 0 && (
+                <button
+                  type="button"
+                  onClick={(e) => { e.stopPropagation(); onClearGrade(grade); }}
+                  className="ml-1 flex h-5 items-center gap-0.5 rounded px-1.5 text-[10px] font-normal text-muted-foreground hover:text-destructive hover:bg-destructive-light transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
+                  title={`Clear all courses in Grade ${grade}`}
+                >
+                  <svg aria-hidden="true" className="h-3 w-3" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 0 0-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 0 0-7.5 0" />
+                  </svg>
+                  Clear
+                </button>
+              )}
+
+              <span className="ml-auto flex items-center gap-3 text-xs font-normal text-muted-foreground">
+                <span>{gradePlannedCredits % 1 === 0 ? gradePlannedCredits : gradePlannedCredits.toFixed(1)} planned</span>
+                {gradeEarnedCredits > 0 && (
+                  <span className="text-success">{gradeEarnedCredits % 1 === 0 ? gradeEarnedCredits : gradeEarnedCredits.toFixed(1)} earned</span>
+                )}
+                {gradeProjectedGPA.weighted !== null && (
+                  <>
+                    <span className="text-border">|</span>
+                    <span className="text-primary" title="Projected weighted GPA">
+                      GPA {formatGPA(gradeProjectedGPA.weighted)}
+                    </span>
+                  </>
+                )}
+                {gradeActualGPA.weighted !== null && (
+                  <>
+                    <span className="text-success" title="Actual weighted GPA (completed courses)">
+                      ({formatGPA(gradeActualGPA.weighted)} actual)
+                    </span>
+                  </>
+                )}
+              </span>
+            </button>
+
+            {/* Expanded content */}
+            {!isCollapsed && (() => {
+              return (
+              <div className="mt-2">
+                <div className="grid grid-cols-2 gap-3">
+                {SEMESTERS.map((sem, colIdx) => {
+                  const cellCourses = sortCourses(getSemesterCourses(courses, grade, sem));
+                  const cellViolationCount = cellCourses.reduce(
+                    (count, c) => count + (violations[c.courseId]?.length ?? 0),
+                    0
+                  );
+
+                  // Course limit: 7 normally, 8 if early bird is included
+                  const hasEarlyBird = cellCourses.some(
+                    (c) => (c.name ?? "").toLowerCase().includes("early bird") ||
+                           /E\d$/.test(c.code ?? "") || /E\d\//.test(c.code ?? "")
+                  );
+                  const maxCourses = hasEarlyBird ? 8 : 7;
+                  const isAtMax = cellCourses.length >= maxCourses;
+                  const isUnderload = cellCourses.length < 5 && cellCourses.length > 0;
+
+                  return (
+                    <div
+                      key={sem}
+                      ref={(el) => setCellRef(rowIdx, colIdx, el)}
+                      role="gridcell"
+                      tabIndex={
+                        focusedCell.row === rowIdx && focusedCell.col === colIdx ? 0 : -1
+                      }
+                      aria-label={`Grade ${grade}, Semester ${sem} — ${cellCourses.length} course${
+                        cellCourses.length !== 1 ? "s" : ""
+                      } planned${
+                        cellViolationCount > 0
+                          ? `, ${cellViolationCount} warning${cellViolationCount !== 1 ? "s" : ""}`
+                          : ""
+                      }`}
+                      onKeyDown={(e) => handleKeyDown(e, rowIdx, colIdx)}
+                      onFocus={() => setFocusedCell({ row: rowIdx, col: colIdx })}
+                      className={`
+                        min-h-[100px] rounded-lg border-2 border-dashed p-2
+                        transition-colors duration-150
+                        focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring
+                        ${
+                          cellViolationCount > 0
+                            ? "border-warning/50 bg-warning-light/30"
+                            : "border-border bg-card hover:border-primary/30"
+                        }
+                      `}
+                    >
+                      {/* Cell header */}
+                      <div className="mb-1.5 flex items-center justify-between">
+                        <div className="flex items-center gap-1.5">
+                          <p className="text-xs font-medium text-muted-foreground">
+                            Semester {sem}
+                          </p>
+                          {!readOnly && onClearSemester && cellCourses.length > 0 && (
+                            <button
+                              type="button"
+                              onClick={() => onClearSemester(grade, sem)}
+                              className="flex h-4 items-center gap-0.5 rounded px-1 text-[9px] text-muted-foreground hover:text-destructive hover:bg-destructive-light transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
+                              title={`Clear all courses in Semester ${sem}`}
+                            >
+                              <svg aria-hidden="true" className="h-2.5 w-2.5" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M6 18 18 6M6 6l12 12" />
+                              </svg>
+                              Clear
+                            </button>
+                          )}
+                        </div>
+                        <span className={`text-[10px] font-medium ${
+                          isAtMax ? "text-destructive" : isUnderload ? "text-warning" : "text-muted-foreground"
+                        }`}>
+                          {cellCourses.length}/{maxCourses}
+                        </span>
+                      </div>
+
+                      {/* Underload/overload warnings are shown at the grade header level */}
+
+                      {/* Course cards */}
+                      <div className="flex flex-col gap-1.5">
+                        {cellCourses.map((course) => (
+                          <PlanCourseCard
+                            key={course.id}
+                            course={course}
+                            violations={violations[course.courseId]}
+                            onRemove={() => onRemoveCourse(course.id)}
+                            onClick={onViewDetails ? () => onViewDetails(course.courseId) : () => onCourseClick(course)}
+                            onStatusChange={onStatusChange ? (s) => onStatusChange(course.id, s) : undefined}
+                            onGradeChange={onGradeChange ? (g) => onGradeChange(course.id, g) : undefined}
+                            readOnly={readOnly}
+                          />
+                        ))}
+                      </div>
+
+                      {/* Add course button */}
+                      {!readOnly && (
+                        <button
+                          type="button"
+                          onClick={() => !isAtMax && onAddCourse(grade, sem)}
+                          disabled={isAtMax}
+                          className={`
+                            mt-1.5 flex min-h-[44px] w-full items-center justify-center gap-1.5
+                            rounded-lg border border-dashed
+                            text-sm transition-colors duration-150
+                            focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring
+                            ${isAtMax
+                              ? "border-border bg-muted/30 text-muted-foreground/50 cursor-not-allowed"
+                              : "border-border text-muted-foreground hover:border-primary hover:text-primary hover:bg-primary-light/50 cursor-pointer"
+                            }
+                          `}
+                          aria-label={isAtMax
+                            ? `Maximum courses reached for Grade ${grade}, Semester ${sem}`
+                            : `Add course to Grade ${grade}, Semester ${sem}`
+                          }
+                        >
+                          {isAtMax ? (
+                            <>
+                              <svg aria-hidden="true" className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M18.364 18.364A9 9 0 0 0 5.636 5.636m12.728 12.728A9 9 0 0 1 5.636 5.636m12.728 12.728L5.636 5.636" />
+                              </svg>
+                              Max reached
+                            </>
+                          ) : (
+                            <>
+                              <svg aria-hidden="true" className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+                              </svg>
+                              Add Course
+                            </>
+                          )}
+                        </button>
+                      )}
+                    </div>
+                  );
+                })}
+                </div>
+              </div>
+              );
+            })()}
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+// ---- Mobile Accordion ----
+
+function MobileAccordion({
+  planId,
+  courses,
+  currentGradeLevel,
+  onAddCourse,
+  onRemoveCourse,
+  onCourseClick,
+  onStatusChange,
+  onGradeChange,
+  onClearSemester,
+  onClearGrade,
+  onViewDetails,
+  violations,
+  readOnly,
+}: PlannerGridProps) {
+  const [expandedGrades, setExpandedGrades] = useState<Set<number>>(
+    new Set([currentGradeLevel])
+  );
+
+  const toggleGrade = useCallback((grade: number) => {
+    setExpandedGrades((prev) => {
+      const next = new Set(prev);
+      if (next.has(grade)) {
+        next.delete(grade);
+      } else {
+        next.add(grade);
+      }
+      return next;
+    });
+  }, []);
+
+  return (
+    <div className="md:hidden flex flex-col gap-2" role="grid" aria-label="Four-year course planner">
+      {GRADE_LEVELS.map((grade) => {
+        const isExpanded = expandedGrades.has(grade);
+        const isCurrentGrade = grade === currentGradeLevel;
+        const gradeCoursesAll = courses.filter((c) => c.gradeLevel === grade);
+        const gradeViolationCount = gradeCoursesAll.reduce(
+          (count, c) => count + (violations[c.courseId]?.length ?? 0),
+          0
+        );
+
+        return (
+          <div
+            key={grade}
+            role="row"
+            className={`rounded-xl border ${
+              isCurrentGrade ? "border-primary/30" : "border-border"
+            } overflow-hidden`}
+          >
+            {/* Accordion header */}
+            <button
+              type="button"
+              onClick={() => toggleGrade(grade)}
+              aria-expanded={isExpanded}
+              aria-controls={`grade-${grade}-content`}
+              className={`
+                flex min-h-[44px] w-full items-center justify-between px-4 py-3
+                text-left text-sm font-semibold
+                transition-colors duration-150
+                focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring
+                ${
+                  isCurrentGrade
+                    ? "bg-primary-light text-primary"
+                    : "bg-muted/50 text-foreground hover:bg-muted"
+                }
+              `}
+            >
+              <span className="flex items-center gap-2">
+                Grade {grade}
+                {isCurrentGrade && (
+                  <span className="rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-normal text-primary">
+                    Current
+                  </span>
+                )}
+                <span className="text-xs font-normal text-muted-foreground">
+                  {gradeCoursesAll.length} course
+                  {gradeCoursesAll.length !== 1 ? "s" : ""}
+                </span>
+                {gradeViolationCount > 0 && (
+                  <span className="flex items-center gap-0.5 text-xs text-warning">
+                    <svg
+                      aria-hidden="true"
+                      className="h-3.5 w-3.5"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      strokeWidth={2}
+                      stroke="currentColor"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126ZM12 15.75h.007v.008H12v-.008Z"
+                      />
+                    </svg>
+                    {gradeViolationCount}
+                  </span>
+                )}
+              </span>
+              <svg
+                aria-hidden="true"
+                className={`h-5 w-5 shrink-0 transition-transform duration-200 ${
+                  isExpanded ? "rotate-180" : ""
+                }`}
+                fill="none"
+                viewBox="0 0 24 24"
+                strokeWidth={2}
+                stroke="currentColor"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="m19.5 8.25-7.5 7.5-7.5-7.5"
+                />
+              </svg>
+            </button>
+
+            {/* Accordion content */}
+            {isExpanded && (
+              <div id={`grade-${grade}-content`} className="px-4 pb-4 pt-2">
+                {SEMESTERS.map((sem) => {
+                  const cellCourses = getCoursesForCell(courses, grade, sem);
+                  const cellViolationCount = cellCourses.reduce(
+                    (count, c) =>
+                      count + (violations[c.courseId]?.length ?? 0),
+                    0
+                  );
+
+                  return (
+                    <div key={sem} role="gridcell" className="mb-3 last:mb-0">
+                      <h3
+                        className="mb-1.5 text-xs font-semibold uppercase tracking-wider text-muted-foreground"
+                        aria-label={`Grade ${grade}, Semester ${sem} — ${cellCourses.length} course${
+                          cellCourses.length !== 1 ? "s" : ""
+                        } planned${
+                          cellViolationCount > 0
+                            ? `, ${cellViolationCount} warning${cellViolationCount !== 1 ? "s" : ""}`
+                            : ""
+                        }`}
+                      >
+                        Semester {sem}
+                      </h3>
+
+                      <div className="flex flex-col gap-1.5">
+                        {cellCourses.map((course) => (
+                          <PlanCourseCard
+                            key={course.id}
+                            course={course}
+                            violations={violations[course.courseId]}
+                            onRemove={() => onRemoveCourse(course.id)}
+                            onClick={onViewDetails ? () => onViewDetails(course.courseId) : () => onCourseClick(course)}
+                            onStatusChange={onStatusChange ? (s) => onStatusChange(course.id, s) : undefined}
+                            onGradeChange={onGradeChange ? (g) => onGradeChange(course.id, g) : undefined}
+                            readOnly={readOnly}
+                          />
+                        ))}
+                      </div>
+
+                      {!readOnly && (
+                        <button
+                          type="button"
+                          onClick={() => onAddCourse(grade, sem)}
+                          className="mt-1.5 flex min-h-[44px] w-full items-center justify-center gap-1.5 rounded-lg border border-dashed border-border text-sm text-muted-foreground transition-colors duration-150 hover:border-primary hover:text-primary hover:bg-primary-light/50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
+                          aria-label={`Add course to Grade ${grade}, Semester ${sem}`}
+                        >
+                          <svg
+                            aria-hidden="true"
+                            className="h-4 w-4"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            strokeWidth={2}
+                            stroke="currentColor"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              d="M12 4.5v15m7.5-7.5h-15"
+                            />
+                          </svg>
+                          Add Course
+                        </button>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+// ---- Main PlannerGrid ----
+
+export function PlannerGrid(props: PlannerGridProps) {
+  const [liveMessage, setLiveMessage] = useState("");
+
+  // Announce validation changes via live region
+  useEffect(() => {
+    const totalViolations = Object.values(props.violations).flat().length;
+    if (totalViolations > 0) {
+      setLiveMessage(
+        `${totalViolations} validation warning${totalViolations !== 1 ? "s" : ""} found in your plan.`
+      );
+    } else {
+      setLiveMessage("");
+    }
+  }, [props.violations]);
+
+  return (
+    <>
+      {/* Live region for validation announcements */}
+      <div aria-live="assertive" aria-atomic="true" className="sr-only">
+        {liveMessage}
+      </div>
+
+      {/* Desktop grid */}
+      <DesktopGrid {...props} />
+
+      {/* Mobile accordion */}
+      <MobileAccordion {...props} />
+    </>
+  );
+}

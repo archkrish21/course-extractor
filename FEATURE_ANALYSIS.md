@@ -158,7 +158,7 @@ CREATE TABLE career_path_courses (
 ### Plan Management
 
 - **Multiple draft plans** — students create Plan A, Plan B, etc. (e.g., "Pre-Med Track" vs "Computer Science Track") and compare them side by side before committing. Each additional plan starts as a draft; the student can promote any plan to **Primary** at any time.
-- **Primary plan** — one plan per student is designated primary (`is_primary = TRUE`). It is the plan shown by default in the dashboard, planner grid, requirement checklist, GPA projections, alert engine, and PDF exports. All other plans are secondary and accessible via a "Switch plan" dropdown. The primary plan designation is not the same as `status` — a student can have a primary draft plan or multiple active non-primary plans simultaneously.
+- **Primary plan** — one plan per student is designated primary (`is_primary = TRUE`). It is the plan shown by default in the dashboard, planner grid, requirement checklist, GPA projections, alert engine, and PDF exports. All other plans are secondary and accessible via a "Switch plan" dropdown. Primary and active status are merged: setting a plan as primary automatically sets its status to 'active'. The old primary is demoted to 'draft'. Archived plans cannot be set as primary. First plan created is automatically primary + active.
 - **Plan templates** — pre-built starter templates for common tracks (e.g., "4-Year College Prep", "STEM / Engineering Track", "Arts Track", "Dual Credit Maximizer") that students can select during onboarding and customize. Significantly reduces the blank-canvas problem for new users.
 - **Plan history / audit trail** — every change to a plan (add course, remove course, change semester) is logged with a timestamp. Students can undo/revert to a prior state.
 - **What-if analysis** — a read-only simulation mode where students try changes and see the impact on GPA, requirements, and alerts without saving.
@@ -170,7 +170,7 @@ CREATE TABLE career_path_courses (
   - A course cannot be planned before its prerequisite grade level
   - A co-requisite course must be planned in the same semester
 
-> **Implementation status (Phase 1b):** Full-year courses are now stored as two `plan_courses` rows (semester 1 + semester 2) instead of one row with `semester=null`. This enables independent status and grade tracking per semester. Plan templates are seeded with split rows via the seed script. The prerequisite validator's enrollment rule check verifies both semesters are present for full-year courses instead of checking for `semester=null`.
+> **Implementation status (Phase 1b):** Full-year courses are now stored as two `plan_courses` rows (semester 1 + semester 2) instead of one row with `semester=null`. This enables independent status and grade tracking per semester. Plan templates are seeded with split rows via the seed script. The prerequisite validator's enrollment rule check verifies both semesters are present for full-year courses instead of checking for `semester=null`. Semester-paired courses are excluded from the course picker when one variant is already in the plan (e.g., CSC162 hidden if CSC161 is planned). Matching is by course name across all 80 semester-paired courses.
 
 ### Credit System
 

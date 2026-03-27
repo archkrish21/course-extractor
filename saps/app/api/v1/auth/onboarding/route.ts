@@ -14,16 +14,11 @@ import { eq, and, desc } from "drizzle-orm";
 import { successResponse, errorResponse } from "@/lib/api/response";
 import { requireAuth } from "@/lib/auth/get-user";
 import { rateLimit } from "@/lib/api/rate-limit";
+import { ALL_GRADES } from "@/config/grade-scale";
 
 const courseCompletedSchema = z.object({
   code: z.string().min(1),
-  grade: z.enum([
-    "A+", "A", "A-",
-    "B+", "B", "B-",
-    "C+", "C", "C-",
-    "D+", "D", "D-",
-    "F",
-  ]),
+  grade: z.enum(ALL_GRADES),
   academic_year: z.string().min(1),
   semester: z.number().int().min(1).max(2),
 });

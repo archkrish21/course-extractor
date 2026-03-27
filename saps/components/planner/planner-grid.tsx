@@ -242,13 +242,13 @@ function DesktopGrid({
 
         const toggleCollapse = () =>
           setCollapsedGrades((prev) => {
-            if (prev.has(grade)) {
-              // Expanding this grade — collapse all others
-              return new Set(GRADE_LEVELS.filter((g) => g !== grade));
+            const next = new Set(prev);
+            if (next.has(grade)) {
+              next.delete(grade); // Expand this grade
             } else {
-              // Collapsing this grade — all collapsed
-              return new Set(GRADE_LEVELS);
+              next.add(grade); // Collapse this grade
             }
+            return next;
           });
 
         return (

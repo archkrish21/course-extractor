@@ -913,6 +913,43 @@ export default function PlannerPage() {
                     Primary
                   </Badge>
                 )}
+                {/* Set as Primary button — only for non-primary plans, student role only */}
+                {!selectedPlan.isPrimary && currentAccount?.role === "student" && (
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      try {
+                        const res = await apiFetch(`/api/v1/plans/${selectedPlanId}/set-primary`, {
+                          method: "PATCH",
+                        });
+                        if (res.ok) {
+                          // Update local state: new primary becomes active, old primary becomes draft
+                          setPlans((prev) =>
+                            prev.map((p) => ({
+                              ...p,
+                              isPrimary: p.id === selectedPlanId,
+                              status: p.id === selectedPlanId ? "active" as const : (p.isPrimary ? "draft" as const : p.status),
+                            }))
+                          );
+                          showToast(`"${selectedPlan.name}" is now your active plan`);
+                        } else {
+                          const data = await res.json().catch(() => null);
+                          setError(data?.error?.message ?? "Failed to set primary plan.");
+                        }
+                      } catch {
+                        setError("Failed to set primary plan.");
+                      }
+                    }}
+                    className="flex items-center gap-1 rounded-md border border-border bg-card px-2 py-1 text-[10px] font-medium text-muted-foreground hover:bg-muted hover:text-foreground transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
+                    title="Set as primary plan"
+                    aria-label={`Set "${selectedPlan.name}" as primary plan`}
+                  >
+                    <svg aria-hidden="true" className="h-3 w-3" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M11.48 3.499a.562.562 0 0 1 1.04 0l2.125 5.111a.563.563 0 0 0 .475.345l5.518.442c.499.04.701.663.321.988l-4.204 3.602a.563.563 0 0 0-.182.557l1.285 5.385a.562.562 0 0 1-.84.61l-4.725-2.885a.562.562 0 0 0-.586 0L6.982 20.54a.562.562 0 0 1-.84-.61l1.285-5.386a.562.562 0 0 0-.182-.557l-4.204-3.602a.562.562 0 0 1 .321-.988l5.518-.442a.563.563 0 0 0 .475-.345L11.48 3.5Z" />
+                    </svg>
+                    Set Primary
+                  </button>
+                )}
                 {/* Delete plan button — only if not primary and user owns it */}
                 {!selectedPlan.isPrimary && plans.length > 1 && (
                   <button
@@ -1419,8 +1456,9 @@ export default function PlannerPage() {
           .some((c) => (c.name ?? "").toLowerCase().includes("early bird") || /E\d$/.test(c.code ?? "") || /E\d\//.test(c.code ?? ""));
         const otherMax = otherHasEarlyBird ? 8 : 7;
 
-        // Collect all course IDs already in the plan
+        // Collect all course IDs and names already in the plan
         const existingIds = new Set(courses.map((c) => c.courseId));
+        const existingNames = new Set(courses.map((c) => c.name));
 
         return (
           <CoursePicker
@@ -1431,6 +1469,7 @@ export default function PlannerPage() {
             planId={selectedPlanId}
             otherSemesterAtMax={otherSemCount >= otherMax}
             existingCourseIds={existingIds}
+            existingCourseNames={existingNames}
             onAddCourse={handlePickerAddCourse}
             onViewDetails={(courseId) => setDetailCourseId(courseId)}
             lastViewedCourseId={lastViewedCourseId}

@@ -15,18 +15,14 @@ import { successResponse, errorResponse } from "@/lib/api/response";
 import { requireAuth, getAccountContext } from "@/lib/auth/get-user";
 import { validateCourseAddition } from "@/lib/prereq/validator";
 
+import { ALL_GRADES } from "@/config/grade-scale";
+
 const addCourseSchema = z.object({
   course_id: z.string().uuid(),
   grade_level: z.number().int().min(9).max(12),
   semester: z.number().int().min(1).max(2).nullable(),
   planned_grade: z
-    .enum([
-      "A+", "A", "A-",
-      "B+", "B", "B-",
-      "C+", "C", "C-",
-      "D+", "D", "D-",
-      "F",
-    ])
+    .enum(ALL_GRADES)
     .nullable()
     .optional(),
   force_add: z.boolean().optional().default(false),

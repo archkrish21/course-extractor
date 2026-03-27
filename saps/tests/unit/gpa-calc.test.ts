@@ -74,11 +74,11 @@ describe("calculateGPA", () => {
     it("excludes P grade from GPA", () => {
       const courses = [
         makeCourse({ plannedGrade: "P", status: "completed" }),
-        makeCourse({ plannedGrade: "B+", status: "completed" }),
+        makeCourse({ plannedGrade: "B", status: "completed" }),
       ];
       const result = calculateGPA(courses, "projected");
       expect(result.coursesUsed).toBe(1);
-      expect(result.unweighted).toBeCloseTo(3.3);
+      expect(result.unweighted).toBeCloseTo(3.0); // B = 3.0
     });
 
     it("excludes I (incomplete) grade from GPA", () => {
@@ -94,35 +94,35 @@ describe("calculateGPA", () => {
 
   // ── Various grade combinations ───────────────────────────────────
   describe("grade combinations", () => {
-    it("calculates cumulative GPA for A+, A, A- mix", () => {
+    it("calculates cumulative GPA for all A grades", () => {
       const courses = [
-        makeCourse({ plannedGrade: "A+", status: "completed" }),
         makeCourse({ plannedGrade: "A", status: "completed" }),
-        makeCourse({ plannedGrade: "A-", status: "completed" }),
+        makeCourse({ plannedGrade: "A", status: "completed" }),
+        makeCourse({ plannedGrade: "A", status: "completed" }),
       ];
       const result = calculateGPA(courses, "projected");
-      // (4.0 + 4.0 + 3.7) / 3 = 3.9
-      expect(result.unweighted).toBeCloseTo(3.9, 1);
+      // (4.0 + 4.0 + 4.0) / 3 = 4.0
+      expect(result.unweighted).toBeCloseTo(4.0, 1);
       expect(result.coursesUsed).toBe(3);
       expect(result.totalCredits).toBe(3);
     });
 
-    it("calculates GPA for B+, B, B- mix", () => {
+    it("calculates GPA for all B grades", () => {
       const courses = [
-        makeCourse({ plannedGrade: "B+", status: "completed" }),
         makeCourse({ plannedGrade: "B", status: "completed" }),
-        makeCourse({ plannedGrade: "B-", status: "completed" }),
+        makeCourse({ plannedGrade: "B", status: "completed" }),
+        makeCourse({ plannedGrade: "B", status: "completed" }),
       ];
       const result = calculateGPA(courses, "projected");
-      // (3.3 + 3.0 + 2.7) / 3 = 3.0
+      // (3.0 + 3.0 + 3.0) / 3 = 3.0
       expect(result.unweighted).toBeCloseTo(3.0, 1);
     });
 
-    it("all A+ grades yields 4.0 unweighted GPA", () => {
+    it("all A grades yields 4.0 unweighted GPA", () => {
       const courses = [
-        makeCourse({ plannedGrade: "A+", status: "completed" }),
-        makeCourse({ plannedGrade: "A+", status: "completed" }),
-        makeCourse({ plannedGrade: "A+", status: "completed" }),
+        makeCourse({ plannedGrade: "A", status: "completed" }),
+        makeCourse({ plannedGrade: "A", status: "completed" }),
+        makeCourse({ plannedGrade: "A", status: "completed" }),
       ];
       const result = calculateGPA(courses, "projected");
       expect(result.unweighted).toBeCloseTo(4.0);
@@ -316,11 +316,11 @@ describe("calculateGPA", () => {
         makeCourse({ plannedGrade: "A", status: "dropped" }),
         makeCourse({ plannedGrade: "B", status: "completed", gpaWaiver: true }),
         makeCourse({ plannedGrade: "P", status: "completed" }),
-        makeCourse({ plannedGrade: "B+", status: "completed" }), // only this counts
+        makeCourse({ plannedGrade: "B", status: "completed" }), // only this counts
       ];
       const result = calculateGPA(courses, "projected");
       expect(result.coursesUsed).toBe(1);
-      expect(result.unweighted).toBeCloseTo(3.3);
+      expect(result.unweighted).toBeCloseTo(3.0); // B = 3.0
     });
   });
 });

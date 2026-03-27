@@ -1145,7 +1145,7 @@ All routes: `/api/v1/...`. Version from day one.
 | POST | `/api/v1/auth/signup` | — | Create user + subscription row |
 | GET | `/api/v1/plans` | member | List student's plans |
 | POST | `/api/v1/plans` | member (can_edit) | Create plan (check plan limit) |
-| PATCH | `/api/v1/plans/:id/set-primary` | student | Promote plan to primary (transaction) |
+| PATCH | `/api/v1/plans/:id/set-primary` | student | Set plan as primary + active. Demotes old primary to draft. Student role only. Archived plans blocked (409). |
 | GET | `/api/v1/plans/:id/courses` | student/parent/counselor | Plan courses |
 | POST | `/api/v1/plans/:id/courses` | member (can_edit) | Add course to plan |
 | DELETE | `/api/v1/plans/:id/courses/:planCourseId` | student | Remove course (reject if completed) |
@@ -1160,7 +1160,7 @@ All routes: `/api/v1/...`. Version from day one.
 | GET | `/api/v1/suggestions` | student (Pro+) | Rule-based + AI course suggestions |
 | POST | `/api/v1/ai/chat` | student (Pro+) | AI advisor chat |
 | POST | `/api/v1/ai/plan-review` | student (Pro+) | AI review of active plan |
-| GET | `/api/v1/courses` | any | Course browser (search + filter). Params: `department` (UUID or name), `gpa_waiver` (true/false), `semester_offered` (1 or 2 — exclusive to that semester, excludes same-name partners), `semester_both` (true — courses with a same-name partner in the other semester), `duration` (semester or full_year). Returns `gpaWaiver`, `departmentId`, `departmentName`, `semestersOffered` per course; `total` count in pagination meta. Results sorted by name ascending, then code ascending. Cursor encoding: base64(JSON {name, code, id}) for composite sort. |
+| GET | `/api/v1/courses` | any | Course browser (search + filter). Params: `department` (UUID or name), `gpa_waiver` (true/false), `semester_offered` (1 or 2 — exclusive to that semester, excludes same-name partners), `semester_both` (true — courses with a same-name partner in the other semester), `duration` (semester or full_year). Returns `gpaWaiver`, `departmentId`, `departmentName`, `semestersOffered` per course; `total` count in pagination meta. Results sorted by name ascending, then code ascending. Cursor encoding: base64(JSON {name, code, id}) for composite sort. Accepts comma-separated values for `credit_type` and `grade_level` query parameters (e.g., `credit_type=AP,CP&grade_level=9,10`). Builds SQL IN(...) clause for multiple values. |
 | GET | `/api/v1/courses/:id` | any | Course detail. Returns full course data plus `linkedCourses` array: other courses with the same name (semester partners), each with id, code, name, semesters_offered. |
 | GET | `/api/v1/courses/:id/prereqs` | any | Full prerequisite chain (recursive CTE) |
 | POST | `/api/v1/plans/:id/share` | student | Generate share link |

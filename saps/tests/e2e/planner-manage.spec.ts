@@ -171,6 +171,206 @@ test.describe("Planner — Plan Management", () => {
   });
 });
 
+// ─── Set primary plan ────────────────────────────────────────────────────────
+
+test.describe("Planner — Set Primary", () => {
+  test("Set Primary button is visible for non-primary plans", async ({
+    page,
+  }) => {
+    await navigateToPlanner(page);
+
+    // Need at least 2 plans
+    const planSelector = page.locator("select[aria-label='Select a plan']");
+    if (!(await planSelector.isVisible())) {
+      test.skip(); // Only one plan, can't test
+      return;
+    }
+
+    // Find a non-primary plan option (one without ★)
+    const options = planSelector.locator("option");
+    const count = await options.count();
+    let nonPrimaryValue: string | null = null;
+
+    for (let i = 0; i < count; i++) {
+      const text = await options.nth(i).textContent();
+      if (text && !text.includes("★")) {
+        nonPrimaryValue = await options.nth(i).getAttribute("value");
+        break;
+      }
+    }
+
+    if (!nonPrimaryValue) {
+      test.skip(); // All plans are primary (shouldn't happen)
+      return;
+    }
+
+    // Switch to the non-primary plan
+    await planSelector.selectOption(nonPrimaryValue);
+    await page.waitForTimeout(1000);
+
+    // Set Primary button should be visible
+    const setPrimaryBtn = page.getByLabel(/Set.*as primary plan/i);
+    await expect(setPrimaryBtn).toBeVisible();
+  });
+
+  test("Set Primary button is hidden for the current primary plan", async ({
+    page,
+  }) => {
+    await navigateToPlanner(page);
+
+    // The primary plan should be auto-selected
+    // The "Set Primary" button should NOT be visible
+    const setPrimaryBtn = page.getByLabel(/Set.*as primary plan/i);
+    await expect(setPrimaryBtn).toBeHidden();
+
+    // But "Primary" badge should be visible
+    await expect(page.getByText("Primary")).toBeVisible();
+  });
+
+  test("clicking Set Primary changes the plan to primary and active", async ({
+    page,
+  }) => {
+    await navigateToPlanner(page);
+
+    const planSelector = page.locator("select[aria-label='Select a plan']");
+    if (!(await planSelector.isVisible())) {
+      test.skip();
+      return;
+    }
+
+    // Find a non-primary plan
+    const options = planSelector.locator("option");
+    const count = await options.count();
+    let nonPrimaryValue: string | null = null;
+    let nonPrimaryName: string | null = null;
+
+    for (let i = 0; i < count; i++) {
+      const text = await options.nth(i).textContent();
+      if (text && !text.includes("★")) {
+        nonPrimaryValue = await options.nth(i).getAttribute("value");
+        nonPrimaryName = text.trim();
+        break;
+      }
+    }
+
+    if (!nonPrimaryValue) {
+      test.skip();
+      return;
+    }
+
+    // Switch to non-primary plan
+    await planSelector.selectOption(nonPrimaryValue);
+    await page.waitForTimeout(1000);
+
+    // Click Set Primary
+    const setPrimaryBtn = page.getByLabel(/Set.*as primary plan/i);
+    await setPrimaryBtn.click();
+    await page.waitForTimeout(1000);
+
+    // Should show toast confirmation
+    await expect(page.locator('[role="status"]').filter({ hasText: "active plan" })).toBeVisible({
+      timeout: 5000,
+    });
+
+    // Primary badge should now be visible
+    await expect(page.getByText("Primary")).toBeVisible();
+
+    // Status should be "active"
+    await expect(page.locator("text=active").first()).toBeVisible();
+
+    // Set Primary button should now be hidden (it's already primary)
+    await expect(setPrimaryBtn).toBeHidden();
+
+    // Switch back to the old primary (now draft) and restore it
+    // to avoid affecting other tests
+    const updatedOptions = planSelector.locator("option");
+    const updatedCount = await updatedOptions.count();
+    for (let i = 0; i < updatedCount; i++) {
+      const text = await updatedOptions.nth(i).textContent();
+      if (text && !text.includes("★") && text.trim() !== nonPrimaryName) {
+        const oldPrimaryValue = await updatedOptions.nth(i).getAttribute("value");
+        if (oldPrimaryValue) {
+          await planSelector.selectOption(oldPrimaryValue);
+          await page.waitForTimeout(1000);
+          const restoreBtn = page.getByLabel(/Set.*as primary plan/i);
+          if (await restoreBtn.isVisible()) {
+            await restoreBtn.click();
+            await page.waitForTimeout(1000);
+          }
+        }
+        break;
+      }
+    }
+  });
+
+  test("old primary plan is demoted to draft after switching", async ({
+    page,
+  }) => {
+    await navigateToPlanner(page);
+
+    const planSelector = page.locator("select[aria-label='Select a plan']");
+    if (!(await planSelector.isVisible())) {
+      test.skip();
+      return;
+    }
+
+    // Record current primary plan name
+    const currentOption = planSelector.locator("option[selected], option:checked").first();
+    const currentPrimaryName = (await currentOption.textContent())?.replace(" ★", "").trim();
+
+    // Find a non-primary plan and switch to it
+    const options = planSelector.locator("option");
+    const count = await options.count();
+    let nonPrimaryValue: string | null = null;
+
+    for (let i = 0; i < count; i++) {
+      const text = await options.nth(i).textContent();
+      if (text && !text.includes("★")) {
+        nonPrimaryValue = await options.nth(i).getAttribute("value");
+        break;
+      }
+    }
+
+    if (!nonPrimaryValue) {
+      test.skip();
+      return;
+    }
+
+    // Set the non-primary plan as primary
+    await planSelector.selectOption(nonPrimaryValue);
+    await page.waitForTimeout(1000);
+    const setPrimaryBtn = page.getByLabel(/Set.*as primary plan/i);
+    await setPrimaryBtn.click();
+    await page.waitForTimeout(1500);
+
+    // Now switch back to the old primary
+    const updatedOptions = planSelector.locator("option");
+    const updatedCount = await updatedOptions.count();
+    for (let i = 0; i < updatedCount; i++) {
+      const text = await updatedOptions.nth(i).textContent();
+      if (text && text.trim().replace(" ★", "") === currentPrimaryName) {
+        const oldValue = await updatedOptions.nth(i).getAttribute("value");
+        if (oldValue) {
+          await planSelector.selectOption(oldValue);
+          await page.waitForTimeout(1000);
+        }
+        break;
+      }
+    }
+
+    // Old primary should now show "draft" status (not "active")
+    const draftBadge = page.locator('[class*="badge"]').filter({ hasText: "draft" });
+    await expect(draftBadge).toBeVisible({ timeout: 3000 });
+
+    // Restore: set the old primary back
+    const restoreBtn = page.getByLabel(/Set.*as primary plan/i);
+    if (await restoreBtn.isVisible()) {
+      await restoreBtn.click();
+      await page.waitForTimeout(1000);
+    }
+  });
+});
+
 // ─── Course management ──────────────────────────────────────────────────────
 
 test.describe("Planner — Course Management", () => {

@@ -270,6 +270,51 @@ test.describe("Planner — Add Course", () => {
     }
   });
 
+  test("semester partner is hidden when one semester is already in plan", async ({ page }) => {
+    const noPlanState = page.locator("text=No plans yet");
+    if (await noPlanState.isVisible()) {
+      test.skip();
+      return;
+    }
+
+    const picker = await openCoursePicker(page);
+
+    // Search for a course we know has semester pairs (e.g., "Computer Programming 1")
+    const searchInput = picker.locator('input[placeholder*="Search by name or code"]');
+    await searchInput.fill("Computer Programming 1");
+    await page.waitForTimeout(2000);
+
+    // Check how many results appear
+    const resultItems = picker.locator('[role="list"] li');
+    const count = await resultItems.count();
+
+    if (count === 0) {
+      // Course might already be in the plan — search for another paired course
+      await searchInput.fill("Art and Design");
+      await page.waitForTimeout(2000);
+    }
+
+    const resultsAfterSearch = await picker.locator('[role="list"] li').count();
+
+    // If the course (e.g., CSC161) is already in the plan for this grade,
+    // its partner (CSC162) should NOT appear in the picker results.
+    // We verify by checking that the results don't contain both semester variants.
+    // If any results exist, get their course codes
+    if (resultsAfterSearch > 0) {
+      const allTexts: string[] = [];
+      for (let i = 0; i < Math.min(resultsAfterSearch, 4); i++) {
+        const text = await resultItems.nth(i).textContent();
+        if (text) allTexts.push(text);
+      }
+      // If one semester variant is in the plan, the other should not appear
+      // Both CSC161 and CSC162 should NOT both be in the results
+      const has161 = allTexts.some(t => t.includes("CSC161"));
+      const has162 = allTexts.some(t => t.includes("CSC162"));
+      // At most one of the pair should be visible (or neither if both are in the plan)
+      expect(has161 && has162).toBe(false);
+    }
+  });
+
   test("pagination in course picker (4 per page)", async ({ page }) => {
     const noPlanState = page.locator("text=No plans yet");
     if (await noPlanState.isVisible()) {

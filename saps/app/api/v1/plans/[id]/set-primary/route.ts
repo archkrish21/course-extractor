@@ -65,9 +65,17 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
       );
     }
 
-    // Transaction: unset current primary, set new primary
+    if (plan.status === "archived") {
+      return errorResponse(
+        "CONFLICT",
+        "Archived plans cannot be set as primary. Unarchive it first.",
+        409
+      );
+    }
+
+    // Transaction: demote old primary to draft, promote new plan to primary + active
     const result = await db.transaction(async (tx) => {
-      // Unset current primary for this student/account
+      // Unset current primary and demote to draft
       const unsetCondition = plan.accountId
         ? and(
             eq(fourYearPlans.accountId, plan.accountId),
@@ -82,16 +90,16 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
 
       await tx
         .update(fourYearPlans)
-        .set({ isPrimary: false })
+        .set({ isPrimary: false, status: "draft" })
         .where(unsetCondition);
 
-      // Set new primary
+      // Set new primary + active
       const [updated] = await tx
         .update(fourYearPlans)
         .set({
           isPrimary: true,
+          status: "active",
           activatedAt: new Date(),
-          status: plan.status === "archived" ? "active" : plan.status,
         })
         .where(eq(fourYearPlans.id, planId))
         .returning();
@@ -101,8 +109,8 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
         planId,
         changedBy: user.id,
         action: "set_primary",
-        beforeState: { isPrimary: false },
-        afterState: { isPrimary: true },
+        beforeState: { isPrimary: false, status: plan.status },
+        afterState: { isPrimary: true, status: "active" },
       });
 
       return updated;

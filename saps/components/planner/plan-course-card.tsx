@@ -3,6 +3,7 @@
 import { useState, useRef, useEffect } from "react";
 import { Badge } from "@/components/ui/badge";
 import type { BadgeVariant } from "@/components/ui/badge";
+import { GRADE_OPTIONS } from "@/config/grade-scale";
 
 export interface PlanCourse {
   id: string;
@@ -330,7 +331,7 @@ export function PlanCourseCard({
                 }`}
             >
               <option value="">{isCompleted ? "Grade" : "Est."}</option>
-              {["A+","A","A-","B+","B","B-","C+","C","C-","D+","D","D-","F"].map((g) => (
+              {GRADE_OPTIONS.map((g) => (
                 <option key={g} value={g}>{g}</option>
               ))}
             </select>

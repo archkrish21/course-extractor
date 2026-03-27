@@ -39,9 +39,9 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
   return (
     <ToastContext.Provider value={{ showToast }}>
       {children}
-      {/* Toast container — fixed bottom-center */}
+      {/* Toast container — fixed top, aligned with page content */}
       <div
-        className="fixed bottom-4 left-1/2 z-[100] flex -translate-x-1/2 flex-col gap-2"
+        className="fixed top-16 right-4 z-[100] flex flex-col gap-2 sm:right-auto sm:left-1/2 sm:-translate-x-1/2"
         aria-live="polite"
         aria-label="Notifications"
       >
@@ -85,7 +85,7 @@ function ToastItem({
       className={`
         flex items-center gap-3 rounded-lg border border-border bg-card px-4 py-3
         shadow-lg transition-all duration-200 min-w-[300px] max-w-[480px]
-        ${exiting ? "translate-y-2 opacity-0" : "translate-y-0 opacity-100"}
+        ${exiting ? "-translate-y-2 opacity-0" : "translate-y-0 opacity-100"}
       `}
       role="status"
     >

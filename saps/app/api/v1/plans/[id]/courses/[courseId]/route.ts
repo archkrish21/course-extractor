@@ -15,16 +15,12 @@ import {
   getTransitiveDownstream,
 } from "@/lib/prereq/validator";
 
+import { ALL_GRADES } from "@/config/grade-scale";
+
 const patchCourseSchema = z.object({
   semester: z.number().int().min(1).max(2).nullable().optional(),
   planned_grade: z
-    .enum([
-      "A+", "A", "A-",
-      "B+", "B", "B-",
-      "C+", "C", "C-",
-      "D+", "D", "D-",
-      "F",
-    ])
+    .enum(ALL_GRADES)
     .nullable()
     .optional(),
   status: z.enum(["planned", "enrolled", "completed", "dropped"]).optional(),

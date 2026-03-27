@@ -45,13 +45,9 @@ interface CollegeTargets {
 
 const GRADE_LEVELS = [9, 10, 11, 12] as const;
 
-const LETTER_GRADES = [
-  "A+", "A", "A-",
-  "B+", "B", "B-",
-  "C+", "C", "C-",
-  "D+", "D", "D-",
-  "F",
-] as const;
+// Import from central config — Stevenson uses A, B, C, D, F (no +/- variants)
+import { GRADE_OPTIONS } from "@/config/grade-scale";
+const LETTER_GRADES = GRADE_OPTIONS;
 
 const STEPS = [
   { label: "About You", number: 1 },

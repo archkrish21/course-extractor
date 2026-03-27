@@ -268,7 +268,7 @@ export async function POST(request: NextRequest) {
         catalogVersionId: catalogVersionId ?? undefined,
         createdFromTemplateId: from_template_id ?? undefined,
         isTemplate: false,
-        status: "draft",
+        status: isFirstPlan ? "active" : "draft",
         isPrimary: isFirstPlan,
         activatedAt: isFirstPlan ? new Date() : undefined,
       })

@@ -38,6 +38,7 @@ interface CoursePickerProps {
   planId: string;
   otherSemesterAtMax?: boolean;
   existingCourseIds?: Set<string>;
+  existingCourseNames?: Set<string>;
   onAddCourse: (courseId: string, addAnyway?: boolean, courseDuration?: string) => Promise<ValidationPreview | null>;
   onViewDetails?: (courseId: string) => void;
   lastViewedCourseId?: string | null;
@@ -94,6 +95,7 @@ export function CoursePicker({
   planId,
   otherSemesterAtMax = false,
   existingCourseIds = new Set(),
+  existingCourseNames = new Set(),
   onAddCourse,
   onViewDetails,
   lastViewedCourseId,
@@ -148,9 +150,11 @@ export function CoursePicker({
     return () => clearTimeout(timer);
   }, [searchQuery]);
 
-  // Stable ref for existingCourseIds to avoid re-fetching when the set is recreated
+  // Stable refs to avoid re-fetching when the sets are recreated
   const existingIdsRef = useRef(existingCourseIds);
   existingIdsRef.current = existingCourseIds;
+  const existingNamesRef = useRef(existingCourseNames);
+  existingNamesRef.current = existingCourseNames;
 
   // Raw courses from API (before client-side filtering)
   const [rawCourses, setRawCourses] = useState<CourseResult[]>([]);
@@ -196,6 +200,8 @@ export function CoursePicker({
       // Exclude already-added courses (from plan + added in this session)
       if (existingIdsRef.current.has(c.id)) return false;
       if (addedInSession.has(c.id)) return false;
+      // Exclude semester partners of already-added courses (e.g., CSC162 if CSC161 is in plan)
+      if (c.duration === "semester" && existingNamesRef.current.has(c.name)) return false;
 
       // Semester/duration filter
       if (c.duration === "full_year") {

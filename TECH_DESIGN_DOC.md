@@ -2,7 +2,7 @@
 ## Technical Design Document
 
 **Audience:** Engineering team
-**Status:** Pre-development — Architecture approved, implementation pending
+**Status:** Phase 1b Complete — Phase 2 development next.
 **Last updated:** 2026-03-15
 
 ---
@@ -157,7 +157,7 @@ User → Next.js frontend → API routes → PostgreSQL (Supabase + RLS)
 │   ├── ui/                     # shadcn/ui base (button, input, badge, card)
 │   ├── course-detail/
 │   ├── trial-banner/
-│   ├── planner/                # (empty — Phase 1b+)
+│   ├── planner/  # planner-grid.tsx, course-picker.tsx, plan-course-card.tsx
 │   ├── prereq-graph/           # (empty — Phase 1b+)
 │   └── charts/                 # (empty — Phase 1b+)
 ├── lib/
@@ -169,8 +169,11 @@ User → Next.js frontend → API routes → PostgreSQL (Supabase + RLS)
 │   ├── supabase/               # Supabase client helpers
 │   ├── subscription/           # tier enforcement, Redis cache
 │   ├── analytics/              # event tracking utilities
-│   ├── gpa/                    # (empty — future phase)
-│   ├── prereq/                 # (empty — future phase)
+│   ├── gpa/  # calc.ts — GPA calculation engine
+│   ├── prereq/  # validator.ts — prerequisite DAG validation
+│   ├── hooks/  # use-undo-stack.ts
+│   ├── account-context.tsx  # React context for account switching
+│   ├── api-client.ts  # apiFetch with X-Account-Id header
 │   ├── alerts/                 # (empty — future phase)
 │   ├── ai/                     # (empty — future phase)
 │   └── stripe/                 # (empty — future phase)
@@ -670,8 +673,7 @@ CREATE TABLE plan_courses (
   semester      SMALLINT CHECK (semester IN (1, 2)),   -- NULL = full year
   status        TEXT DEFAULT 'planned'
                   CHECK (status IN ('planned','enrolled','completed','dropped')),
-  planned_grade TEXT CHECK (planned_grade IN
-                  ('A+','A','A-','B+','B','B-','C+','C','C-','D+','D','D-','F')
+  planned_grade TEXT CHECK (planned_grade IN ('A', 'B', 'C', 'D', 'F', 'P', 'I')
                   OR planned_grade IS NULL),
   display_order SMALLINT DEFAULT 0,
   notes         TEXT,
@@ -717,12 +719,10 @@ CREATE TABLE grade_entries (
   academic_year TEXT NOT NULL,
   semester      SMALLINT NOT NULL CHECK (semester IN (1, 2)),
   grade_type    TEXT DEFAULT 'letter' CHECK (grade_type IN ('letter','pass_fail','numeric')),
-  midterm_grade TEXT CHECK (
-                  midterm_grade IN ('A+','A','A-','B+','B','B-','C+','C','C-','D+','D','D-','F','P','I')
+  midterm_grade TEXT CHECK (midterm_grade IN ('A', 'B', 'C', 'D', 'F', 'P', 'I')
                   OR grade_type != 'letter'
                 ),
-  final_grade   TEXT CHECK (
-                  final_grade IN ('A+','A','A-','B+','B','B-','C+','C','C-','D+','D','D-','F','P','I')
+  final_grade   TEXT CHECK (final_grade IN ('A', 'B', 'C', 'D', 'F', 'P', 'I')
                   OR grade_type != 'letter'
                 ),
   credit_earned DECIMAL(3,1),
@@ -1188,17 +1188,17 @@ All routes: `/api/v1/...`. Version from day one.
 | POST | `/api/v1/links/counselors/claim` | student | Link to counselor via code | Phase 5 |
 | DELETE | `/api/v1/links/counselors/:linkId` | student/counselor | Remove counselor link | Phase 5 |
 | GET | `/api/v1/export/my-data` | any authenticated | GDPR data export (all user data as JSON) | Phase 2 |
-| POST | `/api/v1/accounts` | parent | Create account for a child (name, DOB, grade, year). COPPA check. Returns claim code. | 2 |
-| POST | `/api/v1/accounts/claim` | student | Student claims account with claim code. Sets student_user_id. Starts trial. | 2 |
-| GET | `/api/v1/accounts` | any | List accounts the user is a member of. Parents see multiple, students see one. | 2 |
-| POST | `/api/v1/accounts/:id/members/invite` | member | Generate invite code for a new member (target_role). | 2 |
-| POST | `/api/v1/accounts/:id/members/join` | any | Join account with invite code. | 2 |
-| DELETE | `/api/v1/accounts/:id/members/:userId` | member | Remove a member (cannot remove the student). | 2 |
+| POST | `/api/v1/accounts` | parent | Create account for a child (name, DOB, grade, year). COPPA check. Returns claim code. | 1b |
+| POST | `/api/v1/accounts/claim` | student | Student claims account with claim code. Sets student_user_id. Starts trial. | 1b |
+| GET | `/api/v1/accounts` | any | List accounts the user is a member of. Parents see multiple, students see one. | 1b |
+| POST | `/api/v1/accounts/:id/members` | member | Generate invite for new member. | 1b |
+| POST | `/api/v1/accounts/:id/members/join` | any | Join account with invite code. | 1b |
+| DELETE | `/api/v1/accounts/:id/members/:userId` | member | Remove a member (cannot remove the student). | 1b |
 | PATCH | `/api/v1/accounts/:id/billing` | member | Transfer billing contact to another member. | 2 |
 | POST | `/api/v1/auth/onboarding` | student/parent | Complete onboarding (grade level, template, goals) | 1b |
 | GET | `/api/v1/plans/templates` | any | List all plan templates with courses | 1b |
 | GET | `/api/v1/plans/:id/validate` | member | Full plan validation | 1b |
-| GET | `/api/v1/accounts/:id/members` | member | List account members | 2 |
+| GET | `/api/v1/accounts/:id/members` | member | List account members | 1b |
 
 > **Note:** All existing plan, grade, and GPA routes now require account context. For students, this is implicit (their one account). For parents, the account_id is derived from the route's resource or from the `X-Account-Id` request header.
 

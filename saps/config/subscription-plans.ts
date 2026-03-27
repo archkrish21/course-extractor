@@ -36,7 +36,7 @@ export const SUBSCRIPTION_PLANS: SubscriptionPlanDef[] = [
       can_what_if: false,
       can_compare_plans: false,
       can_export_pdf: false,
-      can_share_plans: true,
+      can_share_plans: false,
       max_alerts: 5,
     },
   },
@@ -78,7 +78,7 @@ export const SUBSCRIPTION_PLANS: SubscriptionPlanDef[] = [
     name: "elite",
     displayName: "Elite",
     priceMonthly: 19.99,
-    priceAnnual: 199.99,
+    priceAnnual: 129.99,
     maxPlans: null, // unlimited
     features: {
       can_create_goals: true,

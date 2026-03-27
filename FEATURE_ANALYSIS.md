@@ -71,22 +71,17 @@ Stevenson uses a weighted GPA scale:
 
 | Letter Grade | GPA Points (unweighted) |
 |---|---|
-| A / A+ | 4.0 |
-| A- | 3.7 |
-| B+ | 3.3 |
+| A | 4.0 |
 | B | 3.0 |
-| B- | 2.7 |
-| C+ | 2.3 |
 | C | 2.0 |
-| C- | 1.7 |
-| D+ | 1.3 |
 | D | 1.0 |
-| D- | 0.7 |
 | F | 0.0 |
 | P (Pass) | excluded from GPA calculation |
-| I (Incomplete) | excluded until resolved |
+| I (Incomplete) | excluded from GPA calculation |
 
-> Confirm exact scale with Stevenson (some schools use a simpler A=4/B=3/C=2/D=1 mapping). Implement as a config lookup, never hardcoded.
+> Stevenson uses a 5-letter grade scale without +/- variants. P (Pass) and I (Incomplete) are excluded from GPA calculation.
+
+> Confirmed: Stevenson uses A/B/C/D/F (no +/- variants). P (Pass) and I (Incomplete) are excluded from GPA calculation.
 
 Track both semester grades and final grades for mid-year visibility.
 
@@ -728,7 +723,7 @@ course_id     UUID NOT NULL REFERENCES courses(id) ON DELETE RESTRICT,
 grade_level   SMALLINT NOT NULL CHECK (grade_level BETWEEN 9 AND 12),
 semester      SMALLINT CHECK (semester IN (1, 2)),  -- NULL means full year
 status        TEXT DEFAULT 'planned' CHECK (status IN ('planned','enrolled','completed','dropped')),
-planned_grade TEXT CHECK (planned_grade IN ('A+','A','A-','B+','B','B-','C+','C','C-','D+','D','D-','F') OR planned_grade IS NULL),
+planned_grade TEXT CHECK (planned_grade IN ('A', 'B', 'C', 'D', 'F', 'P', 'I') OR planned_grade IS NULL),
 display_order SMALLINT DEFAULT 0,            -- ordering of courses within a grade_level + semester; persists user reordering
 notes         TEXT,
 UNIQUE (plan_id, course_id, grade_level, semester)
@@ -761,8 +756,8 @@ course_id       UUID NOT NULL REFERENCES courses(id) ON DELETE RESTRICT,
 academic_year   TEXT NOT NULL,               -- e.g., "2024-25"
 semester        SMALLINT NOT NULL CHECK (semester IN (1, 2)),
 grade_type      TEXT DEFAULT 'letter' CHECK (grade_type IN ('letter','pass_fail','numeric')),
-midterm_grade   TEXT CHECK (midterm_grade IN ('A+','A','A-','B+','B','B-','C+','C','C-','D+','D','D-','F','P','I') OR grade_type != 'letter'),
-final_grade     TEXT CHECK (final_grade IN ('A+','A','A-','B+','B','B-','C+','C','C-','D+','D','D-','F','P','I') OR grade_type != 'letter'),
+midterm_grade   TEXT CHECK (midterm_grade IN ('A', 'B', 'C', 'D', 'F', 'P', 'I') OR grade_type != 'letter'),
+final_grade     TEXT CHECK (final_grade IN ('A', 'B', 'C', 'D', 'F', 'P', 'I') OR grade_type != 'letter'),
 credit_earned   DECIMAL(3,1),
 -- Weight is derived from courses.credit_type at GPA calculation time — not stored on grade_entries
 -- to avoid denormalization drift if a course's credit_type is corrected.

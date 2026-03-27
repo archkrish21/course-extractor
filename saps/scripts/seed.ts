@@ -7,6 +7,7 @@ import {
   subscriptionPlans,
   divisions,
   departments,
+  graduationRequirements,
   fourYearPlans,
   planCourses,
   courses,
@@ -200,6 +201,86 @@ async function seed() {
   logger.info(
     `Seeded ${divisionData.length} divisions and ${totalDepts} departments`
   );
+
+  // ─── Seed graduation requirements ──────────────────────────────────────
+  logger.info("Seeding graduation requirements...");
+
+  // Get the latest catalog version for graduation requirements
+  const gradCatalogVersion = await db
+    .select({ id: courseCatalogVersions.id })
+    .from(courseCatalogVersions)
+    .orderBy(desc(courseCatalogVersions.loadedAt))
+    .limit(1)
+    .then((rows) => rows[0]);
+
+  if (!gradCatalogVersion) {
+    logger.warn("No catalog version found — skipping graduation requirements seeding.");
+  } else {
+    // Build a lookup map: division name → division ID
+    const allDivisions = await db
+      .select({ id: divisions.id, name: divisions.name })
+      .from(divisions);
+
+    const divisionNameToId = new Map<string, string>();
+    for (const d of allDivisions) {
+      divisionNameToId.set(d.name, d.id);
+    }
+
+    const gradRequirements: {
+      requirementName: string;
+      category: string;
+      requiredCredits: string;
+      divisionName: string;
+      notes: string | null;
+    }[] = [
+      { requirementName: "English", category: "English", requiredCredits: "8.0", divisionName: "English", notes: null },
+      { requirementName: "Mathematics", category: "Mathematics", requiredCredits: "6.0", divisionName: "Mathematics", notes: null },
+      { requirementName: "Biology", category: "Science", requiredCredits: "2.0", divisionName: "Science", notes: null },
+      { requirementName: "Physical Science", category: "Science", requiredCredits: "2.0", divisionName: "Science", notes: null },
+      { requirementName: "U.S. History", category: "Social Studies", requiredCredits: "2.0", divisionName: "Social Studies", notes: null },
+      { requirementName: "World History and Geography", category: "Social Studies", requiredCredits: "2.0", divisionName: "Social Studies", notes: null },
+      { requirementName: "Government", category: "Social Studies", requiredCredits: "1.0", divisionName: "Social Studies", notes: null },
+      { requirementName: "Economics or Personal Finance", category: "Social Studies", requiredCredits: "1.0", divisionName: "Business Education", notes: "May be fulfilled through Social Studies or Business Education" },
+      { requirementName: "Health", category: "Physical Welfare", requiredCredits: "1.0", divisionName: "Physical Education", notes: null },
+      { requirementName: "Driver Education", category: "Physical Welfare", requiredCredits: "1.0", divisionName: "Physical Education", notes: null },
+      { requirementName: "Required Electives", category: "Electives", requiredCredits: "2.0", divisionName: "English", notes: "May be fulfilled from any division" },
+      { requirementName: "Additional Credits and P.E.", category: "Physical Welfare", requiredCredits: "17.0", divisionName: "Physical Education", notes: "Includes P.E. and additional elective credits" },
+    ];
+
+    let gradReqsSeeded = 0;
+
+    for (const req of gradRequirements) {
+      const divisionId = divisionNameToId.get(req.divisionName);
+      if (!divisionId) {
+        logger.warn(`Division "${req.divisionName}" not found — skipping requirement "${req.requirementName}"`);
+        continue;
+      }
+
+      await db
+        .insert(graduationRequirements)
+        .values({
+          divisionId,
+          requirementName: req.requirementName,
+          requiredCredits: req.requiredCredits,
+          eligibleCreditTypes: [req.category],
+          notes: req.notes,
+          catalogVersionId: gradCatalogVersion.id,
+        })
+        .onConflictDoUpdate({
+          target: [graduationRequirements.catalogVersionId, graduationRequirements.requirementName],
+          set: {
+            divisionId,
+            requiredCredits: req.requiredCredits,
+            eligibleCreditTypes: [req.category],
+            notes: req.notes,
+          },
+        });
+
+      gradReqsSeeded++;
+    }
+
+    logger.info(`Seeded ${gradReqsSeeded} graduation requirements`);
+  }
 
   // ─── Seed plan templates ───────────────────────────────────────────────
   logger.info("Seeding plan templates...");

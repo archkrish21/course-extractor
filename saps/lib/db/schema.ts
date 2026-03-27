@@ -651,8 +651,12 @@ export const gradeEntries = pgTable(
     gradeType: text("grade_type", {
       enum: ["letter", "pass_fail", "numeric"],
     }).default("letter"),
-    midtermGrade: text("midterm_grade"),
-    finalGrade: text("final_grade"),
+    midtermGrade: text("midterm_grade", {
+      enum: ["A", "B", "C", "D", "F", "P", "I"],
+    }),
+    finalGrade: text("final_grade", {
+      enum: ["A", "B", "C", "D", "F", "P", "I"],
+    }),
     creditEarned: decimal("credit_earned", { precision: 3, scale: 1 }),
     createdAt: timestamp("created_at", { withTimezone: true }).defaultNow(),
     updatedAt: timestamp("updated_at", { withTimezone: true })

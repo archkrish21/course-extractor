@@ -225,12 +225,14 @@ It replaces guesswork with:
 | US-03 | As a new student, I want to select a starting plan template (e.g., "STEM Track", "Pre-Med", "Dual Credit Maximizer") so I don't start from a blank canvas. | Must | 1 |
 | US-04 | As a new user, I want to see a 14-day free trial of the Elite tier automatically activated so I can explore all features before deciding whether to pay. | Must | 1 |
 | US-05 | As a student, I want to set my GPA goal, target colleges, and career interests during onboarding so the system can personalize its recommendations. | Should | 1 |
-| US-06 | As a parent, I want to create an account for my child by entering their name, date of birth, grade level, and graduation year, so I can start building course plans before my child signs up. | Must | 2 |
-| US-06a | As a parent who created an account, I want to generate an invite code so my child can claim their account and set their own email/password. | Must | 2 |
-| US-06b | As a student, I want to claim an account created by my parent using an invite code, so I take ownership of my academic data. | Must | 2 |
-| US-07 | As a student, I want to invite my parent to join my account so they can view my plans and create plan suggestions for me. | Must | 2 |
-| US-07a | As a parent with multiple children, I want to switch between my children's accounts using an account switcher, with each child's subscription tier governing available features. | Must | 2 |
-| US-07b | As a student, I want to mark any of my plans as "private" so my parents cannot see them. | Should | 2 |
+| US-06 | As a parent, I want to create an account for my child by entering their name, date of birth, grade level, and graduation year, so I can start building course plans before my child signs up. | Must | 1b |
+| US-06a | As a parent who created an account, I want to generate an invite code so my child can claim their account and set their own email/password. | Must | 1b |
+| US-06b | As a student, I want to claim an account created by my parent using an invite code, so I take ownership of my academic data. | Must | 1b |
+| US-07 | As a student, I want to invite my parent to join my account so they can view my plans and create plan suggestions for me. | Must | 1b |
+| US-07a | As a parent with multiple children, I want to switch between my children's accounts using an account switcher, with each child's subscription tier governing available features. | Must | 1b |
+| US-07b | As a student, I want to mark any of my plans as "private" so my parents cannot see them. | Should | 1b |
+
+> **Implementation note:** Account management APIs, claim flow, and account switcher were built ahead of schedule in Phase 1b. The Settings page UI for managing family members remains for Phase 2.
 
 ### Account Creation & Membership Flow
 

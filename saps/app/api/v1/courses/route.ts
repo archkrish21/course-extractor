@@ -135,7 +135,7 @@ export async function GET(request: NextRequest) {
     if (credit_type) {
       const types = credit_type.split(",").map((t) => t.trim()).filter(Boolean);
       if (types.length === 1) {
-        conditions.push(eq(courses.creditType, types[0]));
+        conditions.push(sql`${courses.creditType} = ${types[0]}`);
       } else if (types.length > 1) {
         conditions.push(sql`${courses.creditType} IN (${sql.join(types.map(t => sql`${t}`), sql`, `)})`);
       }

@@ -1209,6 +1209,7 @@ All routes: `/api/v1/...`. Version from day one.
 | GET | `/api/v1/plans/templates` | any | List all plan templates with courses | 1b |
 | GET | `/api/v1/plans/:id/validate` | member | Full plan validation | 1b |
 | GET | `/api/v1/accounts/:id/members` | member | List account members | 1b |
+| GET | `/planner/print` | student/parent | Print-optimized plan view. Opens in new tab with landscape layout, auto-triggers browser print. | 1b |
 
 > **Note:** All existing plan, grade, and GPA routes now require account context. For students, this is implicit (their one account). For parents, the account_id is derived from the route's resource or from the `X-Account-Id` request header.
 

@@ -160,6 +160,7 @@ CREATE TABLE career_path_courses (
 - **Plan history / audit trail** — every change to a plan (add course, remove course, change semester) is logged with a timestamp. Students can undo/revert to a prior state.
 - **What-if analysis** — a read-only simulation mode where students try changes and see the impact on GPA, requirements, and alerts without saving.
 - **Plan export / share** — students can export their active plan as a PDF (to share with a counselor or parent) or generate a read-only shareable link. The PDF includes the course grid, GPA projections, and requirement status.
+- **Plan print/export** — browser-native print dialog via `/planner/print?id=planId`. Landscape layout with grade tables, semester columns, status, grades, credits, GPA. Print button (printer icon) in planner header bar.
 - **Year-end transition workflow** — at the end of each school year, the app prompts the student to: (1) confirm final grades for completed courses, (2) advance their current grade level, and (3) review the active plan for the upcoming year. Courses marked `completed` are locked and their grades feed into the cumulative GPA. This is a critical operational workflow — without it, the plan becomes stale.
 - **Enrollment rule enforcement** — the planner enforces scheduling rules automatically:
   - `One Semester` courses can only occupy one semester slot

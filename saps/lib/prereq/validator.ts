@@ -171,21 +171,34 @@ export async function validateCourseAddition(
     .innerJoin(courses, eq(planCourses.courseId, courses.id))
     .where(eq(planCourses.planId, planId));
 
-  // 3. Check duplicate: same course anywhere in the plan (regardless of grade/semester)
-  const duplicate = existingPlanCourses.find(
+  // 3. Check duplicate: same course in the plan
+  // For full-year courses: allow same courseId at same grade in different semesters (expected pattern)
+  // Block: same courseId at a different grade, or same courseId+grade+semester
+  const duplicates = existingPlanCourses.filter(
     (pc) =>
       pc.courseId === courseId &&
       pc.status !== "dropped"
   );
-  if (duplicate) {
+  for (const dup of duplicates) {
+    const isSameGradeDiffSemester =
+      dup.gradeLevel === gradeLevel &&
+      dup.semester !== semester &&
+      targetCourse.duration === "full_year";
+
+    if (isSameGradeDiffSemester) {
+      // This is expected for full-year courses (sem 1 + sem 2 at same grade) — not a duplicate
+      continue;
+    }
+
     violations.push({
       type: "duplicate",
       courseId: targetCourse.id,
       courseName: targetCourse.name,
       courseCode: targetCourse.code,
-      message: `${targetCourse.code} is already in the plan at Grade ${duplicate.gradeLevel}, Semester ${duplicate.semester ?? "full year"}.`,
-      details: { conflictingCourseId: duplicate.id },
+      message: `${targetCourse.code} is already in the plan at Grade ${dup.gradeLevel}, Semester ${dup.semester ?? "full year"}.`,
+      details: { conflictingCourseId: dup.id },
     });
+    break; // One duplicate violation is enough
   }
 
   // Also check semester partner: same course name (e.g., CSC162 when CSC161 is already planned)

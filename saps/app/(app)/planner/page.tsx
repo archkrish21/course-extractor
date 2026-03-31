@@ -781,12 +781,18 @@ export default function PlannerPage() {
   const selectedPlan = plans.find((p) => p.id === selectedPlanId);
   const totalCourses = courses.length;
   const totalViolations = Object.values(violations).flat().length;
+  // Credit per row: full-year courses are stored as 2 rows with creditValue=2.0 each,
+  // so each row represents 1 credit (half the course). Semester courses are 1 row = 1 credit.
+  const creditPerRow = (c: PlanCourse) => {
+    const val = parseFloat(c.creditValue) || 0;
+    return val > 1 ? val / 2 : val;
+  };
   const totalPlannedCredits = courses
     .filter((c) => c.status !== "dropped")
-    .reduce((sum, c) => sum + (parseFloat(c.creditValue) || 0), 0);
+    .reduce((sum, c) => sum + creditPerRow(c), 0);
   const totalEarnedCredits = courses
     .filter((c) => c.status === "completed")
-    .reduce((sum, c) => sum + (parseFloat(c.creditValue) || 0), 0);
+    .reduce((sum, c) => sum + creditPerRow(c), 0);
   const totalProjectedGPA = calculateGPA(courses, "projected");
   const totalActualGPA = calculateGPA(courses, "actual");
 
@@ -973,30 +979,28 @@ export default function PlannerPage() {
                 </span>
                 <span className="text-border">|</span>
                 <span className="text-xs font-medium text-foreground">
-                  {totalPlannedCredits % 1 === 0 ? totalPlannedCredits : totalPlannedCredits.toFixed(1)} planned
+                  {totalEarnedCredits > 0 && totalEarnedCredits === totalPlannedCredits ? (
+                    <span className="text-success">{totalEarnedCredits % 1 === 0 ? totalEarnedCredits : totalEarnedCredits.toFixed(1)} credits earned</span>
+                  ) : totalEarnedCredits > 0 ? (
+                    <>{totalPlannedCredits % 1 === 0 ? totalPlannedCredits : totalPlannedCredits.toFixed(1)} credits planned, <span className="text-success">{totalEarnedCredits % 1 === 0 ? totalEarnedCredits : totalEarnedCredits.toFixed(1)} earned</span></>
+                  ) : (
+                    <>{totalPlannedCredits % 1 === 0 ? totalPlannedCredits : totalPlannedCredits.toFixed(1)} credits planned</>
+                  )}
                 </span>
-                {totalEarnedCredits > 0 && (
-                  <>
-                    <span className="text-border">|</span>
-                    <span className="text-xs font-medium text-success">
-                      {totalEarnedCredits % 1 === 0 ? totalEarnedCredits : totalEarnedCredits.toFixed(1)} earned
-                    </span>
-                  </>
-                )}
                 <span className="text-[10px] text-muted-foreground">
                   / 45 required
                 </span>
-                {totalProjectedGPA.weighted !== null && (
+                {totalProjectedGPA.unweighted !== null && (
                   <>
                     <span className="text-border">|</span>
-                    <span className="text-xs font-semibold text-primary" title="Projected weighted GPA (all graded courses)">
-                      GPA {formatGPA(totalProjectedGPA.weighted)}
+                    <span className="text-xs font-semibold text-primary" title="Projected GPA (all graded courses): Unweighted / Weighted">
+                      Proj: {formatGPA(totalProjectedGPA.unweighted)} / {formatGPA(totalProjectedGPA.weighted)}
                     </span>
                   </>
                 )}
-                {totalActualGPA.weighted !== null && (
-                  <span className="text-xs font-semibold text-success" title="Actual weighted GPA (completed courses only)">
-                    ({formatGPA(totalActualGPA.weighted)} actual)
+                {totalActualGPA.unweighted !== null && (
+                  <span className="text-xs font-semibold text-success" title="Actual GPA (completed only): Unweighted / Weighted">
+                    Actual: {formatGPA(totalActualGPA.unweighted)} / {formatGPA(totalActualGPA.weighted)}
                   </span>
                 )}
               {totalViolations > 0 && (() => {
@@ -1148,6 +1152,38 @@ export default function PlannerPage() {
           onClearSemester={handleClearSemester}
           onClearGrade={handleClearGrade}
           onViewDetails={(courseId) => setDetailCourseId(courseId)}
+          onBulkStatusChange={async (ids, status) => {
+            if (!selectedPlanId) return;
+            try {
+              for (const id of ids) {
+                await apiFetch(`/api/v1/plans/${selectedPlanId}/courses/${id}`, {
+                  method: "PATCH",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({ status }),
+                });
+              }
+              showToast(`Set ${ids.length} courses to ${status}`);
+              await fetchPlanData(selectedPlanId);
+            } catch {
+              setError("Failed to update course statuses.");
+            }
+          }}
+          onBulkGradeChange={async (ids, grade) => {
+            if (!selectedPlanId) return;
+            try {
+              for (const id of ids) {
+                await apiFetch(`/api/v1/plans/${selectedPlanId}/courses/${id}`, {
+                  method: "PATCH",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({ planned_grade: grade }),
+                });
+              }
+              showToast(grade ? `Set ${ids.length} courses to grade ${grade}` : `Cleared grades for ${ids.length} courses`);
+              await fetchPlanData(selectedPlanId);
+            } catch {
+              setError("Failed to update grades.");
+            }
+          }}
           violations={violations}
           readOnly={selectedPlan?.status === "archived"}
         />
@@ -1484,7 +1520,11 @@ export default function PlannerPage() {
           onClose={() => { setLastViewedCourseId(detailCourseId); setDetailCourseId(null); }}
           onCourseNavigate={(id) => setDetailCourseId(id)}
           zIndex={70}
-          hideAddButton
+          hideAddButton={!pickerTarget}
+          onDirectAdd={pickerTarget ? (cid) => {
+            handlePickerAddCourse(cid, true);
+            setDetailCourseId(null);
+          } : undefined}
         />
       )}
     </div>

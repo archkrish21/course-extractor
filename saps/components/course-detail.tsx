@@ -341,9 +341,11 @@ interface CourseDetailProps {
   onCourseAdded?: () => void;
   /** Called when the user clicks Cancel to close the detail view */
   onClose?: () => void;
+  /** Direct add — skips the form, adds immediately. Used from course picker where plan/grade/semester are known. */
+  onDirectAdd?: () => void;
 }
 
-export function CourseDetail({ course, onCourseClick, onDivisionClick, onDepartmentClick, hideAddButton = false, plans: externalPlans, onCourseAdded, onClose }: CourseDetailProps) {
+export function CourseDetail({ course, onCourseClick, onDivisionClick, onDepartmentClick, hideAddButton = false, plans: externalPlans, onCourseAdded, onClose, onDirectAdd }: CourseDetailProps) {
   const [showAddForm, setShowAddForm] = useState(false);
   const [plans, setPlans] = useState<PlanOption[]>(externalPlans ?? []);
   const [loadingPlans, setLoadingPlans] = useState(false);
@@ -486,7 +488,29 @@ export function CourseDetail({ course, onCourseClick, onDivisionClick, onDepartm
       {/* Add to Plan */}
       {!hideAddButton && (
         <div className="border-t border-border pt-4">
-          {!showAddForm ? (
+          {onDirectAdd ? (
+            /* Direct add mode (from course picker) — no form, just buttons */
+            <div className="flex gap-2">
+              {onClose && (
+                <Button
+                  variant="ghost"
+                  className="flex-1"
+                  onClick={onClose}
+                >
+                  Cancel
+                </Button>
+              )}
+              <Button
+                className="flex-1"
+                onClick={() => { onDirectAdd(); onClose?.(); }}
+              >
+                <svg aria-hidden="true" className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+                </svg>
+                Add to Plan
+              </Button>
+            </div>
+          ) : !showAddForm ? (
             <div className="flex gap-2">
               {onClose && (
                 <Button

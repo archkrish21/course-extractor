@@ -19,6 +19,8 @@ interface PlannerGridProps {
   onClearSemester?: (gradeLevel: number, semester: number) => void;
   onClearGrade?: (gradeLevel: number) => void;
   onViewDetails?: (courseId: string) => void;
+  onBulkStatusChange?: (planCourseIds: string[], status: PlanCourse["status"]) => void;
+  onBulkGradeChange?: (planCourseIds: string[], grade: string | null) => void;
   violations: Record<string, Violation[]>;
   readOnly?: boolean;
 }
@@ -109,6 +111,8 @@ function DesktopGrid({
   onClearSemester,
   onClearGrade,
   onViewDetails,
+  onBulkStatusChange,
+  onBulkGradeChange,
   violations,
   readOnly,
 }: PlannerGridProps) {
@@ -203,12 +207,18 @@ function DesktopGrid({
         const isCollapsed = collapsedGrades.has(grade);
         const gradeCourses = courses.filter((c) => c.gradeLevel === grade);
         const gradeCourseCount = gradeCourses.length;
+        // Credit per row: full-year courses stored as 2 rows with creditValue=2.0,
+        // each row = 1 credit. Semester courses = 1 row = 1 credit.
+        const creditPerRow = (c: PlanCourse) => {
+          const val = parseFloat(c.creditValue) || 0;
+          return val > 1 ? val / 2 : val;
+        };
         const gradePlannedCredits = gradeCourses
           .filter((c) => c.status !== "dropped")
-          .reduce((sum, c) => sum + (parseFloat(c.creditValue) || 0), 0);
+          .reduce((sum, c) => sum + creditPerRow(c), 0);
         const gradeEarnedCredits = gradeCourses
           .filter((c) => c.status === "completed")
-          .reduce((sum, c) => sum + (parseFloat(c.creditValue) || 0), 0);
+          .reduce((sum, c) => sum + creditPerRow(c), 0);
         const gradeProjectedGPA = calculateGPA(gradeCourses, "projected");
         const gradeActualGPA = calculateGPA(gradeCourses, "actual");
         const gradeViolationCount = courses
@@ -315,24 +325,27 @@ function DesktopGrid({
               )}
 
               <span className="ml-auto flex items-center gap-3 text-xs font-normal text-muted-foreground">
-                <span>{gradePlannedCredits % 1 === 0 ? gradePlannedCredits : gradePlannedCredits.toFixed(1)} planned</span>
-                {gradeEarnedCredits > 0 && (
-                  <span className="text-success">{gradeEarnedCredits % 1 === 0 ? gradeEarnedCredits : gradeEarnedCredits.toFixed(1)} earned</span>
-                )}
-                {gradeProjectedGPA.weighted !== null && (
+                <span>
+                  {gradeEarnedCredits > 0 && gradeEarnedCredits === gradePlannedCredits ? (
+                    <span className="text-success">{gradeEarnedCredits % 1 === 0 ? gradeEarnedCredits : gradeEarnedCredits.toFixed(1)} credits earned</span>
+                  ) : gradeEarnedCredits > 0 ? (
+                    <>{gradePlannedCredits % 1 === 0 ? gradePlannedCredits : gradePlannedCredits.toFixed(1)} credits planned, <span className="text-success">{gradeEarnedCredits % 1 === 0 ? gradeEarnedCredits : gradeEarnedCredits.toFixed(1)} earned</span></>
+                  ) : (
+                    <>{gradePlannedCredits % 1 === 0 ? gradePlannedCredits : gradePlannedCredits.toFixed(1)} credits planned</>
+                  )}
+                </span>
+                {gradeProjectedGPA.unweighted !== null && (
                   <>
                     <span className="text-border">|</span>
-                    <span className="text-primary" title="Projected weighted GPA">
-                      GPA {formatGPA(gradeProjectedGPA.weighted)}
+                    <span className="text-primary" title="Projected GPA (all graded courses): Unweighted / Weighted">
+                      Proj: {formatGPA(gradeProjectedGPA.unweighted)} / {formatGPA(gradeProjectedGPA.weighted)}
                     </span>
                   </>
                 )}
-                {gradeActualGPA.weighted !== null && (
-                  <>
-                    <span className="text-success" title="Actual weighted GPA (completed courses)">
-                      ({formatGPA(gradeActualGPA.weighted)} actual)
-                    </span>
-                  </>
+                {gradeActualGPA.unweighted !== null && (
+                  <span className="text-success" title="Actual GPA (completed only): Unweighted / Weighted">
+                    Actual: {formatGPA(gradeActualGPA.unweighted)} / {formatGPA(gradeActualGPA.weighted)}
+                  </span>
                 )}
               </span>
             </button>
@@ -388,29 +401,78 @@ function DesktopGrid({
                     >
                       {/* Cell header */}
                       <div className="mb-1.5 flex items-center justify-between">
-                        <div className="flex items-center gap-1.5">
+                        <div className="flex items-center gap-3">
                           <p className="text-xs font-medium text-muted-foreground">
                             Semester {sem}
                           </p>
-                          {!readOnly && onClearSemester && cellCourses.length > 0 && (
-                            <button
-                              type="button"
-                              onClick={() => onClearSemester(grade, sem)}
-                              className="flex h-4 items-center gap-0.5 rounded px-1 text-[9px] text-muted-foreground hover:text-destructive hover:bg-destructive-light transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
-                              title={`Clear all courses in Semester ${sem}`}
-                            >
-                              <svg aria-hidden="true" className="h-2.5 w-2.5" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
-                                <path strokeLinecap="round" strokeLinejoin="round" d="M6 18 18 6M6 6l12 12" />
-                              </svg>
-                              Clear
-                            </button>
+                          {!readOnly && cellCourses.length > 0 && (
+                            <>
+                              {/* Bulk status */}
+                              {onBulkStatusChange && (
+                                <select
+                                  className="h-4 rounded border-none bg-transparent px-0.5 text-[9px] text-muted-foreground hover:text-foreground cursor-pointer focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
+                                  title="Set status for all courses in this semester"
+                                  defaultValue=""
+                                  onChange={(e) => {
+                                    if (!e.target.value) return;
+                                    const ids = cellCourses.map((c) => c.id);
+                                    onBulkStatusChange(ids, e.target.value as PlanCourse["status"]);
+                                    e.target.value = "";
+                                  }}
+                                  onClick={(e) => e.stopPropagation()}
+                                >
+                                  <option value="" disabled>Status</option>
+                                  <option value="planned">All → Planned</option>
+                                  <option value="enrolled">All → Enrolled</option>
+                                  <option value="completed">All → Completed</option>
+                                </select>
+                              )}
+                              {/* Bulk grade */}
+                              {onBulkGradeChange && (
+                                <select
+                                  className="h-4 rounded border-none bg-transparent px-0.5 text-[9px] text-muted-foreground hover:text-foreground cursor-pointer focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
+                                  title="Set grade for all courses in this semester"
+                                  defaultValue=""
+                                  onChange={(e) => {
+                                    if (!e.target.value) return;
+                                    const ids = cellCourses.map((c) => c.id);
+                                    onBulkGradeChange(ids, e.target.value === "clear" ? null : e.target.value);
+                                    e.target.value = "";
+                                  }}
+                                  onClick={(e) => e.stopPropagation()}
+                                >
+                                  <option value="" disabled>Grade</option>
+                                  <option value="A">All → A</option>
+                                  <option value="B">All → B</option>
+                                  <option value="C">All → C</option>
+                                  <option value="D">All → D</option>
+                                  <option value="F">All → F</option>
+                                  <option value="clear">Clear grades</option>
+                                </select>
+                              )}
+                            </>
                           )}
                         </div>
+                        <div className="flex items-center gap-1.5">
+                        {!readOnly && onClearSemester && cellCourses.length > 0 && (
+                          <button
+                            type="button"
+                            onClick={() => onClearSemester(grade, sem)}
+                            className="flex h-4 w-4 items-center justify-center rounded text-muted-foreground/50 hover:text-destructive hover:bg-destructive-light transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
+                            title={`Clear all courses in Semester ${sem}`}
+                            aria-label={`Clear all courses in Grade ${grade}, Semester ${sem}`}
+                          >
+                            <svg aria-hidden="true" className="h-3 w-3" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 0 0-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 0 0-7.5 0" />
+                            </svg>
+                          </button>
+                        )}
                         <span className={`text-[10px] font-medium ${
                           isAtMax ? "text-destructive" : isUnderload ? "text-warning" : "text-muted-foreground"
                         }`}>
                           {cellCourses.length}/{maxCourses}
                         </span>
+                      </div>
                       </div>
 
                       {/* Underload/overload warnings are shown at the grade header level */}
@@ -497,6 +559,8 @@ function MobileAccordion({
   onClearSemester,
   onClearGrade,
   onViewDetails,
+  onBulkStatusChange,
+  onBulkGradeChange,
   violations,
   readOnly,
 }: PlannerGridProps) {

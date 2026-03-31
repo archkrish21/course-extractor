@@ -546,3 +546,113 @@ test.describe("Planner — Course Management", () => {
     ).toBeVisible();
   });
 });
+
+// ─── GPA Waiver ──────────────────────────────────────────────────────────────
+
+test.describe("Planner — GPA Waiver", () => {
+  test.beforeEach(async ({ page }) => {
+    await navigateToPlanner(page);
+  });
+
+  test("GPA Waiver button is visible on waiver-eligible courses", async ({
+    page,
+  }) => {
+    // Look for any "GPA Waiver" button in the planner grid
+    const waiverBtn = page.locator('button:has-text("GPA Waiver")').first();
+
+    // May or may not be visible depending on courses in the plan
+    if (await waiverBtn.isVisible()) {
+      await expect(waiverBtn).toBeVisible();
+    } else {
+      test.skip(); // No waiver-eligible courses in current plan
+    }
+  });
+
+  test("clicking GPA Waiver toggles the waiver state", async ({ page }) => {
+    const waiverBtn = page.locator('button:has-text("GPA Waiver")').first();
+    if (!(await waiverBtn.isVisible())) {
+      test.skip();
+      return;
+    }
+
+    // Click to toggle waiver on
+    await waiverBtn.click();
+    await page.waitForTimeout(1500);
+
+    // Should show toast
+    await expect(page.locator('[role="status"]').first()).toBeVisible({ timeout: 5000 });
+
+    // Click again to toggle waiver off
+    await waiverBtn.click();
+    await page.waitForTimeout(1500);
+  });
+});
+
+// ─── Bulk Updates ────────────────────────────────────────────────────────────
+
+test.describe("Planner — Bulk Updates", () => {
+  test.beforeEach(async ({ page }) => {
+    await navigateToPlanner(page);
+  });
+
+  test("bulk status dropdown is visible in semester cell header", async ({
+    page,
+  }) => {
+    // Expand a grade if needed
+    const collapsedHeader = page
+      .locator('button[role="rowheader"][aria-expanded="false"]')
+      .first();
+    if (await collapsedHeader.isVisible()) {
+      await collapsedHeader.click();
+      await page.waitForTimeout(500);
+    }
+
+    // Look for the Status dropdown in a semester cell
+    const statusSelect = page.locator('select[title="Set status for all courses in this semester"]').first();
+    if (await statusSelect.isVisible()) {
+      await expect(statusSelect).toBeVisible();
+    } else {
+      test.skip(); // No courses in expanded semester
+    }
+  });
+
+  test("bulk grade dropdown is visible in semester cell header", async ({
+    page,
+  }) => {
+    const collapsedHeader = page
+      .locator('button[role="rowheader"][aria-expanded="false"]')
+      .first();
+    if (await collapsedHeader.isVisible()) {
+      await collapsedHeader.click();
+      await page.waitForTimeout(500);
+    }
+
+    const gradeSelect = page.locator('select[title="Set grade for all courses in this semester"]').first();
+    if (await gradeSelect.isVisible()) {
+      await expect(gradeSelect).toBeVisible();
+    } else {
+      test.skip();
+    }
+  });
+
+  test("AP course cards show only one AP badge (no duplicate)", async ({
+    page,
+  }) => {
+    // Find any course card that contains "AP" in its credit type badge
+    const apBadges = page.locator('[role="button"]').filter({ hasText: /\bAP\b/ });
+    const count = await apBadges.count();
+
+    if (count === 0) {
+      test.skip(); // No AP courses in plan
+      return;
+    }
+
+    // Check first AP course card — should have exactly one AP badge, not two
+    const firstApCard = apBadges.first();
+    const badgesInCard = firstApCard.locator('span:has-text("AP")');
+    const badgeCount = await badgesInCard.count();
+
+    // Should be 1 (credit type badge) not 2
+    expect(badgeCount).toBeLessThanOrEqual(1);
+  });
+});

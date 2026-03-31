@@ -141,6 +141,7 @@ export default function PlannerPage() {
                 isAp: pc.course?.isAp ?? false,
                 isDualCredit: pc.course?.isDualCredit ?? false,
                 gpaWaiver: pc.course?.gpaWaiver ?? false,
+                gpaWaiverApplied: pc.gpaWaiverApplied ?? false,
                 gradeLevels: pc.course?.gradeLevels ?? [],
                 semestersOffered: pc.course?.semestersOffered ?? null,
                 divisionName: pc.course?.divisionName ?? "",
@@ -1182,6 +1183,21 @@ export default function PlannerPage() {
               await fetchPlanData(selectedPlanId);
             } catch {
               setError("Failed to update grades.");
+            }
+          }}
+          onGpaWaiverToggle={async (planCourseId, applied) => {
+            if (!selectedPlanId) return;
+            try {
+              await apiFetch(`/api/v1/plans/${selectedPlanId}/courses/${planCourseId}`, {
+                method: "PATCH",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ gpa_waiver_applied: applied }),
+              });
+              const course = courses.find((c) => c.id === planCourseId);
+              showToast(applied ? `GPA waiver applied for ${course?.name ?? "course"}` : `GPA waiver removed for ${course?.name ?? "course"}`);
+              await fetchPlanData(selectedPlanId);
+            } catch {
+              setError("Failed to update GPA waiver.");
             }
           }}
           violations={violations}

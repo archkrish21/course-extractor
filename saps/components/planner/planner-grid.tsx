@@ -21,6 +21,7 @@ interface PlannerGridProps {
   onViewDetails?: (courseId: string) => void;
   onBulkStatusChange?: (planCourseIds: string[], status: PlanCourse["status"]) => void;
   onBulkGradeChange?: (planCourseIds: string[], grade: string | null) => void;
+  onGpaWaiverToggle?: (planCourseId: string, applied: boolean) => void;
   violations: Record<string, Violation[]>;
   readOnly?: boolean;
 }
@@ -113,6 +114,7 @@ function DesktopGrid({
   onViewDetails,
   onBulkStatusChange,
   onBulkGradeChange,
+  onGpaWaiverToggle,
   violations,
   readOnly,
 }: PlannerGridProps) {
@@ -488,6 +490,7 @@ function DesktopGrid({
                             onClick={onViewDetails ? () => onViewDetails(course.courseId) : () => onCourseClick(course)}
                             onStatusChange={onStatusChange ? (s) => onStatusChange(course.id, s) : undefined}
                             onGradeChange={onGradeChange ? (g) => onGradeChange(course.id, g) : undefined}
+                            onGpaWaiverToggle={onGpaWaiverToggle ? (applied) => onGpaWaiverToggle(course.id, applied) : undefined}
                             readOnly={readOnly}
                           />
                         ))}
@@ -561,6 +564,7 @@ function MobileAccordion({
   onViewDetails,
   onBulkStatusChange,
   onBulkGradeChange,
+  onGpaWaiverToggle,
   violations,
   readOnly,
 }: PlannerGridProps) {
@@ -702,6 +706,7 @@ function MobileAccordion({
                             onClick={onViewDetails ? () => onViewDetails(course.courseId) : () => onCourseClick(course)}
                             onStatusChange={onStatusChange ? (s) => onStatusChange(course.id, s) : undefined}
                             onGradeChange={onGradeChange ? (g) => onGradeChange(course.id, g) : undefined}
+                            onGpaWaiverToggle={onGpaWaiverToggle ? (applied) => onGpaWaiverToggle(course.id, applied) : undefined}
                             readOnly={readOnly}
                           />
                         ))}

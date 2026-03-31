@@ -23,6 +23,7 @@ const patchCourseSchema = z.object({
     .enum(ALL_GRADES)
     .nullable()
     .optional(),
+  gpa_waiver_applied: z.boolean().optional(),
   status: z.enum(["planned", "enrolled", "completed", "dropped"]).optional(),
 });
 
@@ -55,11 +56,12 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
     if (
       updates.semester === undefined &&
       updates.planned_grade === undefined &&
-      updates.status === undefined
+      updates.status === undefined &&
+      updates.gpa_waiver_applied === undefined
     ) {
       return errorResponse(
         "VALIDATION_ERROR",
-        "At least one of 'semester', 'planned_grade', or 'status' must be provided.",
+        "At least one field must be provided.",
         400
       );
     }
@@ -158,6 +160,9 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
       beforeState.status = planCourse.status;
       afterState.status = updates.status;
       updateValues.status = updates.status;
+    }
+    if (updates.gpa_waiver_applied !== undefined) {
+      updateValues.gpaWaiverApplied = updates.gpa_waiver_applied;
     }
 
     // Update the plan course

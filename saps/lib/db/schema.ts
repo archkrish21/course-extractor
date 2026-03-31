@@ -560,6 +560,7 @@ export const planCourses = pgTable(
     plannedGrade: text("planned_grade", {
       enum: ["A", "B", "C", "D", "F", "P", "I"],
     }),
+    gpaWaiverApplied: boolean("gpa_waiver_applied").default(false),
     displayOrder: smallint("display_order").default(0),
     notes: text("notes"),
   },

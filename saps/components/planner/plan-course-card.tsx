@@ -20,6 +20,7 @@ export interface PlanCourse {
   isAp: boolean;
   isDualCredit: boolean;
   gpaWaiver: boolean;
+  gpaWaiverApplied?: boolean;
   gradeLevels?: number[];
   semestersOffered?: number[] | null;
   divisionName?: string;
@@ -39,6 +40,7 @@ interface PlanCourseCardProps {
   onClick?: () => void;
   onStatusChange?: (status: PlanCourse["status"]) => void;
   onGradeChange?: (grade: string | null) => void;
+  onGpaWaiverToggle?: (applied: boolean) => void;
   readOnly?: boolean;
 }
 
@@ -144,8 +146,10 @@ export function PlanCourseCard({
   onClick,
   onStatusChange,
   onGradeChange,
+  onGpaWaiverToggle,
   readOnly = false,
 }: PlanCourseCardProps) {
+  const waiverApplied = course.gpaWaiverApplied ?? false;
   const statusConfig = STATUS_CONFIG[course.status];
   const hasViolations = violations.length > 0;
   const isDropped = course.status === "dropped";
@@ -235,7 +239,7 @@ export function PlanCourseCard({
             {course.creditType}
           </Badge>
 
-          {course.isAp && (
+          {course.isAp && course.creditType !== "AP" && (
             <Badge variant="ap" className="text-[10px] px-1.5 py-0">
               AP
             </Badge>
@@ -247,9 +251,10 @@ export function PlanCourseCard({
             </Badge>
           )}
 
-          {course.gpaWaiver && (
+          {/* Static GPA Waiver badge shown in read-only mode */}
+          {course.gpaWaiver && (readOnly || !onGpaWaiverToggle) && (
             <Badge variant="warning" className="text-[10px] px-1.5 py-0">
-              GPA Waiver
+              {waiverApplied ? "GPA Waived" : "GPA Waiver"}
             </Badge>
           )}
 
@@ -343,6 +348,32 @@ export function PlanCourseCard({
               {course.plannedGrade}
             </Badge>
           ) : null}
+
+          {/* GPA Waiver toggle — next to grade dropdown */}
+          {course.gpaWaiver && !readOnly && onGpaWaiverToggle && (
+            <button
+              type="button"
+              className={`inline-flex items-center gap-1 rounded-full px-1.5 py-0.5 text-[10px] font-medium cursor-pointer transition-colors bg-warning/20 text-warning hover:bg-warning/30`}
+              title={waiverApplied ? "GPA waiver applied — click to remove" : "Click to apply GPA waiver"}
+              onClick={(e) => {
+                e.stopPropagation();
+                e.preventDefault();
+                onGpaWaiverToggle(!waiverApplied);
+              }}
+              onKeyDown={(e) => e.stopPropagation()}
+            >
+              {waiverApplied ? (
+                <svg aria-hidden="true" className="h-3 w-3" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="m4.5 12.75 6 6 9-13.5" />
+                </svg>
+              ) : (
+                <svg aria-hidden="true" className="h-3 w-3" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M5.25 7.5A2.25 2.25 0 0 1 7.5 5.25h9a2.25 2.25 0 0 1 2.25 2.25v9a2.25 2.25 0 0 1-2.25 2.25h-9a2.25 2.25 0 0 1-2.25-2.25v-9Z" />
+                </svg>
+              )}
+              GPA Waiver
+            </button>
+          )}
         </div>
 
         {/* Info line: grades offered + semester */}

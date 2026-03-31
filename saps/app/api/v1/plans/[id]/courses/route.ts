@@ -126,6 +126,7 @@ export async function GET(request: NextRequest, context: RouteContext) {
         semester: planCourses.semester,
         status: planCourses.status,
         plannedGrade: planCourses.plannedGrade,
+        gpaWaiverApplied: planCourses.gpaWaiverApplied,
         displayOrder: planCourses.displayOrder,
         notes: planCourses.notes,
         course: {

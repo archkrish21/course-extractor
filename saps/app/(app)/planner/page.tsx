@@ -141,6 +141,7 @@ export default function PlannerPage() {
                 isAp: pc.course?.isAp ?? false,
                 isDualCredit: pc.course?.isDualCredit ?? false,
                 gpaWaiver: pc.course?.gpaWaiver ?? false,
+                gpaWaiverApplied: pc.gpaWaiverApplied ?? false,
                 gradeLevels: pc.course?.gradeLevels ?? [],
                 semestersOffered: pc.course?.semestersOffered ?? null,
                 divisionName: pc.course?.divisionName ?? "",
@@ -780,7 +781,26 @@ export default function PlannerPage() {
 
   const selectedPlan = plans.find((p) => p.id === selectedPlanId);
   const totalCourses = courses.length;
-  const totalViolations = Object.values(violations).flat().length;
+  // Count all warnings: API violations + local underload/overload
+  const apiViolationCount = Object.values(violations).flat().length;
+  const planWarnings: string[] = [];
+  for (const grade of [9, 10, 11, 12]) {
+    const gradeCourses = courses.filter((c) => c.gradeLevel === grade && c.status !== "dropped");
+    for (const sem of [1, 2]) {
+      const semCourses = gradeCourses.filter((c) => c.semester === sem);
+      const hasEarlyBird = semCourses.some(
+        (c) => (c.name ?? "").toLowerCase().includes("early bird") || /E\d$/.test(c.code ?? "") || /E\d\//.test(c.code ?? "")
+      );
+      const max = hasEarlyBird ? 8 : 7;
+      if (semCourses.length < 5) {
+        planWarnings.push(`Grade ${grade} Sem ${sem}: ${semCourses.length} courses (min 5)`);
+      }
+      if (semCourses.length > max) {
+        planWarnings.push(`Grade ${grade} Sem ${sem}: ${semCourses.length} courses (max ${max})`);
+      }
+    }
+  }
+  const totalViolations = apiViolationCount + planWarnings.length;
   // Credit per row: full-year courses are stored as 2 rows with creditValue=2.0 each,
   // so each row represents 1 credit (half the course). Semester courses are 1 row = 1 credit.
   const creditPerRow = (c: PlanCourse) => {
@@ -1004,8 +1024,8 @@ export default function PlannerPage() {
                   </span>
                 )}
               {totalViolations > 0 && (() => {
-                // Collect all warning messages
-                const allMessages: string[] = [];
+                // Collect all warning messages (API violations + local underload/overload)
+                const allMessages: string[] = [...planWarnings];
                 for (const [courseId, vList] of Object.entries(violations)) {
                   const course = courses.find((c) => c.courseId === courseId);
                   const prefix = course ? `${course.name}:` : "";
@@ -1057,6 +1077,20 @@ export default function PlannerPage() {
         </div>
 
         <div className="flex items-center gap-1.5">
+          {/* Print plan */}
+          {selectedPlanId && (
+            <button
+              type="button"
+              onClick={() => window.open(`/planner/print?id=${selectedPlanId}`, "_blank")}
+              className="min-h-[44px] min-w-[44px] flex items-center justify-center rounded-lg border border-border bg-card text-muted-foreground hover:bg-muted hover:text-foreground focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
+              title="Print plan"
+              aria-label="Print plan"
+            >
+              <svg aria-hidden="true" className="h-5 w-5" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M6.72 13.829c-.24.03-.48.062-.72.096m.72-.096a42.415 42.415 0 0 1 10.56 0m-10.56 0L6.34 18m10.94-4.171c.24.03.48.062.72.096m-.72-.096L17.66 18m0 0 .229 2.523a1.125 1.125 0 0 1-1.12 1.227H7.231c-.662 0-1.18-.568-1.12-1.227L6.34 18m11.318 0h1.091A2.25 2.25 0 0 0 21 15.75V9.456c0-1.081-.768-2.015-1.837-2.175a48.055 48.055 0 0 0-1.913-.247M6.34 18H5.25A2.25 2.25 0 0 1 3 15.75V9.456c0-1.081.768-2.015 1.837-2.175a48.041 48.041 0 0 1 1.913-.247m10.5 0a48.536 48.536 0 0 0-10.5 0m10.5 0V3.375c0-.621-.504-1.125-1.125-1.125h-8.25c-.621 0-1.125.504-1.125 1.125v3.659M18 10.5h.008v.008H18V10.5Zm-3 0h.008v.008H15V10.5Z" />
+              </svg>
+            </button>
+          )}
           {undoStack.canUndo && (
             <button
               type="button"
@@ -1182,6 +1216,21 @@ export default function PlannerPage() {
               await fetchPlanData(selectedPlanId);
             } catch {
               setError("Failed to update grades.");
+            }
+          }}
+          onGpaWaiverToggle={async (planCourseId, applied) => {
+            if (!selectedPlanId) return;
+            try {
+              await apiFetch(`/api/v1/plans/${selectedPlanId}/courses/${planCourseId}`, {
+                method: "PATCH",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ gpa_waiver_applied: applied }),
+              });
+              const course = courses.find((c) => c.id === planCourseId);
+              showToast(applied ? `GPA waiver applied for ${course?.name ?? "course"}` : `GPA waiver removed for ${course?.name ?? "course"}`);
+              await fetchPlanData(selectedPlanId);
+            } catch {
+              setError("Failed to update GPA waiver.");
             }
           }}
           violations={violations}

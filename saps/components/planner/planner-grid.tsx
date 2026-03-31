@@ -21,6 +21,7 @@ interface PlannerGridProps {
   onViewDetails?: (courseId: string) => void;
   onBulkStatusChange?: (planCourseIds: string[], status: PlanCourse["status"]) => void;
   onBulkGradeChange?: (planCourseIds: string[], grade: string | null) => void;
+  onGpaWaiverToggle?: (planCourseId: string, applied: boolean) => void;
   violations: Record<string, Violation[]>;
   readOnly?: boolean;
 }
@@ -113,6 +114,7 @@ function DesktopGrid({
   onViewDetails,
   onBulkStatusChange,
   onBulkGradeChange,
+  onGpaWaiverToggle,
   violations,
   readOnly,
 }: PlannerGridProps) {
@@ -235,8 +237,8 @@ function DesktopGrid({
         const sem2HasEarlyBird = [...gradeFullYear, ...getSemesterCourses(courses, grade, 2)].some(
           (c) => (c.name ?? "").toLowerCase().includes("early bird") || /E\d$/.test(c.code ?? "") || /E\d\//.test(c.code ?? "")
         );
-        const sem1Underload = sem1Total > 0 && sem1Total < 5;
-        const sem2Underload = sem2Total > 0 && sem2Total < 5;
+        const sem1Underload = sem1Total < 5;
+        const sem2Underload = sem2Total < 5;
         const sem1Overload = sem1Total > (sem1HasEarlyBird ? 8 : 7);
         const sem2Overload = sem2Total > (sem2HasEarlyBird ? 8 : 7);
         const hasScheduleWarning = sem1Underload || sem2Underload || sem1Overload || sem2Overload;
@@ -369,7 +371,7 @@ function DesktopGrid({
                   );
                   const maxCourses = hasEarlyBird ? 8 : 7;
                   const isAtMax = cellCourses.length >= maxCourses;
-                  const isUnderload = cellCourses.length < 5 && cellCourses.length > 0;
+                  const isUnderload = cellCourses.length < 5;
 
                   return (
                     <div
@@ -488,6 +490,7 @@ function DesktopGrid({
                             onClick={onViewDetails ? () => onViewDetails(course.courseId) : () => onCourseClick(course)}
                             onStatusChange={onStatusChange ? (s) => onStatusChange(course.id, s) : undefined}
                             onGradeChange={onGradeChange ? (g) => onGradeChange(course.id, g) : undefined}
+                            onGpaWaiverToggle={onGpaWaiverToggle ? (applied) => onGpaWaiverToggle(course.id, applied) : undefined}
                             readOnly={readOnly}
                           />
                         ))}
@@ -561,6 +564,7 @@ function MobileAccordion({
   onViewDetails,
   onBulkStatusChange,
   onBulkGradeChange,
+  onGpaWaiverToggle,
   violations,
   readOnly,
 }: PlannerGridProps) {
@@ -702,6 +706,7 @@ function MobileAccordion({
                             onClick={onViewDetails ? () => onViewDetails(course.courseId) : () => onCourseClick(course)}
                             onStatusChange={onStatusChange ? (s) => onStatusChange(course.id, s) : undefined}
                             onGradeChange={onGradeChange ? (g) => onGradeChange(course.id, g) : undefined}
+                            onGpaWaiverToggle={onGpaWaiverToggle ? (applied) => onGpaWaiverToggle(course.id, applied) : undefined}
                             readOnly={readOnly}
                           />
                         ))}

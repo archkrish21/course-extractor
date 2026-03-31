@@ -8,6 +8,7 @@ function makeCourse(overrides: {
   plannedGrade?: string | null;
   status?: "planned" | "enrolled" | "completed" | "dropped";
   gpaWaiver?: boolean;
+  gpaWaiverApplied?: boolean;
 }) {
   return {
     creditValue: overrides.creditValue ?? "1",
@@ -15,6 +16,7 @@ function makeCourse(overrides: {
     plannedGrade: overrides.plannedGrade ?? null,
     status: overrides.status ?? "completed",
     gpaWaiver: overrides.gpaWaiver ?? false,
+    gpaWaiverApplied: overrides.gpaWaiverApplied ?? false,
   };
 }
 
@@ -58,9 +60,9 @@ describe("calculateGPA", () => {
 
   // ── GPA waiver courses ───────────────────────────────────────────
   describe("GPA waiver courses", () => {
-    it("excludes courses with gpaWaiver=true from GPA", () => {
+    it("excludes courses with gpaWaiverApplied=true from GPA", () => {
       const courses = [
-        makeCourse({ plannedGrade: "F", status: "completed", gpaWaiver: true }),
+        makeCourse({ plannedGrade: "F", status: "completed", gpaWaiver: true, gpaWaiverApplied: true }),
         makeCourse({ plannedGrade: "A", status: "completed" }),
       ];
       const result = calculateGPA(courses, "projected");
@@ -314,7 +316,7 @@ describe("calculateGPA", () => {
     it("handles a mix of dropped, waiver, P/F, and graded courses", () => {
       const courses = [
         makeCourse({ plannedGrade: "A", status: "dropped" }),
-        makeCourse({ plannedGrade: "B", status: "completed", gpaWaiver: true }),
+        makeCourse({ plannedGrade: "B", status: "completed", gpaWaiver: true, gpaWaiverApplied: true }),
         makeCourse({ plannedGrade: "P", status: "completed" }),
         makeCourse({ plannedGrade: "B", status: "completed" }), // only this counts
       ];
@@ -344,5 +346,81 @@ describe("formatGPA", () => {
 
   it("rounds to 2 decimal places", () => {
     expect(formatGPA(3.333333)).toBe("3.33");
+  });
+});
+
+// ── GPA waiver applied ──────────────────────────────────────────────
+
+describe("calculateGPA — GPA waiver applied", () => {
+  it("excludes courses where gpaWaiverApplied is true", () => {
+    const courses = [
+      makeCourse({ plannedGrade: "A", status: "completed", gpaWaiver: true }),
+      makeCourse({ plannedGrade: "B", status: "completed" }),
+    ];
+    // Without waiver applied, both count
+    const withoutWaiver = calculateGPA(courses, "projected");
+    expect(withoutWaiver.coursesUsed).toBe(2);
+
+    // With waiver applied on first course
+    const coursesWithWaiver = [
+      makeCourse({ plannedGrade: "A", status: "completed", gpaWaiver: true, gpaWaiverApplied: true }),
+      makeCourse({ plannedGrade: "B", status: "completed" }),
+    ];
+    const withWaiver = calculateGPA(coursesWithWaiver, "projected");
+    expect(withWaiver.coursesUsed).toBe(1);
+    expect(withWaiver.unweighted).toBeCloseTo(3.0); // Only B counts
+  });
+
+  it("gpaWaiver=true without gpaWaiverApplied still counts toward GPA", () => {
+    const courses = [
+      makeCourse({ plannedGrade: "A", status: "completed", gpaWaiver: true, gpaWaiverApplied: false }),
+    ];
+    const result = calculateGPA(courses, "projected");
+    expect(result.coursesUsed).toBe(1);
+    expect(result.unweighted).toBeCloseTo(4.0);
+  });
+
+  it("gpaWaiverApplied without gpaWaiver still excludes from GPA", () => {
+    const courses = [
+      makeCourse({ plannedGrade: "A", status: "completed", gpaWaiverApplied: true }),
+    ];
+    const result = calculateGPA(courses, "projected");
+    expect(result.coursesUsed).toBe(0);
+    expect(result.unweighted).toBeNull();
+  });
+});
+
+// ── 1.5 period courses (credit_value=3.0) ───────────────────────────
+
+describe("calculateGPA — 1.5 period courses", () => {
+  it("weights 1.5 credit courses correctly (creditValue=3.0 → 1.5 per semester row)", () => {
+    const courses = [
+      makeCourse({ plannedGrade: "A", status: "completed", creditValue: "3.0", creditType: "AP" }), // 1.5 credits
+      makeCourse({ plannedGrade: "B", status: "completed", creditValue: "1.0" }), // 1.0 credit
+    ];
+    const result = calculateGPA(courses, "projected");
+    // Weighted: A in AP = (4.0+1.0)*1.5 = 7.5, B in CP = 3.0*1.0 = 3.0
+    // Total = 10.5 / 2.5 = 4.2 weighted
+    expect(result.totalCredits).toBeCloseTo(2.5);
+    expect(result.weighted).toBeCloseTo(4.2);
+    // Unweighted: A = 4.0*1.5 = 6.0, B = 3.0*1.0 = 3.0
+    // Total = 9.0 / 2.5 = 3.6 unweighted
+    expect(result.unweighted).toBeCloseTo(3.6);
+  });
+
+  it("standard full-year course creditValue=2.0 gives 1.0 credit per row", () => {
+    const courses = [
+      makeCourse({ plannedGrade: "A", status: "completed", creditValue: "2.0" }),
+    ];
+    const result = calculateGPA(courses, "projected");
+    expect(result.totalCredits).toBeCloseTo(1.0);
+  });
+
+  it("semester course creditValue=1.0 gives 1.0 credit per row", () => {
+    const courses = [
+      makeCourse({ plannedGrade: "A", status: "completed", creditValue: "1.0" }),
+    ];
+    const result = calculateGPA(courses, "projected");
+    expect(result.totalCredits).toBeCloseTo(1.0);
   });
 });

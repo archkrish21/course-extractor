@@ -267,3 +267,100 @@ test.describe("Planner — Navigation & Layout", () => {
     }
   });
 });
+
+// ─── Print Plan ──────────────────────────────────────────────────────────────
+
+test.describe("Planner — Print Plan", () => {
+  test("print button is visible in planner header", async ({ page }) => {
+    await navigateToPlanner(page);
+
+    const printBtn = page.locator('button[aria-label="Print plan"]');
+    await expect(printBtn).toBeVisible({ timeout: 5000 });
+  });
+
+  test("print button opens print view in new tab", async ({ page, context }) => {
+    await navigateToPlanner(page);
+
+    const printBtn = page.locator('button[aria-label="Print plan"]');
+    if (!(await printBtn.isVisible())) {
+      test.skip();
+      return;
+    }
+
+    // Listen for new page (tab)
+    const [newPage] = await Promise.all([
+      context.waitForEvent("page"),
+      printBtn.click(),
+    ]);
+
+    // New page should have the print URL
+    await newPage.waitForLoadState("domcontentloaded");
+    expect(newPage.url()).toContain("/planner/print");
+  });
+
+  test("print view shows plan header with student info", async ({ page }) => {
+    await login(page);
+    await page.goto("/planner/print");
+    await page.waitForLoadState("networkidle");
+    await page.waitForTimeout(2000);
+
+    // Should show SAPS header
+    await expect(page.locator("text=Student Academic Planning System")).toBeVisible({ timeout: 10000 });
+
+    // Should show a plan name
+    const planName = page.locator("h2");
+    await expect(planName).toBeVisible();
+  });
+
+  test("print view shows grade tables with semester columns", async ({
+    page,
+  }) => {
+    await login(page);
+    await page.goto("/planner/print");
+    await page.waitForLoadState("networkidle");
+    await page.waitForTimeout(2000);
+
+    // Should show Grade 9 through Grade 12 headers
+    await expect(page.locator("text=Grade 9").first()).toBeVisible({ timeout: 10000 });
+
+    // Should show Semester 1 and Semester 2 labels
+    await expect(page.locator("text=Semester 1").first()).toBeVisible();
+    await expect(page.locator("text=Semester 2").first()).toBeVisible();
+  });
+
+  test("print view shows summary with credits and GPA", async ({ page }) => {
+    await login(page);
+    await page.goto("/planner/print");
+    await page.waitForLoadState("networkidle");
+    await page.waitForTimeout(2000);
+
+    // Should show credits info
+    await expect(page.locator("text=/credits/i").first()).toBeVisible({ timeout: 10000 });
+
+    // Should show courses count
+    await expect(page.locator("text=/Courses/i").first()).toBeVisible();
+  });
+
+  test("print view shows back button and print button on screen", async ({
+    page,
+  }) => {
+    await login(page);
+    await page.goto("/planner/print");
+    await page.waitForLoadState("networkidle");
+    await page.waitForTimeout(2000);
+
+    await expect(page.locator("text=Back to Planner")).toBeVisible({ timeout: 10000 });
+    await expect(page.locator("text=Print / Save as PDF")).toBeVisible();
+  });
+
+  test("print view shows footer with legend", async ({ page }) => {
+    await login(page);
+    await page.goto("/planner/print");
+    await page.waitForLoadState("networkidle");
+    await page.waitForTimeout(2000);
+
+    // Footer should show the legend
+    await expect(page.locator("text=GPA waiver applied").first()).toBeVisible({ timeout: 10000 });
+    await expect(page.locator("text=Unweighted/Weighted").first()).toBeVisible();
+  });
+});

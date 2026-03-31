@@ -7,6 +7,7 @@ interface CourseForGPA {
   plannedGrade?: string | null;
   status: "planned" | "enrolled" | "completed" | "dropped";
   gpaWaiver?: boolean;
+  gpaWaiverApplied?: boolean;
 }
 
 interface GPAResult {
@@ -39,8 +40,8 @@ export function calculateGPA(
     // Actual mode: only completed courses
     if (mode === "actual" && c.status !== "completed") continue;
 
-    // Skip GPA waiver courses
-    if (c.gpaWaiver) continue;
+    // Skip courses where student applied GPA waiver
+    if (c.gpaWaiverApplied) continue;
 
     // Skip courses without a grade
     const grade = c.plannedGrade;

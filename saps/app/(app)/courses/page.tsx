@@ -731,7 +731,7 @@ export default function CourseBrowserPage() {
                 onCourseClick={handleCourseCodeClick}
                 onDivisionClick={handleDivisionClick}
                 onDepartmentClick={handleDepartmentClick}
-                hideAddButton
+                onClose={() => setSelectedCourse(null)}
               />
               </div>
             </div>

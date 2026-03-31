@@ -39,6 +39,7 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
         isDualCredit: courses.isDualCredit,
         isHonors: courses.isHonors,
         gpaWaiver: courses.gpaWaiver,
+        semestersOffered: courses.semestersOffered,
         maxEnrollment: courses.maxEnrollment,
         isActive: courses.isActive,
         notes: courses.notes,

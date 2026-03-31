@@ -171,12 +171,11 @@ export async function validateCourseAddition(
     .innerJoin(courses, eq(planCourses.courseId, courses.id))
     .where(eq(planCourses.planId, planId));
 
-  // 3. Check duplicate: same course at same grade/semester
+  // 3. Check duplicate: same course anywhere in the plan (regardless of grade/semester)
   const duplicate = existingPlanCourses.find(
     (pc) =>
       pc.courseId === courseId &&
-      pc.gradeLevel === gradeLevel &&
-      pc.semester === semester
+      pc.status !== "dropped"
   );
   if (duplicate) {
     violations.push({
@@ -184,8 +183,28 @@ export async function validateCourseAddition(
       courseId: targetCourse.id,
       courseName: targetCourse.name,
       courseCode: targetCourse.code,
-      message: `${targetCourse.code} is already in the plan at grade ${gradeLevel}, semester ${semester ?? "full year"}.`,
+      message: `${targetCourse.code} is already in the plan at Grade ${duplicate.gradeLevel}, Semester ${duplicate.semester ?? "full year"}.`,
       details: { conflictingCourseId: duplicate.id },
+    });
+  }
+
+  // Also check semester partner: same course name (e.g., CSC162 when CSC161 is already planned)
+  const semesterPartner = existingPlanCourses.find(
+    (pc) =>
+      pc.courseId !== courseId &&
+      pc.course.name === targetCourse.name &&
+      pc.course.duration === "semester" &&
+      targetCourse.duration === "semester" &&
+      pc.status !== "dropped"
+  );
+  if (semesterPartner) {
+    violations.push({
+      type: "duplicate",
+      courseId: targetCourse.id,
+      courseName: targetCourse.name,
+      courseCode: targetCourse.code,
+      message: `${semesterPartner.course.code} (${semesterPartner.course.name}) is already in the plan. This is the same course offered in a different semester.`,
+      details: { conflictingCourseId: semesterPartner.id },
     });
   }
 

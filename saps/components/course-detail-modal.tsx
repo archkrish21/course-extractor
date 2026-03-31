@@ -12,6 +12,8 @@ interface CourseDetailModalProps {
   onCourseNavigate?: (courseId: string) => void;
   /** Higher z-index for stacking over other modals (e.g., course picker) */
   zIndex?: number;
+  /** Hide the "Add to Plan" button (e.g., when opened from planner/picker) */
+  hideAddButton?: boolean;
 }
 
 function creditTypeBadgeVariant(type: string) {
@@ -28,6 +30,7 @@ export function CourseDetailModal({
   onClose,
   onCourseNavigate,
   zIndex = 50,
+  hideAddButton = false,
 }: CourseDetailModalProps) {
   const [course, setCourse] = useState<Record<string, unknown> | null>(null);
   const [loading, setLoading] = useState(true);
@@ -153,7 +156,7 @@ export function CourseDetailModal({
                 <CourseDetail
                   course={c}
                   onCourseClick={handleCourseCodeClick}
-                  hideAddButton
+                  hideAddButton={hideAddButton}
                 />
               </div>
             </>

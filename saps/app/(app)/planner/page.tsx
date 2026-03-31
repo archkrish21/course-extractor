@@ -1484,6 +1484,7 @@ export default function PlannerPage() {
           onClose={() => { setLastViewedCourseId(detailCourseId); setDetailCourseId(null); }}
           onCourseNavigate={(id) => setDetailCourseId(id)}
           zIndex={70}
+          hideAddButton
         />
       )}
     </div>

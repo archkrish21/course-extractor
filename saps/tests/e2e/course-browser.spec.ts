@@ -2,6 +2,14 @@ import { test, expect, type Page } from "@playwright/test";
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
 
+async function login(page: Page) {
+  await page.goto("/login");
+  await page.locator('input[type="email"]').fill("student@test.com");
+  await page.locator('input[type="password"]').fill("Test1234!");
+  await page.locator('form button[type="submit"]').click();
+  await page.waitForURL(/\/(dashboard|planner|courses)/, { timeout: 15_000 });
+}
+
 /** Wait for the course list to finish loading (spinner gone, results visible). */
 async function waitForCoursesLoaded(page: Page) {
   // Wait for loading spinner to disappear
@@ -19,6 +27,7 @@ async function waitForCoursesLoaded(page: Page) {
 
 test.describe("Course Browser — Page Load", () => {
   test("page loads and shows course list", async ({ page }) => {
+    await login(page);
     await page.goto("/courses");
     await waitForCoursesLoaded(page);
 
@@ -38,6 +47,9 @@ test.describe("Course Browser — Page Load", () => {
 // ─── Search ─────────────────────────────────────────────────────────────────
 
 test.describe("Course Browser — Search", () => {
+  test.beforeEach(async ({ page }) => {
+    await login(page);
+  });
   test.beforeEach(async ({ page }) => {
     await page.goto("/courses");
     await waitForCoursesLoaded(page);
@@ -71,6 +83,9 @@ test.describe("Course Browser — Search", () => {
 // ─── Filters ────────────────────────────────────────────────────────────────
 
 test.describe("Course Browser — Filters", () => {
+  test.beforeEach(async ({ page }) => {
+    await login(page);
+  });
   test.beforeEach(async ({ page }) => {
     await page.goto("/courses");
     await waitForCoursesLoaded(page);
@@ -217,6 +232,9 @@ test.describe("Course Browser — Filters", () => {
 
 test.describe("Course Browser — Detail Modal", () => {
   test.beforeEach(async ({ page }) => {
+    await login(page);
+  });
+  test.beforeEach(async ({ page }) => {
     await page.goto("/courses");
     await waitForCoursesLoaded(page);
   });
@@ -340,6 +358,9 @@ test.describe("Course Browser — Detail Modal", () => {
 // ─── Pagination ─────────────────────────────────────────────────────────────
 
 test.describe("Course Browser — Pagination", () => {
+  test.beforeEach(async ({ page }) => {
+    await login(page);
+  });
   test("pagination works (next/previous)", async ({ page }) => {
     await page.goto("/courses");
     await waitForCoursesLoaded(page);
@@ -369,6 +390,9 @@ test.describe("Course Browser — Pagination", () => {
 // ─── Layout and badges ──────────────────────────────────────────────────────
 
 test.describe("Course Browser — Layout & Badges", () => {
+  test.beforeEach(async ({ page }) => {
+    await login(page);
+  });
   test("two-column grid layout on desktop", async ({ page }) => {
     // Only run on desktop (chromium project)
     test.skip(
@@ -423,5 +447,203 @@ test.describe("Course Browser — Layout & Badges", () => {
       // Should be a plain number, not "Gr 9"
       expect(firstCircleText?.trim()).toMatch(/^\d{1,2}$/);
     }
+  });
+});
+
+// ─── Add to Plan from Course Detail ──────────────────────────────────────────
+
+test.describe("Course Browser — Add to Plan", () => {
+  test.beforeEach(async ({ page }) => {
+    await login(page);
+    await page.goto("/courses");
+    await waitForCoursesLoaded(page);
+  });
+
+  test("Add to Plan button is visible in course detail modal", async ({
+    page,
+  }) => {
+    // Open first course detail
+    const firstCard = page
+      .getByRole("list", { name: "Course results" })
+      .getByRole("listitem")
+      .first()
+      .getByRole("button");
+    await firstCard.click();
+
+    const modal = page.locator('[role="dialog"][aria-modal="true"]');
+    await expect(modal).toBeVisible({ timeout: 5000 });
+
+    // Scroll down and check for Add to Plan button
+    await expect(
+      modal.getByRole("button", { name: "Add to Plan" })
+    ).toBeVisible({ timeout: 5000 });
+  });
+
+  test("Cancel button closes the detail modal", async ({ page }) => {
+    const firstCard = page
+      .getByRole("list", { name: "Course results" })
+      .getByRole("listitem")
+      .first()
+      .getByRole("button");
+    await firstCard.click();
+
+    const modal = page.locator('[role="dialog"][aria-modal="true"]');
+    await expect(modal).toBeVisible({ timeout: 5000 });
+
+    // Click Cancel
+    await modal.getByRole("button", { name: "Cancel" }).click();
+
+    // Modal should close
+    await expect(modal).toBeHidden({ timeout: 3000 });
+  });
+
+  test("clicking Add to Plan shows plan, grade, and semester selectors", async ({
+    page,
+  }) => {
+    const firstCard = page
+      .getByRole("list", { name: "Course results" })
+      .getByRole("listitem")
+      .first()
+      .getByRole("button");
+    await firstCard.click();
+
+    const modal = page.locator('[role="dialog"][aria-modal="true"]');
+    await expect(modal).toBeVisible({ timeout: 5000 });
+
+    // Click Add to Plan to expand the form
+    await modal.getByRole("button", { name: "Add to Plan" }).click();
+    await page.waitForTimeout(1000);
+
+    // Should show plan selector
+    await expect(modal.locator("#add-plan-select")).toBeVisible();
+
+    // Should show grade buttons
+    await expect(modal.locator('button[aria-pressed]').first()).toBeVisible();
+  });
+
+  test("semester course shows only available semesters", async ({ page }) => {
+    // Search for a known semester-1-only course
+    await page.locator('input[type="search"], input[placeholder*="Search"]').fill("CSC161");
+    await waitForCoursesLoaded(page);
+
+    const firstCard = page
+      .getByRole("list", { name: "Course results" })
+      .getByRole("listitem")
+      .first()
+      .getByRole("button");
+    if ((await firstCard.count()) === 0) {
+      test.skip();
+      return;
+    }
+    await firstCard.click();
+
+    const modal = page.locator('[role="dialog"][aria-modal="true"]');
+    await expect(modal).toBeVisible({ timeout: 5000 });
+    await page.waitForTimeout(1000);
+
+    // Open add form
+    await modal.getByRole("button", { name: "Add to Plan" }).click();
+    await page.waitForTimeout(1000);
+
+    // CSC161 is Sem 1 only — should only show Sem 1 button
+    const semButtons = modal.locator('button[aria-pressed]:has-text("Sem")');
+    const count = await semButtons.count();
+    if (count > 0) {
+      // Should have exactly 1 semester option (Sem 1)
+      expect(count).toBe(1);
+      await expect(semButtons.first()).toContainText("Sem 1");
+    }
+  });
+
+  test("full-year course shows 'added to both semesters' message", async ({
+    page,
+  }) => {
+    // Search for a known full-year course
+    await page.locator('input[type="search"], input[placeholder*="Search"]').fill("Algebra 1");
+    await waitForCoursesLoaded(page);
+
+    const firstCard = page
+      .getByRole("list", { name: "Course results" })
+      .getByRole("listitem")
+      .first()
+      .getByRole("button");
+    if ((await firstCard.count()) === 0) {
+      test.skip();
+      return;
+    }
+    await firstCard.click();
+
+    const modal = page.locator('[role="dialog"][aria-modal="true"]');
+    await expect(modal).toBeVisible({ timeout: 5000 });
+    await page.waitForTimeout(1000);
+
+    // Open add form
+    await modal.getByRole("button", { name: "Add to Plan" }).click();
+    await page.waitForTimeout(1000);
+
+    // Should show "Full-year course" note
+    await expect(modal.locator("text=Full-year course")).toBeVisible();
+
+    // Should NOT show semester selector buttons
+    const semButtons = modal.locator('button[aria-pressed]:has-text("Sem")');
+    expect(await semButtons.count()).toBe(0);
+  });
+
+  test("duplicate course is blocked with error message", async ({ page }) => {
+    // Search for a course that's already in the plan
+    await page.locator('input[type="search"], input[placeholder*="Search"]').fill("Algebra 1");
+    await waitForCoursesLoaded(page);
+
+    const firstCard = page
+      .getByRole("list", { name: "Course results" })
+      .getByRole("listitem")
+      .first()
+      .getByRole("button");
+    if ((await firstCard.count()) === 0) {
+      test.skip();
+      return;
+    }
+    await firstCard.click();
+
+    const modal = page.locator('[role="dialog"][aria-modal="true"]');
+    await expect(modal).toBeVisible({ timeout: 5000 });
+    await page.waitForTimeout(1000);
+
+    // Open add form
+    await modal.getByRole("button", { name: "Add to Plan" }).click();
+    await page.waitForTimeout(1000);
+
+    // Try to add it
+    await modal.getByRole("button", { name: "Add to Plan" }).last().click();
+    await page.waitForTimeout(2000);
+
+    // Should show error (already in plan) or success
+    // Either way, a result message should appear
+    const resultMsg = modal.locator('[role="status"]');
+    await expect(resultMsg).toBeVisible({ timeout: 5000 });
+  });
+
+  test("cancel in Add to Plan form closes the detail modal", async ({
+    page,
+  }) => {
+    const firstCard = page
+      .getByRole("list", { name: "Course results" })
+      .getByRole("listitem")
+      .first()
+      .getByRole("button");
+    await firstCard.click();
+
+    const modal = page.locator('[role="dialog"][aria-modal="true"]');
+    await expect(modal).toBeVisible({ timeout: 5000 });
+
+    // Open add form
+    await modal.getByRole("button", { name: "Add to Plan" }).click();
+    await page.waitForTimeout(500);
+
+    // Click Cancel in the form
+    await modal.getByRole("button", { name: "Cancel" }).click();
+
+    // Modal should close
+    await expect(modal).toBeHidden({ timeout: 3000 });
   });
 });

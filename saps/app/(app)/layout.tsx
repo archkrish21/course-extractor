@@ -2,10 +2,11 @@
 
 import { useState, useEffect, useCallback, useRef } from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { TrialBanner } from "@/components/trial-banner";
 import { AccountProvider, useAccount, type Account } from "@/lib/account-context";
 import { ToastProvider } from "@/components/ui/toast";
+import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 
 const NAV_ITEMS = [
   {
@@ -276,9 +277,25 @@ function AccountSwitcher() {
 
 function AppLayoutInner({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
+  const router = useRouter();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [authChecked, setAuthChecked] = useState(false);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
 
   const closeMenu = useCallback(() => setMobileMenuOpen(false), []);
+
+  // Auth guard: redirect to /login if not authenticated
+  useEffect(() => {
+    const supabase = createSupabaseBrowserClient();
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (!session) {
+        router.replace(`/login?redirect=${encodeURIComponent(pathname)}`);
+      } else {
+        setIsAuthenticated(true);
+      }
+      setAuthChecked(true);
+    });
+  }, [pathname, router]);
 
   // Close menu on route change
   useEffect(() => {
@@ -293,6 +310,15 @@ function AppLayoutInner({ children }: { children: React.ReactNode }) {
     document.addEventListener("keydown", handleKeyDown);
     return () => document.removeEventListener("keydown", handleKeyDown);
   }, [mobileMenuOpen, closeMenu]);
+
+  // Show loading while checking auth
+  if (!authChecked || !isAuthenticated) {
+    return (
+      <div className="flex min-h-screen items-center justify-center">
+        <div className="h-8 w-8 animate-spin rounded-full border-4 border-muted border-t-primary" />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen">

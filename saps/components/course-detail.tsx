@@ -152,7 +152,7 @@ function DetailGrid({ course, onCourseClick, onDivisionClick, onDepartmentClick 
         <div>
           <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Grade Levels</p>
           <p className="mt-1 text-sm font-medium text-foreground">
-            {(course.gradeLevels ?? []).map((g: number) => `Grade ${g}`).join(", ")}
+            {(course.gradeLevels ?? []).join(", ")}
           </p>
         </div>
         <div>
@@ -317,16 +317,160 @@ function DetailGrid({ course, onCourseClick, onDivisionClick, onDepartmentClick 
   );
 }
 
+interface PlanOption {
+  id: string;
+  name: string;
+  isPrimary: boolean;
+}
+
+interface AddToPlanResult {
+  success: boolean;
+  message?: string;
+  warnings?: Array<{ type: string; message: string }>;
+}
+
 interface CourseDetailProps {
   course: Course;
   onCourseClick?: (courseId: string) => void;
   onDivisionClick?: (divisionName: string) => void;
   onDepartmentClick?: (divisionName: string, departmentName: string) => void;
   hideAddButton?: boolean;
+  /** Provide plans for the "Add to Plan" form. If empty/undefined, form fetches plans itself. */
+  plans?: PlanOption[];
+  /** Called after a course is successfully added to a plan */
+  onCourseAdded?: () => void;
+  /** Called when the user clicks Cancel to close the detail view */
+  onClose?: () => void;
 }
 
-export function CourseDetail({ course, onCourseClick, onDivisionClick, onDepartmentClick, hideAddButton = false }: CourseDetailProps) {
-  const [showTooltip, setShowTooltip] = useState(false);
+export function CourseDetail({ course, onCourseClick, onDivisionClick, onDepartmentClick, hideAddButton = false, plans: externalPlans, onCourseAdded, onClose }: CourseDetailProps) {
+  const [showAddForm, setShowAddForm] = useState(false);
+  const [plans, setPlans] = useState<PlanOption[]>(externalPlans ?? []);
+  const [loadingPlans, setLoadingPlans] = useState(false);
+  const [selectedPlanId, setSelectedPlanId] = useState<string>("");
+  const [selectedGrade, setSelectedGrade] = useState<number>(course.gradeLevels[0] ?? 9);
+  const [selectedSemester, setSelectedSemester] = useState<number>(
+    course.semestersOffered?.[0] ?? 1
+  );
+  const [adding, setAdding] = useState(false);
+  const [addResult, setAddResult] = useState<AddToPlanResult | null>(null);
+
+  // Reset form state when course changes (e.g., navigating via "Also available as")
+  useEffect(() => {
+    setSelectedGrade(course.gradeLevels[0] ?? 9);
+    setSelectedSemester(course.semestersOffered?.[0] ?? 1);
+    setShowAddForm(false);
+    setAddResult(null);
+  }, [course.id, course.gradeLevels, course.semestersOffered]);
+
+  // Fetch plans when form opens (if not provided externally)
+  useEffect(() => {
+    if (showAddForm && plans.length === 0 && !externalPlans) {
+      setLoadingPlans(true);
+      fetch("/api/v1/plans")
+        .then((res) => res.ok ? res.json() : null)
+        .then((data) => {
+          if (data) {
+            const planList: PlanOption[] = (data.plans ?? data.data ?? []).map(
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+              (p: any) => ({ id: p.id, name: p.name, isPrimary: p.isPrimary })
+            );
+            setPlans(planList);
+            // Default to primary plan
+            const primary = planList.find((p) => p.isPrimary);
+            setSelectedPlanId(primary?.id ?? planList[0]?.id ?? "");
+          }
+        })
+        .finally(() => setLoadingPlans(false));
+    }
+  }, [showAddForm, plans.length, externalPlans]);
+
+  // Set default plan when plans load
+  useEffect(() => {
+    if (externalPlans && externalPlans.length > 0 && !selectedPlanId) {
+      const primary = externalPlans.find((p) => p.isPrimary);
+      setSelectedPlanId(primary?.id ?? externalPlans[0]?.id ?? "");
+    }
+  }, [externalPlans, selectedPlanId]);
+
+  async function handleAddToPlan() {
+    if (!selectedPlanId) return;
+    setAdding(true);
+    setAddResult(null);
+
+    try {
+      if (course.duration === "full_year") {
+        // Full-year: add to both semesters
+        const res1 = await fetch(`/api/v1/plans/${selectedPlanId}/courses`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            course_id: course.id,
+            grade_level: selectedGrade,
+            semester: 1,
+            force_add: true,
+          }),
+        });
+        const res2 = await fetch(`/api/v1/plans/${selectedPlanId}/courses`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            course_id: course.id,
+            grade_level: selectedGrade,
+            semester: 2,
+            force_add: true,
+          }),
+        });
+
+        if (res1.ok && res2.ok) {
+          setAddResult({ success: true, message: `Added to both semesters of Grade ${selectedGrade}` });
+          onCourseAdded?.();
+        } else {
+          const data = await (res1.ok ? res2 : res1).json().catch(() => null);
+          setAddResult({
+            success: false,
+            message: data?.error?.message ?? data?.violations?.[0]?.message ?? "Failed to add course",
+            warnings: data?.violations,
+          });
+        }
+      } else {
+        // Semester course: add to selected semester
+        const res = await fetch(`/api/v1/plans/${selectedPlanId}/courses`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            course_id: course.id,
+            grade_level: selectedGrade,
+            semester: selectedSemester,
+            force_add: true,
+          }),
+        });
+
+        if (res.ok) {
+          setAddResult({ success: true, message: `Added to Grade ${selectedGrade}, Semester ${selectedSemester}` });
+          onCourseAdded?.();
+        } else {
+          const data = await res.json().catch(() => null);
+          setAddResult({
+            success: false,
+            message: data?.error?.message ?? data?.violations?.[0]?.message ?? "Failed to add course",
+            warnings: data?.violations,
+          });
+        }
+      }
+    } catch {
+      setAddResult({ success: false, message: "Something went wrong" });
+    } finally {
+      setAdding(false);
+    }
+  }
+
+  // Available semesters for semester courses
+  const availableSemesters = course.duration === "full_year"
+    ? []
+    : course.semestersOffered && course.semestersOffered.length > 0
+      ? course.semestersOffered
+      : [1, 2];
 
   return (
     <div className="flex flex-col gap-6">
@@ -339,31 +483,179 @@ export function CourseDetail({ course, onCourseClick, onDivisionClick, onDepartm
       {/* Course details grid */}
       <DetailGrid course={course} onCourseClick={onCourseClick} onDivisionClick={onDivisionClick} onDepartmentClick={onDepartmentClick} />
 
-      {/* Add to Plan button — hidden when opened from course picker or planner */}
+      {/* Add to Plan */}
       {!hideAddButton && (
-        <div className="relative">
-          <Button
-            disabled
-            className="w-full"
-            onMouseEnter={() => setShowTooltip(true)}
-            onMouseLeave={() => setShowTooltip(false)}
-            onFocus={() => setShowTooltip(true)}
-            onBlur={() => setShowTooltip(false)}
-            aria-describedby="add-plan-tooltip"
-          >
-            <svg aria-hidden="true" className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
-            </svg>
-            Add to Plan
-          </Button>
-          {showTooltip && (
-            <div
-              id="add-plan-tooltip"
-              role="tooltip"
-              className="absolute bottom-full left-1/2 mb-2 -translate-x-1/2 rounded-lg border border-border bg-card px-3 py-2 text-xs text-muted-foreground shadow-md whitespace-nowrap"
-            >
-              Use the Planner to add courses to your plan
-              <div className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-border" aria-hidden="true" />
+        <div className="border-t border-border pt-4">
+          {!showAddForm ? (
+            <div className="flex gap-2">
+              {onClose && (
+                <Button
+                  variant="ghost"
+                  className="flex-1"
+                  onClick={onClose}
+                >
+                  Cancel
+                </Button>
+              )}
+              <Button
+                className="flex-1"
+                onClick={() => { setShowAddForm(true); setAddResult(null); }}
+              >
+                <svg aria-hidden="true" className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+                </svg>
+                Add to Plan
+              </Button>
+            </div>
+          ) : (
+            <div className="rounded-lg border border-border bg-muted/30 p-4">
+              <h4 className="mb-3 text-sm font-semibold text-foreground">Add to Plan</h4>
+
+              {loadingPlans ? (
+                <div className="flex items-center justify-center py-4">
+                  <div className="h-5 w-5 animate-spin rounded-full border-2 border-muted border-t-primary" />
+                </div>
+              ) : plans.length === 0 ? (
+                <div className="flex flex-col gap-3">
+                  <p className="text-sm text-muted-foreground">
+                    No plans found.{" "}
+                    <a href="/planner" className="text-primary underline underline-offset-2">
+                      Create a plan
+                    </a>{" "}
+                    first.
+                  </p>
+                  <Button variant="ghost" size="sm" onClick={() => { setShowAddForm(false); setAddResult(null); onClose?.(); }}>
+                    Cancel
+                  </Button>
+                </div>
+              ) : (
+                <div className="flex flex-col gap-3">
+                  {/* Plan + Grade + Semester in one line */}
+                  <div className="flex flex-wrap items-end gap-3">
+                    {/* Plan selector */}
+                    <div className="min-w-0 flex-1">
+                      <label htmlFor="add-plan-select" className="mb-1 block text-xs font-medium text-muted-foreground">
+                        Plan
+                      </label>
+                      <select
+                        id="add-plan-select"
+                        value={selectedPlanId}
+                        onChange={(e) => setSelectedPlanId(e.target.value)}
+                        className="h-9 w-full rounded-lg border border-border bg-background px-2 text-sm text-foreground focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
+                      >
+                        {plans.map((p) => (
+                          <option key={p.id} value={p.id}>
+                            {p.name}{p.isPrimary ? " ★" : ""}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+
+                    {/* Grade level */}
+                    <div className="shrink-0">
+                      <label className="mb-1 block text-xs font-medium text-muted-foreground">
+                        Grade
+                      </label>
+                      <div className="flex gap-1">
+                        {course.gradeLevels.map((g) => (
+                          <button
+                            key={g}
+                            type="button"
+                            onClick={() => setSelectedGrade(g)}
+                            className={`flex h-9 w-10 items-center justify-center rounded-lg border text-xs font-medium transition-colors
+                              ${selectedGrade === g
+                                ? "border-primary bg-primary text-primary-foreground"
+                                : "border-border bg-background text-foreground hover:bg-muted"
+                              }
+                              focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring`}
+                            aria-pressed={selectedGrade === g}
+                          >
+                            {g}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Semester (only for semester courses) */}
+                    {course.duration === "semester" && (
+                      <div className="shrink-0">
+                        <label className="mb-1 block text-xs font-medium text-muted-foreground">
+                          Semester
+                        </label>
+                        <div className="flex gap-1">
+                          {availableSemesters.map((s) => (
+                            <button
+                              key={s}
+                              type="button"
+                              onClick={() => setSelectedSemester(s)}
+                              className={`flex h-9 w-14 items-center justify-center rounded-lg border text-xs font-medium transition-colors
+                                ${selectedSemester === s
+                                  ? "border-primary bg-primary text-primary-foreground"
+                                  : "border-border bg-background text-foreground hover:bg-muted"
+                                }
+                                focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring`}
+                            aria-pressed={selectedSemester === s}
+                          >
+                            Sem {s}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                  </div>
+
+                  {course.duration === "full_year" && (
+                    <p className="text-xs text-muted-foreground">
+                      Full-year course — will be added to both semesters.
+                    </p>
+                  )}
+
+                  {/* Result message */}
+                  {addResult && (
+                    <div
+                      className={`rounded-lg p-2.5 text-sm ${
+                        addResult.success
+                          ? "bg-success-light text-success"
+                          : "bg-destructive-light text-destructive"
+                      }`}
+                      role="status"
+                    >
+                      {addResult.message}
+                    </div>
+                  )}
+
+                  {/* Action buttons */}
+                  <div className="flex gap-2">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="flex-1"
+                      onClick={() => { setShowAddForm(false); setAddResult(null); onClose?.(); }}
+                    >
+                      Cancel
+                    </Button>
+                    <Button
+                      size="sm"
+                      className="flex-1"
+                      onClick={handleAddToPlan}
+                      disabled={adding || !selectedPlanId || addResult?.success === true}
+                    >
+                      {adding ? (
+                        <div className="h-4 w-4 animate-spin rounded-full border-2 border-primary-foreground border-t-transparent" />
+                      ) : addResult?.success ? (
+                        <>
+                          <svg aria-hidden="true" className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" d="m4.5 12.75 6 6 9-13.5" />
+                          </svg>
+                          Added
+                        </>
+                      ) : (
+                        "Add to Plan"
+                      )}
+                    </Button>
+                  </div>
+                </div>
+              )}
             </div>
           )}
         </div>

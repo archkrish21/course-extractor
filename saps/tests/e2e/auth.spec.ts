@@ -155,14 +155,11 @@ test.describe("Auth — Route Protection", () => {
     }
   });
 
-  test("/courses is accessible without login", async ({ page }) => {
+  test("/courses redirects to login without auth", async ({ page }) => {
     // Navigate to courses page without logging in
     await page.goto("/courses");
 
-    // Should stay on /courses and show the course browser
-    await expect(page).toHaveURL(/\/courses/);
-    await expect(
-      page.getByRole("heading", { name: "Course Browser" })
-    ).toBeVisible({ timeout: 10_000 });
+    // Should redirect to /login
+    await page.waitForURL(/\/login/, { timeout: 10_000 });
   });
 });

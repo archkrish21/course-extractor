@@ -781,7 +781,26 @@ export default function PlannerPage() {
 
   const selectedPlan = plans.find((p) => p.id === selectedPlanId);
   const totalCourses = courses.length;
-  const totalViolations = Object.values(violations).flat().length;
+  // Count all warnings: API violations + local underload/overload
+  const apiViolationCount = Object.values(violations).flat().length;
+  const planWarnings: string[] = [];
+  for (const grade of [9, 10, 11, 12]) {
+    const gradeCourses = courses.filter((c) => c.gradeLevel === grade && c.status !== "dropped");
+    for (const sem of [1, 2]) {
+      const semCourses = gradeCourses.filter((c) => c.semester === sem);
+      const hasEarlyBird = semCourses.some(
+        (c) => (c.name ?? "").toLowerCase().includes("early bird") || /E\d$/.test(c.code ?? "") || /E\d\//.test(c.code ?? "")
+      );
+      const max = hasEarlyBird ? 8 : 7;
+      if (semCourses.length > 0 && semCourses.length < 5) {
+        planWarnings.push(`Grade ${grade} Sem ${sem}: ${semCourses.length} courses (min 5)`);
+      }
+      if (semCourses.length > max) {
+        planWarnings.push(`Grade ${grade} Sem ${sem}: ${semCourses.length} courses (max ${max})`);
+      }
+    }
+  }
+  const totalViolations = apiViolationCount + planWarnings.length;
   // Credit per row: full-year courses are stored as 2 rows with creditValue=2.0 each,
   // so each row represents 1 credit (half the course). Semester courses are 1 row = 1 credit.
   const creditPerRow = (c: PlanCourse) => {
@@ -1005,8 +1024,8 @@ export default function PlannerPage() {
                   </span>
                 )}
               {totalViolations > 0 && (() => {
-                // Collect all warning messages
-                const allMessages: string[] = [];
+                // Collect all warning messages (API violations + local underload/overload)
+                const allMessages: string[] = [...planWarnings];
                 for (const [courseId, vList] of Object.entries(violations)) {
                   const course = courses.find((c) => c.courseId === courseId);
                   const prefix = course ? `${course.name}:` : "";

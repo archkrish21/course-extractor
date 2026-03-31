@@ -711,7 +711,8 @@ Templates are tied to a specific `catalog_version_id`. During annual catalog upd
    ├── Option A: Email + password
    │   └── Verify email before proceeding
    └── Option B: Google OAuth
-       └── Continue directly
+       └── First-time: auto-provisions app records (user, account, profile, 14-day Elite trial) using Google profile name. Email marked as verified. Redirects to /onboarding.
+       └── Returning: resumes session, redirects to intended page.
 
 3. Date of birth check
    └── If under 13 → blocked; show COPPA notice

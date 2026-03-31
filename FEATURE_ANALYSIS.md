@@ -47,7 +47,7 @@ Three user roles — design the auth/roles model to accommodate all from day one
 The platform uses a student-centric account model. Each `account` represents one student's academic data. Users (students, parents, counselors) are `account_members` with role-based permissions. Either a student or parent can create an account. When a parent creates an account, the student claims it later via an invite code.
 
 - Use an established auth library (Auth.js or Supabase Auth) — do not build auth from scratch.
-- Support email login + Google OAuth.
+- Support email login + Google OAuth. The OAuth callback auto-provisions first-time Google users (creates `users`, `accounts`, `student_profiles`, `subscriptions` with 14-day Elite trial) and redirects to `/onboarding`. Student name is extracted from Google profile metadata. Email is marked as pre-verified.
 
 **Onboarding flow for existing students** (non-freshman) is critical: students must be able to enter grades already completed before using the planner. Without prior grade history, the GPA calculator and requirement progress tracker are meaningless. Make bulk entry fast — a table-style entry form, not one course at a time.
 

@@ -209,6 +209,8 @@ User → Next.js frontend → API routes → PostgreSQL (Supabase + RLS)
 - JWTs issued by Supabase Auth; passed as `Authorization: Bearer <token>` on all API requests
 - Session refresh handled by Supabase client SDK
 
+**Google OAuth first-time user provisioning:** The OAuth callback (`/api/v1/auth/callback`) detects first-time Google users (no `users` row for the auth ID) and provisions all app-level records: `users` (role: student, email verified: true), `accounts`, `account_members`, `student_profiles`, and `subscriptions` (14-day Elite trial). The student name is extracted from Google profile metadata (`full_name`). First-time users are redirected to `/onboarding`; returning users go to their intended destination. If provisioning fails, the user is redirected to `/dashboard?error=setup_incomplete` for graceful recovery.
+
 ### User roles
 
 ```typescript
@@ -1143,6 +1145,7 @@ All routes: `/api/v1/...`. Version from day one.
 | Method | Route | Auth | Description |
 |---|---|---|---|
 | POST | `/api/v1/auth/signup` | — | Create user + subscription row |
+| GET | `/api/v1/auth/callback` | — | OAuth callback. Exchanges code for session. First-time users: provisions app records + redirects to /onboarding. Returning users: redirects to intended page. |
 | GET | `/api/v1/plans` | member | List student's plans |
 | POST | `/api/v1/plans` | member (can_edit) | Create plan (check plan limit) |
 | PATCH | `/api/v1/plans/:id/set-primary` | student | Set plan as primary + active. Demotes old primary to draft. Student role only. Archived plans blocked (409). |

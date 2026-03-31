@@ -165,7 +165,7 @@ CREATE TABLE career_path_courses (
   - A course cannot be planned before its prerequisite grade level
   - A co-requisite course must be planned in the same semester
 
-> **Implementation status (Phase 1b):** Full-year courses are now stored as two `plan_courses` rows (semester 1 + semester 2) instead of one row with `semester=null`. This enables independent status and grade tracking per semester. Plan templates are seeded with split rows via the seed script. The prerequisite validator's enrollment rule check verifies both semesters are present for full-year courses instead of checking for `semester=null`. Semester-paired courses are excluded from the course picker when one variant is already in the plan (e.g., CSC162 hidden if CSC161 is planned). Matching is by course name across all 80 semester-paired courses.
+> **Implementation status (Phase 1b):** Full-year courses are now stored as two `plan_courses` rows (semester 1 + semester 2) instead of one row with `semester=null`. This enables independent status and grade tracking per semester. Plan templates are seeded with split rows via the seed script. The prerequisite validator's enrollment rule check verifies both semesters are present for full-year courses instead of checking for `semester=null`. Semester-paired courses are excluded from the course picker when one variant is already in the plan (e.g., CSC162 hidden if CSC161 is planned). Matching is by course name across all 80 semester-paired courses. Bulk status and grade updates available per semester (dropdown in semester cell header). Trash icon for clearing a semester. Credits calculated correctly for full-year courses (per-row = creditValue/2 to avoid double-counting).
 
 ### Credit System
 

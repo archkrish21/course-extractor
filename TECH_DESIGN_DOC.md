@@ -209,6 +209,8 @@ User → Next.js frontend → API routes → PostgreSQL (Supabase + RLS)
 - JWTs issued by Supabase Auth; passed as `Authorization: Bearer <token>` on all API requests
 - Session refresh handled by Supabase client SDK
 
+All pages under the `(app)/` route group require authentication. The app layout checks the Supabase session on mount and redirects unauthenticated users to `/login?redirect=...`.
+
 **Google OAuth first-time user provisioning:** The OAuth callback (`/api/v1/auth/callback`) detects first-time Google users (no `users` row for the auth ID) and provisions all app-level records: `users` (role: student, email verified: true), `accounts`, `account_members`, `student_profiles`, and `subscriptions` (14-day Elite trial). The student name is extracted from Google profile metadata (`full_name`). First-time users are redirected to `/onboarding`; returning users go to their intended destination. If provisioning fails, the user is redirected to `/dashboard?error=setup_incomplete` for graceful recovery.
 
 ### User roles
@@ -1641,6 +1643,8 @@ For each course C in the plan:
 3. Any unsatisfied group → fire `prereq_violation` or `coreq_violation` alert
 
 Cycle detection runs at catalog load time (topological sort). Cycles at runtime are blocked by the `visited_path` guard in the CTE — they do not cause infinite loops.
+
+> **Duplicate validation (Phase 1b update):** Duplicate validation blocks the same course at any grade level (not just same grade+semester). Semester partners (same name, different code) are also blocked. Full-year courses are allowed at the same grade in both semesters (expected pattern for 2-row storage).
 
 ---
 

@@ -14,6 +14,8 @@ interface CourseDetailModalProps {
   zIndex?: number;
   /** Hide the "Add to Plan" button (e.g., when opened from planner/picker) */
   hideAddButton?: boolean;
+  /** Direct add callback — skips the plan/grade/semester form. Used from course picker where context is known. */
+  onDirectAdd?: (courseId: string) => void;
 }
 
 function creditTypeBadgeVariant(type: string) {
@@ -31,6 +33,7 @@ export function CourseDetailModal({
   onCourseNavigate,
   zIndex = 50,
   hideAddButton = false,
+  onDirectAdd,
 }: CourseDetailModalProps) {
   const [course, setCourse] = useState<Record<string, unknown> | null>(null);
   const [loading, setLoading] = useState(true);
@@ -157,6 +160,8 @@ export function CourseDetailModal({
                   course={c}
                   onCourseClick={handleCourseCodeClick}
                   hideAddButton={hideAddButton}
+                  onClose={onClose}
+                  onDirectAdd={onDirectAdd ? () => onDirectAdd(courseId) : undefined}
                 />
               </div>
             </>

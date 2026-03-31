@@ -94,7 +94,7 @@ The build is structured across five phases over approximately 18+ weeks. Phase 1
 
 **Internal milestone after Phase 1a (Week 3):** ✅ Complete. Course catalog in DB, auth functional, course browser usable.
 
-**Internal milestone after Phase 1b (Week 6):** ✅ Complete. 4-year planner grid, course picker, prerequisite validation, 6 plan templates, GPA calculation, per-semester status/grade editing, credit display, plan management (create/delete/clear).
+**Internal milestone after Phase 1b (Week 6):** ✅ Complete. 4-year planner grid, course picker, prerequisite validation, 6 plan templates, GPA calculation, per-semester status/grade editing, credit display, plan management (create/delete/clear). Add to Plan from course detail modal. Auth guard on all app pages. Bulk status/grade update per semester. Credit calculation fixed for full-year courses.
 
 **User testing checkpoint (before Phase 2):** 3–5 real students will validate the core planning UX before Phase 2 begins. Phase 2 scope will be adjusted based on findings.
 

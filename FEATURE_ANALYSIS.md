@@ -91,6 +91,8 @@ Also track **standardized test scores** (SAT, ACT, AP exam scores) — these are
 
 > **Implementation status (Phase 1b):** GPA calculation is implemented in `lib/gpa/calc.ts` using configurable weights from `config/gpa-weights.ts` and grade scale from `config/grade-scale.ts`. Three GPA views supported: cumulative (completed only), projected (all non-dropped with grades), what-if (Phase 2). Weighted GPA includes bonuses: CP +0.0, Accelerated +0.5, Honors +0.5, AP +1.0. GPA waiver courses excluded from calculation. Pass/Fail and Incomplete grades excluded. Full-year courses are stored as two semester rows; GPA uses half credit value per row to avoid double-counting. GPA displayed in planner grid grade headers and plan header.
 
+> **GPA waiver toggle:** GPA waiver is a per-plan-course toggle (`gpa_waiver_applied` on plan_courses). The catalog-level `gpa_waiver` flag indicates eligibility; the student must explicitly apply it via a checkbox on the course card. Applied waivers show in yellow. The GPA calculator excludes courses where `gpa_waiver_applied = true`.
+
 ### Dual Credit Tracking
 
 Several Stevenson courses earn transferable college credit through partner institutions (e.g., Harper College). This is a significant college planning consideration and must be tracked explicitly:
@@ -170,6 +172,8 @@ CREATE TABLE career_path_courses (
 ### Credit System
 
 Stevenson uses 1 credit per semester course, 2 credits per full-year course. Graduation requires 45 credits total. The school day has 8 periods (including lunch), allowing a maximum of 7 courses per semester (8 with an early bird period). Minimum 5 courses per semester.
+
+> **1.5 period AP Science courses:** Eight AP Science lab courses use 1.5 class periods and earn 3.0 credits per year (1.5 per semester): AP Physics 1 (SCI611/612), AP Biology (SCI631/632), AP Chemistry (SCI651/652), AP Physics C (SCI661/662), and their Early Bird variants (SCI61E1/E2, SCI63E1/E2, SCI65E1/E2, SCI66E1/E2). All other courses earn 1.0 credit per semester (2.0 per full year) or 1.0 per semester course.
 
 ### Course Ordering in Planner
 

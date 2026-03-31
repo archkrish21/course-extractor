@@ -792,7 +792,7 @@ export default function PlannerPage() {
         (c) => (c.name ?? "").toLowerCase().includes("early bird") || /E\d$/.test(c.code ?? "") || /E\d\//.test(c.code ?? "")
       );
       const max = hasEarlyBird ? 8 : 7;
-      if (semCourses.length > 0 && semCourses.length < 5) {
+      if (semCourses.length < 5) {
         planWarnings.push(`Grade ${grade} Sem ${sem}: ${semCourses.length} courses (min 5)`);
       }
       if (semCourses.length > max) {

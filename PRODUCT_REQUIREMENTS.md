@@ -443,12 +443,12 @@ Templates are tied to a specific `catalog_version_id`. During annual catalog upd
 | F-PL-16 | Full-year courses stored as two semester rows with independent status and grade per semester. Removing from either semester removes both. Adding a full-year course creates both semester rows automatically. | Must |
 | F-PL-17 | Course sort order within semester cells: Early Bird, Language Arts, Math, Science, World Language, Social Studies, Electives, PE. | Should |
 | F-PL-18 | Semester course limits: minimum 5, maximum 7 (or 8 with early bird). Add Course button disabled at max. Count shown as X/7 in cell header. | Must |
-| F-PL-19 | GPA display in grade header (projected weighted + actual weighted) and plan header (total projected + actual + /45 required). | Must |
+| F-PL-19 | GPA display in grade header (projected weighted + actual weighted) and plan header (total projected + actual + /45 required). GPA is displayed as both unweighted and weighted simultaneously: 'Proj: 3.75 / 4.25' (blue, projected from all graded courses) and 'Actual: 4.00 / 5.00' (green, completed courses only). Format is always unweighted / weighted. | Must |
 | F-PL-20 | Plan creation modal with name input and template selection (Blank Plan or any of 6 templates). | Must |
 | F-PL-21 | Plan deletion with confirmation dialog (non-primary plans only). | Must |
 | F-PL-22 | Clear semester and clear grade with confirmation dialogs. | Should |
 | F-PL-23 | Core course removal warning for template-based plans with Reset to Template option. | Should |
-| F-PL-24 | Credits display: planned and earned credits per grade and total. Stevenson uses 1 credit per semester course, 2 credits per full-year course, 45 credits required for graduation. | Must |
+| F-PL-24 | Credits display: planned and earned credits per grade and total. Stevenson uses 1 credit per semester course, 2 credits per full-year course, 45 credits required for graduation. Credits displayed as: 'X credits planned, Y earned' (earned in green). Per-row credit = creditValue/2 for full-year courses to avoid double-counting. 1.5 period courses show 1.5 credits per semester row. | Must |
 
 **Accessibility Requirements (Phase 1 — build in, not bolt on):**
 
@@ -507,7 +507,7 @@ Templates are tied to a specific `catalog_version_id`. During annual catalog upd
 | F-GPA-03 | Weighted GPA: applies credit type bonus. Values configurable — not hardcoded. Must be confirmed with school before implementation. **Placeholder weights:** CP = +0.0; Accelerated = +0.5; Honors = +0.5 (placeholder — confirm with school); AP = +1.0; Pass/Fail = N/A (excluded from GPA). | Must |
 | F-GPA-04 | GPA trend chart: line chart from `gpa_snapshots` over time. | Should |
 | F-GPA-05 | **What-if GPA simulator**: read-only mode. Student swaps courses; GPA recalculates in memory. No changes persisted. | Should |
-| F-GPA-06 | Courses with `gpa_waiver = TRUE` (e.g., PE, some electives) excluded from all GPA calculations. | Must |
+| F-GPA-06 | GPA waiver is a student-initiated per-course toggle, not automatic. Waiver-eligible courses (CP-level Applied Arts, Fine Arts, CSET, specific Communication Arts/PE courses) show a 'GPA Waiver' checkbox on the course card. When checked, the course is excluded from GPA calculation. The waiver can be toggled on/off at any time. | Must |
 
 **What-If Simulator UX:**
 - Accessed via a "What If?" button on the planner grid (Plus tier and above).

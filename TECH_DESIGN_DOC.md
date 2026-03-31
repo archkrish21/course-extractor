@@ -681,12 +681,15 @@ CREATE TABLE plan_courses (
                   OR planned_grade IS NULL),
   display_order SMALLINT DEFAULT 0,
   notes         TEXT,
+  gpa_waiver_applied BOOLEAN NOT NULL DEFAULT FALSE,
   UNIQUE (plan_id, course_id, grade_level, semester)
   -- Allows retakes in different years; prevents duplicates within same grade/semester
 );
 
 CREATE INDEX idx_plan_courses_plan_id ON plan_courses (plan_id);
 ```
+
+> **GPA waiver toggle:** Students can apply a GPA waiver per plan-course by toggling a checkbox on waiver-eligible course cards. The GPA calculation checks `gpa_waiver_applied` (student's choice on plan_courses) rather than `gpa_waiver` (catalog-level flag on courses). Only courses where the student explicitly applies the waiver are excluded from GPA.
 
 > **Completed-course locking:** Once `status = 'completed'`, the API must reject DELETE, and changes to `course_id`, `grade_level`, or `semester` with `HTTP 409 Conflict`. Only `planned_grade` and `notes` remain editable. Enforced at API layer with an integration test asserting 409 on DELETE of a completed row.
 
@@ -937,7 +940,7 @@ CREATE TABLE courses (
   division_id        UUID NOT NULL REFERENCES divisions(id) ON DELETE RESTRICT,
   department_id      UUID REFERENCES departments(id) ON DELETE RESTRICT,
   description        TEXT,
-  credit_value       DECIMAL(3,1) NOT NULL DEFAULT 1.0,
+  credit_value       DECIMAL(3,1) NOT NULL DEFAULT 1.0,  -- 1.5 for AP Science lab courses
   duration           TEXT NOT NULL CHECK (duration IN ('semester','full_year')),
   grade_levels       SMALLINT[] NOT NULL,
   credit_type        TEXT NOT NULL CHECK (credit_type IN ('CP','Accelerated','Honors','AP','Pass/Fail')),
@@ -956,6 +959,8 @@ CREATE TABLE courses (
   updated_at         TIMESTAMPTZ DEFAULT NOW(),
   UNIQUE (code, catalog_version_id)  -- course codes are unique within a catalog version, not globally
 );
+
+> **1.5 period AP Science courses:** Eight AP Science lab courses use 1.5 class periods and earn 3.0 credits per year (1.5 per semester): AP Physics 1 (SCI611/612), AP Biology (SCI631/632), AP Chemistry (SCI651/652), AP Physics C (SCI661/662), and their Early Bird variants (SCI61E1/E2, SCI63E1/E2, SCI65E1/E2, SCI66E1/E2). All other courses earn 1.0 credit per semester (2.0 per full year) or 1.0 per semester course.
 
 -- Active course lookup: for the current catalog version, find a course by code
 CREATE INDEX idx_courses_code_active ON courses (code) WHERE is_active = TRUE;
@@ -1565,7 +1570,7 @@ export const GRADE_TO_POINTS: Record<string, number | null> = {
 
 ```
 Unweighted GPA = SUM(gradePoints × creditValue) / SUM(creditValue)
-                 for all courses WHERE gradePoints IS NOT NULL AND gpa_waiver = FALSE
+                 for all courses WHERE gradePoints IS NOT NULL AND gpa_waiver_applied = FALSE
 
 Weighted GPA   = SUM((gradePoints + weightBonus) × creditValue) / SUM(creditValue)
                  for same set of courses
@@ -1670,6 +1675,14 @@ UNIQUE (student_id, deduplication_key) WHERE resolved_at IS NULL
 `deduplication_key` format: `'{planId}:{courseId}:{alertType}'` (or `'{studentId}:{alertType}'` for non-course alerts).
 
 Before inserting a new alert, the engine checks if a matching unresolved alert already exists (same `deduplication_key` per student). If yes, it skips insertion. When a violation is resolved (e.g., student adds the missing prerequisite), `resolved_at` is set — allowing the same key to fire again if the condition recurs.
+
+### Underload warnings
+
+Underload warnings trigger for any semester with fewer than 5 courses, including empty semesters (0 courses). This ensures all four grade levels have adequate course loads.
+
+### Plan header bar warning count
+
+The plan header bar warning count combines API-returned violations (prerequisite, duplicate, grade-level eligibility) with locally-computed underload/overload warnings per semester. The tooltip on hover lists all warning messages.
 
 ### Tier gating
 

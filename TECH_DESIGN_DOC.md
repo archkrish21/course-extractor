@@ -149,7 +149,8 @@ User → Next.js frontend → API routes → PostgreSQL (Supabase + RLS)
 │   ├── (app)/                  # authenticated group
 │   │   ├── dashboard/
 │   │   ├── courses/
-│   │   └── progress/           # graduation requirements progress page
+│   │   ├── progress/           # graduation requirements progress page (print button in header)
+│   │   └── transcript/         # read-only transcript page (print button in header)
 │   └── api/v1/                 # API routes
 │       ├── auth/
 │       ├── courses/
@@ -719,7 +720,7 @@ CREATE INDEX idx_plan_history_plan_id_at ON plan_history (plan_id, changed_at DE
 
 ### Table: `grade_entries`
 
-> **Phase 2 update:** The `midterm_grade` and `grade_type` columns have been removed. Stevenson uses a single final grade per semester (proficiency-based grading model) — there is no midterm grade. The primary grade source is now `plan_courses.planned_grade`, set via the planner page. The `grade_entries` table is retained for future use (e.g., onboarding bulk import, historical records) but is **not** the authoritative source for GPA calculation or transcript display.
+> **Phase 2 update:** The `midterm_grade` and `grade_type` columns have been removed. Stevenson uses a single final grade per semester (proficiency-based grading model) — there is no midterm grade. The primary grade source is now `plan_courses.planned_grade`, set via the planner page. The `grade_entries` table is retained for future use (e.g., onboarding bulk import, historical records) but is **not** the authoritative source for GPA calculation or transcript display. The Transcript page includes a Print button (printer icon) next to "Edit in Planner" that triggers `window.print()`; the Progress page includes a Print button next to "Edit Plan" with the same behavior.
 
 ```sql
 CREATE TABLE grade_entries (
@@ -1169,7 +1170,7 @@ All routes: `/api/v1/...`. Version from day one.
 | GET | `/api/v1/gpa` | student | Compute live GPA |
 | POST | `/api/v1/gpa/snapshot` | student | Take manual GPA snapshot |
 | POST | `/api/v1/gpa/what-if` | student (Plus+) | What-if GPA simulation (read-only); body: `{ "swaps": [{ "remove_course_id": "...", "add_course_id": "...", "planned_grade": "B+" }] }` |
-| GET | `/api/v1/transcript` | student | Read-only transcript: completed courses from primary plan with grades, semester GPA, grade-level GPA, cumulative GPA, credits earned | Phase 2 |
+| GET | `/api/v1/transcript` | student | Read-only transcript: completed courses from primary plan with grades, semester GPA, grade-level GPA, cumulative GPA, credits earned. Frontend has Print button (printer icon) next to "Edit in Planner" that triggers `window.print()`. | Phase 2 |
 | POST | `/api/v1/transcript` | student | Bulk upsert grade entries (for onboarding import) | Phase 2 |
 | GET | `/api/v1/gpa` | student | Live GPA from `plan_courses` on primary plan: cumulative (completed only), projected (all graded), plan totals (`totalCredits`, `earnedCredits`, `totalCourses`), `hasGrades` flag | Phase 2 |
 | POST | `/api/v1/gpa/snapshots` | student | Take/list GPA snapshot history | Phase 2 |

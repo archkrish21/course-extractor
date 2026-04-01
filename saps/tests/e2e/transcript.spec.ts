@@ -137,6 +137,31 @@ test.describe("Transcript — Course Table", () => {
   });
 });
 
+// ─── Print ──────────────────────────────────────────────────────────────────
+
+test.describe("Transcript — Print", () => {
+  test("Print button is visible", async ({ page }) => {
+    await navigateToTranscript(page);
+
+    const printBtn = page.getByRole("button", { name: "Print" });
+    await expect(printBtn).toBeVisible({ timeout: 5_000 });
+  });
+
+  test("Print button triggers browser print dialog", async ({ page }) => {
+    await navigateToTranscript(page);
+
+    await page.evaluate(() => {
+      window.print = () => { (window as unknown as Record<string, boolean>).__printCalled = true; };
+    });
+
+    const printBtn = page.getByRole("button", { name: "Print" });
+    await printBtn.click();
+
+    const printCalled = await page.evaluate(() => (window as unknown as Record<string, boolean>).__printCalled === true);
+    expect(printCalled).toBe(true);
+  });
+});
+
 // ─── Read-only Behavior ─────────────────────────────────────────────────────
 
 test.describe("Transcript — Read-only", () => {

@@ -56,6 +56,28 @@ test.describe("Progress — Navigation", () => {
     await editPlanBtn.click();
     await page.waitForURL(/\/planner/, { timeout: 10_000 });
   });
+
+  test("Print button is visible", async ({ page }) => {
+    await navigateToProgress(page);
+
+    const printBtn = page.getByRole("button", { name: "Print" });
+    await expect(printBtn).toBeVisible({ timeout: 5_000 });
+  });
+
+  test("Print button triggers browser print dialog", async ({ page }) => {
+    await navigateToProgress(page);
+
+    let printCalled = false;
+    await page.evaluate(() => {
+      window.print = () => { (window as unknown as Record<string, boolean>).__printCalled = true; };
+    });
+
+    const printBtn = page.getByRole("button", { name: "Print" });
+    await printBtn.click();
+
+    printCalled = await page.evaluate(() => (window as unknown as Record<string, boolean>).__printCalled === true);
+    expect(printCalled).toBe(true);
+  });
 });
 
 // ─── Summary Card ───────────────────────────────────────────────────────────

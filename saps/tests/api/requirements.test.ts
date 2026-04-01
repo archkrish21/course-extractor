@@ -60,14 +60,25 @@ vi.mock("@/lib/api/rate-limit", () => ({
 }));
 
 vi.mock("@/lib/db/schema", () => ({
-  graduationRequirements: { id: "gr_id", divisionId: "gr_divisionId", requirementName: "gr_requirementName", requiredCredits: "gr_requiredCredits", matchingRule: "gr_matchingRule", notes: "gr_notes", catalogVersionId: "gr_catalogVersionId" },
+  graduationRequirements: { id: "gr_id", divisionId: "gr_divisionId", requirementName: "gr_requirementName", requiredCredits: "gr_requiredCredits", matchingRule: "gr_matchingRule", notes: "gr_notes", catalogVersionId: "gr_catalogVersionId", requirementGroup: "gr_requirementGroup", evaluationType: "gr_evaluationType", displayOrder: "gr_displayOrder", isOptIn: "gr_isOptIn" },
   courseCatalogVersions: { id: "cv_id", loadedAt: "cv_loadedAt" },
-  courses: { id: "c_id", code: "c_code", name: "c_name", creditValue: "c_creditValue", divisionId: "c_divisionId" },
+  courses: { id: "c_id", code: "c_code", name: "c_name", creditValue: "c_creditValue", divisionId: "c_divisionId", creditType: "c_creditType" },
   divisions: { id: "div_id", name: "div_name" },
-  planCourses: { planId: "pc_planId", courseId: "pc_courseId", status: "pc_status" },
+  planCourses: { planId: "pc_planId", courseId: "pc_courseId", status: "pc_status", gradeLevel: "pc_gradeLevel", semester: "pc_semester", plannedGrade: "pc_plannedGrade", gpaWaiverApplied: "pc_gpaWaiverApplied" },
   fourYearPlans: { id: "fp_id", accountId: "fp_accountId", isPrimary: "fp_isPrimary", isTemplate: "fp_isTemplate" },
   accounts: { id: "a_id" },
   accountMembers: { accountId: "am_accountId", userId: "am_userId" },
+  studentRequirementStatus: { accountId: "srs_accountId", requirementId: "srs_requirementId", status: "srs_status", completedAt: "srs_completedAt" },
+  studentRequirementOptIns: { accountId: "sro_accountId", requirementGroup: "sro_requirementGroup" },
+}));
+
+vi.mock("@/lib/gpa/calc", () => ({
+  calculateGPA: vi.fn().mockReturnValue({
+    unweighted: null,
+    weighted: null,
+    totalCredits: 0,
+    coursesUsed: 0,
+  }),
 }));
 
 vi.mock("drizzle-orm", () => ({
@@ -224,24 +235,30 @@ describe("GET /api/v1/requirements", () => {
         requiredCredits: "6.0",
         matchingRule: { type: "division" },
         notes: null,
+        requirementGroup: "graduation",
+        evaluationType: "course_match",
+        displayOrder: 1,
+        isOptIn: false,
       },
     ];
 
     const mockPlanCourses = [
-      { courseId: "c1", divisionId: "div-math", divisionName: "Mathematics", code: "MTH151", name: "Algebra", creditValue: "2", status: "completed" },
-      { courseId: "c1", divisionId: "div-math", divisionName: "Mathematics", code: "MTH151", name: "Algebra", creditValue: "2", status: "planned" },
-      { courseId: "c2", divisionId: "div-math", divisionName: "Mathematics", code: "MTH251", name: "Geometry", creditValue: "2", status: "planned" },
-      { courseId: "c2", divisionId: "div-math", divisionName: "Mathematics", code: "MTH251", name: "Geometry", creditValue: "2", status: "planned" },
+      { courseId: "c1", divisionId: "div-math", divisionName: "Mathematics", code: "MTH151", name: "Algebra", creditValue: "2", status: "completed", gradeLevel: 9, semester: 1, creditType: "CP", plannedGrade: "A", gpaWaiverApplied: false },
+      { courseId: "c1", divisionId: "div-math", divisionName: "Mathematics", code: "MTH151", name: "Algebra", creditValue: "2", status: "planned", gradeLevel: 9, semester: 2, creditType: "CP", plannedGrade: null, gpaWaiverApplied: false },
+      { courseId: "c2", divisionId: "div-math", divisionName: "Mathematics", code: "MTH251", name: "Geometry", creditValue: "2", status: "planned", gradeLevel: 10, semester: 1, creditType: "CP", plannedGrade: null, gpaWaiverApplied: false },
+      { courseId: "c2", divisionId: "div-math", divisionName: "Mathematics", code: "MTH251", name: "Geometry", creditValue: "2", status: "planned", gradeLevel: 10, semester: 2, creditType: "CP", plannedGrade: null, gpaWaiverApplied: false },
     ];
 
     let queryIndex = 0;
     dbChain.then = vi.fn().mockImplementation((resolve: (v: unknown) => unknown) => {
       queryIndex++;
-      if (queryIndex === 1) return Promise.resolve(resolve([{ accountId: "acc-1" }]));
+      if (queryIndex === 1) return Promise.resolve(resolve([{ accountId: "acc-1" }])); // accountMembers
       if (queryIndex === 2) return Promise.resolve(resolve([{ id: "cv-1" }])); // catalog
       if (queryIndex === 3) return Promise.resolve(resolve(mockRequirements)); // requirements
       if (queryIndex === 4) return Promise.resolve(resolve([{ id: "plan-1" }])); // plan
       if (queryIndex === 5) return Promise.resolve(resolve(mockPlanCourses)); // plan courses
+      if (queryIndex === 6) return Promise.resolve(resolve([])); // opt-ins
+      if (queryIndex === 7) return Promise.resolve(resolve([])); // manual statuses
       return Promise.resolve(resolve([]));
     });
 
@@ -251,8 +268,9 @@ describe("GET /api/v1/requirements", () => {
     expect(response.status).toBe(200);
     expect(body.data.requirements).toHaveLength(1);
     expect(body.data.requirements[0].name).toBe("Mathematics");
-    // 1 completed row = 1 credit earned, 3 planned rows = 3 credits planned (capped at remaining 5)
     expect(body.data.requirements[0].earnedCredits).toBe(1);
     expect(body.data.totalEarned).toBeGreaterThanOrEqual(0);
+    // Should also have groups array
+    expect(body.data.groups).toBeDefined();
   });
 });

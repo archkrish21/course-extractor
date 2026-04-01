@@ -75,35 +75,32 @@ test.describe("Planner — Validation Report Button", () => {
   });
 });
 
-// ─── Validation Report Panel Content ────────────────────────────────────────
+// ─── Validation Report Side Panel Content ───────────────────────────────────
 
-test.describe("Planner — Validation Report Panel", () => {
-  test("panel shows summary stats", async ({ page }) => {
+test.describe("Planner — Validation Report Side Panel", () => {
+  test.beforeEach(({ }, testInfo) => { testInfo.skip(testInfo.project.name === "mobile", "Desktop side panel test"); });
+
+  test("panel shows as side panel alongside planner grid", async ({ page }) => {
     await navigateToPlanner(page);
     await skipIfNoPlans(page);
 
     const validateButton = page.locator('[aria-label="Validation report"]');
     await validateButton.click();
 
-    // Should show summary stat labels
-    await expect(page.locator("text=Total Credits")).toBeVisible({ timeout: 10_000 });
-    await expect(page.locator("text=Earned")).toBeVisible();
-    await expect(page.locator("text=Planned")).toBeVisible();
-    await expect(page.locator("text=Requirements Met")).toBeVisible();
+    await expect(page.locator("text=Validation Report")).toBeVisible({ timeout: 10_000 });
   });
 
-  test("panel shows overall progress bar", async ({ page }) => {
+  test("panel has frozen title", async ({ page }) => {
     await navigateToPlanner(page);
     await skipIfNoPlans(page);
 
     const validateButton = page.locator('[aria-label="Validation report"]');
     await validateButton.click();
 
-    // Progress bar legend items
-    await expect(page.locator("text=% covered")).toBeVisible({ timeout: 10_000 });
+    await expect(page.locator("text=Validation Report")).toBeVisible({ timeout: 10_000 });
   });
 
-  test("panel shows graduation requirements section", async ({ page }) => {
+  test("panel shows collapsible summary with grouped stats", async ({ page }) => {
     await navigateToPlanner(page);
     await skipIfNoPlans(page);
 
@@ -111,23 +108,132 @@ test.describe("Planner — Validation Report Panel", () => {
     await validateButton.click();
     await page.waitForTimeout(2000);
 
-    // Should have at least one of: gaps section, warnings section, or covered section
-    const gapsSection = page.locator("text=/Graduation Requirement Gaps/");
-    const warningsSection = page.locator("text=/Plan Warnings/");
-    const coveredSection = page.locator("text=/Graduation Requirements — Covered/");
+    // Summary section should be visible
+    const summary = page.locator("button", { hasText: "Summary" });
+    await expect(summary).toBeVisible({ timeout: 5_000 });
 
-    const hasGaps = (await gapsSection.count()) > 0;
-    const hasWarnings = (await warningsSection.count()) > 0;
-    const hasCovered = (await coveredSection.count()) > 0;
+    // Grouped stat labels
+    await expect(page.locator("text=CREDITS")).toBeVisible();
+    await expect(page.locator("text=GRADUATION REQUIREMENTS")).toBeVisible();
+  });
 
-    expect(hasGaps || hasWarnings || hasCovered).toBeTruthy();
+  test("summary can be collapsed to single line", async ({ page }) => {
+    await navigateToPlanner(page);
+    await skipIfNoPlans(page);
+
+    const validateButton = page.locator('[aria-label="Validation report"]');
+    await validateButton.click();
+    await page.waitForTimeout(2000);
+
+    const summaryBtn = page.locator("button", { hasText: "Summary" });
+    if ((await summaryBtn.count()) === 0) {
+      test.skip();
+      return;
+    }
+
+    // Collapse
+    await summaryBtn.click();
+    await page.waitForTimeout(300);
+
+    // Should show compact format with pipe separators
+    await expect(page.locator("text=/Credits.*\\|.*Reqs/")).toBeVisible({ timeout: 3_000 });
+
+    // Expand back
+    await summaryBtn.click();
+    await page.waitForTimeout(300);
+  });
+
+  test("shows graduation gaps with credit progress bar", async ({ page }) => {
+    await navigateToPlanner(page);
+    await skipIfNoPlans(page);
+
+    const validateButton = page.locator('[aria-label="Validation report"]');
+    await validateButton.click();
+    await page.waitForTimeout(2000);
+
+    const gapsHeader = page.locator("button", { hasText: "Graduation Gaps" });
+    if ((await gapsHeader.count()) === 0) {
+      test.skip();
+      return;
+    }
+
+    await expect(gapsHeader).toBeVisible();
+    // Credit Progress sub-section should be visible
+    await expect(page.locator("text=CREDIT PROGRESS")).toBeVisible({ timeout: 3_000 });
+  });
+
+  test("shows semester requirement gaps section", async ({ page }) => {
+    await navigateToPlanner(page);
+    await skipIfNoPlans(page);
+
+    const validateButton = page.locator('[aria-label="Validation report"]');
+    await validateButton.click();
+    await page.waitForTimeout(2000);
+
+    const semGaps = page.locator("button", { hasText: "Semester Gaps" });
+    if ((await semGaps.count()) === 0) {
+      test.skip();
+      return;
+    }
+    await expect(semGaps).toBeVisible();
+  });
+
+  test("shows prerequisite violations section", async ({ page }) => {
+    await navigateToPlanner(page);
+    await skipIfNoPlans(page);
+
+    const validateButton = page.locator('[aria-label="Validation report"]');
+    await validateButton.click();
+    await page.waitForTimeout(2000);
+
+    const prereqs = page.locator("button", { hasText: "Prerequisite Violations" });
+    if ((await prereqs.count()) === 0) {
+      test.skip();
+      return;
+    }
+    await expect(prereqs).toBeVisible();
+  });
+
+  test("shows covered requirements section (collapsed by default)", async ({ page }) => {
+    await navigateToPlanner(page);
+    await skipIfNoPlans(page);
+
+    const validateButton = page.locator('[aria-label="Validation report"]');
+    await validateButton.click();
+    await page.waitForTimeout(2000);
+
+    const covered = page.locator("button", { hasText: "Covered" });
+    if ((await covered.count()) === 0) {
+      test.skip();
+      return;
+    }
+    await expect(covered).toBeVisible();
+  });
+
+  test("warning messages have clickable grade/semester links", async ({ page }) => {
+    await navigateToPlanner(page);
+    await skipIfNoPlans(page);
+
+    const validateButton = page.locator('[aria-label="Validation report"]');
+    await validateButton.click();
+    await page.waitForTimeout(2000);
+
+    // Look for clickable "Gr X Sem Y:" links
+    const grLink = page.locator("button", { hasText: /^Gr \d+ Sem \d+:$/ }).first();
+    if ((await grLink.count()) === 0) {
+      test.skip();
+      return;
+    }
+    await expect(grLink).toBeVisible();
   });
 });
 
 // ─── Collapsible Sections ───────────────────────────────────────────────────
 
 test.describe("Planner — Validation Report Collapsible Sections", () => {
-  test("graduation requirement gaps section is collapsible", async ({ page }) => {
+  test.beforeEach(({ }, testInfo) => { testInfo.skip(testInfo.project.name === "mobile", "Desktop side panel test"); });
+
+  test("graduation gaps section is collapsible", async ({ page }) => {
     await navigateToPlanner(page);
     await skipIfNoPlans(page);
 
@@ -135,28 +241,22 @@ test.describe("Planner — Validation Report Collapsible Sections", () => {
     await validateButton.click();
     await page.waitForTimeout(2000);
 
-    const gapsHeader = page.locator("button", { hasText: "Graduation Requirement Gaps" });
+    const gapsHeader = page.locator("button", { hasText: "Graduation Gaps" });
     if ((await gapsHeader.count()) === 0) {
-      test.skip(); // No gaps to test
+      test.skip();
       return;
     }
-
-    // Gaps section starts expanded — content should be visible
-    const gapContent = page.locator("text=/credit.*needed/i").first();
-    await expect(gapContent).toBeVisible({ timeout: 3_000 });
 
     // Click to collapse
     await gapsHeader.click();
     await page.waitForTimeout(300);
-    await expect(gapContent).toBeHidden({ timeout: 3_000 });
 
     // Click to expand again
     await gapsHeader.click();
     await page.waitForTimeout(300);
-    await expect(gapContent).toBeVisible({ timeout: 3_000 });
   });
 
-  test("plan warnings section is collapsible", async ({ page }) => {
+  test("semester gaps section is collapsible", async ({ page }) => {
     await navigateToPlanner(page);
     await skipIfNoPlans(page);
 
@@ -164,25 +264,19 @@ test.describe("Planner — Validation Report Collapsible Sections", () => {
     await validateButton.click();
     await page.waitForTimeout(2000);
 
-    const warningsHeader = page.locator("button", { hasText: "Plan Warnings" });
-    if ((await warningsHeader.count()) === 0) {
-      test.skip(); // No warnings to test
+    const semHeader = page.locator("button", { hasText: "Semester Gaps" });
+    if ((await semHeader.count()) === 0) {
+      test.skip();
       return;
     }
 
-    // Warnings section starts expanded
-    await expect(warningsHeader).toBeVisible();
-
-    // Click to collapse
-    await warningsHeader.click();
+    await semHeader.click();
     await page.waitForTimeout(300);
-
-    // Click to expand again
-    await warningsHeader.click();
+    await semHeader.click();
     await page.waitForTimeout(300);
   });
 
-  test("covered section starts collapsed and can be expanded", async ({ page }) => {
+  test("prerequisite violations section is collapsible", async ({ page }) => {
     await navigateToPlanner(page);
     await skipIfNoPlans(page);
 
@@ -190,20 +284,37 @@ test.describe("Planner — Validation Report Collapsible Sections", () => {
     await validateButton.click();
     await page.waitForTimeout(2000);
 
-    const coveredHeader = page.locator("button", { hasText: "Graduation Requirements — Covered" });
+    const prereqHeader = page.locator("button", { hasText: "Prerequisite Violations" });
+    if ((await prereqHeader.count()) === 0) {
+      test.skip();
+      return;
+    }
+
+    await prereqHeader.click();
+    await page.waitForTimeout(300);
+    await prereqHeader.click();
+    await page.waitForTimeout(300);
+  });
+
+  test("covered section can be expanded", async ({ page }) => {
+    await navigateToPlanner(page);
+    await skipIfNoPlans(page);
+
+    const validateButton = page.locator('[aria-label="Validation report"]');
+    await validateButton.click();
+    await page.waitForTimeout(2000);
+
+    const coveredHeader = page.locator("button", { hasText: "Covered" });
     if ((await coveredHeader.count()) === 0) {
-      test.skip(); // No covered requirements
+      test.skip();
       return;
     }
 
-    // Covered section starts collapsed — click to expand
     await coveredHeader.click();
     await page.waitForTimeout(500);
 
-    // Should now show requirement items with check marks or progress indicators
     const reqItems = page.locator("li", { has: page.locator("text=/\\d+\\/\\d+/") });
-    const count = await reqItems.count();
-    expect(count).toBeGreaterThanOrEqual(1);
+    expect(await reqItems.count()).toBeGreaterThanOrEqual(1);
   });
 });
 

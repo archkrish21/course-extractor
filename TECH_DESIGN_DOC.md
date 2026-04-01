@@ -149,7 +149,7 @@ User → Next.js frontend → API routes → PostgreSQL (Supabase + RLS)
 │   ├── (app)/                  # authenticated group
 │   │   ├── dashboard/
 │   │   ├── courses/
-│   │   ├── progress/           # graduation requirements progress page (print button in header)
+│   │   ├── progress/           # Academic Progress page — two-column layout with filter bar, grouped sections, sticky sidebar (print button in header)
 │   │   └── transcript/         # read-only transcript page (print button in header)
 │   └── api/v1/                 # API routes
 │       ├── auth/
@@ -980,24 +980,66 @@ CREATE TABLE course_prerequisites (
 );
 
 CREATE TABLE graduation_requirements (
-  id                   UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  division_id          UUID REFERENCES divisions(id) ON DELETE RESTRICT,  -- nullable for multi_division and remainder rules
-  requirement_name     TEXT NOT NULL,
-  required_credits     DECIMAL(3,1) NOT NULL,
+  id                    UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  division_id           UUID REFERENCES divisions(id) ON DELETE RESTRICT,  -- nullable for non-course and course_load requirements
+  requirement_name      TEXT NOT NULL,
+  required_credits      DECIMAL(3,1) NOT NULL,
   eligible_credit_types TEXT[],
-  matching_rule        JSONB,  -- see Phase 2 matching rule types below
-  notes                TEXT,
-  catalog_version_id   UUID NOT NULL REFERENCES course_catalog_versions(id) ON DELETE RESTRICT,
+  matching_rule         JSONB,  -- see Phase 2 matching rule types below
+  requirement_group     TEXT NOT NULL DEFAULT 'graduation',   -- 'graduation', 'il_public_university', 'non_course', 'course_load'
+  evaluation_type       TEXT NOT NULL DEFAULT 'course_match', -- 'course_match', 'manual_checkbox', 'auto_from_course', 'course_load_check'
+  display_order         SMALLINT DEFAULT 0,
+  is_opt_in             BOOLEAN NOT NULL DEFAULT FALSE, -- TRUE for il_public_university group
+  notes                 TEXT,
+  catalog_version_id    UUID NOT NULL REFERENCES course_catalog_versions(id) ON DELETE RESTRICT,
   UNIQUE (catalog_version_id, requirement_name)
 );
--- Phase 2 matching_rule types:
+
+-- student_requirement_status: tracks manual checkbox state (for non_course requirements)
+CREATE TABLE student_requirement_status (
+  id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  student_id      UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  account_id      UUID REFERENCES accounts(id),
+  requirement_id  UUID NOT NULL REFERENCES graduation_requirements(id) ON DELETE CASCADE,
+  is_checked      BOOLEAN NOT NULL DEFAULT FALSE,
+  checked_at      TIMESTAMPTZ,
+  checked_by      UUID REFERENCES users(id),
+  UNIQUE (student_id, requirement_id)
+);
+
+-- student_requirement_opt_ins: tracks which opt-in groups are enabled per student
+CREATE TABLE student_requirement_opt_ins (
+  id                UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  student_id        UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  account_id        UUID REFERENCES accounts(id),
+  requirement_group TEXT NOT NULL,    -- e.g., 'il_public_university'
+  enabled           BOOLEAN NOT NULL DEFAULT FALSE,
+  updated_at        TIMESTAMPTZ DEFAULT NOW(),
+  UNIQUE (student_id, requirement_group)
+);
+
+-- Phase 2 matching_rule types (for course_match evaluation):
 --   { "type": "code_prefix", "prefix": "ENG" }           — matches courses whose code starts with prefix (e.g., all ENG courses)
 --   { "type": "codes", "codes": ["ART101", "ART102"] }   — matches specific course codes
 --   { "type": "division", "division_id": "uuid" }        — matches all courses in a division
 --   { "type": "multi_division", "division_ids": ["uuid1", "uuid2"] } — matches courses in any of the listed divisions
 --   { "type": "remainder" }                               — catch-all: matches any course not claimed by another requirement (used for "Additional Credits and P.E.")
--- Each of the 12 Stevenson graduation requirements has a specific matching rule based on the source PDF.
--- The requirements API uses matching rules instead of simple division_id matching.
+--
+-- Phase 2 requirement groups (4 groups, 37 total requirements):
+--   graduation (12): course_match — Stevenson graduation credit requirements (unchanged)
+--   course_load (16): course_load_check — 8 course count checks (Grades 9-12 x Sem 1-2, min 5 / max 7-8)
+--                                        + 8 PW/Dance/DriverEd checks (each semester must have at least one
+--                                          Physical Welfare, Dance [DNC prefix], or Driver Education [D/E prefix] course)
+--                     Display name: "Semester Requirements"
+--   il_public_university (5): course_match, opt-in — IL public university admission (Science 6cr, Social Studies 6cr, Electives 4cr, English 8cr, Math 6cr)
+--   non_course (4): manual_checkbox (ACT, FAFSA) + auto_from_course (46th Credit, Civics & Patriotism)
+--
+-- Note: honors_status was REMOVED from requirements — it is now an achievement badge computed from GPA
+--
+-- Evaluation types: course_match, manual_checkbox, auto_from_course, course_load_check
+-- The requirements API uses matching rules for course_match types and specialized logic for other evaluation types.
+-- API also returns gpaWaiverWarnings[] and honorsStatus (achievement, not requirement).
+-- Group order: graduation, course_load, il_public_university, non_course.
 
 CREATE TABLE career_paths (
   id               UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -1175,7 +1217,9 @@ All routes: `/api/v1/...`. Version from day one.
 | GET | `/api/v1/gpa` | student | Live GPA from `plan_courses` on primary plan: cumulative (completed only), projected (all graded), plan totals (`totalCredits`, `earnedCredits`, `totalCourses`), `hasGrades` flag | Phase 2 |
 | POST | `/api/v1/gpa/snapshots` | student | Take/list GPA snapshot history | Phase 2 |
 | POST | `/api/v1/gpa/what-if` | student (Plus+) | What-if GPA simulation (read-only) | Phase 2 |
-| GET | `/api/v1/requirements` | student | Graduation progress with matching rules (code_prefix, codes, division, multi_division, remainder). Optional `?planId=` query parameter to validate any plan (defaults to primary plan). | Phase 2 |
+| GET | `/api/v1/requirements` | student | Graduation progress with matching rules (code_prefix, codes, division, multi_division, remainder). Returns both flat `requirements[]` (backwards compatible) and `groups[]` array with group key, label, isOptIn, enabled, requirements[], and totals. Also returns `gpaWaiverWarnings[]` (validates 4+ GPA-counted courses per semester when waiver applied) and `honorsStatus` (achievement badge, not requirement). Optional `?planId=` query parameter to validate any plan (defaults to primary plan). 4 evaluation types: course_match, manual_checkbox, auto_from_course, course_load_check. Group order: graduation, course_load, il_public_university, non_course. | Phase 2 |
+| PUT | `/api/v1/requirements/status` | student | Toggle manual checkbox requirements (for non_course group). Body: `{ requirementId, isChecked }`. Updates `student_requirement_status`. | Phase 2 |
+| PUT | `/api/v1/requirements/opt-in` | student | Enable/disable tracking for opt-in requirement groups. Body: `{ requirementGroup, enabled }`. Updates `student_requirement_opt_ins`. | Phase 2 |
 | GET | `/api/v1/alerts` | student | Active alerts (unresolved) |
 | PATCH | `/api/v1/alerts/:id/dismiss` | student | Dismiss alert |
 | GET | `/api/v1/suggestions` | student (Pro+) | Rule-based + AI course suggestions |
@@ -1453,7 +1497,7 @@ The BullMQ worker must use Supabase's PgBouncer pooled connection string (`DATAB
 |---|---|---|
 | `user:{userId}:subscription` | 5 min | Stripe webhook updates `subscriptions.status` |
 | `user:{userId}:gpa` | 5 min | Any grade entry or plan save for this student |
-| `plan:{planId}:requirements` | 10 min | Any plan save for this student. Requirements API accepts optional `?planId=` to cache per non-primary plan. |
+| `plan:{planId}:requirements` | 10 min | Any plan save for this student, manual checkbox toggle, or opt-in group change. Requirements API accepts optional `?planId=` to cache per non-primary plan. |
 | `course:{courseId}:prereqs` | 24 hr | Catalog reload (course_catalog_versions insert) |
 
 All cache values are JSON-serialized. On cache miss, fall back to live DB query and re-populate. Never trust a cached value for write operations — always read from DB before mutating.
@@ -1694,26 +1738,36 @@ Before inserting a new alert, the engine checks if a matching unresolved alert a
 
 Underload warnings trigger for any semester with fewer than 5 courses, including empty semesters (0 courses). This ensures all four grade levels have adequate course loads.
 
-### Dashboard Validation Report card
+### Dashboard layout
 
-> **Phase 2 update:** A full-width Validation Report card is rendered below the 2x2 dashboard grid (Active Plan, GPA Summary, Graduation Progress, Quick Actions). The card header displays "Validation Report" with a status badge: "Valid" (green) when no issues exist, or "Issues found" (red) when there are graduation requirement gaps or plan warnings. When issues are present, the card shows two categorized sections:
-> - **Graduation Requirement Gaps** (red accent) — lists each unmet requirement with credits needed
-> - **Plan Warnings** (amber accent) — lists prerequisite violations and underload/overload issues
+> **Phase 2 update:** The dashboard uses a 3-row, 2-column grid layout:
+> - **Row 1:** Active Plan card, GPA card
+> - **Row 2:** Attention Required card (renamed from "Validation Report", with warning icon), Achievements card
+> - **Row 3:** Academic Progress card, Quick Actions card
 >
-> When no issues exist, the card shows a green success message: "All graduation requirements are covered and no plan warnings found." The card fetches data from `GET /api/v1/requirements?planId=<primaryPlanId>` (requirements API) and the plan validation API for the primary/active plan.
+> **"Attention Required" card:** Displays a category summary line: "1 Graduation Gap | 7 Semester Issues | 8 Prerequisite Violations". Three validation categories:
+> - **Graduation Requirement Gaps** (red) — missing credits for diploma
+> - **Semester Requirement Gaps** (amber) — course load, PW/Dance, GPA waiver eligibility issues
+> - **Prerequisite Violations** (amber) — course ordering conflicts
+>
+> Honors badge removed from this card (moved to Achievements).
+>
+> **"Achievements" card:** Displays earned/unearned badges: Honor Graduate tier (computed from GPA), Graduation Ready, Credit milestones (15/30/45), GPA milestones (3.0+/3.5+/4.0+), Credits Earned. Data from requirements API (`honorsStatus`) and plan validation API for the primary/active plan.
 
 ### Plan header bar validation indicator
 
-> **Phase 2 update:** The plan header bar now shows a validation status instead of a warning count. Displays "Valid" (green check icon) when no issues exist, or "Issues found" (red X icon) when there are plan warnings OR graduation requirement gaps. Progress data is auto-fetched on plan load. Both plan warnings (prerequisite violations, underload/overload) and graduation requirement gaps are considered.
+> **Phase 2 update:** The plan header bar shows prerequisite violation count only (not semester issues). Progress data is auto-fetched on plan load.
 
-### Planner validation report panel
+### Planner validation report side panel
 
-> **Phase 2 update:** A toggle button with a check-badge icon in the planner toolbar opens a collapsible validation report panel. The panel has 3 collapsible sections:
-> - **Graduation Requirement Gaps** (red accent, expanded by default) — shows unmet requirements with credits needed badge, progress bars, notes, and course chips
-> - **Plan Warnings** (amber accent, expanded by default) — shows prerequisite violations, underload/overload warnings
-> - **Graduation Requirements — Covered** (collapsed by default) — shows met/in-progress requirements with progress bars
+> **Phase 2 update:** A side panel (380px, right side, sticky, scrollable) with frozen title "Validation Report". Collapsible summary: collapsed shows "Credits 48/45 | Reqs 11/12 | 1 gap | 15 warnings". Expanded summary has 3 groups: Credits (Total/Earned/Planned), Graduation Requirements (Met/In Progress/Gaps), Warnings (Semester/Prerequisite).
 >
-> Summary stats at top: Total Credits, Earned, Planned, Requirements Met, Gaps, Warnings. The panel works with any selected plan (not just primary) using the `?planId=` parameter on the requirements API.
+> 3 collapsible detail sections:
+> - **Graduation Gaps** (with credit progress bar inside)
+> - **Semester Requirement Gaps** (course load, PW/Dance/DriverEd, GPA waiver eligibility)
+> - **Prerequisite Violations** (course ordering conflicts)
+>
+> Warning messages use consistent "Gr X Sem Y:" prefix format as clickable links that navigate to the grade/semester in the planner grid. Clicking a link expands only that grade and highlights the target semester cell (blue ring, fades after 3s). The panel works with any selected plan (not just primary) using the `?planId=` parameter on the requirements API.
 
 ### Plan selection persistence
 
@@ -1964,7 +2018,7 @@ Mobile (<640px):
 **Mobile-specific behaviors:**
 
 - Course browser opens as full-screen slide-over (not modal overlay) with sticky search bar
-- Dashboard uses single-column card stack of all 4 cards plus full-width Validation Report card (desktop uses uniform 2x2 grid with `md:grid-cols-2`, Validation Report card spans full width below the grid)
+- Dashboard uses single-column card stack of all 6 cards (desktop uses 3-row, 2-column grid: Active Plan/GPA, Attention Required/Achievements, Academic Progress/Quick Actions)
 - Validation tooltips render as bottom sheets on mobile (not hover tooltips, which don't work on touch)
 - Touch targets: minimum 44×44px for all interactive elements (WCAG 2.5.5)
 - Drag-and-drop (Phase 3) supported on tablet via touch events; on mobile, use explicit "Move to..." action menu instead
@@ -2227,7 +2281,7 @@ config/seeds/
 ├── subscription-plans.ts     # 4 tier definitions
 ├── plan-templates.ts         # 6 starter plan templates (College Prep, STEM, Pre-Med, CS, Humanities, Business)
 ├── career-paths.ts           # Career tracks + course mappings
-├── graduation-requirements.ts # Credit requirements per subject
+├── graduation-requirements.ts # 37 requirements across 4 groups (graduation, course_load, il_public_university, non_course)
 └── divisions-departments.ts  # Subject area hierarchy
 ```
 
@@ -2339,4 +2393,4 @@ FERPA applies immediately. Before storing any school-transmitted data:
 
 ---
 
-*References: FEATURE_ANALYSIS.md (rev 6, 2026-03-15)*
+*References: FEATURE_ANALYSIS.md (rev 8, 2026-04-01)*

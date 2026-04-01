@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { Card, CardHeader, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -46,11 +46,31 @@ interface RequirementItem {
   requiredCredits: number;
 }
 
+interface RequirementGroupData {
+  group: string;
+  label: string;
+  isOptIn: boolean;
+  enabled: boolean;
+  requirements: Array<{
+    name: string;
+    status: string;
+    earnedCredits: number;
+    plannedCredits: number;
+    requiredCredits: number;
+    notes: string | null;
+    evaluationType?: string;
+    metadata?: Record<string, unknown>;
+  }>;
+}
+
 interface RequirementsData {
   totalEarned: number;
   totalPlanned?: number;
   totalRequired: number;
   requirements: RequirementItem[];
+  groups?: RequirementGroupData[];
+  gpaWaiverWarnings?: string[];
+  honorsStatus?: { tier: string; weightedGpa: number; totalCredits: number } | null;
 }
 
 export default function DashboardPage() {
@@ -99,62 +119,17 @@ export default function DashboardPage() {
               ]);
               const warnings: string[] = [];
 
-              // API violations (prerequisite, duplicate, etc.)
+              // API violations (prerequisite, duplicate, etc.) — formatted consistently
               if (valRes.ok) {
                 const valJson = await valRes.json();
                 const valData = valJson.data ?? valJson;
                 const courseViolations = valData.courseViolations ?? valData.violations ?? [];
                 if (Array.isArray(courseViolations)) {
                   for (const cv of courseViolations) {
+                    const code = cv.courseCode ?? "";
                     const innerViolations = cv.violations ?? [cv];
                     for (const v of innerViolations) {
-                      warnings.push(v.message ?? "Validation issue");
-                    }
-                  }
-                }
-              }
-
-              // Underload/overload warnings (computed locally)
-              if (coursesRes.ok) {
-                const coursesJson = await coursesRes.json();
-                const coursesData = coursesJson.data ?? coursesJson;
-                // Flatten courses to count per grade+semester
-                // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                const flat: Array<{ gradeLevel: number; semester: number; status: string; name: string; code: string }> = [];
-                if (typeof coursesData === "object" && !Array.isArray(coursesData)) {
-                  for (const gl of Object.keys(coursesData)) {
-                    const sems = coursesData[gl];
-                    if (!sems || typeof sems !== "object") continue;
-                    for (const sem of Object.keys(sems)) {
-                      const arr = sems[sem];
-                      if (!Array.isArray(arr)) continue;
-                      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                      for (const pc of arr as any[]) {
-                        if (pc.status !== "dropped") {
-                          flat.push({
-                            gradeLevel: pc.gradeLevel ?? Number(gl),
-                            semester: pc.semester ?? Number(sem),
-                            status: pc.status ?? "planned",
-                            name: pc.course?.name ?? pc.name ?? "",
-                            code: pc.course?.code ?? pc.code ?? "",
-                          });
-                        }
-                      }
-                    }
-                  }
-                }
-                for (const grade of [9, 10, 11, 12]) {
-                  for (const sem of [1, 2]) {
-                    const semCourses = flat.filter((c) => c.gradeLevel === grade && c.semester === sem);
-                    const hasEarlyBird = semCourses.some(
-                      (c) => c.name.toLowerCase().includes("early bird") || /E\d$/.test(c.code) || /E\d\//.test(c.code)
-                    );
-                    const max = hasEarlyBird ? 8 : 7;
-                    if (semCourses.length < 5) {
-                      warnings.push(`Grade ${grade} Sem ${sem}: ${semCourses.length} courses (min 5)`);
-                    }
-                    if (semCourses.length > max) {
-                      warnings.push(`Grade ${grade} Sem ${sem}: ${semCourses.length} courses (max ${max})`);
+                      warnings.push(`${code ? `${code} — ` : ""}${v.message ?? "Validation issue"}`);
                     }
                   }
                 }
@@ -212,6 +187,9 @@ export default function DashboardPage() {
                 requiredCredits: r.requiredCredits ?? r.required_credits ?? 0,
               })
             ),
+            groups: data.groups ?? [],
+            gpaWaiverWarnings: data.gpaWaiverWarnings ?? [],
+            honorsStatus: data.honorsStatus ?? null,
           });
         } else {
           setReqError(true);
@@ -444,8 +422,8 @@ export default function DashboardPage() {
 
       {/* Dashboard grid */}
       <div className="grid gap-4 sm:gap-6 md:grid-cols-2">
-        {/* GPA Summary — 1 col */}
-        <Card className="flex h-full flex-col">
+        {/* GPA Summary */}
+        <Card className="flex h-full flex-col md:order-2">
           <CardHeader>
             <div className="flex items-center gap-2">
               <svg
@@ -571,8 +549,8 @@ export default function DashboardPage() {
           </CardContent>
         </Card>
 
-        {/* Graduation Progress — spans 2 cols, ordered first */}
-        <Card className="flex h-full flex-col">
+        {/* Academic Progress */}
+        <Card className="flex h-full flex-col md:order-5">
           <CardHeader>
             <div className="flex items-center gap-2">
               <svg
@@ -590,7 +568,7 @@ export default function DashboardPage() {
                 />
               </svg>
               <h2 className="text-lg font-semibold text-foreground">
-                Graduation Progress
+                Academic Progress
               </h2>
             </div>
           </CardHeader>
@@ -743,7 +721,7 @@ export default function DashboardPage() {
         </Card>
 
         {/* Active Plan Summary */}
-        <Card className="flex h-full flex-col md:-order-1">
+        <Card className="flex h-full flex-col md:order-1">
           <CardHeader>
             <div className="flex items-center gap-2">
               <svg
@@ -881,7 +859,7 @@ export default function DashboardPage() {
         </Card>
 
         {/* Quick Actions */}
-        <Card className="flex h-full flex-col">
+        <Card className="flex h-full flex-col md:order-6">
           <CardHeader>
             <div className="flex items-center gap-2">
               <svg
@@ -1003,15 +981,14 @@ export default function DashboardPage() {
             </div>
           </CardContent>
         </Card>
-      </div>
 
-      {/* Validation Report */}
-      <Card className="mt-4 sm:mt-6">
+        {/* Attention Required */}
+        <Card className="flex h-full flex-col md:order-3">
         <CardHeader>
           <div className="flex items-center gap-2">
             <svg
               aria-hidden="true"
-              className="h-5 w-5 text-primary"
+              className="h-5 w-5 text-warning"
               fill="none"
               viewBox="0 0 24 24"
               strokeWidth={1.5}
@@ -1020,11 +997,11 @@ export default function DashboardPage() {
               <path
                 strokeLinecap="round"
                 strokeLinejoin="round"
-                d="M9 12.75 11.25 15 15 9.75M21 12c0 1.268-.63 2.39-1.593 3.068a3.745 3.745 0 0 1-1.043 3.296 3.745 3.745 0 0 1-3.296 1.043A3.745 3.745 0 0 1 12 21c-1.268 0-2.39-.63-3.068-1.593a3.746 3.746 0 0 1-3.296-1.043 3.745 3.745 0 0 1-1.043-3.296A3.745 3.745 0 0 1 3 12c0-1.268.63-2.39 1.593-3.068a3.745 3.745 0 0 1 1.043-3.296 3.746 3.746 0 0 1 3.296-1.043A3.746 3.746 0 0 1 12 3c1.268 0 2.39.63 3.068 1.593a3.746 3.746 0 0 1 3.296 1.043 3.745 3.745 0 0 1 1.043 3.296A3.745 3.745 0 0 1 21 12Z"
+                d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126ZM12 15.75h.007v.008H12v-.008Z"
               />
             </svg>
             <h2 className="text-lg font-semibold text-foreground">
-              Validation Report
+              Attention Required
             </h2>
             {!reqLoading && !planLoading && (
               (() => {
@@ -1034,7 +1011,9 @@ export default function DashboardPage() {
                       return covered < r.requiredCredits;
                     }).length
                   : 0;
-                const hasIssues = gapCount > 0 || warningCount > 0;
+                const semIssues = (reqData?.groups?.find((g) => g.group === "course_load")
+                  ?.requirements.filter((r) => r.status === "gap").length ?? 0) + (reqData?.gpaWaiverWarnings?.length ?? 0);
+                const hasIssues = gapCount > 0 || warningCount > 0 || semIssues > 0;
                 return hasIssues ? (
                   <Badge variant="destructive" className="text-[10px]">Issues found</Badge>
                 ) : (
@@ -1044,7 +1023,7 @@ export default function DashboardPage() {
             )}
           </div>
         </CardHeader>
-        <CardContent>
+        <CardContent className="flex-1">
           {(reqLoading || planLoading) ? (
             <div className="animate-pulse space-y-3">
               <div className="h-4 w-32 rounded bg-muted" />
@@ -1058,22 +1037,46 @@ export default function DashboardPage() {
                   return covered < r.requiredCredits;
                 })
               : [];
-            const hasNoIssues = gaps.length === 0 && warningCount === 0;
-
-            if (hasNoIssues) {
-              return (
-                <div className="flex items-center gap-2 py-2 text-sm text-success">
-                  <svg aria-hidden="true" className="h-5 w-5" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75 11.25 15 15 9.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
-                  </svg>
-                  All graduation requirements are covered and no plan warnings found.
-                </div>
-              );
-            }
+            const courseLoadGroup = reqData?.groups?.find((g) => g.group === "course_load");
+            const semesterIssues = [
+              ...(courseLoadGroup?.requirements.filter((r) => r.status === "gap") ?? []).map((r) => {
+                const gl = (r.metadata?.gradeLevel as number) ?? 0;
+                const sem = (r.metadata?.semester as number) ?? 0;
+                return `Gr ${gl} Sem ${sem}: ${r.notes ?? r.name}`;
+              }),
+              ...(reqData?.gpaWaiverWarnings ?? []).map((msg) =>
+                msg.startsWith("Grade") ? msg.replace(/^Grade (\d+) Sem (\d)/, "Gr $1 Sem $2") : msg
+              ),
+            ];
+            const hasNoIssues = gaps.length === 0 && warningCount === 0 && semesterIssues.length === 0;
 
             return (
               <div className="space-y-4">
-                {/* Graduation Requirement Gaps */}
+                {/* Category summary */}
+                <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs">
+                  <span className={gaps.length > 0 ? "text-destructive" : "text-success"}>
+                    <span className="font-semibold">{gaps.length}</span> Graduation Gap{gaps.length !== 1 ? "s" : ""}
+                  </span>
+                  <span className="text-border">|</span>
+                  <span className={semesterIssues.length > 0 ? "text-warning" : "text-success"}>
+                    <span className="font-semibold">{semesterIssues.length}</span> Semester Issue{semesterIssues.length !== 1 ? "s" : ""}
+                  </span>
+                  <span className="text-border">|</span>
+                  <span className={warningCount > 0 ? "text-warning" : "text-success"}>
+                    <span className="font-semibold">{warningCount}</span> Prerequisite Violation{warningCount !== 1 ? "s" : ""}
+                  </span>
+                </div>
+
+                {hasNoIssues && (
+                  <div className="flex items-center gap-2 py-2 text-sm text-success">
+                    <svg aria-hidden="true" className="h-5 w-5" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75 11.25 15 15 9.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
+                    </svg>
+                    No issues found. All requirements are on track.
+                  </div>
+                )}
+
+                {/* 1. Graduation Requirement Gaps */}
                 {gaps.length > 0 && (
                   <div className="rounded-lg border border-destructive/30 bg-destructive/5 p-3">
                     <p className="mb-2 flex items-center gap-1.5 text-sm font-semibold text-destructive">
@@ -1102,14 +1105,34 @@ export default function DashboardPage() {
                   </div>
                 )}
 
-                {/* Plan Warnings */}
+                {/* 2. Semester Requirement Gaps */}
+                {semesterIssues.length > 0 && (
+                  <div className="rounded-lg border border-warning/30 bg-warning/5 p-3">
+                    <p className="mb-2 flex items-center gap-1.5 text-sm font-semibold text-warning">
+                      <svg aria-hidden="true" className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 0 1 2.25-2.25h13.5A2.25 2.25 0 0 1 21 7.5v11.25m-18 0A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75m-18 0v-7.5A2.25 2.25 0 0 1 5.25 9h13.5A2.25 2.25 0 0 1 21 11.25v7.5" />
+                      </svg>
+                      Semester Requirement Gaps ({semesterIssues.length})
+                    </p>
+                    <ul className="space-y-1">
+                      {semesterIssues.map((msg, i) => (
+                        <li key={i} className="flex items-start gap-1.5 text-sm text-foreground">
+                          <span className="mt-1.5 h-1 w-1 shrink-0 rounded-full bg-warning" />
+                          {msg}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+
+                {/* 3. Prerequisite Violations */}
                 {warningCount > 0 && (
                   <div className="rounded-lg border border-warning/30 bg-warning/5 p-3">
                     <p className="mb-2 flex items-center gap-1.5 text-sm font-semibold text-warning">
                       <svg aria-hidden="true" className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126ZM12 15.75h.007v.008H12v-.008Z" />
                       </svg>
-                      Plan Warnings ({warningCount})
+                      Prerequisite Violations ({warningCount})
                     </p>
                     <ul className="space-y-1">
                       {warningMessages.map((msg, i) => (
@@ -1121,11 +1144,167 @@ export default function DashboardPage() {
                     </ul>
                   </div>
                 )}
+
               </div>
             );
           })()}
         </CardContent>
       </Card>
+        {/* Achievements & Badges */}
+        <Card className="flex h-full flex-col md:order-4">
+        <CardHeader>
+          <div className="flex items-center gap-2">
+            <svg
+              aria-hidden="true"
+              className="h-5 w-5 text-amber-500"
+              fill="none"
+              viewBox="0 0 24 24"
+              strokeWidth={1.5}
+              stroke="currentColor"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M16.5 18.75h-9m9 0a3 3 0 0 1 3 3h-15a3 3 0 0 1 3-3m9 0v-3.375c0-.621-.503-1.125-1.125-1.125h-.871M7.5 18.75v-3.375c0-.621.504-1.125 1.125-1.125h.872m5.007 0H9.497m5.007 0a7.454 7.454 0 0 1-.982-3.172M9.497 14.25a7.454 7.454 0 0 0 .982-3.172M2.25 12c0 1.8.68 3.44 1.8 4.681M21.75 12c0 1.8-.68 3.44-1.8 4.681"
+              />
+            </svg>
+            <h2 className="text-lg font-semibold text-foreground">
+              Achievements
+            </h2>
+          </div>
+        </CardHeader>
+        <CardContent className="flex-1">
+          {(() => {
+            const honorsStatus = (reqData as unknown as { honorsStatus?: { tier: string; weightedGpa: number; totalCredits: number } | null })?.honorsStatus;
+            const gradGroup = reqData?.groups?.find((g) => g.group === "graduation");
+            const gradReqs = gradGroup?.requirements ?? reqData?.requirements ?? [];
+            const gradMet = gradReqs.filter((r) => {
+              const covered = (r.earnedCredits ?? 0) + (r.plannedCredits ?? 0);
+              return covered >= r.requiredCredits;
+            }).length;
+            const gradTotal = gradReqs.length;
+            const allGradMet = gradTotal > 0 && gradMet === gradTotal;
+
+            const totalCredits = gpaData?.plan?.totalCredits ?? 0;
+            const earnedCredits = gpaData?.plan?.earnedCredits ?? 0;
+            const weightedGpa = gpaData?.cumulative?.weighted ?? null;
+
+            const badges: Array<{ icon: string; label: string; detail: string; color: string; earned: boolean }> = [];
+
+            // Honor Graduate
+            if (honorsStatus) {
+              badges.push({
+                icon: "star",
+                label: honorsStatus.tier,
+                detail: `GPA ${honorsStatus.weightedGpa.toFixed(2)} · ${honorsStatus.totalCredits} credits`,
+                color: "amber",
+                earned: true,
+              });
+            }
+
+            // All Graduation Requirements Met
+            badges.push({
+              icon: "check",
+              label: "Graduation Ready",
+              detail: allGradMet ? `All ${gradTotal} requirements covered` : `${gradMet}/${gradTotal} requirements met`,
+              color: "success",
+              earned: allGradMet,
+            });
+
+            // Credit milestones
+            const creditMilestones = [
+              { threshold: 45, label: "45 Credits", detail: "Minimum graduation credits reached" },
+              { threshold: 30, label: "30 Credits", detail: "Two-thirds of graduation credits" },
+              { threshold: 15, label: "15 Credits", detail: "One-third of graduation credits" },
+            ];
+            for (const m of creditMilestones) {
+              if (totalCredits >= m.threshold) {
+                badges.push({ icon: "credits", label: m.label, detail: m.detail, color: "primary", earned: true });
+                break;
+              }
+            }
+
+            // GPA milestones
+            if (weightedGpa !== null) {
+              if (weightedGpa >= 4.0) {
+                badges.push({ icon: "gpa", label: "GPA 4.0+", detail: `Weighted GPA ${weightedGpa.toFixed(2)}`, color: "amber", earned: true });
+              } else if (weightedGpa >= 3.5) {
+                badges.push({ icon: "gpa", label: "GPA 3.5+", detail: `Weighted GPA ${weightedGpa.toFixed(2)}`, color: "primary", earned: true });
+              } else if (weightedGpa >= 3.0) {
+                badges.push({ icon: "gpa", label: "GPA 3.0+", detail: `Weighted GPA ${weightedGpa.toFixed(2)}`, color: "primary", earned: true });
+              }
+            }
+
+            // Earned credits milestone
+            if (earnedCredits > 0) {
+              badges.push({ icon: "earned", label: `${earnedCredits} Earned`, detail: "Credits completed so far", color: "success", earned: true });
+            }
+
+            const earnedBadges = badges.filter((b) => b.earned);
+            const unearnedBadges = badges.filter((b) => !b.earned);
+
+            const iconMap: Record<string, React.ReactNode> = {
+              star: <svg aria-hidden="true" className="h-5 w-5" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" d="M11.48 3.499a.562.562 0 0 1 1.04 0l2.125 5.111a.563.563 0 0 0 .475.345l5.518.442c.499.04.701.663.321.988l-4.204 3.602a.563.563 0 0 0-.182.557l1.285 5.385a.562.562 0 0 1-.84.61l-4.725-2.885a.562.562 0 0 0-.586 0L6.982 20.54a.562.562 0 0 1-.84-.61l1.285-5.386a.562.562 0 0 0-.182-.557l-4.204-3.602a.562.562 0 0 1 .321-.988l5.518-.442a.563.563 0 0 0 .475-.345L11.48 3.5Z" /></svg>,
+              check: <svg aria-hidden="true" className="h-5 w-5" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75 11.25 15 15 9.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" /></svg>,
+              credits: <svg aria-hidden="true" className="h-5 w-5" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" d="M4.26 10.147a60.438 60.438 0 0 0-.491 6.347A48.62 48.62 0 0 1 12 20.904a48.62 48.62 0 0 1 8.232-4.41 60.46 60.46 0 0 0-.491-6.347m-15.482 0a50.636 50.636 0 0 0-2.658-.813A59.906 59.906 0 0 1 12 3.493a59.903 59.903 0 0 1 10.399 5.84c-.896.248-1.783.52-2.658.814m-15.482 0A50.717 50.717 0 0 1 12 13.489a50.702 50.702 0 0 1 7.74-3.342M6.75 15a.75.75 0 1 0 0-1.5.75.75 0 0 0 0 1.5Zm0 0v-3.675A55.378 55.378 0 0 1 12 8.443m-7.007 11.55A5.981 5.981 0 0 0 6.75 15.75v-1.5" /></svg>,
+              gpa: <svg aria-hidden="true" className="h-5 w-5" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 0 1 3 19.875v-6.75ZM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 0 1-1.125-1.125V8.625ZM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 0 1-1.125-1.125V4.125Z" /></svg>,
+              earned: <svg aria-hidden="true" className="h-5 w-5" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75 11.25 15 15 9.75M21 12c0 1.268-.63 2.39-1.593 3.068a3.745 3.745 0 0 1-1.043 3.296 3.745 3.745 0 0 1-3.296 1.043A3.745 3.745 0 0 1 12 21c-1.268 0-2.39-.63-3.068-1.593a3.746 3.746 0 0 1-3.296-1.043 3.745 3.745 0 0 1-1.043-3.296A3.745 3.745 0 0 1 3 12c0-1.268.63-2.39 1.593-3.068a3.745 3.745 0 0 1 1.043-3.296 3.746 3.746 0 0 1 3.296-1.043A3.746 3.746 0 0 1 12 3c1.268 0 2.39.63 3.068 1.593a3.746 3.746 0 0 1 3.296 1.043 3.745 3.745 0 0 1 1.043 3.296A3.745 3.745 0 0 1 21 12Z" /></svg>,
+            };
+
+            const colorMap: Record<string, string> = {
+              amber: "border-amber-400/40 bg-gradient-to-r from-amber-50 to-yellow-50 text-amber-700 dark:from-amber-950/20 dark:to-yellow-950/20 dark:text-amber-400",
+              success: "border-success/30 bg-success/5 text-success",
+              primary: "border-primary/30 bg-primary/5 text-primary",
+            };
+
+            if (earnedBadges.length === 0 && unearnedBadges.length === 0) {
+              return (
+                <p className="py-2 text-sm text-muted-foreground">
+                  Complete courses and earn credits to unlock achievements.
+                </p>
+              );
+            }
+
+            return (
+              <div className="space-y-3">
+                {earnedBadges.length > 0 && (
+                  <div className="grid grid-cols-2 gap-2">
+                    {earnedBadges.map((b) => (
+                      <div
+                        key={b.label}
+                        className={`flex items-center gap-2 rounded-lg border px-3 py-2 ${colorMap[b.color] ?? colorMap.primary}`}
+                      >
+                        {iconMap[b.icon]}
+                        <div>
+                          <p className="text-sm font-semibold">{b.label}</p>
+                          <p className="text-[10px] opacity-70">{b.detail}</p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+                {unearnedBadges.length > 0 && (
+                  <div className="grid grid-cols-2 gap-2">
+                    {unearnedBadges.map((b) => (
+                      <div
+                        key={b.label}
+                        className="flex items-center gap-2 rounded-lg border border-border bg-muted/30 px-3 py-2 text-muted-foreground opacity-50"
+                      >
+                        {iconMap[b.icon]}
+                        <div>
+                          <p className="text-sm font-semibold">{b.label}</p>
+                          <p className="text-[10px]">{b.detail}</p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            );
+          })()}
+        </CardContent>
+        </Card>
+      </div>
     </div>
   );
 }

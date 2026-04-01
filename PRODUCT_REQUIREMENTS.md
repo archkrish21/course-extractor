@@ -317,11 +317,25 @@ Account Switcher (parent with multiple children):
 
 ### Graduation Requirements
 
-> **Phase 2 update:** Each graduation requirement has a `matching_rule` (JSONB) that specifies how courses are matched to that requirement. Five rule types: `code_prefix` (e.g., all ENG courses), `codes` (specific course codes), `division` (all courses in a division), `multi_division` (courses across multiple divisions), and `remainder` (catch-all for courses not claimed by other requirements — used for "Additional Credits and P.E."). Each of Stevenson's 12 graduation requirements has a specific matching rule derived from the source PDF. The requirements API uses matching rules instead of simple division_id matching.
+> **Phase 2 update:** Each graduation requirement has a `matching_rule` (JSONB) that specifies how courses are matched to that requirement. Five rule types: `code_prefix` (e.g., all ENG courses), `codes` (specific course codes), `division` (all courses in a division), `multi_division` (courses across multiple divisions), and `remainder` (catch-all for courses not claimed by other requirements — used for "Additional Credits and P.E."). The requirements API uses matching rules instead of simple division_id matching.
+>
+> **Phase 2 update (expanded):** The requirements system has been expanded from 12 graduation-only requirements to **37 total requirements** across 4 requirement groups:
+> - `graduation` — 12 course-match requirements (existing Stevenson graduation credit requirements, unchanged)
+> - `course_load` — 16 per-semester requirements: 8 course count checks (Grades 9-12 x Sem 1-2, min 5 / max 7-8) + 8 PW/Dance/DriverEd checks (each semester must have at least one Physical Welfare, Dance [DNC prefix], or Driver Education [D/E prefix] course)
+> - `il_public_university` — 5 opt-in course-match requirements for Illinois public university admission (Science 6cr, Social Studies 6cr, Electives 4cr, English 8cr, Math 6cr)
+> - `non_course` — 4 requirements: ACT (manual checkbox), FAFSA (manual checkbox), 46th Credit (auto-from-course), Civics & Patriotism (auto-from-course)
+> - Note: `honors_status` was REMOVED from requirements — it is now an achievement badge computed from GPA
+>
+> Four evaluation types: `course_match`, `manual_checkbox`, `auto_from_course`, `course_load_check`. Schema changes: `graduation_requirements` table has `requirement_group`, `evaluation_type`, `display_order`, `is_opt_in` columns; `divisionId` now nullable. New `student_requirement_status` table for manual checkbox tracking. New `student_requirement_opt_ins` table for opt-in group enablement. New API endpoints: `PUT /api/v1/requirements/status` (toggle manual checkboxes), `PUT /api/v1/requirements/opt-in` (enable/disable opt-in groups). `GET /api/v1/requirements` now returns `groups[]` array alongside existing flat `requirements[]` (backwards compatible), plus `gpaWaiverWarnings[]` and `honorsStatus` (achievement, not requirement). Group order: graduation, course_load, il_public_university, non_course. GPA waiver eligibility check validates 4+ GPA-counted courses per semester when waiver is applied.
 
 | ID | Story | Priority | Phase |
 |---|---|---|---|
 | US-30 | As a student, I want to see a visual checklist of graduation requirements (credits required per subject area) with my current progress filled in so I always know what's left. | Must | 2 |
+| US-30a | As a student, I want to see my requirements organized by group (Graduation, Semester Requirements, IL Public University, Additional Requirements) so I can understand all dimensions of my academic standing. | Must | 2 |
+| US-30b | As a student, I want to opt in to tracking Illinois public university admission requirements so I can see whether my plan meets those additional standards. | Must | 2 |
+| US-30c | As a student, I want to check off non-course requirements (ACT, FAFSA) via clickable checkbox cards so I can track items that aren't tied to specific courses. | Must | 2 |
+| US-30d | As a student, I want to see my honors status as an achievement badge (computed from GPA) in the Progress page sidebar and Dashboard Achievements card so I know where I stand. | Should | 2 |
+| US-30e | As a student, I want to see per-semester course load status (underload/overload badges) so I can identify semesters that need adjustment. | Must | 2 |
 | US-31 | As a student, I want the system to immediately alert me when my plan creates a graduation credit gap (e.g., I've only planned 2 of the 4 required English credits) so I can fix it before it's too late. | Must | 2 |
 | US-32 | As a parent, I want to see my child's graduation requirement progress so I can have an informed conversation with them about their plan. | Must | 5 |
 
@@ -475,7 +489,7 @@ Templates are tied to a specific `catalog_version_id`. During annual catalog upd
 | F-PL-M02 | **Mobile planner layout:** The 4×2 grid (grade × semester) collapses to a single-column accordion on mobile. Each grade year is a collapsible section showing Semester 1 and Semester 2 stacked vertically. | Must |
 | F-PL-M03 | **Touch targets:** All interactive elements (buttons, course cards, dropdowns) have a minimum 44×44px touch target per WCAG 2.5.5. | Must |
 | F-PL-M04 | **Course browser on mobile:** Full-screen slide-over panel (not a modal overlay) with sticky search bar and scrollable results. | Must |
-| F-PL-M05 | **Dashboard on mobile:** Single-column stack of all 4 cards plus full-width Validation Report card. Desktop uses uniform 2x2 grid (`md:grid-cols-2`) with Active Plan card at top-left, Validation Report card spans full width below the grid. No side-by-side panels on mobile. | Must |
+| F-PL-M05 | **Dashboard on mobile:** Single-column stack of all 6 cards. Desktop uses 3-row, 2-column grid: Row 1 (Active Plan, GPA), Row 2 (Attention Required, Achievements), Row 3 (Academic Progress, Quick Actions). No side-by-side panels on mobile. | Must |
 | F-PL-M06 | **Tablet planner layout:** 2-column layout (Semester 1 | Semester 2) with grade years stacked vertically. Drag-and-drop (Phase 3) works on tablet but is not required on mobile. | Should |
 
 > **Design principle:** Mobile is the student's primary device during registration season. The planner must be usable (not just viewable) on a phone. Desktop is the power-user experience; mobile is the "check my plan, add a course, review an alert" experience.
@@ -484,7 +498,7 @@ Templates are tied to a specific `catalog_version_id`. During annual catalog upd
 
 > **Phase 1b implementation note:** Planner grid, course picker, prerequisite validation (AND/OR groups), 6 plan templates, per-semester status/grade editing, GPA display (projected + actual weighted), plan creation/deletion/reset-to-template, credit display per semester and grade, and semester course limits (5 min, 7 max, 8 with early bird) are all functional. Full-year courses are stored as two `plan_courses` rows (one per semester) with independent status and grade per semester. Course status transitions (planned → enrolled → completed/dropped) are supported per semester via dropdown on each course card. Course detail modal accessible from planner grid and course picker (clicking any course card). Template-based plans support core course deletion warnings and Reset to Template. Redis performance optimized (short-circuits when not configured). Course loader uses UPSERT to preserve IDs. Set Primary UI (student-only, star icon button). Primary = active status merge (setting primary auto-activates, old primary demotes to draft). Multi-select credit type/grade level filters with comma-separated API support. Semester partner exclusion in course picker (same-name courses hidden). Multiple grade expansion (no forced single-accordion). E2E global teardown for test data cleanup. Add to Plan from course detail modal on /courses page (plan/grade/semester selection). Auth guard on all app pages. Improved duplicate validation (cross-grade, semester partners). Bulk status and grade update per semester. Credit calculation corrected for full-year courses. Plan print view at /planner/print — opens in new tab with clean print-optimized landscape layout. Shows student info, plan name, grade tables with semester columns, course status/grades, credits, GPA summary, and legend footer. Auto-triggers browser print dialog. Screen controls (Back to Planner, Print/Save as PDF) hidden when printing.
 
-> **Phase 2 implementation note (Dashboard + Progress + Planner):** Dashboard layout changed to uniform 2x2 grid (`md:grid-cols-2`) with Active Plan card at top-left (`md:-order-1`). Graduation Progress card simplified to compact `earned+planned/required` format (per-requirement bars removed) with "View Progress" button linking to `/progress`. Quick Actions reordered: Browse Courses, Open Planner, Print Plan, View Progress, View Transcript. Credit display shows `earned + planned = total / required`. New full-width **Validation Report card** below the 2x2 grid: header shows "Validation Report" with a status badge — "Valid" (green) when no issues, "Issues found" (red) when there are gaps or warnings. When issues exist, displays two categorized sections: Graduation Requirement Gaps (red, lists unmet requirements with credits needed) and Plan Warnings (amber, lists prerequisite violations and underload/overload issues). When valid, shows green success message: "All graduation requirements are covered and no plan warnings found." Data sourced from requirements API and plan validation API for the primary/active plan. New Progress page (`/progress`) provides full graduation requirements detail: summary card (Total Credits, Earned, Planned, Requirements Met, Gaps with warning icon/red), overall segmented progress bar, per-requirement cards with status badge, progress bar, notes, and color-coded course chips. Print button (printer icon) in header next to "Edit Plan" triggers `window.print()`. New "Progress" nav menu item between Planner and Transcript. Planner: validation report panel (toggle with check-badge icon) with 3 collapsible sections — Graduation Requirement Gaps (red, default expanded), Plan Warnings (amber, default expanded), Graduation Requirements Covered (default collapsed) — plus summary stats. Plan bar shows validation status: "Valid" (green check) or "Issues found" (red X) considering both warnings and graduation gaps. Plan selection persisted via `sessionStorage`.
+> **Phase 2 implementation note (Dashboard + Progress + Planner):** Dashboard restructured to 3-row, 2-column grid: Row 1 (Active Plan, GPA), Row 2 (Attention Required, Achievements), Row 3 (Academic Progress, Quick Actions). "Validation Report" renamed to **"Attention Required"** with warning icon and category summary line ("1 Graduation Gap | 7 Semester Issues | 8 Prerequisite Violations"). Three validation categories: Graduation Requirement Gaps (red), Semester Requirement Gaps (amber), Prerequisite Violations (amber). Honors badge removed from this card. New **"Achievements"** card with earned/unearned badges: Honor Graduate tier, Graduation Ready, Credit milestones, GPA milestones, Credits Earned. Progress page renamed to **"Academic Progress"** (page title; nav label unchanged). Two-column layout: left (2/3) has status filter bar (All/Gap-Missing/In Progress/OK-Complete/Not Started) + Expand All/Collapse All + grouped sections (Graduation, Semester Requirements, IL Public University, Additional Requirements); right (1/3) sticky sidebar with honors badge + summary card (met/total, per-category breakdown with progress bars). Course Load group has 2 sub-categories: "Course Count Per Semester" and "Physical Welfare / Dance / Driver Ed". Course-match cards show earned/planned/needed breakdown below progress bar. Planner validation report is now a **side panel** (380px, right side, sticky, scrollable) with frozen title, collapsible summary ("Credits 48/45 | Reqs 11/12 | 1 gap | 15 warnings"), 3 detail sections (Graduation Gaps, Semester Requirement Gaps, Prerequisite Violations). Warning messages use "Gr X Sem Y:" prefix as clickable links that navigate to the grade/semester cell (blue ring highlight, fades after 3s). Plan bar shows prerequisite violation count only (not semester issues). Plan selection persisted via `sessionStorage`.
 
 **Course Status Transitions:**
 - `planned` → `enrolled`: Manual action by student (or automatically when the year-end wizard advances to a new year and next year's planned courses become current-year).
@@ -494,39 +508,50 @@ Templates are tied to a specific `catalog_version_id`. During annual catalog upd
 - `dropped` courses are excluded from GPA but retained in plan history.
 - `completed` is a terminal state — cannot be changed (edit the grade, not the status).
 
-### 5.2a Progress Page
+### 5.2a Progress Page (Academic Progress)
 
 | Req | Description | Priority |
 |---|---|---|
-| F-PR-01 | Dedicated graduation requirements progress page at `/progress`. | Must |
-| F-PR-02 | Summary card showing: Total Credits, Earned Credits, Planned Credits, Requirements Met count, Gaps count (with warning icon, red highlight). | Must |
-| F-PR-03 | Overall segmented progress bar: green = earned, blue = planned, gray = remaining. | Must |
-| F-PR-04 | Per-requirement cards with: status badge (Met/In Progress/Gap), segmented progress bar, notes, and course chips color-coded by earned vs planned. | Must |
+| F-PR-01 | Dedicated requirements progress page at `/progress` with page title "Academic Progress" (nav menu item label remains "Progress"). Two-column layout: left (2/3) content area, right (1/3) sticky sidebar. | Must |
+| F-PR-02 | Sticky sidebar with honors badge (achievement computed from GPA) and overall summary card showing met/total, per-category breakdown with progress bars. | Must |
+| F-PR-03 | Status filter bar: All, Gap/Missing, In Progress, OK/Complete, Not Started. Plus Expand All / Collapse All buttons. | Must |
+| F-PR-04 | Per-requirement cards with: status badge (Met/In Progress/Gap), segmented progress bar, notes, and course chips color-coded by earned vs planned. Course-match cards show earned/planned/needed breakdown below progress bar. | Must |
 | F-PR-05 | Gap message per requirement showing credits still needed. | Must |
-| F-PR-06 | "View Progress" button on the Dashboard Graduation Progress card links to `/progress`. | Must |
-| F-PR-07 | Print button (printer icon) in the Progress page header, next to the "Edit Plan" button. Triggers `window.print()` for browser-native print dialog. | Must |
+| F-PR-06 | "View Progress" button on the Dashboard Academic Progress card links to `/progress`. | Must |
+| F-PR-07 | Print button (printer icon) in the Progress page header. Triggers `window.print()` for browser-native print dialog. | Must |
+| F-PR-08 | Grouped sections: Graduation, Semester Requirements (unified name for course_load group), IL Public University (opt-in), Additional Requirements. Each is a collapsible section with its own header. | Must |
+| F-PR-09 | Manual checkbox requirements (`non_course` group): clickable checkbox cards that toggle via `PUT /api/v1/requirements/status`. | Must |
+| F-PR-10 | Auto-from-course requirements: status cards showing auto-satisfaction notes (e.g., "Satisfied by 46th credit" or "Satisfied by Civics course"). | Must |
+| F-PR-11 | Honors status displayed as an achievement badge in the sidebar (computed from GPA, no longer a requirement group). | Should |
+| F-PR-12 | Course load (Semester Requirements) group has 2 collapsible sub-categories: "Course Count Per Semester" and "Physical Welfare / Dance / Driver Ed". Per-semester cards with course count vs min/max, Underload/Overload badges. PW/Dance/DriverEd checks: each semester must have at least one Physical Welfare, Dance (DNC prefix), or Driver Education (D/E prefix) course. | Must |
+| F-PR-13 | Opt-in groups (`il_public_university`): toggle to enable/disable tracking, calls `PUT /api/v1/requirements/opt-in`. | Must |
 
-### 5.2a2 Dashboard Validation Report Card
+### 5.2a2 Dashboard Layout
+
+The dashboard uses a 3-row, 2-column grid layout:
+- **Row 1:** Active Plan card, GPA card
+- **Row 2:** Attention Required card (with warning icon), Achievements card
+- **Row 3:** Academic Progress card, Quick Actions card
 
 | Req | Description | Priority |
 |---|---|---|
-| F-DVR-01 | Full-width Validation Report card below the 2x2 grid on the Dashboard page. | Must |
-| F-DVR-02 | Card header shows "Validation Report" with a status badge: "Valid" (green) when no issues, "Issues found" (red) when there are gaps or warnings. | Must |
-| F-DVR-03 | When issues exist, two categorized sections: **Graduation Requirement Gaps** (red) listing each unmet requirement with credits needed, and **Plan Warnings** (amber) listing prerequisite violations and underload/overload issues. | Must |
-| F-DVR-04 | When no issues, shows green success message: "All graduation requirements are covered and no plan warnings found." | Must |
-| F-DVR-05 | Uses data from the requirements API and plan validation API for the primary/active plan. | Must |
+| F-DVR-01 | **"Attention Required"** card (renamed from "Validation Report") with warning icon. Shows categorized validation issues. | Must |
+| F-DVR-02 | Category summary line: "1 Graduation Gap | 7 Semester Issues | 8 Prerequisite Violations". | Must |
+| F-DVR-03 | Three validation categories: **Graduation Requirement Gaps** (red, missing credits for diploma), **Semester Requirement Gaps** (amber, course load/PW-Dance/GPA waiver eligibility), **Prerequisite Violations** (amber, course ordering conflicts). Honors badge removed from this card. | Must |
+| F-DVR-04 | New **"Achievements"** card with earned/unearned badges: Honor Graduate tier (computed from GPA), Graduation Ready, Credit milestones (15/30/45), GPA milestones (3.0+/3.5+/4.0+), Credits Earned. | Must |
+| F-DVR-05 | Uses data from the requirements API (which returns grouped data, `gpaWaiverWarnings[]`, `honorsStatus`) and plan validation API for the primary/active plan. | Must |
 
-### 5.2b Planner Validation Report
+### 5.2b Planner Validation Report (Side Panel)
 
 | Req | Description | Priority |
 |---|---|---|
-| F-VR-01 | Toggle button with check-badge icon in planner toolbar to show/hide validation report panel. | Must |
-| F-VR-02 | Collapsible panel with 3 sections: Graduation Requirement Gaps (red, expanded by default), Plan Warnings (amber, expanded by default), Graduation Requirements Covered (collapsed by default). | Must |
-| F-VR-03 | Graduation Requirement Gaps section shows unmet requirements with credits needed badge, progress bars, notes, and course chips. | Must |
-| F-VR-04 | Plan Warnings section shows prerequisite violations and underload/overload warnings. | Must |
-| F-VR-05 | Summary stats in the panel: Total Credits, Earned, Planned, Requirements Met, Gaps, Warnings. | Must |
+| F-VR-01 | Side panel (380px, right side, sticky, scrollable) with frozen title "Validation Report". | Must |
+| F-VR-02 | Collapsible summary: collapsed shows "Credits 48/45 | Reqs 11/12 | 1 gap | 15 warnings". Expanded summary has 3 groups: Credits (Total/Earned/Planned), Graduation Requirements (Met/In Progress/Gaps), Warnings (Semester/Prerequisite). | Must |
+| F-VR-03 | 3 collapsible detail sections: Graduation Gaps (with credit progress bar inside), Semester Requirement Gaps, Prerequisite Violations. | Must |
+| F-VR-04 | Warning messages use consistent "Gr X Sem Y:" prefix format as clickable links that navigate to the grade/semester in the planner grid. Clicking a link expands only that grade and highlights the target semester cell (blue ring, fades after 3s). | Must |
+| F-VR-05 | Validation categories: Graduation Requirement Gaps (red), Semester Requirement Gaps (amber, course load/PW-Dance/GPA waiver eligibility), Prerequisite Violations (amber). | Must |
 | F-VR-06 | Validation report works with any selected plan, not just the primary plan. | Must |
-| F-VR-07 | Plan bar displays validation status: "Valid" (green check) or "Issues found" (red X), considering both plan warnings and graduation requirement gaps. | Must |
+| F-VR-07 | Plan bar shows prerequisite violation count only (not semester issues). | Must |
 | F-VR-08 | Progress data auto-fetched when a plan is loaded. | Must |
 | F-VR-09 | Selected plan in planner persisted via `sessionStorage` so navigating away and back retains the selection. | Must |
 
@@ -572,11 +597,18 @@ Templates are tied to a specific `catalog_version_id`. During annual catalog upd
 
 | Req | Description | Priority |
 |---|---|---|
-| F-REQ-01 | Visual checklist per subject area: required credits vs. completed + planned credits. | Must |
-| F-REQ-02 | Status indicator per requirement: Met / In Progress / Gap. | Must |
+| F-REQ-01 | Visual checklist per subject area: required credits vs. completed + planned credits. Applies to course-match requirements in `graduation` and `il_public_university` groups. | Must |
+| F-REQ-02 | Status indicator per requirement: Met / In Progress / Gap. Applies to all evaluation types. | Must |
 | F-REQ-03 | Credit tally displayed in the planner grid (running total per subject area). | Must |
 | F-REQ-04 | Requirements versioned by catalog year. A student's tracker uses the requirements from the catalog version their plan was created on. | Must |
 | F-REQ-05 | `requirement_progress` is recomputed in a BullMQ job on every plan save. Cached in Redis (10-min TTL). | Must |
+| F-REQ-06 | 37 total requirements seeded across 4 groups (was 12 graduation-only). `honors_status` removed as a requirement group — now an achievement badge. | Must |
+| F-REQ-07 | Opt-in requirement groups (e.g., `il_public_university`) are not tracked unless the student explicitly enables them. | Must |
+| F-REQ-08 | Manual checkbox requirements persist their checked/unchecked state via `student_requirement_status` table. | Must |
+| F-REQ-09 | Auto-from-course requirements are automatically satisfied when the relevant course or credit threshold is reached. | Must |
+| F-REQ-10 | Honors status computed from GPA and displayed as an achievement badge (not a requirement). | Should |
+| F-REQ-11 | Course load requirements: 8 course count checks (min 5 / max 7-8 per semester) + 8 PW/Dance/DriverEd checks (at least one Physical Welfare, Dance [DNC prefix], or Driver Education [D/E prefix] course per semester). "Semester Requirements" is the unified display name. | Must |
+| F-REQ-12 | GPA waiver eligibility check: API validates 4+ GPA-counted courses per semester when waiver is applied. | Must |
 
 ### 5.6 Course Browser
 

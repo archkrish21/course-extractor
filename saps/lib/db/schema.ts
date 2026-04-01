@@ -427,7 +427,6 @@ export const graduationRequirements = pgTable(
   {
     id: uuid("id").primaryKey().defaultRandom(),
     divisionId: uuid("division_id")
-      .notNull()
       .references(() => divisions.id, { onDelete: "restrict" }),
     requirementName: text("requirement_name").notNull(),
     requiredCredits: decimal("required_credits", {
@@ -440,12 +439,63 @@ export const graduationRequirements = pgTable(
     catalogVersionId: uuid("catalog_version_id")
       .notNull()
       .references(() => courseCatalogVersions.id, { onDelete: "restrict" }),
+    requirementGroup: text("requirement_group").notNull().default("graduation"),
+    evaluationType: text("evaluation_type").notNull().default("course_match"),
+    displayOrder: smallint("display_order").default(0),
+    isOptIn: boolean("is_opt_in").notNull().default(false),
   },
   (table) => [
     uniqueIndex("grad_req_version_name_unique").on(
       table.catalogVersionId,
       table.requirementName
     ),
+    index("idx_grad_req_group").on(table.requirementGroup),
+  ]
+);
+
+// ─── STUDENT REQUIREMENT STATUS (non-course requirement tracking) ───────────
+
+export const studentRequirementStatus = pgTable(
+  "student_requirement_status",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    accountId: uuid("account_id")
+      .notNull()
+      .references(() => accounts.id, { onDelete: "cascade" }),
+    requirementId: uuid("requirement_id")
+      .notNull()
+      .references(() => graduationRequirements.id, { onDelete: "cascade" }),
+    status: text("status", {
+      enum: ["not_started", "in_progress", "completed", "waived"],
+    }).notNull().default("not_started"),
+    completedAt: timestamp("completed_at", { withTimezone: true }),
+    notes: text("notes"),
+    metadata: jsonb("metadata"),
+    updatedAt: timestamp("updated_at", { withTimezone: true })
+      .defaultNow()
+      .$onUpdate(() => new Date()),
+  },
+  (table) => [
+    uniqueIndex("student_req_status_unique").on(
+      table.accountId,
+      table.requirementId
+    ),
+  ]
+);
+
+// ─── STUDENT REQUIREMENT OPT-INS ───────────────────────────────────────────
+
+export const studentRequirementOptIns = pgTable(
+  "student_requirement_opt_ins",
+  {
+    accountId: uuid("account_id")
+      .notNull()
+      .references(() => accounts.id, { onDelete: "cascade" }),
+    requirementGroup: text("requirement_group").notNull(),
+    enabledAt: timestamp("enabled_at", { withTimezone: true }).defaultNow(),
+  },
+  (table) => [
+    primaryKey({ columns: [table.accountId, table.requirementGroup] }),
   ]
 );
 

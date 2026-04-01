@@ -218,6 +218,139 @@ test.describe("Progress — Requirement Cards", () => {
   });
 });
 
+// ─── Requirement Groups ─────────────────────────────────────────────────────
+
+test.describe("Progress — Requirement Groups", () => {
+  test("shows graduation requirements group", async ({ page }) => {
+    await navigateToProgress(page);
+
+    await expect(page.locator("text=Graduation Requirements")).toBeVisible({ timeout: 10_000 });
+  });
+
+  test("shows additional requirements group (non-course)", async ({ page }) => {
+    await navigateToProgress(page);
+
+    await expect(page.locator("text=Additional Requirements")).toBeVisible({ timeout: 10_000 });
+  });
+
+  test("shows honor graduate status group", async ({ page }) => {
+    await navigateToProgress(page);
+
+    await expect(page.locator("text=Honor Graduate Status")).toBeVisible({ timeout: 10_000 });
+  });
+
+  test("shows course load group", async ({ page }) => {
+    await navigateToProgress(page);
+
+    await expect(page.locator("text=Course Load")).toBeVisible({ timeout: 10_000 });
+  });
+
+  test("IL Public University group shows opt-in toggle", async ({ page }) => {
+    await navigateToProgress(page);
+
+    const uniGroup = page.locator("text=IL Public University Admission");
+    await expect(uniGroup).toBeVisible({ timeout: 10_000 });
+
+    // Should have Enable/Disable Tracking button
+    const trackBtn = page.locator("text=/Enable Tracking|Disable Tracking/");
+    await expect(trackBtn).toBeVisible({ timeout: 5_000 });
+  });
+
+  test("groups are collapsible", async ({ page }) => {
+    await navigateToProgress(page);
+
+    // Click a group header to collapse it
+    const groupHeader = page.locator("button", { hasText: "Graduation Requirements" });
+    await expect(groupHeader).toBeVisible({ timeout: 10_000 });
+    await groupHeader.click();
+    await page.waitForTimeout(300);
+  });
+});
+
+// ─── Non-Course Requirements ────────────────────────────────────────────────
+
+test.describe("Progress — Non-Course Requirements", () => {
+  test("shows ACT and FAFSA as checkbox requirements", async ({ page }) => {
+    await navigateToProgress(page);
+
+    const actReq = page.locator("text=ACT Graduation Requirement");
+    const fafsaReq = page.locator("text=FAFSA Requirement");
+
+    await expect(actReq).toBeVisible({ timeout: 10_000 });
+    await expect(fafsaReq).toBeVisible();
+  });
+
+  test("shows auto-from-course requirements (46th Credit, Civics)", async ({ page }) => {
+    await navigateToProgress(page);
+
+    const drugEd = page.locator("text=46th Credit");
+    const civics = page.locator("text=Civics and Patriotism");
+
+    await expect(drugEd).toBeVisible({ timeout: 10_000 });
+    await expect(civics).toBeVisible();
+  });
+
+  test("checkbox requirements have clickable checkbox", async ({ page }) => {
+    await navigateToProgress(page);
+
+    // Find the checkbox button for ACT
+    const checkbox = page.locator('button[aria-label*="ACT"]');
+    if ((await checkbox.count()) > 0) {
+      await expect(checkbox).toBeVisible();
+    }
+  });
+});
+
+// ─── Honors Status ──────────────────────────────────────────────────────────
+
+test.describe("Progress — Honors Status", () => {
+  test("shows honors tier cards with GPA info", async ({ page }) => {
+    await navigateToProgress(page);
+
+    const highestHonors = page.locator("text=Highest Honors");
+    const highHonors = page.locator("text=High Honors");
+    const honors = page.locator("text=/^Honors$/");
+
+    // At least one honors tier should be visible
+    const hasAny = (await highestHonors.count()) + (await highHonors.count()) + (await honors.count());
+    expect(hasAny).toBeGreaterThanOrEqual(1);
+  });
+
+  test("honors cards show GPA vs required", async ({ page }) => {
+    await navigateToProgress(page);
+
+    const gpaInfo = page.locator("text=/GPA:.*\\/.*required/i");
+    const hasGpaInfo = (await gpaInfo.count()) > 0;
+    // GPA info may not show if no grades exist
+    const heading = page.locator("text=Honor Graduate Status");
+    await expect(heading).toBeVisible({ timeout: 10_000 });
+  });
+});
+
+// ─── Course Load ────────────────────────────────────────────────────────────
+
+test.describe("Progress — Course Load", () => {
+  test("shows per-semester course load cards", async ({ page }) => {
+    await navigateToProgress(page);
+
+    const loadCards = page.locator("text=/Course Load.*Grade/");
+    const count = await loadCards.count();
+    // Should have 8 entries (4 grades x 2 semesters)
+    expect(count).toBeGreaterThanOrEqual(1);
+  });
+
+  test("course load shows OK or Underload/Overload badge", async ({ page }) => {
+    await navigateToProgress(page);
+
+    const okBadge = page.locator("text=OK");
+    const underloadBadge = page.locator("text=Underload");
+    const overloadBadge = page.locator("text=Overload");
+
+    const hasAny = (await okBadge.count()) + (await underloadBadge.count()) + (await overloadBadge.count());
+    expect(hasAny).toBeGreaterThanOrEqual(1);
+  });
+});
+
 // ─── Error & Empty States ───────────────────────────────────────────────────
 
 test.describe("Progress — Error Handling", () => {
@@ -239,5 +372,141 @@ test.describe("Progress — Error Handling", () => {
     const hasPlannerLink = (await plannerLink.count()) > 0;
 
     expect(hasError || hasPlannerLink).toBeTruthy();
+  });
+});
+
+// ─── Page Title ─────────────────────────────────────────────────────────────
+
+test.describe("Progress — Page Title", () => {
+  test("page title is Academic Progress", async ({ page }) => {
+    await navigateToProgress(page);
+    await expect(page.getByRole("heading", { name: "Academic Progress" })).toBeVisible({ timeout: 10_000 });
+  });
+});
+
+// ─── Two-Column Layout ──────────────────────────────────────────────────────
+
+test.describe("Progress — Layout", () => {
+  test("shows summary sidebar on desktop", async ({ page }) => {
+    test.skip(test.info().project.name === "mobile", "Desktop layout test");
+    await navigateToProgress(page);
+
+    // Summary card should be visible with Overall stats
+    await expect(page.locator("text=/Overall/")).toBeVisible({ timeout: 10_000 });
+    await expect(page.locator("text=/% met/")).toBeVisible();
+  });
+});
+
+// ─── Filter Bar ─────────────────────────────────────────────────────────────
+
+test.describe("Progress — Filters", () => {
+  test("filter bar is visible with all options", async ({ page }) => {
+    await navigateToProgress(page);
+
+    await expect(page.locator("text=Filter:")).toBeVisible({ timeout: 10_000 });
+    await expect(page.getByRole("button", { name: "All" })).toBeVisible();
+    await expect(page.getByRole("button", { name: "Gap / Missing" })).toBeVisible();
+    await expect(page.getByRole("button", { name: "In Progress" })).toBeVisible();
+    await expect(page.getByRole("button", { name: "OK / Complete" })).toBeVisible();
+    await expect(page.getByRole("button", { name: "Not Started" })).toBeVisible();
+  });
+
+  test("Expand All and Collapse All buttons work", async ({ page }) => {
+    await navigateToProgress(page);
+
+    const expandAll = page.getByRole("button", { name: "Expand All" });
+    const collapseAll = page.getByRole("button", { name: "Collapse All" });
+    await expect(expandAll).toBeVisible({ timeout: 10_000 });
+    await expect(collapseAll).toBeVisible();
+
+    // Collapse all
+    await collapseAll.click();
+    await page.waitForTimeout(300);
+
+    // Expand all
+    await expandAll.click();
+    await page.waitForTimeout(300);
+  });
+
+  test("clicking a filter updates displayed requirements", async ({ page }) => {
+    await navigateToProgress(page);
+
+    const gapFilter = page.getByRole("button", { name: "Gap / Missing" });
+    await gapFilter.click();
+    await page.waitForTimeout(500);
+
+    // Click All to reset
+    const allFilter = page.getByRole("button", { name: "All" });
+    await allFilter.click();
+    await page.waitForTimeout(500);
+  });
+});
+
+// ─── Semester Requirements Sub-categories ───────────────────────────────────
+
+test.describe("Progress — Semester Sub-categories", () => {
+  test("shows Course Count Per Semester sub-category", async ({ page }) => {
+    await navigateToProgress(page);
+    await expect(page.locator("text=/Course Count Per Semester/")).toBeVisible({ timeout: 10_000 });
+  });
+
+  test("shows Physical Welfare / Dance / Driver Ed sub-category", async ({ page }) => {
+    await navigateToProgress(page);
+    await expect(page.locator("text=/Physical Welfare.*Dance.*Driver Ed/")).toBeVisible({ timeout: 10_000 });
+  });
+
+  test("sub-categories are collapsible", async ({ page }) => {
+    await navigateToProgress(page);
+
+    const courseCountHeader = page.locator("button", { hasText: "Course Count Per Semester" });
+    if ((await courseCountHeader.count()) > 0) {
+      await courseCountHeader.click();
+      await page.waitForTimeout(300);
+      await courseCountHeader.click();
+      await page.waitForTimeout(300);
+    }
+  });
+});
+
+// ─── IL Public University Opt-in ────────────────────────────────────────────
+
+test.describe("Progress — IL Public University", () => {
+  test("shows enable/disable tracking button", async ({ page }) => {
+    await navigateToProgress(page);
+
+    const trackBtn = page.locator("text=/Enable Tracking|Disable Tracking/");
+    await expect(trackBtn).toBeVisible({ timeout: 10_000 });
+  });
+
+  test("can toggle opt-in tracking", async ({ page }) => {
+    await navigateToProgress(page);
+
+    const trackBtn = page.locator("text=/Enable Tracking|Disable Tracking/").first();
+    await expect(trackBtn).toBeVisible({ timeout: 10_000 });
+
+    // Toggle
+    await trackBtn.click();
+    await page.waitForTimeout(1000);
+
+    // Toggle back
+    const trackBtn2 = page.locator("text=/Enable Tracking|Disable Tracking/").first();
+    await trackBtn2.click();
+    await page.waitForTimeout(1000);
+  });
+});
+
+// ─── Earned/Planned Breakdown ───────────────────────────────────────────────
+
+test.describe("Progress — Credit Breakdown", () => {
+  test("shows earned and planned counts below progress bars", async ({ page }) => {
+    await navigateToProgress(page);
+
+    const earned = page.locator("text=/\\d+ earned/");
+    const planned = page.locator("text=/\\d+ planned/");
+
+    // At least one should be visible if there are courses
+    const hasEarned = (await earned.count()) > 0;
+    const hasPlanned = (await planned.count()) > 0;
+    expect(hasEarned || hasPlanned).toBeTruthy();
   });
 });

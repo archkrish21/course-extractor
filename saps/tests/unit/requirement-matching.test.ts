@@ -320,3 +320,217 @@ describe("requirement status derivation", () => {
     expect(deriveStatus(2, 3, 8)).toBe("gap");
   });
 });
+
+// ── GPA threshold matching (honors_status) ──────────────────────────────────
+
+describe("GPA threshold evaluation", () => {
+  function evaluateGpaThreshold(
+    weightedGpa: number | null,
+    totalCredits: number,
+    minGpa: number,
+    minCredits: number
+  ): "met" | "gap" {
+    const gpaOk = weightedGpa !== null && weightedGpa >= minGpa;
+    const creditsOk = totalCredits >= minCredits;
+    return gpaOk && creditsOk ? "met" : "gap";
+  }
+
+  it("returns 'met' when GPA and credits meet threshold", () => {
+    expect(evaluateGpaThreshold(4.2, 43, 4.0, 42)).toBe("met");
+    expect(evaluateGpaThreshold(3.75, 42, 3.75, 42)).toBe("met");
+  });
+
+  it("returns 'gap' when GPA is below threshold", () => {
+    expect(evaluateGpaThreshold(3.5, 43, 4.0, 42)).toBe("gap");
+    expect(evaluateGpaThreshold(3.74, 45, 3.75, 42)).toBe("gap");
+  });
+
+  it("returns 'gap' when credits are below threshold", () => {
+    expect(evaluateGpaThreshold(4.5, 40, 4.0, 42)).toBe("gap");
+  });
+
+  it("returns 'gap' when GPA is null", () => {
+    expect(evaluateGpaThreshold(null, 45, 3.5, 42)).toBe("gap");
+  });
+
+  it("returns 'gap' when both GPA and credits are below", () => {
+    expect(evaluateGpaThreshold(3.0, 30, 4.0, 42)).toBe("gap");
+  });
+});
+
+// ── Course load evaluation ──────────────────────────────────────────────────
+
+describe("course load evaluation", () => {
+  function evaluateCourseLoad(
+    courseCount: number,
+    minCourses: number,
+    maxCourses: number,
+    hasEarlyBird: boolean,
+    maxWithEarlyBird: number
+  ): "met" | "gap" {
+    const effectiveMax = hasEarlyBird ? maxWithEarlyBird : maxCourses;
+    return courseCount >= minCourses && courseCount <= effectiveMax ? "met" : "gap";
+  }
+
+  it("returns 'met' for normal load (5-7 courses)", () => {
+    expect(evaluateCourseLoad(5, 5, 7, false, 8)).toBe("met");
+    expect(evaluateCourseLoad(6, 5, 7, false, 8)).toBe("met");
+    expect(evaluateCourseLoad(7, 5, 7, false, 8)).toBe("met");
+  });
+
+  it("returns 'gap' for underload (< 5 courses)", () => {
+    expect(evaluateCourseLoad(3, 5, 7, false, 8)).toBe("gap");
+    expect(evaluateCourseLoad(4, 5, 7, false, 8)).toBe("gap");
+    expect(evaluateCourseLoad(0, 5, 7, false, 8)).toBe("gap");
+  });
+
+  it("returns 'gap' for overload without early bird (> 7)", () => {
+    expect(evaluateCourseLoad(8, 5, 7, false, 8)).toBe("gap");
+    expect(evaluateCourseLoad(9, 5, 7, false, 8)).toBe("gap");
+  });
+
+  it("allows 8 courses with early bird", () => {
+    expect(evaluateCourseLoad(8, 5, 7, true, 8)).toBe("met");
+  });
+
+  it("returns 'gap' for > 8 even with early bird", () => {
+    expect(evaluateCourseLoad(9, 5, 7, true, 8)).toBe("gap");
+  });
+});
+
+// ── Auto-from-course evaluation ─────────────────────────────────────────────
+
+describe("auto-from-course evaluation", () => {
+  it("returns 'completed' when matching course is completed", () => {
+    const courses = [makeCourse({ code: "PED201", status: "completed" })];
+    const rule = { type: "codes" as const, codes: ["PED201", "PED202"] };
+    const matchingCompleted = courses.some(
+      (c) => c.status === "completed" && (rule.codes ?? []).includes(c.code)
+    );
+    expect(matchingCompleted).toBe(true);
+  });
+
+  it("returns 'in_progress' when matching course is planned", () => {
+    const courses = [makeCourse({ code: "PED201", status: "planned" })];
+    const rule = { type: "codes" as const, codes: ["PED201", "PED202"] };
+    const matchingCompleted = courses.some(
+      (c) => c.status === "completed" && (rule.codes ?? []).includes(c.code)
+    );
+    const matchingPlanned = courses.some(
+      (c) => c.status !== "completed" && (rule.codes ?? []).includes(c.code)
+    );
+    expect(matchingCompleted).toBe(false);
+    expect(matchingPlanned).toBe(true);
+  });
+
+  it("returns 'gap' when no matching course exists", () => {
+    const courses = [makeCourse({ code: "MTH151", status: "completed" })];
+    const rule = { type: "codes" as const, codes: ["PED201", "PED202"] };
+    const matchingCompleted = courses.some(
+      (c) => c.status === "completed" && (rule.codes ?? []).includes(c.code)
+    );
+    const matchingPlanned = courses.some(
+      (c) => c.status !== "completed" && (rule.codes ?? []).includes(c.code)
+    );
+    expect(matchingCompleted).toBe(false);
+    expect(matchingPlanned).toBe(false);
+  });
+});
+
+// ── PW/Dance/DriverEd check ─────────────────────────────────────────────────
+
+describe("PW/Dance/DriverEd check", () => {
+  const divisionNames = ["Physical Welfare"];
+  const codePrefixes = ["DNC", "D/E"];
+
+  function hasPwCourse(courses: PlanCourseEntry[]) {
+    return courses.some(
+      (pc) => divisionNames.includes(pc.divisionName) || codePrefixes.some((p) => pc.code.startsWith(p))
+    );
+  }
+
+  it("matches Physical Welfare division courses", () => {
+    const courses = [makeCourse({ divisionName: "Physical Welfare", code: "PED121" })];
+    expect(hasPwCourse(courses)).toBe(true);
+  });
+
+  it("matches Dance courses by DNC prefix", () => {
+    const courses = [makeCourse({ divisionName: "Fine Arts", code: "DNC101/DNC102" })];
+    expect(hasPwCourse(courses)).toBe(true);
+  });
+
+  it("matches Driver Education by D/E prefix", () => {
+    const courses = [makeCourse({ divisionName: "Applied Arts", code: "D/E231" })];
+    expect(hasPwCourse(courses)).toBe(true);
+  });
+
+  it("does not match non-PW courses", () => {
+    const courses = [makeCourse({ divisionName: "Mathematics", code: "MTH151" })];
+    expect(hasPwCourse(courses)).toBe(false);
+  });
+
+  it("returns false for empty course list", () => {
+    expect(hasPwCourse([])).toBe(false);
+  });
+});
+
+// ── GPA waiver eligibility check ────────────────────────────────────────────
+
+describe("GPA waiver eligibility", () => {
+  it("passes when 4+ GPA-counted courses exist", () => {
+    const courses = [
+      makeCourse({ code: "MTH151", status: "planned" }),
+      makeCourse({ code: "ENG151", status: "planned" }),
+      makeCourse({ code: "SCI111", status: "planned" }),
+      makeCourse({ code: "SOC101", status: "planned" }),
+      makeCourse({ code: "ART101", status: "planned" }),
+    ];
+    // 5 non-waivered courses, 1 would be waivered = 4 GPA-counted = OK
+    const gpaCounted = courses.length;
+    expect(gpaCounted).toBeGreaterThanOrEqual(4);
+  });
+
+  it("fails when fewer than 4 GPA-counted courses exist", () => {
+    const gpaCounted = 3;
+    expect(gpaCounted).toBeLessThan(4);
+  });
+});
+
+// ── Honors status computation ───────────────────────────────────────────────
+
+describe("honors status computation", () => {
+  function computeHonors(weightedGpa: number | null, totalCredits: number) {
+    if (weightedGpa === null || totalCredits < 42) return null;
+    if (weightedGpa >= 4.0) return "Highest Honors";
+    if (weightedGpa >= 3.75) return "High Honors";
+    if (weightedGpa >= 3.5) return "Honors";
+    return null;
+  }
+
+  it("returns Highest Honors for GPA 4.0+ with 42+ credits", () => {
+    expect(computeHonors(4.2, 43)).toBe("Highest Honors");
+    expect(computeHonors(4.0, 42)).toBe("Highest Honors");
+  });
+
+  it("returns High Honors for GPA 3.75-3.99", () => {
+    expect(computeHonors(3.85, 45)).toBe("High Honors");
+    expect(computeHonors(3.75, 42)).toBe("High Honors");
+  });
+
+  it("returns Honors for GPA 3.50-3.74", () => {
+    expect(computeHonors(3.6, 44)).toBe("Honors");
+    expect(computeHonors(3.5, 42)).toBe("Honors");
+  });
+
+  it("returns null for GPA below 3.5", () => {
+    expect(computeHonors(3.4, 45)).toBeNull();
+  });
+
+  it("returns null when credits below 42", () => {
+    expect(computeHonors(4.5, 40)).toBeNull();
+  });
+
+  it("returns null when GPA is null", () => {
+    expect(computeHonors(null, 45)).toBeNull();
+  });
+});

@@ -23,6 +23,8 @@ interface PlannerGridProps {
   onBulkGradeChange?: (planCourseIds: string[], grade: string | null) => void;
   onGpaWaiverToggle?: (planCourseId: string, applied: boolean) => void;
   violations: Record<string, Violation[]>;
+  semesterGaps?: Record<string, string[]>;
+  focusGrade?: { grade: number; semester: number } | null;
   readOnly?: boolean;
 }
 
@@ -116,16 +118,34 @@ function DesktopGrid({
   onBulkGradeChange,
   onGpaWaiverToggle,
   violations,
+  semesterGaps,
+  focusGrade,
   readOnly,
 }: PlannerGridProps) {
   const gridRef = useRef<HTMLDivElement>(null);
   const [collapsedGrades, setCollapsedGrades] = useState<Set<number>>(
     () => new Set(GRADE_LEVELS.filter((g) => g !== currentGradeLevel))
   );
+  const [highlightedSem, setHighlightedSem] = useState<{ grade: number; semester: number } | null>(null);
   const [focusedCell, setFocusedCell] = useState<{
     row: number;
     col: number;
   }>({ row: 0, col: 0 });
+
+  // When focusGrade changes, expand only that grade and highlight the semester
+  useEffect(() => {
+    if (!focusGrade) return;
+    setCollapsedGrades(new Set(GRADE_LEVELS.filter((g) => g !== focusGrade.grade)));
+    setHighlightedSem(focusGrade);
+    // Scroll to the grade after a short delay for DOM update
+    setTimeout(() => {
+      const gradeSpan = document.querySelector(`[data-grade="${focusGrade.grade}"]`);
+      gradeSpan?.closest('button[role="rowheader"]')?.scrollIntoView({ behavior: "smooth", block: "start" });
+    }, 100);
+    // Clear highlight after 3 seconds
+    const timer = setTimeout(() => setHighlightedSem(null), 3000);
+    return () => clearTimeout(timer);
+  }, [focusGrade]);
 
   const cellRefs = useRef<Map<string, HTMLDivElement>>(new Map());
 
@@ -223,34 +243,28 @@ function DesktopGrid({
           .reduce((sum, c) => sum + creditPerRow(c), 0);
         const gradeProjectedGPA = calculateGPA(gradeCourses, "projected");
         const gradeActualGPA = calculateGPA(gradeCourses, "actual");
-        const gradeViolationCount = courses
-          .filter((c) => c.gradeLevel === grade)
-          .reduce((count, c) => count + (violations[c.courseId]?.length ?? 0), 0);
+        // Semester requirement gaps from API (course load, PW/Dance, GPA waiver)
+        const normalizeMsg = (msg: string, defaultGrade: number, defaultSem: number) => {
+          // Normalize "Grade X Sem Y:" to "Gr X Sem Y:"
+          const normalized = msg.replace(/^Grade (\d+) Sem (\d)/, "Gr $1 Sem $2");
+          // If already prefixed, return as-is
+          if (/^Gr \d+ Sem \d/.test(normalized)) return normalized;
+          // Otherwise add prefix
+          return `Gr ${defaultGrade} Sem ${defaultSem}: ${msg}`;
+        };
+        const sem1Gaps = (semesterGaps?.[`${grade}-1`] ?? []).map((msg) => normalizeMsg(msg, grade, 1));
+        const sem2Gaps = (semesterGaps?.[`${grade}-2`] ?? []).map((msg) => normalizeMsg(msg, grade, 2));
 
-        // Compute per-semester counts for underload/overload warnings at grade level
-        const gradeFullYear = getFullYearCourses(courses, grade);
-        const sem1Total = gradeFullYear.length + getSemesterCourses(courses, grade, 1).length;
-        const sem2Total = gradeFullYear.length + getSemesterCourses(courses, grade, 2).length;
-        const sem1HasEarlyBird = [...gradeFullYear, ...getSemesterCourses(courses, grade, 1)].some(
-          (c) => (c.name ?? "").toLowerCase().includes("early bird") || /E\d$/.test(c.code ?? "") || /E\d\//.test(c.code ?? "")
-        );
-        const sem2HasEarlyBird = [...gradeFullYear, ...getSemesterCourses(courses, grade, 2)].some(
-          (c) => (c.name ?? "").toLowerCase().includes("early bird") || /E\d$/.test(c.code ?? "") || /E\d\//.test(c.code ?? "")
-        );
-        const sem1Underload = sem1Total < 5;
-        const sem2Underload = sem2Total < 5;
-        const sem1Overload = sem1Total > (sem1HasEarlyBird ? 8 : 7);
-        const sem2Overload = sem2Total > (sem2HasEarlyBird ? 8 : 7);
-        const hasScheduleWarning = sem1Underload || sem2Underload || sem1Overload || sem2Overload;
+        // Prerequisite violations for courses in this grade
+        const prereqWarnings: string[] = [];
+        for (const c of courses.filter((c) => c.gradeLevel === grade)) {
+          for (const v of violations[c.courseId] ?? []) {
+            prereqWarnings.push(`Gr ${grade} Sem ${c.semester}: ${c.code ?? c.name} — ${v.message}`);
+          }
+        }
 
-        // Build warning messages
-        const gradeWarnings: string[] = [];
-        if (sem1Underload) gradeWarnings.push(`Sem 1: ${sem1Total} courses (min 5)`);
-        if (sem2Underload) gradeWarnings.push(`Sem 2: ${sem2Total} courses (min 5)`);
-        if (sem1Overload) gradeWarnings.push(`Sem 1: ${sem1Total} courses (max ${sem1HasEarlyBird ? 8 : 7})`);
-        if (sem2Overload) gradeWarnings.push(`Sem 2: ${sem2Total} courses (max ${sem2HasEarlyBird ? 8 : 7})`);
-
-        const totalWarnings = gradeViolationCount + gradeWarnings.length;
+        const gradeWarnings = [...sem1Gaps, ...sem2Gaps, ...prereqWarnings];
+        const totalWarnings = gradeWarnings.length;
 
         const toggleCollapse = () =>
           setCollapsedGrades((prev) => {
@@ -286,7 +300,7 @@ function DesktopGrid({
               >
                 <path strokeLinecap="round" strokeLinejoin="round" d="m8.25 4.5 7.5 7.5-7.5 7.5" />
               </svg>
-              <span>Grade {grade}</span>
+              <span data-grade={grade}>Grade {grade}</span>
               {isCurrentGrade && (
                 <span className="text-[10px] font-normal text-primary/70">(current)</span>
               )}
@@ -295,7 +309,6 @@ function DesktopGrid({
               {totalWarnings > 0 && (
                 <span
                   className="relative group/warn flex items-center gap-1 text-warning"
-                  title={[...gradeWarnings, ...(gradeViolationCount > 0 ? [`${gradeViolationCount} prerequisite warning${gradeViolationCount !== 1 ? "s" : ""}`] : [])].join(" · ")}
                 >
                   <svg aria-hidden="true" className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126ZM12 15.75h.007v.008H12v-.008Z" />
@@ -303,9 +316,9 @@ function DesktopGrid({
                   <span className="text-[10px] font-normal">{totalWarnings}</span>
 
                   {/* Tooltip */}
-                  <span className="pointer-events-none absolute left-1/2 top-full z-50 mt-2 -translate-x-1/2 whitespace-nowrap rounded-lg border border-warning/30 bg-card px-3 py-2 text-xs font-medium text-warning shadow-lg opacity-0 transition-opacity group-hover/warn:opacity-100">
-                    {[...gradeWarnings, ...(gradeViolationCount > 0 ? [`${gradeViolationCount} prerequisite warning${gradeViolationCount !== 1 ? "s" : ""}`] : [])].map((msg, i) => (
-                      <span key={i} className="block">{msg}</span>
+                  <span className="pointer-events-none absolute left-1/2 top-full z-50 mt-2 -translate-x-1/2 w-max max-w-sm rounded-lg border border-warning/30 bg-card px-3 py-2 text-xs font-medium text-warning shadow-lg opacity-0 transition-opacity group-hover/warn:opacity-100">
+                    {gradeWarnings.map((msg, i) => (
+                      <span key={i} className="block whitespace-normal">{msg}</span>
                     ))}
                   </span>
                 </span>
@@ -392,12 +405,14 @@ function DesktopGrid({
                       onFocus={() => setFocusedCell({ row: rowIdx, col: colIdx })}
                       className={`
                         min-h-[100px] rounded-lg border-2 border-dashed p-2
-                        transition-colors duration-150
+                        transition-all duration-300
                         focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring
                         ${
-                          cellViolationCount > 0
-                            ? "border-warning/50 bg-warning-light/30"
-                            : "border-border bg-card hover:border-primary/30"
+                          highlightedSem?.grade === grade && highlightedSem?.semester === sem
+                            ? "border-primary bg-primary/5 ring-2 ring-primary/30"
+                            : cellViolationCount > 0
+                              ? "border-warning/50 bg-warning-light/30"
+                              : "border-border bg-card hover:border-primary/30"
                         }
                       `}
                     >
@@ -566,6 +581,8 @@ function MobileAccordion({
   onBulkGradeChange,
   onGpaWaiverToggle,
   violations,
+  semesterGaps,
+  focusGrade: _focusGrade,
   readOnly,
 }: PlannerGridProps) {
   const [expandedGrades, setExpandedGrades] = useState<Set<number>>(
@@ -594,6 +611,11 @@ function MobileAccordion({
           (count, c) => count + (violations[c.courseId]?.length ?? 0),
           0
         );
+        const gradeSemGaps = [
+          ...(semesterGaps?.[`${grade}-1`] ?? []),
+          ...(semesterGaps?.[`${grade}-2`] ?? []),
+        ];
+        const mobileWarningCount = gradeViolationCount + gradeSemGaps.length;
 
         return (
           <div
@@ -632,7 +654,7 @@ function MobileAccordion({
                   {gradeCoursesAll.length} course
                   {gradeCoursesAll.length !== 1 ? "s" : ""}
                 </span>
-                {gradeViolationCount > 0 && (
+                {mobileWarningCount > 0 && (
                   <span className="flex items-center gap-0.5 text-xs text-warning">
                     <svg
                       aria-hidden="true"
@@ -648,7 +670,7 @@ function MobileAccordion({
                         d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126ZM12 15.75h.007v.008H12v-.008Z"
                       />
                     </svg>
-                    {gradeViolationCount}
+                    {mobileWarningCount}
                   </span>
                 )}
               </span>

@@ -9,6 +9,7 @@ function makeCourse(overrides: {
   status?: "planned" | "enrolled" | "completed" | "dropped";
   gpaWaiver?: boolean;
   gpaWaiverApplied?: boolean;
+  code?: string;
 }) {
   return {
     creditValue: overrides.creditValue ?? "1",
@@ -17,6 +18,7 @@ function makeCourse(overrides: {
     status: overrides.status ?? "completed",
     gpaWaiver: overrides.gpaWaiver ?? false,
     gpaWaiverApplied: overrides.gpaWaiverApplied ?? false,
+    code: overrides.code,
   };
 }
 
@@ -68,6 +70,64 @@ describe("calculateGPA", () => {
       const result = calculateGPA(courses, "projected");
       expect(result.coursesUsed).toBe(1);
       expect(result.unweighted).toBeCloseTo(4.0);
+    });
+  });
+
+  // ── Pass/Fail course exclusion (Driver Ed + regular PE) ─────────
+  describe("Pass/Fail course exclusion", () => {
+    it("excludes Driver Education courses (D/E prefix) from GPA", () => {
+      const courses = [
+        makeCourse({ plannedGrade: "A", status: "completed", code: "D/E231" }),
+        makeCourse({ plannedGrade: "B", status: "completed", code: "ENG151" }),
+      ];
+      const result = calculateGPA(courses, "projected");
+      expect(result.coursesUsed).toBe(1);
+      expect(result.unweighted).toBeCloseTo(3.0);
+    });
+
+    it("excludes regular PE courses from GPA", () => {
+      const courses = [
+        makeCourse({ plannedGrade: "A", status: "completed", code: "PED121" }),
+        makeCourse({ plannedGrade: "A", status: "completed", code: "PED451" }),
+        makeCourse({ plannedGrade: "B", status: "completed", code: "MTH151" }),
+      ];
+      const result = calculateGPA(courses, "projected");
+      // PED121 and PED451 are regular PE — excluded
+      expect(result.coursesUsed).toBe(1);
+      expect(result.unweighted).toBeCloseTo(3.0);
+    });
+
+    it("includes Health Education in GPA", () => {
+      const courses = [
+        makeCourse({ plannedGrade: "A", status: "completed", code: "PED201" }),
+        makeCourse({ plannedGrade: "B", status: "completed", code: "MTH151" }),
+      ];
+      const result = calculateGPA(courses, "projected");
+      expect(result.coursesUsed).toBe(2);
+    });
+
+    it("includes Applied Health in GPA", () => {
+      const courses = [
+        makeCourse({ plannedGrade: "A", status: "completed", code: "PED231" }),
+      ];
+      const result = calculateGPA(courses, "projected");
+      expect(result.coursesUsed).toBe(1);
+    });
+
+    it("includes Leadership courses in GPA", () => {
+      const courses = [
+        makeCourse({ plannedGrade: "A", status: "completed", code: "PED61L/PED62L" }),
+      ];
+      const result = calculateGPA(courses, "projected");
+      expect(result.coursesUsed).toBe(1);
+    });
+
+    it("handles courses without code field", () => {
+      const courses = [
+        makeCourse({ plannedGrade: "A", status: "completed" }),
+      ];
+      const result = calculateGPA(courses, "projected");
+      expect(result.coursesUsed).toBe(1);
     });
   });
 

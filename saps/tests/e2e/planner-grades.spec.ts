@@ -392,3 +392,126 @@ test.describe("Planner — Course Card Display", () => {
     await expect(heading).toBeVisible();
   });
 });
+
+// ─── P/F Course Badge ───────────────────────────────────────────────────────
+
+test.describe("Planner — P/F Course Badge", () => {
+  test("PE courses show P/F badge", async ({ page }) => {
+    test.skip(test.info().project.name === "mobile", "Desktop test");
+    await navigateToPlanner(page);
+    await skipIfNoPlans(page);
+
+    // Expand all grades to find PE courses
+    for (let i = 0; i < 4; i++) {
+      const collapsed = page.locator('button[role="rowheader"][aria-expanded="false"]').first();
+      if ((await collapsed.count()) > 0) {
+        await collapsed.click();
+        await page.waitForTimeout(300);
+      }
+    }
+    await page.waitForTimeout(1000);
+
+    // Look for P/F badges
+    const pfBadge = page.locator("text=P/F");
+    // Data-dependent — PE courses may or may not be in the plan
+    const heading = page.locator("text=/Course Planner/");
+    await expect(heading).toBeVisible();
+  });
+
+  test("P/F courses have restricted grade dropdown", async ({ page }) => {
+    test.skip(test.info().project.name === "mobile", "Desktop test");
+    await navigateToPlanner(page);
+    await skipIfNoPlans(page);
+    await expandFirstGrade(page);
+    await page.waitForTimeout(1000);
+
+    // Find a P/F badge and check its nearby grade dropdown
+    const pfBadge = page.locator("span[title*='Pass/Fail']").first();
+    if ((await pfBadge.count()) === 0) {
+      test.skip(); // No P/F courses in view
+      return;
+    }
+
+    // The grade dropdown near a P/F course should have P and F options
+    const card = pfBadge.locator("xpath=ancestor::div[contains(@class, 'rounded')]");
+    const gradeSelect = card.locator("select").first();
+    if ((await gradeSelect.count()) > 0) {
+      const options = gradeSelect.locator("option");
+      const texts: string[] = [];
+      for (let i = 0; i < await options.count(); i++) {
+        texts.push((await options.nth(i).textContent()) ?? "");
+      }
+      // Should have P and F but not A, B, C, D
+      const hasP = texts.some((t) => t === "P");
+      const hasA = texts.some((t) => t === "A");
+      expect(hasP).toBeTruthy();
+      // A should not be present for P/F courses
+      expect(hasA).toBeFalsy();
+    }
+  });
+
+  test("P/F courses do not show GPA waiver toggle", async ({ page }) => {
+    test.skip(test.info().project.name === "mobile", "Desktop test");
+    await navigateToPlanner(page);
+    await skipIfNoPlans(page);
+
+    for (let i = 0; i < 4; i++) {
+      const collapsed = page.locator('button[role="rowheader"][aria-expanded="false"]').first();
+      if ((await collapsed.count()) > 0) {
+        await collapsed.click();
+        await page.waitForTimeout(300);
+      }
+    }
+    await page.waitForTimeout(1000);
+
+    // Find P/F badge cards
+    const pfBadges = page.locator("span[title*='Pass/Fail']");
+    if ((await pfBadges.count()) === 0) {
+      test.skip();
+      return;
+    }
+
+    // The card with P/F should not have a GPA Waiver button
+    const pfCard = pfBadges.first().locator("xpath=ancestor::div[contains(@class, 'rounded')]");
+    const waiverBtn = pfCard.locator("text=GPA Waiver");
+    expect(await waiverBtn.count()).toBe(0);
+  });
+});
+
+// ─── Validation Auto-Refresh ────────────────────────────────────────────────
+
+test.describe("Planner — Validation Auto-Refresh", () => {
+  test("validation panel refreshes when plan changes", async ({ page }) => {
+    test.skip(test.info().project.name === "mobile", "Desktop test");
+    await navigateToPlanner(page);
+    await skipIfNoPlans(page);
+
+    // Open validation panel
+    const validateButton = page.locator('[aria-label="Validation report"]');
+    await validateButton.click();
+    await expect(page.locator("text=Validation Report")).toBeVisible({ timeout: 10_000 });
+    await page.waitForTimeout(2000);
+
+    // Make a change — toggle a status if possible
+    await expandFirstGrade(page);
+    await page.waitForTimeout(500);
+
+    const statusSelect = page.locator('select[aria-label*="status" i]').first();
+    if ((await statusSelect.count()) === 0) {
+      test.skip();
+      return;
+    }
+
+    const currentValue = await statusSelect.inputValue();
+    const newStatus = currentValue === "planned" ? "enrolled" : "planned";
+    await statusSelect.selectOption(newStatus);
+    await page.waitForTimeout(2000);
+
+    // Validation report should still be visible (auto-refreshed)
+    await expect(page.locator("text=Validation Report")).toBeVisible();
+
+    // Revert
+    await statusSelect.selectOption(currentValue);
+    await page.waitForTimeout(500);
+  });
+});

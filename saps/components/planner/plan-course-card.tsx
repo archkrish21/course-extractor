@@ -3,7 +3,7 @@
 import { useState, useRef, useEffect } from "react";
 import { Badge } from "@/components/ui/badge";
 import type { BadgeVariant } from "@/components/ui/badge";
-import { GRADE_OPTIONS } from "@/config/grade-scale";
+import { GRADE_OPTIONS, PASS_FAIL_OPTIONS, isPassFailCourse } from "@/config/grade-scale";
 
 export interface PlanCourse {
   id: string;
@@ -336,7 +336,7 @@ export function PlanCourseCard({
                 }`}
             >
               <option value="">{isCompleted ? "Grade" : "Est."}</option>
-              {GRADE_OPTIONS.map((g) => (
+              {(isPassFailCourse(course.code) ? PASS_FAIL_OPTIONS : GRADE_OPTIONS).map((g) => (
                 <option key={g} value={g}>{g}</option>
               ))}
             </select>
@@ -349,8 +349,8 @@ export function PlanCourseCard({
             </Badge>
           ) : null}
 
-          {/* GPA Waiver toggle — next to grade dropdown */}
-          {course.gpaWaiver && !readOnly && onGpaWaiverToggle && (
+          {/* GPA Waiver toggle — only for courses that count toward GPA */}
+          {course.gpaWaiver && !isPassFailCourse(course.code) && !readOnly && onGpaWaiverToggle && (
             <button
               type="button"
               className={`inline-flex items-center gap-1 rounded-full px-1.5 py-0.5 text-[10px] font-medium cursor-pointer transition-colors bg-warning/20 text-warning hover:bg-warning/30`}
@@ -373,6 +373,16 @@ export function PlanCourseCard({
               )}
               GPA Waiver
             </button>
+          )}
+
+          {/* P/F indicator for non-academic courses */}
+          {isPassFailCourse(course.code) && (
+            <span
+              className="inline-flex items-center rounded-full px-1.5 py-0.5 text-[10px] font-medium bg-muted text-muted-foreground"
+              title="Pass/Fail course — excluded from GPA and academic course count"
+            >
+              P/F
+            </span>
           )}
         </div>
 

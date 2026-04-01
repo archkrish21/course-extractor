@@ -191,7 +191,7 @@ User → Next.js frontend → API routes → PostgreSQL (Supabase + RLS)
 │       └── 2026-courses.json   # git-tracked yearly artifacts
 ├── config/
 │   ├── gpa-weights.ts          # CONFIGURABLE — get from school before coding
-│   ├── grade-scale.ts          # letter → GPA points mapping
+│   ├── grade-scale.ts          # letter → GPA points mapping + isPassFailCourse() + PASS_FAIL_OPTIONS
 │   └── subscription-plans.ts   # tier feature flags (mirrors DB seed)
 ├── scripts/
 │   └── seed.ts                 # Drizzle seed runner (npm run db:seed)
@@ -692,7 +692,7 @@ CREATE TABLE plan_courses (
 CREATE INDEX idx_plan_courses_plan_id ON plan_courses (plan_id);
 ```
 
-> **GPA waiver toggle:** Students can apply a GPA waiver per plan-course by toggling a checkbox on waiver-eligible course cards. The GPA calculation checks `gpa_waiver_applied` (student's choice on plan_courses) rather than `gpa_waiver` (catalog-level flag on courses). Only courses where the student explicitly applies the waiver are excluded from GPA.
+> **GPA waiver toggle:** Students can apply a GPA waiver per plan-course by toggling a checkbox on waiver-eligible course cards. The GPA calculation checks `gpa_waiver_applied` (student's choice on plan_courses) rather than `gpa_waiver` (catalog-level flag on courses). Only courses where the student explicitly applies the waiver are excluded from GPA. The GPA waiver checkbox is hidden for P/F-only courses (identified by `isPassFailCourse()`) since they are already excluded from GPA calculation.
 
 > **Completed-course locking:** Once `status = 'completed'`, the API must reject DELETE, and changes to `course_id`, `grade_level`, or `semester` with `HTTP 409 Conflict`. Only `planned_grade` and `notes` remain editable. Enforced at API layer with an integration test asserting 409 on DELETE of a completed row.
 
@@ -1027,7 +1027,8 @@ CREATE TABLE student_requirement_opt_ins (
 --
 -- Phase 2 requirement groups (4 groups, 37 total requirements):
 --   graduation (12): course_match — Stevenson graduation credit requirements (unchanged)
---   course_load (16): course_load_check — 8 course count checks (Grades 9-12 x Sem 1-2, min 5 / max 7-8)
+--   course_load (16): course_load_check — 8 course count checks (Grades 9-12 x Sem 1-2, min 5 / max 7-8,
+--                                          counting academic courses only — PW division, DNC-prefix, D/E-prefix excluded)
 --                                        + 8 PW/Dance/DriverEd checks (each semester must have at least one
 --                                          Physical Welfare, Dance [DNC prefix], or Driver Education [D/E prefix] course)
 --                     Display name: "Semester Requirements"
@@ -1038,7 +1039,7 @@ CREATE TABLE student_requirement_opt_ins (
 --
 -- Evaluation types: course_match, manual_checkbox, auto_from_course, course_load_check
 -- The requirements API uses matching rules for course_match types and specialized logic for other evaluation types.
--- API also returns gpaWaiverWarnings[] and honorsStatus (achievement, not requirement).
+-- API also returns gpaWaiverWarnings[] (P/F-only courses excluded from count) and honorsStatus (achievement, not requirement).
 -- Group order: graduation, course_load, il_public_university, non_course.
 
 CREATE TABLE career_paths (
@@ -1217,7 +1218,7 @@ All routes: `/api/v1/...`. Version from day one.
 | GET | `/api/v1/gpa` | student | Live GPA from `plan_courses` on primary plan: cumulative (completed only), projected (all graded), plan totals (`totalCredits`, `earnedCredits`, `totalCourses`), `hasGrades` flag | Phase 2 |
 | POST | `/api/v1/gpa/snapshots` | student | Take/list GPA snapshot history | Phase 2 |
 | POST | `/api/v1/gpa/what-if` | student (Plus+) | What-if GPA simulation (read-only) | Phase 2 |
-| GET | `/api/v1/requirements` | student | Graduation progress with matching rules (code_prefix, codes, division, multi_division, remainder). Returns both flat `requirements[]` (backwards compatible) and `groups[]` array with group key, label, isOptIn, enabled, requirements[], and totals. Also returns `gpaWaiverWarnings[]` (validates 4+ GPA-counted courses per semester when waiver applied) and `honorsStatus` (achievement badge, not requirement). Optional `?planId=` query parameter to validate any plan (defaults to primary plan). 4 evaluation types: course_match, manual_checkbox, auto_from_course, course_load_check. Group order: graduation, course_load, il_public_university, non_course. | Phase 2 |
+| GET | `/api/v1/requirements` | student | Graduation progress with matching rules (code_prefix, codes, division, multi_division, remainder). Returns both flat `requirements[]` (backwards compatible) and `groups[]` array with group key, label, isOptIn, enabled, requirements[], and totals. Also returns `gpaWaiverWarnings[]` (validates 4+ GPA-counted courses per semester when waiver applied; P/F-only courses excluded from GPA-counted course count) and `honorsStatus` (achievement badge, not requirement). Optional `?planId=` query parameter to validate any plan (defaults to primary plan). 4 evaluation types: course_match, manual_checkbox, auto_from_course, course_load_check. Course load checks count only academic courses (PW division, DNC-prefix, D/E-prefix excluded). Group order: graduation, course_load, il_public_university, non_course. | Phase 2 |
 | PUT | `/api/v1/requirements/status` | student | Toggle manual checkbox requirements (for non_course group). Body: `{ requirementId, isChecked }`. Updates `student_requirement_status`. | Phase 2 |
 | PUT | `/api/v1/requirements/opt-in` | student | Enable/disable tracking for opt-in requirement groups. Body: `{ requirementGroup, enabled }`. Updates `student_requirement_opt_ins`. | Phase 2 |
 | GET | `/api/v1/alerts` | student | Active alerts (unresolved) |
@@ -1620,13 +1621,28 @@ export const GRADE_TO_POINTS: Record<string, number | null> = {
   'P':  null,  // Pass — excluded from GPA
   'I':  null,  // Incomplete — excluded until resolved
 };
+
+// P/F-only course identification
+export function isPassFailCourse(code: string): boolean { ... }
+// Returns true for regular PE (PED121, PED122, PED451, PED452, PED111, PED112)
+// and Driver Ed (D/E231, D/E232).
+// Health (PED201/202), Applied Health (PED231/232), Adventure Ed (PED331/332),
+// Lifeguard (PED501), and Leadership courses still get letter grades.
+
+export const PASS_FAIL_OPTIONS = [
+  { value: 'P', label: 'P' },
+  { value: 'F', label: 'F' },
+];
 ```
 
 ### Calculation logic
 
 ```
 Unweighted GPA = SUM(gradePoints × creditValue) / SUM(creditValue)
-                 for all courses WHERE gradePoints IS NOT NULL AND gpa_waiver_applied = FALSE
+                 for all courses WHERE gradePoints IS NOT NULL
+                 AND gpa_waiver_applied = FALSE
+                 AND isPassFailCourse(code) = FALSE
+                 AND status != 'dropped'
 
 Weighted GPA   = SUM((gradePoints + weightBonus) × creditValue) / SUM(creditValue)
                  for same set of courses
@@ -1637,6 +1653,8 @@ GPA is **always recomputed from `plan_courses` on the primary plan at read time*
 > **Phase 2 update:** The GPA API (`GET /api/v1/gpa`) reads exclusively from `plan_courses` on the primary plan — not from `grade_entries`. Grades are set via the planner page (status dropdown + grade dropdown on each course card) and stored in `plan_courses.planned_grade`. The API returns cumulative GPA (completed courses only), projected GPA (all courses with grades), plan totals (`totalCredits`, `earnedCredits`, `totalCourses` with per-row adjusted credits), and a `hasGrades` boolean flag.
 
 > **Implementation status (Phase 1b):** GPA calculation is implemented in `lib/gpa/calc.ts`. Full-year courses are stored as two `plan_courses` rows; the calculation uses `creditValue / 2` per row to avoid double-counting. GPA is displayed in the planner UI at both the grade header level (per-grade projected + actual weighted GPA) and the plan header level (total projected + actual).
+>
+> **P/F-only course exclusion (Phase 2 update):** `calculateGPA()` now skips courses where `isPassFailCourse(code)` returns true, in addition to existing exclusions (dropped, GPA waiver applied, P/I grades). The `CourseForGPA` interface includes an optional `code` field to support this. P/F-only courses (regular PE: PED121/122/451/452/111/112; Driver Ed: D/E231/232) show only P/F in the grade dropdown via `PASS_FAIL_OPTIONS`. The GPA waiver checkbox is hidden for these courses. They display a grey "P/F" badge with tooltip "Pass/Fail course — excluded from GPA and academic course count".
 
 ### Three GPA views
 
@@ -1736,7 +1754,7 @@ Before inserting a new alert, the engine checks if a matching unresolved alert a
 
 ### Underload warnings
 
-Underload warnings trigger for any semester with fewer than 5 courses, including empty semesters (0 courses). This ensures all four grade levels have adequate course loads.
+Underload warnings trigger for any semester with fewer than 5 academic courses, including empty semesters (0 courses). This ensures all four grade levels have adequate course loads. The course load count excludes non-academic courses: Physical Welfare division, DNC-prefix (Dance), and D/E-prefix (Driver Ed) courses are not counted — they represent the "sixth supervised period", not part of the 5 academic credits.
 
 ### Dashboard layout
 
@@ -1756,7 +1774,7 @@ Underload warnings trigger for any semester with fewer than 5 courses, including
 
 ### Plan header bar validation indicator
 
-> **Phase 2 update:** The plan header bar shows prerequisite violation count only (not semester issues). Progress data is auto-fetched on plan load.
+> **Phase 2 update:** The plan header bar shows prerequisite violation count only (not semester issues). Progress data is auto-fetched on plan load and auto-refreshed when the plan is updated while the validation side panel is open.
 
 ### Planner validation report side panel
 
@@ -1767,7 +1785,7 @@ Underload warnings trigger for any semester with fewer than 5 courses, including
 > - **Semester Requirement Gaps** (course load, PW/Dance/DriverEd, GPA waiver eligibility)
 > - **Prerequisite Violations** (course ordering conflicts)
 >
-> Warning messages use consistent "Gr X Sem Y:" prefix format as clickable links that navigate to the grade/semester in the planner grid. Clicking a link expands only that grade and highlights the target semester cell (blue ring, fades after 3s). The panel works with any selected plan (not just primary) using the `?planId=` parameter on the requirements API.
+> Warning messages use consistent "Gr X Sem Y:" prefix format as clickable links that navigate to the grade/semester in the planner grid. Clicking a link expands only that grade and highlights the target semester cell (blue ring, fades after 3s). The panel works with any selected plan (not just primary) using the `?planId=` parameter on the requirements API. When the side panel is open and the plan is updated (course added/removed, grade or status changed), the requirements API is automatically called to refresh the validation data.
 
 ### Plan selection persistence
 

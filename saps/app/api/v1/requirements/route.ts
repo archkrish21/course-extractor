@@ -16,6 +16,7 @@ import { successResponse, errorResponse } from "@/lib/api/response";
 import { requireAuth, getAccountContext } from "@/lib/auth/get-user";
 import { rateLimit } from "@/lib/api/rate-limit";
 import { calculateGPA } from "@/lib/gpa/calc";
+import { isPassFailCourse } from "@/config/grade-scale";
 
 // ─── Types ─────────────────────────────────────────────────────────────────
 
@@ -361,11 +362,17 @@ function processCourseLoadGroup(
       const maxCourses = rule.maxCourses ?? 7;
       const maxWithEarlyBird = rule.maxWithEarlyBird ?? 8;
 
-      const hasEarlyBird = semCourses.some(
+      // Exclude PW/Dance/DriverEd from the academic course count
+      // Per Stevenson: "at least five credits of coursework" + "a sixth supervised period (PW/Dance/DriverEd)"
+      const isPwDanceDriverEd = (pc: PlanCourseEntry) =>
+        pc.divisionName === "Physical Welfare" || pc.code.startsWith("DNC") || pc.code.startsWith("D/E");
+      const academicCourses = semCourses.filter((c) => !isPwDanceDriverEd(c));
+
+      const hasEarlyBird = academicCourses.some(
         (c) => c.name.toLowerCase().includes("early bird") || /E\d$/.test(c.code) || /E\d\//.test(c.code)
       );
       const effectiveMax = hasEarlyBird ? maxWithEarlyBird : maxCourses;
-      const count = semCourses.length;
+      const count = academicCourses.length;
 
       const isOk = count >= minCourses && count <= effectiveMax;
       let statusNote = `${count} course${count !== 1 ? "s" : ""} (min ${minCourses}, max ${effectiveMax})`;
@@ -645,9 +652,9 @@ export async function GET(request: NextRequest) {
       const semCourses = allPlanCourses.filter(
         (pc) => pc.gradeLevel === gl && pc.semester === sem
       );
-      // GPA-counted = non-waivered, non-dropped, non-P/F grade courses
+      // GPA-counted = non-waivered, non-dropped, not P/F-only courses (PE, Driver Ed)
       const gpaCounted = semCourses.filter(
-        (pc) => !pc.gpaWaiverApplied && pc.status !== "dropped"
+        (pc) => !pc.gpaWaiverApplied && pc.status !== "dropped" && !isPassFailCourse(pc.code)
       ).length;
       if (gpaCounted < 4) {
         gpaWaiverWarnings.push(

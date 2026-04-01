@@ -78,6 +78,8 @@ export default function PlannerPage() {
   } | null>(null);
   const [clearing, setClearing] = useState(false);
   const [showProgressPanel, setShowProgressPanel] = useState(false);
+  const showProgressPanelRef = useRef(false);
+  useEffect(() => { showProgressPanelRef.current = showProgressPanel; }, [showProgressPanel]);
   const [progressData, setProgressData] = useState<{
     totalEarned: number;
     totalPlanned: number;
@@ -266,6 +268,23 @@ export default function PlannerPage() {
         }
       } else {
         setTemplateCourseIds(new Set());
+      }
+      // Auto-refresh validation report if the side panel is open
+      if (showProgressPanelRef.current) {
+        apiFetch(`/api/v1/requirements?planId=${planId}`).then(async (res) => {
+          if (res.ok) {
+            const json = await res.json();
+            const d = json.data ?? json;
+            setProgressData({
+              totalEarned: d.totalEarned ?? 0,
+              totalPlanned: d.totalPlanned ?? 0,
+              totalRequired: d.totalRequired ?? 45,
+              requirements: d.requirements ?? [],
+              groups: d.groups ?? [],
+              gpaWaiverWarnings: d.gpaWaiverWarnings ?? [],
+            });
+          }
+        }).catch(() => { /* silent */ });
       }
     } catch {
       setError("Failed to load plan data.");

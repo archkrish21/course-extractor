@@ -232,19 +232,20 @@ async function seed() {
       requiredCredits: string;
       divisionName: string;
       notes: string | null;
+      matchingRule?: Record<string, unknown>;
     }[] = [
-      { requirementName: "English", category: "English", requiredCredits: "8.0", divisionName: "English", notes: null },
-      { requirementName: "Mathematics", category: "Mathematics", requiredCredits: "6.0", divisionName: "Mathematics", notes: null },
-      { requirementName: "Biology", category: "Science", requiredCredits: "2.0", divisionName: "Science", notes: null },
-      { requirementName: "Physical Science", category: "Science", requiredCredits: "2.0", divisionName: "Science", notes: null },
-      { requirementName: "U.S. History", category: "Social Studies", requiredCredits: "2.0", divisionName: "Social Studies", notes: null },
-      { requirementName: "World History and Geography", category: "Social Studies", requiredCredits: "2.0", divisionName: "Social Studies", notes: null },
-      { requirementName: "Government", category: "Social Studies", requiredCredits: "1.0", divisionName: "Social Studies", notes: null },
-      { requirementName: "Economics or Personal Finance", category: "Social Studies", requiredCredits: "1.0", divisionName: "Business Education", notes: "May be fulfilled through Social Studies or Business Education" },
-      { requirementName: "Health", category: "Physical Welfare", requiredCredits: "1.0", divisionName: "Physical Education", notes: null },
-      { requirementName: "Driver Education", category: "Physical Welfare", requiredCredits: "1.0", divisionName: "Physical Education", notes: null },
-      { requirementName: "Required Electives", category: "Electives", requiredCredits: "2.0", divisionName: "English", notes: "May be fulfilled from any division" },
-      { requirementName: "Additional Credits and P.E.", category: "Physical Welfare", requiredCredits: "17.0", divisionName: "Physical Education", notes: "Includes P.E. and additional elective credits" },
+      { requirementName: "English", category: "English", requiredCredits: "8.0", divisionName: "Communication Arts", notes: null, matchingRule: { type: "code_prefix", prefix: "ENG" } },
+      { requirementName: "Mathematics", category: "Mathematics", requiredCredits: "6.0", divisionName: "Mathematics", notes: null, matchingRule: { type: "division" } },
+      { requirementName: "Biology", category: "Science", requiredCredits: "2.0", divisionName: "Science", notes: null, matchingRule: { type: "codes", codes: ["SCI111/SCI112", "SCI631/SCI632", "SCI63E1/SCI63E2", "SCI351/SCI352", "SCI521/SCI522", "SCI531/SCI532"] } },
+      { requirementName: "Physical Science", category: "Science", requiredCredits: "2.0", divisionName: "Science", notes: null, matchingRule: { type: "codes", codes: ["SCI211/SCI212", "SCI271/SCI272", "SCI401/SCI402", "SCI611/SCI612", "SCI61E1/SCI61E2", "SCI641/SCI642", "SCI651/SCI652", "SCI65E1/SCI65E2", "SCI661/SCI662", "SCI66E1/SCI66E2", "SCI671/SCI672", "SCI681/SCI682"] } },
+      { requirementName: "U.S. History", category: "Social Studies", requiredCredits: "2.0", divisionName: "Social Studies", notes: null, matchingRule: { type: "codes", codes: ["SOC321/SOC322", "SOC621/SOC622", "SOC691/SOC692", "ENG341/ENG342"] } },
+      { requirementName: "World History and Geography", category: "Social Studies", requiredCredits: "2.0", divisionName: "Social Studies", notes: null, matchingRule: { type: "codes", codes: ["SOC101/SOC102"] } },
+      { requirementName: "Government", category: "Social Studies", requiredCredits: "1.0", divisionName: "Social Studies", notes: null, matchingRule: { type: "codes", codes: ["SOC401", "SOC402", "SOC631", "SOC632", "SOC681", "SOC682"] } },
+      { requirementName: "Economics or Personal Finance", category: "Social Studies", requiredCredits: "1.0", divisionName: "Social Studies", notes: "Economics, AP Macro/Micro, or Personal Finance", matchingRule: { type: "codes", codes: ["SOC411/SOC412", "SOC641", "SOC642", "SOC651", "SOC652", "BUS301", "BUS302"] } },
+      { requirementName: "Health", category: "Physical Welfare", requiredCredits: "1.0", divisionName: "Physical Welfare", notes: null, matchingRule: { type: "codes", codes: ["PED201", "PED202"] } },
+      { requirementName: "Driver Education", category: "Physical Welfare", requiredCredits: "1.0", divisionName: "Applied Arts", notes: null, matchingRule: { type: "codes", codes: ["D/E231", "D/E232"] } },
+      { requirementName: "Required Electives", category: "Electives", requiredCredits: "2.0", divisionName: "Fine Arts", notes: "From: Applied Arts, Fine Arts, Multilingual Learning, or CSET", matchingRule: { type: "multi_division", divisionNames: ["Applied Arts", "Fine Arts", "Multilingual Learning", "Computer Science, Engineering and Technology"] } },
+      { requirementName: "Additional Credits and P.E.", category: "Physical Welfare", requiredCredits: "17.0", divisionName: "Physical Welfare", notes: "All remaining credits including P.E.", matchingRule: { type: "remainder" } },
     ];
 
     let gradReqsSeeded = 0;
@@ -263,6 +264,7 @@ async function seed() {
           requirementName: req.requirementName,
           requiredCredits: req.requiredCredits,
           eligibleCreditTypes: [req.category],
+          matchingRule: req.matchingRule ?? null,
           notes: req.notes,
           catalogVersionId: gradCatalogVersion.id,
         })
@@ -272,6 +274,7 @@ async function seed() {
             divisionId,
             requiredCredits: req.requiredCredits,
             eligibleCreditTypes: [req.category],
+            matchingRule: req.matchingRule ?? null,
             notes: req.notes,
           },
         });

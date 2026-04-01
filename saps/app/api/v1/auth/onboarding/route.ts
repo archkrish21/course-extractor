@@ -144,7 +144,6 @@ export async function POST(request: NextRequest) {
             courseId: courseInfo.id,
             academicYear: entry.academic_year,
             semester: entry.semester,
-            gradeType: "letter",
             finalGrade: entry.grade,
             creditEarned: courseInfo.creditValue,
           })

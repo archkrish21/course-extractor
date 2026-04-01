@@ -42,7 +42,16 @@ type PickerTarget = {
 export default function PlannerPage() {
   const { currentAccount } = useAccount();
   const [plans, setPlans] = useState<Plan[]>([]);
-  const [selectedPlanId, setSelectedPlanId] = useState<string | null>(null);
+  const [selectedPlanId, setSelectedPlanIdState] = useState<string | null>(null);
+
+  const setSelectedPlanId = useCallback((id: string | null) => {
+    setSelectedPlanIdState(id);
+    if (id) {
+      sessionStorage.setItem("planner:selectedPlanId", id);
+    } else {
+      sessionStorage.removeItem("planner:selectedPlanId");
+    }
+  }, []);
   const [courses, setCourses] = useState<PlanCourse[]>([]);
   const [violations, setViolations] = useState<Record<string, Violation[]>>({});
   const [loading, setLoading] = useState(true);
@@ -68,6 +77,24 @@ export default function PlannerPage() {
     courseCount: number;
   } | null>(null);
   const [clearing, setClearing] = useState(false);
+  const [showProgressPanel, setShowProgressPanel] = useState(false);
+  const [progressData, setProgressData] = useState<{
+    totalEarned: number;
+    totalPlanned: number;
+    totalRequired: number;
+    requirements: Array<{
+      name: string;
+      earnedCredits: number;
+      plannedCredits: number;
+      requiredCredits: number;
+      notes: string | null;
+      courses: Array<{ code: string; name: string; status: string }>;
+    }>;
+  } | null>(null);
+  const [progressLoading, setProgressLoading] = useState(false);
+  const [gapsExpanded, setGapsExpanded] = useState(true);
+  const [warningsExpanded, setWarningsExpanded] = useState(true);
+  const [coveredExpanded, setCoveredExpanded] = useState(false);
   const [showNewPlanModal, setShowNewPlanModal] = useState(false);
   const [newPlanName, setNewPlanName] = useState("");
   const [newPlanTemplateId, setNewPlanTemplateId] = useState<string | null>(null);
@@ -90,9 +117,14 @@ export default function PlannerPage() {
           const data = await res.json();
           const planList: Plan[] = data.plans ?? data.data ?? data ?? [];
           setPlans(planList);
-          // Select primary plan or first plan
+          // Restore from URL param or sessionStorage, else select primary plan or first plan
+          const urlPlanId = new URLSearchParams(window.location.search).get("planId")
+            || sessionStorage.getItem("planner:selectedPlanId");
+          const urlPlan = urlPlanId ? planList.find((p: Plan) => p.id === urlPlanId) : null;
           const primary = planList.find((p: Plan) => p.isPrimary);
-          setSelectedPlanId(primary?.id ?? planList[0]?.id ?? null);
+          const initialId = urlPlan?.id ?? primary?.id ?? planList[0]?.id ?? null;
+          setSelectedPlanIdState(initialId);
+          if (initialId) sessionStorage.setItem("planner:selectedPlanId", initialId);
         } else {
           setPlans([]);
         }
@@ -215,13 +247,43 @@ export default function PlannerPage() {
     }
   }, [plans]);
 
-  // Fetch plan data when plan selection changes
+  const fetchProgress = useCallback(async () => {
+    if (!selectedPlanId) return;
+    setProgressLoading(true);
+    try {
+      const res = await apiFetch(`/api/v1/requirements?planId=${selectedPlanId}`);
+      if (res.ok) {
+        const json = await res.json();
+        const d = json.data ?? json;
+        setProgressData({
+          totalEarned: d.totalEarned ?? 0,
+          totalPlanned: d.totalPlanned ?? 0,
+          totalRequired: d.totalRequired ?? 45,
+          requirements: d.requirements ?? [],
+        });
+      }
+    } catch {
+      // ignore
+    } finally {
+      setProgressLoading(false);
+    }
+  }, [selectedPlanId]);
+
+  const toggleProgressPanel = useCallback(() => {
+    setShowProgressPanel((prev) => {
+      if (!prev) fetchProgress();
+      return !prev;
+    });
+  }, [fetchProgress]);
+
+  // Fetch plan data and progress when plan selection changes
   useEffect(() => {
     if (selectedPlanId) {
       fetchPlanData(selectedPlanId);
+      fetchProgress();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedPlanId, fetchPlanData]);
+  }, [selectedPlanId, fetchPlanData, fetchProgress]);
 
   // Clear undo stack ONLY when the user switches to a different plan
   const prevPlanIdRef = useRef<string | null>(null);
@@ -801,6 +863,10 @@ export default function PlannerPage() {
     }
   }
   const totalViolations = apiViolationCount + planWarnings.length;
+  const gradReqGapCount = progressData
+    ? progressData.requirements.filter((r) => (r.earnedCredits ?? 0) + (r.plannedCredits ?? 0) < r.requiredCredits).length
+    : 0;
+  const hasIssues = totalViolations > 0 || gradReqGapCount > 0;
   // Credit per row: full-year courses are stored as 2 rows with creditValue=2.0 each,
   // so each row represents 1 credit (half the course). Semester courses are 1 row = 1 credit.
   const creditPerRow = (c: PlanCourse) => {
@@ -916,7 +982,7 @@ export default function PlannerPage() {
                 {plans.length > 1 ? (
                   <select
                     value={selectedPlanId ?? ""}
-                    onChange={(e) => setSelectedPlanId(e.target.value)}
+                    onChange={(e) => { setSelectedPlanId(e.target.value); setShowProgressPanel(false); setProgressData(null); }}
                     aria-label="Select a plan"
                     className="h-8 rounded-lg border border-border bg-background px-2 pr-7 text-sm font-medium text-foreground focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
                   >
@@ -1023,60 +1089,42 @@ export default function PlannerPage() {
                     Actual: {formatGPA(totalActualGPA.unweighted)} / {formatGPA(totalActualGPA.weighted)}
                   </span>
                 )}
-              {totalViolations > 0 && (() => {
-                // Collect all warning messages (API violations + local underload/overload)
-                const allMessages: string[] = [...planWarnings];
-                for (const [courseId, vList] of Object.entries(violations)) {
-                  const course = courses.find((c) => c.courseId === courseId);
-                  const prefix = course ? `${course.name}:` : "";
-                  for (const v of vList) {
-                    allMessages.push(`${prefix} ${v.message}`);
-                  }
-                }
-
-                return (
-                  <span className="relative group/planwarn flex items-center gap-0.5 text-xs text-warning cursor-default">
-                    <svg
-                      aria-hidden="true"
-                      className="h-3.5 w-3.5"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      strokeWidth={2}
-                      stroke="currentColor"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126ZM12 15.75h.007v.008H12v-.008Z"
-                      />
-                    </svg>
-                    {totalViolations} warning{totalViolations !== 1 ? "s" : ""}
-
-                    {/* Tooltip with all messages */}
-                    <span className="pointer-events-none absolute left-0 top-full z-50 mt-2 w-80 rounded-lg border border-warning/30 bg-card px-3 py-2 shadow-lg opacity-0 transition-opacity group-hover/planwarn:opacity-100">
-                      <span className="mb-1 block text-[10px] font-semibold uppercase tracking-wide text-warning">
-                        {totalViolations} Warning{totalViolations !== 1 ? "s" : ""}
-                      </span>
-                      {allMessages.slice(0, 10).map((msg, i) => (
-                        <span key={i} className="block text-[11px] leading-relaxed text-foreground">
-                          • {msg}
-                        </span>
-                      ))}
-                      {allMessages.length > 10 && (
-                        <span className="block text-[10px] text-muted-foreground mt-1">
-                          ...and {allMessages.length - 10} more
-                        </span>
-                      )}
-                    </span>
-                  </span>
-                );
-              })()}
+              <span className="text-border">|</span>
+              {!hasIssues ? (
+                <span className="flex items-center gap-1 text-xs text-success">
+                  <svg aria-hidden="true" className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75 11.25 15 15 9.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
+                  </svg>
+                  Valid
+                </span>
+              ) : (
+                <span className="flex items-center gap-1 text-xs text-destructive">
+                  <svg aria-hidden="true" className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="m9.75 9.75 4.5 4.5m0-4.5-4.5 4.5M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
+                  </svg>
+                  Issues found
+                </span>
+              )}
               </div>
             </div>
           )}
         </div>
 
         <div className="flex items-center gap-1.5">
+          {/* Validate progress */}
+          {selectedPlanId && (
+            <button
+              type="button"
+              onClick={toggleProgressPanel}
+              className={`min-h-[44px] min-w-[44px] flex items-center justify-center rounded-lg border bg-card hover:bg-muted hover:text-foreground focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring ${showProgressPanel ? "border-primary text-primary" : "border-border text-muted-foreground"}`}
+              title="Validation report"
+              aria-label="Validation report"
+            >
+              <svg aria-hidden="true" className="h-5 w-5" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75 11.25 15 15 9.75M21 12c0 1.268-.63 2.39-1.593 3.068a3.745 3.745 0 0 1-1.043 3.296 3.745 3.745 0 0 1-3.296 1.043A3.745 3.745 0 0 1 12 21c-1.268 0-2.39-.63-3.068-1.593a3.746 3.746 0 0 1-3.296-1.043 3.745 3.745 0 0 1-1.043-3.296A3.745 3.745 0 0 1 3 12c0-1.268.63-2.39 1.593-3.068a3.745 3.745 0 0 1 1.043-3.296 3.746 3.746 0 0 1 3.296-1.043A3.746 3.746 0 0 1 12 3c1.268 0 2.39.63 3.068 1.593a3.746 3.746 0 0 1 3.296 1.043 3.745 3.745 0 0 1 1.043 3.296A3.745 3.745 0 0 1 21 12Z" />
+              </svg>
+            </button>
+          )}
           {/* Print plan */}
           {selectedPlanId && (
             <button
@@ -1170,6 +1218,273 @@ export default function PlannerPage() {
             </svg>
           </button>
         </div>
+      )}
+
+      {/* Graduation Progress Panel */}
+      {showProgressPanel && selectedPlanId && (
+        <Card className="mb-4">
+          <CardContent>
+            {progressLoading ? (
+              <div className="animate-pulse space-y-2 py-2">
+                <div className="h-4 w-40 rounded bg-muted" />
+                <div className="h-3 w-full rounded-full bg-muted" />
+                <div className="h-3 w-48 rounded bg-muted" />
+              </div>
+            ) : progressData ? (
+              (() => {
+                const totalCovered = progressData.totalEarned + progressData.totalPlanned;
+                const overallEarnedPct = progressData.totalRequired > 0 ? Math.min(100, Math.round((progressData.totalEarned / progressData.totalRequired) * 100)) : 0;
+                const overallPlannedPct = progressData.totalRequired > 0 ? Math.min(100 - overallEarnedPct, Math.round((progressData.totalPlanned / progressData.totalRequired) * 100)) : 0;
+
+                const reqsWithStatus = progressData.requirements.map((req) => {
+                  const earned = req.earnedCredits ?? 0;
+                  const planned = req.plannedCredits ?? 0;
+                  const required = req.requiredCredits ?? 0;
+                  const covered = earned + planned;
+                  const status = earned >= required ? "met" as const : covered >= required ? "in_progress" as const : "gap" as const;
+                  const needed = Math.max(0, required - covered);
+                  const ePct = required > 0 ? Math.min(100, Math.round((earned / required) * 100)) : 0;
+                  const pPct = required > 0 ? Math.min(100 - ePct, Math.round((planned / required) * 100)) : 0;
+                  return { ...req, earned, planned, required, covered, status, needed, ePct, pPct };
+                });
+
+                const gaps = reqsWithStatus.filter((r) => r.status === "gap");
+                const met = reqsWithStatus.filter((r) => r.status !== "gap");
+                const metCount = reqsWithStatus.filter((r) => r.status === "met").length;
+                const totalReqs = reqsWithStatus.length;
+                const gapCount = gaps.length;
+
+                return (
+                  <div className="py-1">
+                    <h3 className="mb-3 font-semibold text-foreground">Validation Report</h3>
+
+                    {/* Summary stats */}
+                    <div className="mb-3 flex flex-wrap items-center gap-x-6 gap-y-2">
+                      <div>
+                        <p className="text-xs text-muted-foreground">Total Credits</p>
+                        <p className="text-lg font-bold text-foreground">
+                          {totalCovered}
+                          <span className="text-sm font-normal text-muted-foreground"> / {progressData.totalRequired}</span>
+                        </p>
+                      </div>
+                      <div>
+                        <p className="text-xs text-muted-foreground">Earned</p>
+                        <p className="text-lg font-bold text-success">{progressData.totalEarned}</p>
+                      </div>
+                      <div>
+                        <p className="text-xs text-muted-foreground">Planned</p>
+                        <p className="text-lg font-bold text-primary">{progressData.totalPlanned}</p>
+                      </div>
+                      <div>
+                        <p className="text-xs text-muted-foreground">Requirements Met</p>
+                        <p className="text-lg font-bold text-foreground">
+                          {metCount}
+                          <span className="text-sm font-normal text-muted-foreground"> / {totalReqs}</span>
+                        </p>
+                      </div>
+                      {gapCount > 0 && (
+                        <div>
+                          <p className="flex items-center gap-1 text-xs text-destructive">
+                            <svg aria-hidden="true" className="h-3 w-3" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126ZM12 15.75h.007v.008H12v-.008Z" />
+                            </svg>
+                            Gaps
+                          </p>
+                          <p className="text-lg font-bold text-destructive">{gapCount}</p>
+                        </div>
+                      )}
+                      {totalViolations > 0 && (
+                        <div>
+                          <p className="flex items-center gap-1 text-xs text-warning">
+                            <svg aria-hidden="true" className="h-3 w-3" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126ZM12 15.75h.007v.008H12v-.008Z" />
+                            </svg>
+                            Warnings
+                          </p>
+                          <p className="text-lg font-bold text-warning">{totalViolations}</p>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Overall progress bar */}
+                    <div className="flex h-3 w-full overflow-hidden rounded-full bg-muted">
+                      {overallEarnedPct > 0 && (
+                        <div className="h-full bg-success" style={{ width: `${overallEarnedPct}%` }} />
+                      )}
+                      {overallPlannedPct > 0 && (
+                        <div className="h-full bg-primary/50" style={{ width: `${overallPlannedPct}%` }} />
+                      )}
+                    </div>
+                    <div className="mt-1 mb-3 flex items-center justify-between text-[10px] text-muted-foreground">
+                      <div className="flex items-center gap-3">
+                        <span className="flex items-center gap-1">
+                          <span className="inline-block h-2 w-2 rounded-full bg-success" /> Earned
+                        </span>
+                        <span className="flex items-center gap-1">
+                          <span className="inline-block h-2 w-2 rounded-full bg-primary/50" /> Planned
+                        </span>
+                      </div>
+                      <span>{overallEarnedPct + overallPlannedPct}% covered</span>
+                    </div>
+
+                    {/* Gaps section — collapsible */}
+                    {gaps.length > 0 && (
+                      <div className="mb-4 rounded-lg border border-destructive/30 bg-destructive/5">
+                        <button
+                          type="button"
+                          onClick={() => setGapsExpanded((v) => !v)}
+                          className="flex w-full items-center justify-between p-3 text-left"
+                        >
+                          <span className="flex items-center gap-1.5 text-sm font-semibold text-destructive">
+                            <svg aria-hidden="true" className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126ZM12 15.75h.007v.008H12v-.008Z" />
+                            </svg>
+                            Graduation Requirement Gaps ({gaps.length})
+                          </span>
+                          <svg aria-hidden="true" className={`h-4 w-4 text-destructive transition-transform ${gapsExpanded ? "rotate-180" : ""}`} fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" />
+                          </svg>
+                        </button>
+                        {gapsExpanded && (
+                          <ul className="space-y-2.5 px-3 pb-3">
+                            {gaps.map((req) => (
+                              <li key={req.name}>
+                                <div className="flex items-center justify-between mb-0.5">
+                                  <span className="flex items-center gap-1.5 text-sm font-medium text-destructive">
+                                    <span className="text-xs">&#x2717;</span>
+                                    {req.name}
+                                  </span>
+                                  <span className="rounded bg-destructive/10 px-1.5 py-0.5 text-xs font-semibold text-destructive">
+                                    {req.needed} credit{req.needed !== 1 ? "s" : ""} needed
+                                  </span>
+                                </div>
+                                <div className="flex h-1.5 w-full overflow-hidden rounded-full bg-destructive/10">
+                                  {req.ePct > 0 && (
+                                    <div className="h-full bg-success" style={{ width: `${req.ePct}%` }} />
+                                  )}
+                                  {req.pPct > 0 && (
+                                    <div className="h-full bg-primary/50" style={{ width: `${req.pPct}%` }} />
+                                  )}
+                                </div>
+                                {req.notes && (
+                                  <p className="mt-0.5 text-[10px] text-muted-foreground">{req.notes}</p>
+                                )}
+                                {req.courses.length > 0 && (
+                                  <div className="mt-1 flex flex-wrap gap-1">
+                                    {req.courses.map((c) => (
+                                      <span
+                                        key={c.code}
+                                        className={`inline-flex items-center gap-0.5 rounded px-1.5 py-0.5 text-[10px] ${
+                                          c.status === "earned"
+                                            ? "bg-success/10 text-success"
+                                            : "bg-primary/10 text-primary"
+                                        }`}
+                                      >
+                                        <span className={`h-1 w-1 rounded-full ${c.status === "earned" ? "bg-success" : "bg-primary"}`} />
+                                        {c.code}
+                                      </span>
+                                    ))}
+                                  </div>
+                                )}
+                              </li>
+                            ))}
+                          </ul>
+                        )}
+                      </div>
+                    )}
+
+                    {/* Plan warnings section — collapsible */}
+                    {totalViolations > 0 && (() => {
+                      const allWarnings: string[] = [...planWarnings];
+                      for (const [courseId, vList] of Object.entries(violations)) {
+                        const course = courses.find((c) => c.courseId === courseId);
+                        const prefix = course ? `${course.code ?? course.name}:` : "";
+                        for (const v of vList) {
+                          allWarnings.push(`${prefix} ${v.message}`);
+                        }
+                      }
+                      return (
+                        <div className="mb-4 rounded-lg border border-warning/30 bg-warning/5">
+                          <button
+                            type="button"
+                            onClick={() => setWarningsExpanded((v) => !v)}
+                            className="flex w-full items-center justify-between p-3 text-left"
+                          >
+                            <span className="flex items-center gap-1.5 text-sm font-semibold text-warning">
+                              <svg aria-hidden="true" className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126ZM12 15.75h.007v.008H12v-.008Z" />
+                              </svg>
+                              Plan Warnings ({totalViolations})
+                            </span>
+                            <svg aria-hidden="true" className={`h-4 w-4 text-warning transition-transform ${warningsExpanded ? "rotate-180" : ""}`} fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" />
+                            </svg>
+                          </button>
+                          {warningsExpanded && (
+                            <ul className="space-y-1 px-3 pb-3">
+                              {allWarnings.map((msg, i) => (
+                                <li key={i} className="flex items-start gap-1.5 text-sm text-foreground">
+                                  <span className="mt-1.5 h-1 w-1 shrink-0 rounded-full bg-warning" />
+                                  {msg}
+                                </li>
+                              ))}
+                            </ul>
+                          )}
+                        </div>
+                      );
+                    })()}
+
+                    {/* Graduation Requirements — Covered — collapsible */}
+                    {met.length > 0 && (
+                      <div className="rounded-lg border border-border">
+                        <button
+                          type="button"
+                          onClick={() => setCoveredExpanded((v) => !v)}
+                          className="flex w-full items-center justify-between p-3 text-left"
+                        >
+                          <span className="text-sm font-semibold text-muted-foreground">
+                            Graduation Requirements — Covered ({met.length})
+                          </span>
+                          <svg aria-hidden="true" className={`h-4 w-4 text-muted-foreground transition-transform ${coveredExpanded ? "rotate-180" : ""}`} fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" />
+                          </svg>
+                        </button>
+                        {coveredExpanded && (
+                          <ul className="space-y-2 px-3 pb-3">
+                            {met.map((req) => (
+                              <li key={req.name}>
+                                <div className="flex items-center justify-between mb-0.5">
+                                  <span className="flex items-center gap-1.5 text-sm">
+                                    {req.status === "met" && <span className="text-success text-xs">&#x2713;</span>}
+                                    {req.status === "in_progress" && <span className="text-primary text-xs">&#x25D0;</span>}
+                                    <span className="text-foreground">{req.name}</span>
+                                  </span>
+                                  <span className="text-[10px] text-muted-foreground">
+                                    {req.covered}/{req.required}
+                                  </span>
+                                </div>
+                                <div className="flex h-1.5 w-full overflow-hidden rounded-full bg-muted">
+                                  {req.ePct > 0 && (
+                                    <div className="h-full bg-success" style={{ width: `${req.ePct}%` }} />
+                                  )}
+                                  {req.pPct > 0 && (
+                                    <div className="h-full bg-primary/50" style={{ width: `${req.pPct}%` }} />
+                                  )}
+                                </div>
+                              </li>
+                            ))}
+                          </ul>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                );
+              })()
+            ) : (
+              <p className="py-2 text-sm text-muted-foreground">Unable to load graduation progress.</p>
+            )}
+          </CardContent>
+        </Card>
       )}
 
       {/* Planner Grid */}

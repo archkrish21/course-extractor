@@ -23,7 +23,7 @@ Three distinct pillars, all powered by a foundational data engine:
 ┌─────────────────┐  ┌─────────────────┐  ┌─────────────────┐
 │ Planning Engine │  │  Tracking Engine │  │ Advisory Engine │
 │                 │  │                  │  │                 │
-│ 4-year planner  │  │ Grade tracker    │  │ AI suggestions  │
+│ 4-year planner  │  │ Transcript       │  │ AI suggestions  │
 │ Req. validator  │  │ GPA calculator   │  │ Career mapping  │
 │ Prereq. graph   │  │ Credit tracker   │  │ Alert system    │
 │ Plan comparison │  │ Dual credit log  │  │ Notifications   │
@@ -83,7 +83,7 @@ Stevenson uses a weighted GPA scale:
 
 > Confirmed: Stevenson uses A/B/C/D/F (no +/- variants). P (Pass) and I (Incomplete) are excluded from GPA calculation.
 
-Track both semester grades and final grades for mid-year visibility.
+> **Phase 2 update:** Stevenson uses a single final grade per semester (proficiency-based grading model). Midterm grades have been removed from the schema (`midterm_grade` and `grade_type` columns dropped from `grade_entries`). Grades live exclusively in `plan_courses.planned_grade`, set via the planner page. The Grades page has been renamed to **Transcript** (`/transcript`) — a read-only view showing completed courses from the primary plan with their grades, semester GPA, grade-level GPA, cumulative GPA, and credits earned. No editing on the transcript; all grade entry happens in the planner page.
 
 **GPA snapshots** are taken automatically at two points: (1) end of each semester when a student marks all grades as final, and (2) on-demand when the student requests a snapshot. These form the historical GPA trend chart on the dashboard.
 
@@ -424,15 +424,16 @@ If no action is taken within 6 months of graduation, show a dashboard banner: *"
 ┌─────────────────────────────────────────────────────────────────────┐
 │                         Frontend (Next.js)                          │
 │                                                                      │
-│  Auth / Onboarding  │  Dashboard   │  4-yr Planner  │  Grade Tracker│
-│  GPA Calc / What-If │  Req Checker │  AI Advisor    │  Notif Center │
-│  Plan Comparison    │  Course Search│  Prereq Graph  │  Plan Export  │
+│  Auth / Onboarding  │  Dashboard   │  4-yr Planner  │  Progress     │
+│  Transcript         │  Req Checker │  AI Advisor    │  Notif Center │
+│  GPA Calc / What-If │  Course Search│  Prereq Graph  │  Plan Export  │
+│  Plan Comparison    │              │                │               │
 └──────────────────────────────────┬──────────────────────────────────┘
                                    │ REST API (versioned: /api/v1/...)
 ┌──────────────────────────────────▼──────────────────────────────────┐
 │                  API Layer (Next.js API routes)                       │
 │                                                                      │
-│  /auth          /courses        /plans          /grades              │
+│  /auth          /courses        /plans          /transcript          │
 │  /requirements  /gpa            /suggestions    /alerts              │
 │  /notifications /ai             /users          /catalog-versions    │
 │  /export        /dual-credit    /subscriptions  /stripe              │
@@ -734,7 +735,7 @@ notes         TEXT,
 UNIQUE (plan_id, course_id, grade_level, semester)
 -- Allows retakes in different years but prevents duplicate entries within the same grade/semester.
 ```
-> `actual_grade` is NOT stored here — it lives in `grade_entries`. `plan_courses` is the forward-looking plan; `grade_entries` is the historical record.
+> **Phase 2 update:** `planned_grade` in `plan_courses` is now the authoritative grade source for both planned and completed courses. Grades are set via the planner page (status dropdown + grade dropdown). The `grade_entries` table is retained for future use but is not the primary source. The GPA API and Transcript page both read from `plan_courses` on the primary plan.
 
 > **Completed-course locking:** Once a `plan_courses` row transitions to `status = 'completed'` (during year-end transition), the API must reject any attempt to delete the row, change `course_id`, `grade_level`, or `semester`. Only `planned_grade` (for reference) and `notes` remain editable. This is enforced at the API layer — not by a DB constraint — because PostgreSQL does not support conditional mutability triggers without plpgsql triggers. Add an integration test asserting that a DELETE on a `completed` row returns `HTTP 409 Conflict`. To link them: JOIN `plan_courses → four_year_plans` (to get `student_id`), then match on `(student_id, course_id, academic_year, semester)`. This two-step join is intentional — it allows a student to retake a course in a different year without creating conflicting plan rows.
 
@@ -752,6 +753,9 @@ after_state   JSONB
 ```
 
 ### `grade_entries`
+
+> **Phase 2 update:** The `midterm_grade` and `grade_type` columns have been removed. Stevenson uses a single final grade per semester (proficiency-based grading model). The primary grade source is now `plan_courses.planned_grade`, set via the planner page. The `grade_entries` table is retained for future use (e.g., onboarding bulk import, historical records) but is **not** the authoritative source for GPA calculation or transcript display.
+
 ```sql
 id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
 student_id      UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
@@ -760,9 +764,7 @@ course_id       UUID NOT NULL REFERENCES courses(id) ON DELETE RESTRICT,
                   -- RESTRICT: deleting a catalog course that has grade records must be an explicit migration, not a cascade
 academic_year   TEXT NOT NULL,               -- e.g., "2024-25"
 semester        SMALLINT NOT NULL CHECK (semester IN (1, 2)),
-grade_type      TEXT DEFAULT 'letter' CHECK (grade_type IN ('letter','pass_fail','numeric')),
-midterm_grade   TEXT CHECK (midterm_grade IN ('A', 'B', 'C', 'D', 'F', 'P', 'I') OR grade_type != 'letter'),
-final_grade     TEXT CHECK (final_grade IN ('A', 'B', 'C', 'D', 'F', 'P', 'I') OR grade_type != 'letter'),
+final_grade     TEXT CHECK (final_grade IN ('A', 'B', 'C', 'D', 'F', 'P', 'I')),
 credit_earned   DECIMAL(3,1),
 -- Weight is derived from courses.credit_type at GPA calculation time — not stored on grade_entries
 -- to avoid denormalization drift if a course's credit_type is corrected.
@@ -770,7 +772,6 @@ created_at      TIMESTAMPTZ DEFAULT NOW(),
 updated_at      TIMESTAMPTZ DEFAULT NOW(),
 UNIQUE (student_id, course_id, academic_year, semester)
 ```
-> `grade_type` distinguishes letter grades (standard GPA calculation), pass/fail (excluded from GPA), and numeric grades (some vocational courses may use percentage scores). CHECK constraints enforce valid letter grade values.
 
 > **Incomplete grade handling:** Grades marked as `I` (Incomplete) are excluded from GPA calculation. An `incomplete_grade` alert fires when an Incomplete is older than 30 days. Incompletes block year-end transition for the affected course.
 
@@ -1251,16 +1252,26 @@ When validating a student's plan, the engine:
 
 Defines the credit targets per subject area that a student must meet to graduate.
 
+> **Phase 2 update:** A `matching_rule` JSONB column has been added. Each of Stevenson's 12 graduation requirements has a specific matching rule that determines how courses are matched to that requirement. The requirements API uses matching rules instead of simple `division_id` matching.
+
 ```sql
 id               UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-division_id      UUID NOT NULL REFERENCES divisions(id) ON DELETE RESTRICT,
+division_id      UUID REFERENCES divisions(id) ON DELETE RESTRICT,  -- nullable for multi_division and remainder rules
 requirement_name TEXT NOT NULL,          -- e.g., "English", "Mathematics", "Fine Arts"
 required_credits DECIMAL(3,1) NOT NULL,
 eligible_credit_types TEXT[],            -- which credit_type values count, e.g., {'CP','Honors','AP'}
+matching_rule    JSONB,                  -- see matching rule types below
 notes            TEXT,
 catalog_version_id UUID NOT NULL REFERENCES course_catalog_versions(id) ON DELETE RESTRICT,
 UNIQUE (catalog_version_id, requirement_name)
 ```
+
+**Matching rule types (5 types):**
+- `{ "type": "code_prefix", "prefix": "ENG" }` — matches courses whose code starts with the prefix (e.g., all ENG courses for English requirement)
+- `{ "type": "codes", "codes": ["ART101", "ART102"] }` — matches specific course codes
+- `{ "type": "division", "division_id": "uuid" }` — matches all courses in a division
+- `{ "type": "multi_division", "division_ids": ["uuid1", "uuid2"] }` — matches courses in any of the listed divisions
+- `{ "type": "remainder" }` — catch-all: matches any course not claimed by another requirement (used for "Additional Credits and P.E.")
 
 ### JSON vs Database Strategy
 
@@ -1292,13 +1303,14 @@ human review of diff → approve → DB reload → insert course_catalog_version
 | Screen | Primary User | Purpose |
 |---|---|---|
 | Onboarding wizard | Student | Enter grade level, past course history (bulk), grades, and goals |
-| Dashboard | Student / Parent | GPA trend, graduation progress ring, active alerts, dual credit tally |
+| Dashboard | Student / Parent | Uniform 2x2 grid layout (`md:grid-cols-2`): Active Plan card (top-left via `md:-order-1`, credits with `earned + planned = total / required` format, projected + actual GPA, validation status), Graduation Progress card (compact `earned+planned/required` format per requirement, no per-requirement bars, "View Progress" button linking to `/progress`), GPA Summary card (reads from `/api/v1/gpa` with `data` unwrapping), Quick Actions (Browse Courses, Open Planner, Print Plan, View Progress, View Transcript) |
+| Progress | Student / Parent | Dedicated graduation requirements progress page (`/progress`): summary card (Total Credits, Earned, Planned, Requirements Met, Gaps with warning icon/red), overall segmented progress bar (earned/planned/remaining), per-requirement cards with status badge, segmented progress bar, notes, and color-coded course chips (earned vs planned), gap message per requirement |
 | 4-Year Planner grid | Student | Click-to-add courses in a grade × semester grid with inline validation |
 | Prerequisite graph | Student | Visual DAG showing prereq chains and what each course unlocks |
 | Plan Comparison | Student | Side-by-side diff of Plan A vs Plan B (GPA, requirements, course load) |
 | What-If Simulator | Student | Try course swaps; see GPA/requirement impact without saving |
 | Course Browser | Student / Parent | Search, filter by division/credit type/grade; view prereqs and dual credit info |
-| Grade Tracker | Student | Enter midterm and final grades per semester; see running credit tally |
+| Transcript | Student / Parent | Read-only view of completed courses from primary plan with grades, semester GPA, grade-level GPA, cumulative GPA, credits earned. All grade entry happens in the planner page. |
 | GPA Calculator | Student | Live unweighted + weighted GPA with projected future GPA chart |
 | Requirement Checklist | Student / Parent | Visual progress against graduation requirements per subject area |
 | Dual Credit Summary | Student / Parent | Planned and earned college credits, partner colleges, transferability notes |
@@ -1360,12 +1372,20 @@ Phase 5 includes a formal WCAG audit and remediation of any gaps, but the core p
 > **User testing checkpoint:** Before starting Phase 2, run the Phase 1b build with 3-5 real students and collect feedback. Plan the Phase 2 scope based on what they actually use.
 
 ### Phase 2 — Grade Tracking + GPA + Subscription Gating (Weeks 7-10)
-- Grade entry per course per semester (midterm + final)
+- **Transcript page** (`/transcript`): read-only view of completed courses from primary plan with grades, semester GPA, grade-level GPA, cumulative GPA, credits earned. Replaces previously planned "Grade Tracker" — all grade entry happens in the planner page.
+- **GPA API** (`GET /api/v1/gpa`): calculates cumulative and projected GPA from `plan_courses` on primary plan (not `grade_entries`). Returns plan totals (`totalCredits`, `earnedCredits`, `totalCourses`) and `hasGrades` flag.
+- **Graduation requirements with matching rules**: `matching_rule` JSONB column on `graduation_requirements` table. 5 rule types: `code_prefix`, `codes`, `division`, `multi_division`, `remainder`. Requirements API rewritten to use matching rules instead of simple `division_id` matching.
+- **Progress page** (`/progress`): dedicated graduation requirements progress page with summary card (Total Credits, Earned, Planned, Requirements Met, Gaps with warning icon/red), overall segmented progress bar (earned/planned/remaining), per-requirement cards with status badge, segmented progress bar, notes, and color-coded course chips (earned vs planned), gap message per requirement.
+- **Dashboard**: uniform 2x2 grid layout (`md:grid-cols-2`). Active Plan card at top-left (`md:-order-1`). Graduation Progress card simplified to compact `earned+planned/required` format (per-requirement bars removed), "View Progress" button links to `/progress`. Quick Actions reordered: Browse Courses, Open Planner, Print Plan, View Progress, View Transcript. Credit display: `earned + planned = total / required`. New full-width **Validation Report card** below the 2x2 grid: header with "Validation Report" title and status badge ("Valid" green / "Issues found" red). When issues exist, shows Graduation Requirement Gaps (red, each unmet requirement with credits needed) and Plan Warnings (amber, prerequisite violations and underload/overload). When valid, green success message. Data from requirements API and plan validation API for primary/active plan.
+- **Navigation**: "Progress" nav item added between Planner and Transcript. Menu order: Dashboard, Courses, Planner, Progress, Transcript, Settings.
+- **Planner validation report panel**: toggle button (check-badge icon) in toolbar. Collapsible panel with 3 sections: Graduation Requirement Gaps (red, expanded by default), Plan Warnings (amber, expanded by default), Graduation Requirements Covered (collapsed by default). Summary stats: Total Credits, Earned, Planned, Requirements Met, Gaps, Warnings. Works with any selected plan.
+- **Planner validation indicator**: plan bar shows "Valid" (green check) or "Issues found" (red X) based on both plan warnings and graduation requirement gaps. Progress data auto-fetched on plan load.
+- **Plan selection persistence**: selected plan in planner persisted via `sessionStorage`.
+- **Requirements API enhancement**: `/api/v1/requirements` accepts optional `?planId=` query parameter to validate any plan, not just the primary plan.
 - GPA calculator (unweighted + weighted)
 - Projected GPA based on planned courses + estimated grades
 - What-if GPA simulator (read-only mode)
 - GPA trend chart from snapshots
-- Graduation requirement progress tracker (visual checklist per subject area)
 - Credit accumulation display in the planner grid (running tally per subject area)
 - Year-end transition workflow + screen
 - **Stripe integration:** checkout, billing portal, webhook handler (`customer.subscription.updated`, `invoice.payment_failed`, `customer.subscription.deleted`)
@@ -1622,4 +1642,4 @@ The PDF covers school-level data only. Additional sources needed:
 
 ---
 
-*Last updated: 2026-03-15 (rev 6)*
+*Last updated: 2026-04-01 (rev 7)*

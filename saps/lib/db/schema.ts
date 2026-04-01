@@ -435,6 +435,7 @@ export const graduationRequirements = pgTable(
       scale: 1,
     }).notNull(),
     eligibleCreditTypes: text("eligible_credit_types").array(),
+    matchingRule: jsonb("matching_rule"),
     notes: text("notes"),
     catalogVersionId: uuid("catalog_version_id")
       .notNull()
@@ -649,12 +650,6 @@ export const gradeEntries = pgTable(
       .references(() => courses.id, { onDelete: "restrict" }),
     academicYear: text("academic_year").notNull(),
     semester: smallint("semester").notNull(),
-    gradeType: text("grade_type", {
-      enum: ["letter", "pass_fail", "numeric"],
-    }).default("letter"),
-    midtermGrade: text("midterm_grade", {
-      enum: ["A", "B", "C", "D", "F", "P", "I"],
-    }),
     finalGrade: text("final_grade", {
       enum: ["A", "B", "C", "D", "F", "P", "I"],
     }),

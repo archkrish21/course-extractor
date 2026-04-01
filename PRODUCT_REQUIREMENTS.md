@@ -284,7 +284,7 @@ Account Switcher (parent with multiple children):
 | **4** | No additional parent features (AI advisory is student-only) |
 | **5** | Dedicated parent dashboard. Co-edit toggle for plan editing rights. |
 
-> **Note on parent experience gap (Phases 2–4):** In Phases 2–4, linked parents access their child's data through the same pages students use (planner grid, grade tracker, etc.) — there is no dedicated parent dashboard until Phase 5. This is intentional: building a separate parent UI before the core student experience is mature would add scope risk. The Phase 2 parent experience is functional but not optimized for parents.
+> **Note on parent experience gap (Phases 2–4):** In Phases 2–4, linked parents access their child's data through the same pages students use (planner grid, transcript, etc.) — there is no dedicated parent dashboard until Phase 5. This is intentional: building a separate parent UI before the core student experience is mature would add scope risk. The Phase 2 parent experience is functional but not optimized for parents.
 
 ### Plan Management
 
@@ -304,9 +304,11 @@ Account Switcher (parent with multiple children):
 
 ### Grade Tracking & GPA
 
+> **Phase 2 update:** Grades are entered via the planner page (status dropdown + grade dropdown on each course card) and stored in `plan_courses.planned_grade`. The Transcript page (`/transcript`) is a read-only view showing completed courses from the primary plan with their grades, semester GPA, grade-level GPA, and cumulative GPA. No editing on the transcript — all grade changes happen via the planner. The GPA API reads from `plan_courses` on the primary plan, not from `grade_entries`.
+
 | ID | Story | Priority | Phase |
 |---|---|---|---|
-| US-20 | As a student, I want to enter midterm and final grades for each course each semester so my GPA is always up to date. | Must | 2 |
+| US-20 | As a student, I want to enter grades for each course via the planner page (status dropdown + grade dropdown) so my GPA is always up to date. Midterm grades are not tracked — Stevenson uses a single final grade per semester. | Must | 2 |
 | US-21 | As a student, I want to see my cumulative GPA (completed courses only), projected GPA (including planned future courses with estimated grades), and weighted GPA side by side so I understand where I stand now and where I'm headed. | Must | 2 |
 | US-22 | As a student, I want to use a what-if GPA simulator to try course swaps (e.g., "replace AP Chemistry with Honors Chemistry") and see the GPA impact without saving any changes so I can explore safely. | Should | 2 |
 | US-23 | As a student, I want to see a GPA trend chart over time (from semester snapshots) so I can show improvement to colleges. | Should | 2 |
@@ -314,6 +316,8 @@ Account Switcher (parent with multiple children):
 | US-25 | As a student, I want to store my SAT, ACT, and AP exam scores in my profile so the AI advisor can factor them into its recommendations. | Could | 4 |
 
 ### Graduation Requirements
+
+> **Phase 2 update:** Each graduation requirement has a `matching_rule` (JSONB) that specifies how courses are matched to that requirement. Five rule types: `code_prefix` (e.g., all ENG courses), `codes` (specific course codes), `division` (all courses in a division), `multi_division` (courses across multiple divisions), and `remainder` (catch-all for courses not claimed by other requirements — used for "Additional Credits and P.E."). Each of Stevenson's 12 graduation requirements has a specific matching rule derived from the source PDF. The requirements API uses matching rules instead of simple division_id matching.
 
 | ID | Story | Priority | Phase |
 |---|---|---|---|
@@ -471,14 +475,16 @@ Templates are tied to a specific `catalog_version_id`. During annual catalog upd
 | F-PL-M02 | **Mobile planner layout:** The 4×2 grid (grade × semester) collapses to a single-column accordion on mobile. Each grade year is a collapsible section showing Semester 1 and Semester 2 stacked vertically. | Must |
 | F-PL-M03 | **Touch targets:** All interactive elements (buttons, course cards, dropdowns) have a minimum 44×44px touch target per WCAG 2.5.5. | Must |
 | F-PL-M04 | **Course browser on mobile:** Full-screen slide-over panel (not a modal overlay) with sticky search bar and scrollable results. | Must |
-| F-PL-M05 | **Dashboard on mobile:** Single-column stack: GPA summary card → Graduation progress → Active alerts → Quick actions. No side-by-side panels. | Must |
+| F-PL-M05 | **Dashboard on mobile:** Single-column stack of all 4 cards plus full-width Validation Report card. Desktop uses uniform 2x2 grid (`md:grid-cols-2`) with Active Plan card at top-left, Validation Report card spans full width below the grid. No side-by-side panels on mobile. | Must |
 | F-PL-M06 | **Tablet planner layout:** 2-column layout (Semester 1 | Semester 2) with grade years stacked vertically. Drag-and-drop (Phase 3) works on tablet but is not required on mobile. | Should |
 
 > **Design principle:** Mobile is the student's primary device during registration season. The planner must be usable (not just viewable) on a phone. Desktop is the power-user experience; mobile is the "check my plan, add a course, review an alert" experience.
 
-> **Phase 1a implementation note:** The top navigation bar uses a horizontal layout with logo, nav items (Dashboard, Planner, Grades, Courses, Settings), and user avatar. Mobile uses a hamburger dropdown menu. The sidebar layout described earlier was replaced during implementation for better screen real estate.
+> **Phase 1a implementation note:** The top navigation bar uses a horizontal layout with logo, nav items (Dashboard, Courses, Planner, Progress, Transcript, Settings), and user avatar. Mobile uses a hamburger dropdown menu. The sidebar layout described earlier was replaced during implementation for better screen real estate. "Progress" was added in Phase 2 between Planner and Transcript.
 
 > **Phase 1b implementation note:** Planner grid, course picker, prerequisite validation (AND/OR groups), 6 plan templates, per-semester status/grade editing, GPA display (projected + actual weighted), plan creation/deletion/reset-to-template, credit display per semester and grade, and semester course limits (5 min, 7 max, 8 with early bird) are all functional. Full-year courses are stored as two `plan_courses` rows (one per semester) with independent status and grade per semester. Course status transitions (planned → enrolled → completed/dropped) are supported per semester via dropdown on each course card. Course detail modal accessible from planner grid and course picker (clicking any course card). Template-based plans support core course deletion warnings and Reset to Template. Redis performance optimized (short-circuits when not configured). Course loader uses UPSERT to preserve IDs. Set Primary UI (student-only, star icon button). Primary = active status merge (setting primary auto-activates, old primary demotes to draft). Multi-select credit type/grade level filters with comma-separated API support. Semester partner exclusion in course picker (same-name courses hidden). Multiple grade expansion (no forced single-accordion). E2E global teardown for test data cleanup. Add to Plan from course detail modal on /courses page (plan/grade/semester selection). Auth guard on all app pages. Improved duplicate validation (cross-grade, semester partners). Bulk status and grade update per semester. Credit calculation corrected for full-year courses. Plan print view at /planner/print — opens in new tab with clean print-optimized landscape layout. Shows student info, plan name, grade tables with semester columns, course status/grades, credits, GPA summary, and legend footer. Auto-triggers browser print dialog. Screen controls (Back to Planner, Print/Save as PDF) hidden when printing.
+
+> **Phase 2 implementation note (Dashboard + Progress + Planner):** Dashboard layout changed to uniform 2x2 grid (`md:grid-cols-2`) with Active Plan card at top-left (`md:-order-1`). Graduation Progress card simplified to compact `earned+planned/required` format (per-requirement bars removed) with "View Progress" button linking to `/progress`. Quick Actions reordered: Browse Courses, Open Planner, Print Plan, View Progress, View Transcript. Credit display shows `earned + planned = total / required`. New full-width **Validation Report card** below the 2x2 grid: header shows "Validation Report" with a status badge — "Valid" (green) when no issues, "Issues found" (red) when there are gaps or warnings. When issues exist, displays two categorized sections: Graduation Requirement Gaps (red, lists unmet requirements with credits needed) and Plan Warnings (amber, lists prerequisite violations and underload/overload issues). When valid, shows green success message: "All graduation requirements are covered and no plan warnings found." Data sourced from requirements API and plan validation API for the primary/active plan. New Progress page (`/progress`) provides full graduation requirements detail: summary card (Total Credits, Earned, Planned, Requirements Met, Gaps with warning icon/red), overall segmented progress bar, per-requirement cards with status badge, progress bar, notes, and color-coded course chips. New "Progress" nav menu item between Planner and Transcript. Planner: validation report panel (toggle with check-badge icon) with 3 collapsible sections — Graduation Requirement Gaps (red, default expanded), Plan Warnings (amber, default expanded), Graduation Requirements Covered (default collapsed) — plus summary stats. Plan bar shows validation status: "Valid" (green check) or "Issues found" (red X) considering both warnings and graduation gaps. Plan selection persisted via `sessionStorage`.
 
 **Course Status Transitions:**
 - `planned` → `enrolled`: Manual action by student (or automatically when the year-end wizard advances to a new year and next year's planned courses become current-year).
@@ -488,12 +494,49 @@ Templates are tied to a specific `catalog_version_id`. During annual catalog upd
 - `dropped` courses are excluded from GPA but retained in plan history.
 - `completed` is a terminal state — cannot be changed (edit the grade, not the status).
 
-### 5.3 Grade Tracking
+### 5.2a Progress Page
 
 | Req | Description | Priority |
 |---|---|---|
-| F-GR-01 | Enter midterm grade and final grade per course per semester. | Must |
-| F-GR-02 | Support three grade types: letter grade (standard GPA), pass/fail (excluded from GPA), numeric (vocational courses). | Must |
+| F-PR-01 | Dedicated graduation requirements progress page at `/progress`. | Must |
+| F-PR-02 | Summary card showing: Total Credits, Earned Credits, Planned Credits, Requirements Met count, Gaps count (with warning icon, red highlight). | Must |
+| F-PR-03 | Overall segmented progress bar: green = earned, blue = planned, gray = remaining. | Must |
+| F-PR-04 | Per-requirement cards with: status badge (Met/In Progress/Gap), segmented progress bar, notes, and course chips color-coded by earned vs planned. | Must |
+| F-PR-05 | Gap message per requirement showing credits still needed. | Must |
+| F-PR-06 | "View Progress" button on the Dashboard Graduation Progress card links to `/progress`. | Must |
+
+### 5.2a2 Dashboard Validation Report Card
+
+| Req | Description | Priority |
+|---|---|---|
+| F-DVR-01 | Full-width Validation Report card below the 2x2 grid on the Dashboard page. | Must |
+| F-DVR-02 | Card header shows "Validation Report" with a status badge: "Valid" (green) when no issues, "Issues found" (red) when there are gaps or warnings. | Must |
+| F-DVR-03 | When issues exist, two categorized sections: **Graduation Requirement Gaps** (red) listing each unmet requirement with credits needed, and **Plan Warnings** (amber) listing prerequisite violations and underload/overload issues. | Must |
+| F-DVR-04 | When no issues, shows green success message: "All graduation requirements are covered and no plan warnings found." | Must |
+| F-DVR-05 | Uses data from the requirements API and plan validation API for the primary/active plan. | Must |
+
+### 5.2b Planner Validation Report
+
+| Req | Description | Priority |
+|---|---|---|
+| F-VR-01 | Toggle button with check-badge icon in planner toolbar to show/hide validation report panel. | Must |
+| F-VR-02 | Collapsible panel with 3 sections: Graduation Requirement Gaps (red, expanded by default), Plan Warnings (amber, expanded by default), Graduation Requirements Covered (collapsed by default). | Must |
+| F-VR-03 | Graduation Requirement Gaps section shows unmet requirements with credits needed badge, progress bars, notes, and course chips. | Must |
+| F-VR-04 | Plan Warnings section shows prerequisite violations and underload/overload warnings. | Must |
+| F-VR-05 | Summary stats in the panel: Total Credits, Earned, Planned, Requirements Met, Gaps, Warnings. | Must |
+| F-VR-06 | Validation report works with any selected plan, not just the primary plan. | Must |
+| F-VR-07 | Plan bar displays validation status: "Valid" (green check) or "Issues found" (red X), considering both plan warnings and graduation requirement gaps. | Must |
+| F-VR-08 | Progress data auto-fetched when a plan is loaded. | Must |
+| F-VR-09 | Selected plan in planner persisted via `sessionStorage` so navigating away and back retains the selection. | Must |
+
+### 5.3 Grade Tracking
+
+> **Phase 2 update:** Grade entry happens exclusively in the planner page via status dropdown + grade dropdown on each course card. Grades are stored in `plan_courses.planned_grade`. Midterm grades have been removed — Stevenson uses a single final grade per semester (proficiency-based grading model). The Transcript page (`/transcript`) is a read-only view showing completed courses from the primary plan with their grades, semester GPA, grade-level GPA, cumulative GPA, and credits earned.
+
+| Req | Description | Priority |
+|---|---|---|
+| F-GR-01 | Enter a single final grade per course per semester via the planner page. Midterm grades are not tracked (Stevenson proficiency-based model). | Must |
+| F-GR-02 | Support letter grades (A/B/C/D/F for standard GPA), Pass/Fail (excluded from GPA), and Incomplete (excluded from GPA). | Must |
 | F-GR-03 | Grade corrections allowed at any time. If a correction would change a past GPA snapshot by more than 0.05 points, display a notice: "Your historical GPA chart has been updated." | Must |
 | F-GR-04 | Automatic GPA snapshot at semester-end when all grades are marked final. Manual snapshot available on demand. | Must |
 | F-GR-05 | "Data entered by you" badge on all self-reported grades — never implied to be official school records. | Must |
@@ -558,7 +601,7 @@ Templates are tied to a specific `catalog_version_id`. During annual catalog upd
 | F-CB-18 | Course detail: "What This Unlocks" section also merges semester pairs. | Must |
 | F-CB-19 | Course detail: Division and Department names are clickable (sets the corresponding filter and closes the modal). | Should |
 | F-CB-20 | Course detail: Prerequisite and unlock course codes are clickable (navigates to that course's detail). | Should |
-| F-CB-21 | Navigation uses a horizontal top bar instead of a sidebar. | Must |
+| F-CB-21 | Navigation uses a horizontal top bar instead of a sidebar. Nav order: Dashboard, Courses, Planner, Progress, Transcript, Settings. | Must |
 
 ### 5.7 Prerequisite Visualization
 

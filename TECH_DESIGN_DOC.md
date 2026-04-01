@@ -3,7 +3,7 @@
 
 **Audience:** Engineering team
 **Status:** Phase 1b Complete — Phase 2 development next.
-**Last updated:** 2026-03-15
+**Last updated:** 2026-04-01
 
 ---
 
@@ -64,14 +64,15 @@ User → Next.js frontend → API routes → PostgreSQL (Supabase + RLS)
 ```
 ┌─────────────────────────────────────────────────────────────────────┐
 │                         Frontend (Next.js)                          │
-│  Auth / Onboarding  │  Dashboard   │  4-yr Planner  │ Grade Tracker │
-│  GPA Calc / What-If │  Req Checker │  AI Advisor    │ Notif Center  │
-│  Plan Comparison    │ Course Search│  Prereq Graph  │ Plan Export   │
+│  Auth / Onboarding  │  Dashboard   │  4-yr Planner  │  Progress     │
+│  Transcript         │  Req Checker │  AI Advisor    │ Notif Center  │
+│  GPA Calc / What-If │ Course Search│  Prereq Graph  │ Plan Export   │
+│  Plan Comparison    │              │                │               │
 └──────────────────────────────────┬──────────────────────────────────┘
                                    │ REST /api/v1/...
 ┌──────────────────────────────────▼──────────────────────────────────┐
 │                  API Layer (Next.js API routes)                      │
-│  /auth          /courses        /plans          /grades              │
+│  /auth          /courses        /plans          /transcript          │
 │  /requirements  /gpa            /suggestions    /alerts              │
 │  /notifications /ai             /users          /catalog-versions    │
 │  /export        /dual-credit    /subscriptions  /stripe              │
@@ -147,7 +148,8 @@ User → Next.js frontend → API routes → PostgreSQL (Supabase + RLS)
 │   │   └── signup/
 │   ├── (app)/                  # authenticated group
 │   │   ├── dashboard/
-│   │   └── courses/
+│   │   ├── courses/
+│   │   └── progress/           # graduation requirements progress page
 │   └── api/v1/                 # API routes
 │       ├── auth/
 │       ├── courses/
@@ -717,6 +719,8 @@ CREATE INDEX idx_plan_history_plan_id_at ON plan_history (plan_id, changed_at DE
 
 ### Table: `grade_entries`
 
+> **Phase 2 update:** The `midterm_grade` and `grade_type` columns have been removed. Stevenson uses a single final grade per semester (proficiency-based grading model) — there is no midterm grade. The primary grade source is now `plan_courses.planned_grade`, set via the planner page. The `grade_entries` table is retained for future use (e.g., onboarding bulk import, historical records) but is **not** the authoritative source for GPA calculation or transcript display.
+
 ```sql
 CREATE TABLE grade_entries (
   id            UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -725,13 +729,7 @@ CREATE TABLE grade_entries (
   course_id     UUID NOT NULL REFERENCES courses(id) ON DELETE RESTRICT,
   academic_year TEXT NOT NULL,
   semester      SMALLINT NOT NULL CHECK (semester IN (1, 2)),
-  grade_type    TEXT DEFAULT 'letter' CHECK (grade_type IN ('letter','pass_fail','numeric')),
-  midterm_grade TEXT CHECK (midterm_grade IN ('A', 'B', 'C', 'D', 'F', 'P', 'I')
-                  OR grade_type != 'letter'
-                ),
-  final_grade   TEXT CHECK (final_grade IN ('A', 'B', 'C', 'D', 'F', 'P', 'I')
-                  OR grade_type != 'letter'
-                ),
+  final_grade   TEXT CHECK (final_grade IN ('A', 'B', 'C', 'D', 'F', 'P', 'I')),
   credit_earned DECIMAL(3,1),
   -- Note: is_weighted is NOT stored here — weight is derived from the course's credit_type
   -- at GPA calculation time via the courses table join. Storing it here would create
@@ -982,14 +980,23 @@ CREATE TABLE course_prerequisites (
 
 CREATE TABLE graduation_requirements (
   id                   UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  division_id          UUID NOT NULL REFERENCES divisions(id) ON DELETE RESTRICT,
+  division_id          UUID REFERENCES divisions(id) ON DELETE RESTRICT,  -- nullable for multi_division and remainder rules
   requirement_name     TEXT NOT NULL,
   required_credits     DECIMAL(3,1) NOT NULL,
   eligible_credit_types TEXT[],
+  matching_rule        JSONB,  -- see Phase 2 matching rule types below
   notes                TEXT,
   catalog_version_id   UUID NOT NULL REFERENCES course_catalog_versions(id) ON DELETE RESTRICT,
   UNIQUE (catalog_version_id, requirement_name)
 );
+-- Phase 2 matching_rule types:
+--   { "type": "code_prefix", "prefix": "ENG" }           — matches courses whose code starts with prefix (e.g., all ENG courses)
+--   { "type": "codes", "codes": ["ART101", "ART102"] }   — matches specific course codes
+--   { "type": "division", "division_id": "uuid" }        — matches all courses in a division
+--   { "type": "multi_division", "division_ids": ["uuid1", "uuid2"] } — matches courses in any of the listed divisions
+--   { "type": "remainder" }                               — catch-all: matches any course not claimed by another requirement (used for "Additional Credits and P.E.")
+-- Each of the 12 Stevenson graduation requirements has a specific matching rule based on the source PDF.
+-- The requirements API uses matching rules instead of simple division_id matching.
 
 CREATE TABLE career_paths (
   id               UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -1162,9 +1169,12 @@ All routes: `/api/v1/...`. Version from day one.
 | GET | `/api/v1/gpa` | student | Compute live GPA |
 | POST | `/api/v1/gpa/snapshot` | student | Take manual GPA snapshot |
 | POST | `/api/v1/gpa/what-if` | student (Plus+) | What-if GPA simulation (read-only); body: `{ "swaps": [{ "remove_course_id": "...", "add_course_id": "...", "planned_grade": "B+" }] }` |
-| GET | `/api/v1/grades` | student | Grade entries |
-| POST | `/api/v1/grades` | student | Enter/update grade |
-| GET | `/api/v1/requirements` | student | Graduation requirement progress |
+| GET | `/api/v1/transcript` | student | Read-only transcript: completed courses from primary plan with grades, semester GPA, grade-level GPA, cumulative GPA, credits earned | Phase 2 |
+| POST | `/api/v1/transcript` | student | Bulk upsert grade entries (for onboarding import) | Phase 2 |
+| GET | `/api/v1/gpa` | student | Live GPA from `plan_courses` on primary plan: cumulative (completed only), projected (all graded), plan totals (`totalCredits`, `earnedCredits`, `totalCourses`), `hasGrades` flag | Phase 2 |
+| POST | `/api/v1/gpa/snapshots` | student | Take/list GPA snapshot history | Phase 2 |
+| POST | `/api/v1/gpa/what-if` | student (Plus+) | What-if GPA simulation (read-only) | Phase 2 |
+| GET | `/api/v1/requirements` | student | Graduation progress with matching rules (code_prefix, codes, division, multi_division, remainder). Optional `?planId=` query parameter to validate any plan (defaults to primary plan). | Phase 2 |
 | GET | `/api/v1/alerts` | student | Active alerts (unresolved) |
 | PATCH | `/api/v1/alerts/:id/dismiss` | student | Dismiss alert |
 | GET | `/api/v1/suggestions` | student (Pro+) | Rule-based + AI course suggestions |
@@ -1246,7 +1256,7 @@ Headers included on every response: `X-RateLimit-Limit`, `X-RateLimit-Remaining`
 
 ### Pagination
 
-All list endpoints (`/api/v1/plans`, `/api/v1/grades`, `/api/v1/alerts`, `/api/v1/notifications`, `/api/v1/courses`, `/api/v1/plans/:id/courses`) use **cursor-based pagination**.
+All list endpoints (`/api/v1/plans`, `/api/v1/transcript`, `/api/v1/alerts`, `/api/v1/notifications`, `/api/v1/courses`, `/api/v1/plans/:id/courses`) use **cursor-based pagination**.
 
 ```typescript
 // Request
@@ -1442,7 +1452,7 @@ The BullMQ worker must use Supabase's PgBouncer pooled connection string (`DATAB
 |---|---|---|
 | `user:{userId}:subscription` | 5 min | Stripe webhook updates `subscriptions.status` |
 | `user:{userId}:gpa` | 5 min | Any grade entry or plan save for this student |
-| `plan:{planId}:requirements` | 10 min | Any plan save for this student |
+| `plan:{planId}:requirements` | 10 min | Any plan save for this student. Requirements API accepts optional `?planId=` to cache per non-primary plan. |
 | `course:{courseId}:prereqs` | 24 hr | Catalog reload (course_catalog_versions insert) |
 
 All cache values are JSON-serialized. On cache miss, fall back to live DB query and re-populate. Never trust a cached value for write operations — always read from DB before mutating.
@@ -1577,7 +1587,9 @@ Weighted GPA   = SUM((gradePoints + weightBonus) × creditValue) / SUM(creditVal
                  for same set of courses
 ```
 
-GPA is **always recomputed from `grade_entries` at read time**. Snapshots in `gpa_snapshots` are historical markers for the trend chart only — never used for the live GPA display.
+GPA is **always recomputed from `plan_courses` on the primary plan at read time**. Snapshots in `gpa_snapshots` are historical markers for the trend chart only — never used for the live GPA display.
+
+> **Phase 2 update:** The GPA API (`GET /api/v1/gpa`) reads exclusively from `plan_courses` on the primary plan — not from `grade_entries`. Grades are set via the planner page (status dropdown + grade dropdown on each course card) and stored in `plan_courses.planned_grade`. The API returns cumulative GPA (completed courses only), projected GPA (all courses with grades), plan totals (`totalCredits`, `earnedCredits`, `totalCourses` with per-row adjusted credits), and a `hasGrades` boolean flag.
 
 > **Implementation status (Phase 1b):** GPA calculation is implemented in `lib/gpa/calc.ts`. Full-year courses are stored as two `plan_courses` rows; the calculation uses `creditValue / 2` per row to avoid double-counting. GPA is displayed in the planner UI at both the grade header level (per-grade projected + actual weighted GPA) and the plan header level (total projected + actual).
 
@@ -1585,8 +1597,8 @@ GPA is **always recomputed from `grade_entries` at read time**. Snapshots in `gp
 
 | View | Source |
 |---|---|
-| Cumulative GPA | All `grade_entries` with `status = 'completed'` |
-| Projected GPA | Cumulative + `plan_courses` WHERE status IN ('enrolled','planned') using `planned_grade` |
+| Cumulative GPA | All `plan_courses` on primary plan with `status = 'completed'` and a grade set |
+| Projected GPA | All `plan_courses` on primary plan with any grade set (completed + enrolled + planned) |
 | What-If GPA | Same as Projected but computed in-memory from a temporary course swap — never persisted |
 
 ---
@@ -1681,9 +1693,30 @@ Before inserting a new alert, the engine checks if a matching unresolved alert a
 
 Underload warnings trigger for any semester with fewer than 5 courses, including empty semesters (0 courses). This ensures all four grade levels have adequate course loads.
 
-### Plan header bar warning count
+### Dashboard Validation Report card
 
-The plan header bar warning count combines API-returned violations (prerequisite, duplicate, grade-level eligibility) with locally-computed underload/overload warnings per semester. The tooltip on hover lists all warning messages.
+> **Phase 2 update:** A full-width Validation Report card is rendered below the 2x2 dashboard grid (Active Plan, GPA Summary, Graduation Progress, Quick Actions). The card header displays "Validation Report" with a status badge: "Valid" (green) when no issues exist, or "Issues found" (red) when there are graduation requirement gaps or plan warnings. When issues are present, the card shows two categorized sections:
+> - **Graduation Requirement Gaps** (red accent) — lists each unmet requirement with credits needed
+> - **Plan Warnings** (amber accent) — lists prerequisite violations and underload/overload issues
+>
+> When no issues exist, the card shows a green success message: "All graduation requirements are covered and no plan warnings found." The card fetches data from `GET /api/v1/requirements?planId=<primaryPlanId>` (requirements API) and the plan validation API for the primary/active plan.
+
+### Plan header bar validation indicator
+
+> **Phase 2 update:** The plan header bar now shows a validation status instead of a warning count. Displays "Valid" (green check icon) when no issues exist, or "Issues found" (red X icon) when there are plan warnings OR graduation requirement gaps. Progress data is auto-fetched on plan load. Both plan warnings (prerequisite violations, underload/overload) and graduation requirement gaps are considered.
+
+### Planner validation report panel
+
+> **Phase 2 update:** A toggle button with a check-badge icon in the planner toolbar opens a collapsible validation report panel. The panel has 3 collapsible sections:
+> - **Graduation Requirement Gaps** (red accent, expanded by default) — shows unmet requirements with credits needed badge, progress bars, notes, and course chips
+> - **Plan Warnings** (amber accent, expanded by default) — shows prerequisite violations, underload/overload warnings
+> - **Graduation Requirements — Covered** (collapsed by default) — shows met/in-progress requirements with progress bars
+>
+> Summary stats at top: Total Credits, Earned, Planned, Requirements Met, Gaps, Warnings. The panel works with any selected plan (not just primary) using the `?planId=` parameter on the requirements API.
+
+### Plan selection persistence
+
+> **Phase 2 update:** The selected plan in the planner is persisted via `sessionStorage` so navigating away and back retains the selection. Key: plan ID stored on plan switch, restored on planner mount.
 
 ### Tier gating
 
@@ -1930,7 +1963,7 @@ Mobile (<640px):
 **Mobile-specific behaviors:**
 
 - Course browser opens as full-screen slide-over (not modal overlay) with sticky search bar
-- Dashboard uses single-column card stack: GPA → Graduation Progress → Alerts → Quick Actions
+- Dashboard uses single-column card stack of all 4 cards plus full-width Validation Report card (desktop uses uniform 2x2 grid with `md:grid-cols-2`, Validation Report card spans full width below the grid)
 - Validation tooltips render as bottom sheets on mobile (not hover tooltips, which don't work on touch)
 - Touch targets: minimum 44×44px for all interactive elements (WCAG 2.5.5)
 - Drag-and-drop (Phase 3) supported on tablet via touch events; on mobile, use explicit "Move to..." action menu instead

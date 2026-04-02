@@ -59,7 +59,7 @@ export default function SettingsPage() {
       if (res.ok) {
         const json = await res.json();
         const data = json.data ?? json;
-        setInviteCode(data.code ?? data.inviteCode ?? null);
+        setInviteCode(data.invite_code ?? data.code ?? data.inviteCode ?? null);
       }
     } catch { /* silent */ }
     finally { setGenerating(false); }

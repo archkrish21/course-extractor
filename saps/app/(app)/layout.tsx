@@ -71,12 +71,17 @@ const NAV_ITEMS = [
 function TierBadge({ tier }: { tier: string }) {
   const label = tier.charAt(0).toUpperCase() + tier.slice(1).toLowerCase();
 
+  const t = tier.toLowerCase();
   const colorClasses =
-    tier.toLowerCase() === "pro"
-      ? "bg-primary/10 text-primary"
-      : tier.toLowerCase() === "starter"
-        ? "bg-success/10 text-success"
-        : "bg-muted text-muted-foreground";
+    t === "elite"
+      ? "bg-purple-500/10 text-purple-600"
+      : t === "plus"
+        ? "bg-primary/10 text-primary"
+        : t === "trial"
+          ? "bg-warning/10 text-warning"
+          : t === "starter"
+            ? "bg-success/10 text-success"
+            : "bg-muted text-muted-foreground";
 
   return (
     <span

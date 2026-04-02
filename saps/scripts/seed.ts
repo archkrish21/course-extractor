@@ -40,6 +40,7 @@ async function seed() {
         displayName: plan.displayName,
         priceMonthly: plan.priceMonthly?.toString() ?? null,
         priceAnnual: plan.priceAnnual?.toString() ?? null,
+        priceFourYear: plan.priceFourYear?.toString() ?? null,
         maxPlans: plan.maxPlans,
         features: plan.features,
       })
@@ -49,6 +50,7 @@ async function seed() {
           displayName: plan.displayName,
           priceMonthly: plan.priceMonthly?.toString() ?? null,
           priceAnnual: plan.priceAnnual?.toString() ?? null,
+          priceFourYear: plan.priceFourYear?.toString() ?? null,
           maxPlans: plan.maxPlans,
           features: plan.features,
         },

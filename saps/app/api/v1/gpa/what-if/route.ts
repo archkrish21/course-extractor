@@ -91,8 +91,7 @@ export async function POST(request: NextRequest) {
       userId: user.id,
     });
 
-    const ELIGIBLE_TIERS = ["plus", "elite"];
-    if (!ELIGIBLE_TIERS.includes(tier.tier)) {
+    if (!tier.canWhatIf) {
       return errorResponse(
         "UPGRADE_REQUIRED",
         "What-if GPA simulation requires a Plus or Elite subscription.",

@@ -190,6 +190,7 @@ export const subscriptionPlans = pgTable("subscription_plans", {
   displayName: text("display_name").notNull(),
   priceMonthly: decimal("price_monthly", { precision: 6, scale: 2 }),
   priceAnnual: decimal("price_annual", { precision: 7, scale: 2 }),
+  priceFourYear: decimal("price_four_year", { precision: 7, scale: 2 }),
   maxPlans: smallint("max_plans"),
   features: jsonb("features").notNull(),
 });
@@ -210,7 +211,7 @@ export const subscriptions = pgTable("subscriptions", {
     enum: ["trialing", "active", "past_due", "canceled", "paused"],
   }).notNull(),
   trialEndsAt: timestamp("trial_ends_at", { withTimezone: true }).notNull(),
-  billingCycle: text("billing_cycle", { enum: ["monthly", "annual"] }),
+  billingCycle: text("billing_cycle", { enum: ["monthly", "annual", "four_year"] }),
   currentPeriodStart: timestamp("current_period_start", {
     withTimezone: true,
   }),

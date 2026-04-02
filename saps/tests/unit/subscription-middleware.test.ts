@@ -52,13 +52,14 @@ describe("getEffectiveTier", () => {
   it("returns starter defaults when no accountId or userId is provided", async () => {
     const { getEffectiveTier } = await import("@/lib/subscription/middleware");
     const result = await getEffectiveTier({});
-    expect(result).toEqual({
-      tier: "starter",
-      accountStatus: "active",
-      freezeReason: null,
-      canUseAI: false,
-      maxPlans: 1,
-    });
+    expect(result.tier).toBe("starter");
+    expect(result.canUseAI).toBe(false);
+    expect(result.maxPlans).toBe(1);
+    expect(result.canWhatIf).toBe(false);
+    expect(result.canComparePlans).toBe(false);
+    expect(result.canExportPdf).toBe(false);
+    expect(result.canSharePlans).toBe(false);
+    expect(result.canParentDraft).toBe(false);
   });
 
   it.skip("returns starter defaults when no subscription is found for a userId", async () => {

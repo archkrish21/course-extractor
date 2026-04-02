@@ -18,6 +18,14 @@ export interface SubscriptionContext {
   freezeReason: string | null;
   canUseAI: boolean;
   maxPlans: number;
+  canWhatIf: boolean;
+  canComparePlans: boolean;
+  canExportPdf: boolean;
+  canSharePlans: boolean;
+  canParentDraft: boolean;
+  canViewPercentile: boolean;
+  canRigorScoring: boolean;
+  canCreateGoals: boolean;
 }
 
 const STARTER_DEFAULTS: SubscriptionContext = {
@@ -26,6 +34,14 @@ const STARTER_DEFAULTS: SubscriptionContext = {
   freezeReason: null,
   canUseAI: false,
   maxPlans: 1,
+  canWhatIf: false,
+  canComparePlans: false,
+  canExportPdf: false,
+  canSharePlans: false,
+  canParentDraft: false,
+  canViewPercentile: false,
+  canRigorScoring: false,
+  canCreateGoals: false,
 };
 
 /**
@@ -222,23 +238,47 @@ interface SubscriptionRow {
  * Handles trialing (check trial_ends_at), active, past_due.
  * Defaults to starter for canceled/paused/expired trials.
  */
+/** Extract all feature flags from a plan's features JSONB */
+function extractFeatures(features: Record<string, unknown>, maxPlans: number | null): Omit<SubscriptionContext, "tier" | "accountStatus" | "freezeReason"> {
+  return {
+    canUseAI: !!features.can_use_ai,
+    maxPlans: maxPlans ?? Infinity,
+    canWhatIf: !!features.can_what_if,
+    canComparePlans: !!features.can_compare_plans,
+    canExportPdf: !!features.can_export_pdf,
+    canSharePlans: !!features.can_share_plans,
+    canParentDraft: !!features.can_parent_draft,
+    canViewPercentile: !!features.can_view_percentile,
+    canRigorScoring: !!features.can_rigor_scoring,
+    canCreateGoals: !!features.can_create_goals,
+  };
+}
+
 function computeEffectiveTier(row: SubscriptionRow): SubscriptionContext {
-  const features = (row.features ?? {}) as Record<string, boolean>;
+  const features = (row.features ?? {}) as Record<string, unknown>;
   const accountStatus = row.accountStatus;
   const freezeReason = row.freezeReason;
 
-  // Trialing: check if trial is still active
+  // Trialing: restricted Plus-level features (no compare/export/share, no AI, max 2 plans)
   if (row.status === "trialing") {
     const trialEnd = row.trialEndsAt
       ? new Date(row.trialEndsAt)
       : new Date(0);
     if (new Date() < trialEnd) {
       return {
-        tier: row.planName ?? "elite",
+        tier: "trial",
         accountStatus,
         freezeReason,
-        canUseAI: features.can_use_ai !== false, // default true during trial
-        maxPlans: row.maxPlans ?? Infinity,
+        canUseAI: false,
+        maxPlans: 2,
+        canWhatIf: true,
+        canComparePlans: false,
+        canExportPdf: false,
+        canSharePlans: false,
+        canParentDraft: true,
+        canViewPercentile: false,
+        canRigorScoring: false,
+        canCreateGoals: true,
       };
     }
     // Trial expired: fall through to starter
@@ -246,22 +286,21 @@ function computeEffectiveTier(row: SubscriptionRow): SubscriptionContext {
 
   // Active or past_due: use the subscription plan tier
   if (row.status === "active" || row.status === "past_due") {
+    // Pro backward compatibility: treat as Plus
+    const effectivePlanName = row.planName === "pro" ? "plus" : row.planName;
     return {
-      tier: row.planName,
+      tier: effectivePlanName,
       accountStatus,
       freezeReason,
-      canUseAI: !!features.can_use_ai,
-      maxPlans: row.maxPlans ?? Infinity,
+      ...extractFeatures(features, row.maxPlans),
     };
   }
 
   // Canceled, paused, or expired trial: starter defaults
   return {
-    tier: "starter",
+    ...STARTER_DEFAULTS,
     accountStatus,
     freezeReason,
-    canUseAI: false,
-    maxPlans: 1,
   };
 }
 

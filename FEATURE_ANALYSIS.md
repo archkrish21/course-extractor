@@ -312,14 +312,14 @@ Students can see where their GPA, AP count, credit load, and course rigor fall r
 
 **Pattern:** Middleware reads the user's effective subscription tier (from Redis cache, 5-min TTL; fallback to DB) and injects it into the request context. API routes and server components check the tier before returning gated resources.
 
-- **API response for gated features:** `HTTP 402` with `{ "upgrade_required": true, "feature": "ai_suggestions", "minimum_tier": "pro" }`
+- **API response for gated features:** `HTTP 402` with `{ "upgrade_required": true, "feature": "ai_suggestions", "minimum_tier": "elite" }`. Feature gating uses flag-based checks (`canWhatIf`, `canExportPdf`, `canComparePlans`, `canSharePlans`, `canUseAi`, `canViewPercentile`, `canParentDraft`, `canCreateGoals`), not tier name lists. Pro tier backward compatibility: middleware maps `pro` to `plus`.
 - **Frontend:** Gated UI elements render as disabled with an upgrade CTA tooltip; clicking opens the upgrade modal
 - **Plan count enforcement:** Excess plans are not deleted on downgrade — they become `archived` (read-only), in order from oldest `activated_at` first. Student retains all data; they cannot edit beyond their plan limit until upgrading again. Existing `plan_share_links` for archived plans remain active (shares are independent of subscription tier).
 - **Feature data on downgrade:** Alert history, AI chat history, and prerequisite graph data are preserved in the DB. The UI hides tier-gated display until the user upgrades again — no data loss. Alert evaluation continues running for all tiers; only tier-gated alert types (e.g., `ap_capacity_underuse`, `declining_gpa_trend`) are suppressed from dispatch for Starter users — the alerts are still evaluated and stored, just not shown.
 - **Billing:** Stripe handles payment, webhook events update `subscriptions.status`. A `past_due` grace period of 5 days before downgrading to Starter.
 - **`stripe_events` archival:** The `stripe_events` table retains all rows for 90 days for reconciliation and debugging. A scheduled job archives rows older than 90 days (move to cold storage or delete after ensuring reconciliation is complete). The `processed = TRUE` rows are lower priority to retain than `processed = FALSE`.
 
-> **Family note:** The student account holds the subscription. A parent linked to a student views the student's data at the same access level — the parent does not need a separate subscription to view their child's Pro-tier plan.
+> **Family note:** The student account holds the subscription. A parent linked to a student views the student's data at the same access level — the parent does not need a separate subscription to view their child's plan.
 
 > **Account model note:** Subscriptions are per `account`, not per `user`. Parent users have no subscription of their own. The subscription middleware resolves the effective tier from the `account_id` context, not the user's ID. When a parent switches between children's accounts, the available features change based on each account's subscription tier. Any account member can be designated as the billing contact.
 
@@ -934,13 +934,14 @@ change_summary      JSONB DEFAULT '[]'       -- [{code, name, change_type, detai
 ### `subscription_plans` ← static tier definitions, seeded at deploy
 ```sql
 id            UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-name          TEXT NOT NULL UNIQUE,     -- 'starter', 'plus', 'pro', 'elite'
-display_name  TEXT NOT NULL,            -- 'Starter', 'Plus', 'Elite'
-price_monthly DECIMAL(6,2),             -- NULL = free tier
-price_annual  DECIMAL(7,2),             -- NULL = free tier; ~2 months free vs monthly
-max_plans     SMALLINT,                  -- 1 for Starter, 10 for Plus, NULL = unlimited (Elite)
-features      JSONB NOT NULL            -- feature flag map mirroring tier table above
-                                        -- e.g., {"can_create_goals": true, "can_use_ai": false, "can_view_percentile": false}
+name            TEXT NOT NULL UNIQUE,     -- 'starter', 'plus', 'elite' (Pro removed)
+display_name    TEXT NOT NULL,            -- 'Starter', 'Plus', 'Elite'
+price_monthly   DECIMAL(6,2),             -- NULL = free tier. Plus: 9.99, Elite: 19.99
+price_annual    DECIMAL(7,2),             -- NULL = free tier. Plus: 107.88, Elite: 215.88 (save 10%)
+price_four_year DECIMAL(7,2),             -- Plus: 399.00, Elite: 799.00 (save 17%)
+max_plans       SMALLINT,                  -- 1 for Starter, 10 for Plus, NULL = unlimited (Elite)
+features        JSONB NOT NULL            -- 8 feature flags: canWhatIf, canExportPdf, canComparePlans,
+                                          -- canSharePlans, canUseAi, canViewPercentile, canParentDraft, canCreateGoals
 ```
 > This table is seeded once at deploy time and updated only on pricing/tier changes. Never mutated by user actions.
 
@@ -952,8 +953,8 @@ account_id             UUID REFERENCES accounts(id),
 subscription_plan_id   UUID NOT NULL REFERENCES subscription_plans(id) ON DELETE RESTRICT,
 status                 TEXT NOT NULL CHECK (status IN ('trialing','active','past_due','canceled','paused')),
 trial_ends_at          TIMESTAMPTZ NOT NULL,    -- always set at signup = created_at + INTERVAL '14 days'
-billing_cycle          TEXT CHECK (billing_cycle IN ('monthly','annual') OR billing_cycle IS NULL),
-                                                -- NULL = free tier (no billing cycle)
+billing_cycle          TEXT CHECK (billing_cycle IN ('monthly','annual','four_year') OR billing_cycle IS NULL),
+                                                -- NULL = free tier (no billing cycle); four_year uses Stripe payment mode (not subscription)
 current_period_start   TIMESTAMPTZ,
 current_period_end     TIMESTAMPTZ,
 cancel_at_period_end   BOOLEAN DEFAULT FALSE,   -- TRUE = cancels at end of current billing period
@@ -1080,7 +1081,7 @@ CREATE INDEX idx_requirement_progress_student ON requirement_progress (student_i
 **Table Creation by Phase:**
 - **Phase 1a:** users, student_profiles, departments, catalog_versions, courses, course_prerequisites, divisions
 - **Phase 1b:** four_year_plans, plan_courses, plan_history, subscription_plans (seed only)
-- **Phase 2:** accounts, account_members, account_invite_codes, grade_entries, gpa_snapshots, subscriptions, account_events, requirement_progress, graduation_requirements, student_requirement_status, student_requirement_opt_ins
+- **Phase 2:** accounts, account_members, account_invite_codes, grade_entries, gpa_snapshots, subscriptions, account_events, requirement_progress, graduation_requirements, student_requirement_status, student_requirement_opt_ins, stripe_events. Schema changes: `priceFourYear` column on `subscription_plans`; `four_year` added to `billing_cycle` check constraint on `subscriptions`. Drizzle migrations in `lib/db/migrations/`.
 - **Phase 2 (deprecated):** ~~student_parent_links~~, ~~parent_invite_codes~~ — superseded by accounts model
 - **Phase 3:** alerts, notifications, dual_credit_log, plan_share_links
 - **Phase 4:** career_paths, career_path_courses, ai_recommendations (if persisted)
@@ -1376,6 +1377,7 @@ human review of diff → approve → DB reload → insert course_catalog_version
 | Notification Center | Student / Parent | All alerts and notifications with action links |
 | Plan Export | Student | Generate PDF or shareable read-only link of the active plan |
 | Pricing & Upgrade | Student | Tier comparison table, upgrade CTA, billing portal link, trial countdown; shown during trial and on 402 feature-gate |
+| Billing (`/settings/billing`) | Student / billing contact | Pricing cards with 3-interval toggle (monthly/annual/4-year), current plan indicator, upgrade button (Stripe Checkout), manage subscription button (Stripe Billing Portal) |
 | Settings | All users | Notification preferences, password change, linked accounts, subscription management, delete account |
 | Year-End Transition | Student | Confirm final grades, advance grade level, review plan for next year |
 | Parent View | Parent | Read-only dashboard of student's plan, grades, GPA, and alerts |
@@ -1453,11 +1455,11 @@ Phase 5 includes a formal WCAG audit and remediation of any gaps, but the core p
 - GPA trend chart from snapshots
 - Credit accumulation display in the planner grid (running tally per subject area)
 - Year-end transition workflow + screen
-- **Stripe integration:** checkout, billing portal, webhook handler (`customer.subscription.updated`, `invoice.payment_failed`, `customer.subscription.deleted`)
-- **`stripe_events` log table:** store every incoming Stripe event raw for replay and reconciliation
+- **Stripe integration (complete):** Stripe Checkout for payment (subscription mode for monthly/annual, payment mode for 4-year plans). Stripe Webhook handler processing 5 event types (`customer.subscription.created`, `customer.subscription.updated`, `customer.subscription.deleted`, `invoice.payment_failed`, `invoice.paid`), idempotent via `stripe_events` table with UNIQUE on `stripe_event_id`. Stripe Billing Portal for subscription management. New files: `lib/stripe/client.ts` (Stripe SDK singleton), `lib/stripe/prices.ts` (price ID mapping), `app/api/v1/stripe/checkout/route.ts`, `app/api/v1/stripe/webhook/route.ts`, `app/api/v1/stripe/portal/route.ts`, `app/api/v1/subscriptions/route.ts`.
+- **`stripe_events` log table:** stores every incoming Stripe event raw for replay and reconciliation
 - **Nightly Stripe reconciliation job:** compare `subscriptions.status` vs Stripe API; self-heal any missed webhooks
-- **Subscription enforcement middleware:** Redis-cached tier + `account_status` check on all API routes; `402` for gated features, `403` for frozen accounts
-- **Upgrade modal + pricing page** with tier comparison table
+- **Subscription enforcement middleware (complete):** Redis-cached tier + `account_status` check on all API routes; `402` for gated features, `403` for frozen accounts. Expanded with 8 feature flags (`canWhatIf`, `canExportPdf`, `canComparePlans`, `canSharePlans`, `canUseAi`, `canViewPercentile`, `canParentDraft`, `canCreateGoals`). Feature gating uses flag-based checks, not tier name lists. Pro tier backward compatibility: maps `pro` to `plus` in middleware.
+- **Billing page (complete):** `app/(app)/settings/billing/page.tsx` — pricing cards with 3-interval toggle (monthly/annual/4-year), current plan indicator, upgrade/manage subscription CTAs
 - **Trial expiry job (BullMQ cron):** nightly — downgrade expired trials (`status = 'trialing'` + `trial_ends_at < NOW()`) to Starter
 - **Payment lapse freeze job:** triggered by `invoice.payment_failed` webhook; 5-day delay then freeze if still unpaid
 - **Freeze/reactivation email flows:** payment reminder (day 1, day 4), freeze notice, reactivation confirmation
@@ -1572,7 +1574,7 @@ Phase 5 includes a formal WCAG audit and remediation of any gaps, but the core p
 - Counselor API token can read linked student's plans/grades/alerts; cannot read non-linked student data (0 rows)
 
 **Subscription enforcement:**
-- Student on Starter tier calling a Pro-gated API endpoint receives `HTTP 402` with `{ "upgrade_required": true, "feature": "ai_suggestions", "minimum_tier": "pro" }`
+- Student on Starter tier calling an Elite-gated API endpoint receives `HTTP 402` with `{ "upgrade_required": true, "feature": "ai_suggestions", "minimum_tier": "elite" }`
 - Frozen account calling any write endpoint receives `HTTP 403` with `{ "account_frozen": true, "reason": "payment_lapsed", "reactivate_url": "..." }`
 - Redis-cached tier is invalidated and refreshed within 1 second of a Stripe webhook updating `subscriptions.status`
 - Stripe sends same webhook twice (retry); second request hits `UNIQUE` constraint on `stripe_events.stripe_event_id` and produces no duplicate state changes

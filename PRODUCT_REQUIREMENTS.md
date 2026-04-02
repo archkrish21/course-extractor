@@ -69,7 +69,7 @@ It replaces guesswork with:
 |---|---|
 | Establish SAPS as the go-to planning tool for Stevenson students | 200 registered users within 6 months of launch |
 | Convert trial users to paid plans | 20% free-to-paid conversion within 30 days of trial expiry |
-| Retain paid subscribers through the school year | >80% annual renewal rate on Plus/Pro/Elite |
+| Retain paid subscribers through the school year | >80% annual renewal rate on Plus/Elite |
 | Demonstrate enough value to unlock school partnership conversations | Active use by at least one school counselor by Month 9 |
 
 ---
@@ -84,7 +84,7 @@ It replaces guesswork with:
 - Graduation requirement validation against Stevenson's requirements
 - Dual credit tracking for Harper College and other partner institutions
 - AI-powered course and career recommendations
-- Subscription-based monetization (Starter/Plus/Pro/Elite)
+- Subscription-based monetization (Starter/Plus/Elite — Pro tier removed)
 - Web application (responsive for mobile; no native app). Mobile-first responsive design from Phase 1 — see §5.2 for breakpoints and layout specs
 - WCAG 2.1 AA accessibility compliance from Phase 1 for all core UI components — see §5.2 for detailed requirements
 
@@ -364,17 +364,17 @@ Account Switcher (parent with multiple children):
 | US-61 | As a student, I want an alert when my actual grade in a course falls below my planned grade so I know my projected GPA has changed. | Must | 3 |
 | US-62 | As a student, I want an alert if a course I've planned is removed or renamed in the new catalog so I can update my plan before it's too late. | Must | 5 |
 | US-63 | As a student, I want every alert to include an actionable suggestion (not just a warning) so I know exactly what to do to resolve it. | Must | 3 |
-| US-64 | As a student on Pro/Elite, I want an alert when my GPA trend is declining across consecutive heavy-load semesters so I can adjust my load before it becomes a pattern. | Should | 3 |
+| US-64 | As a student on Elite, I want an alert when my GPA trend is declining across consecutive heavy-load semesters so I can adjust my load before it becomes a pattern. | Should | 3 |
 | US-65 | As a parent, I want to receive email notifications when a critical alert fires on my child's account so I can help them address it. | Must | 3 |
 
 ### AI Advisory Engine
 
 | ID | Story | Priority | Phase |
 |---|---|---|---|
-| US-70 | As a student on Pro/Elite, I want AI-powered course recommendations aligned to my stated career path so I can build a plan that strengthens my college application for my target field. | Must | 4 |
-| US-71 | As a student on Pro/Elite, I want an AI review of my full plan that highlights strengths and raises concerns so I get a second perspective before committing. | Should | 4 |
-| US-72 | As a student on Pro/Elite, I want a chat interface to ask planning questions in natural language (e.g., "What AP courses should I take if I want to study Engineering?") so I can get advice at any time, not just during counselor hours. | Should | 4 |
-| US-73 | As a student on Pro/Elite, I want every AI recommendation to only include real courses from the actual catalog so I never receive advice about a course that doesn't exist. | Must | 4 |
+| US-70 | As a student on Elite, I want AI-powered course recommendations aligned to my stated career path so I can build a plan that strengthens my college application for my target field. | Must | 4 |
+| US-71 | As a student on Elite, I want an AI review of my full plan that highlights strengths and raises concerns so I get a second perspective before committing. | Should | 4 |
+| US-72 | As a student on Elite, I want a chat interface to ask planning questions in natural language (e.g., "What AP courses should I take if I want to study Engineering?") so I can get advice at any time, not just during counselor hours. | Should | 4 |
+| US-73 | As a student on Elite, I want every AI recommendation to only include real courses from the actual catalog so I never receive advice about a course that doesn't exist. | Must | 4 |
 
 ### Subscription & Account Management
 
@@ -655,12 +655,12 @@ The dashboard uses a 3-row, 2-column grid layout:
 | Req | Description | Priority |
 |---|---|---|
 | F-AL-01 | All alerts evaluated in BullMQ background jobs — never in the API request cycle. | Must |
-| F-AL-02 | Alert types: overload, underload, prereq_violation, coreq_violation, enrollment_rule, grade_level_ineligible, repeat_course, graduation_risk, catalog_change, grade_below_target, gpa_goal_at_risk, declining_gpa_trend (Pro+), ap_capacity_underuse (Pro+), dual_credit_opportunity. | Must |
+| F-AL-02 | Alert types: overload, underload, prereq_violation, coreq_violation, enrollment_rule, grade_level_ineligible, repeat_course, graduation_risk, catalog_change, grade_below_target, gpa_goal_at_risk, declining_gpa_trend (Elite), ap_capacity_underuse (Elite), dual_credit_opportunity. | Must |
 | F-AL-03 | Every alert includes an `action_suggestion` — a specific, actionable next step. No warning-only alerts. | Must |
 | F-AL-04 | Alert deduplication: only one active alert per unique `(student_id, deduplication_key)`. Re-fires only after the previous instance is resolved. | Must |
 | F-AL-05 | Severity levels: `info`, `warning`, `critical`. Dashboard badge count shows unresolved warning + critical alerts. | Must |
 | F-AL-06 | Student can mark an alert as dismissed. Dismissed alerts do not re-fire for the same condition unless the condition changes. | Must |
-| F-AL-07 | Tier-gated alert types (declining_gpa_trend, ap_capacity_underuse) still evaluated for all tiers but only displayed for Pro/Elite subscribers. | Must |
+| F-AL-07 | Tier-gated alert types (declining_gpa_trend, ap_capacity_underuse) still evaluated for all tiers but only displayed for Elite subscribers. | Must |
 
 **Catalog Change Detection Process:**
 1. Admin uploads the new year's course PDF. The extractor produces a new set of course records tied to the new `catalog_version_id`.
@@ -700,7 +700,7 @@ The dashboard uses a 3-row, 2-column grid layout:
 | Endpoint Category | Limit | Scope |
 |---|---|---|
 | General authenticated API | 120 requests/minute | Per user |
-| AI endpoints (Pro/Elite) | 10 requests/hour | Per user |
+| AI endpoints (Elite) | 10 requests/hour | Per user |
 | Course search | 30 requests/minute | Per user |
 | Auth endpoints (login/signup) | 5 requests/minute | Per IP |
 | Invite code generation | 3 requests/hour | Per user |
@@ -938,27 +938,27 @@ Trigger: Student enters a grade below their planned grade for a course
 1. Student on Starter tier clicks "AI Course Suggestions" in the planner
 
 2. API returns HTTP 402:
-   { "upgrade_required": true, "feature": "ai_suggestions", "minimum_tier": "pro" }
+   { "upgrade_required": true, "feature": "ai_suggestions", "minimum_tier": "elite" }
 
 3. Frontend shows upgrade modal:
-   ├── Highlights Pro and Elite tiers
-   ├── Shows what the student gains: AI suggestions, full alerts, dual credit tracking, etc.
-   └── "Upgrade to Pro — $12/mo" CTA button
+   ├── Highlights Plus and Elite tiers with 3-interval toggle (monthly/annual/4-year)
+   ├── Shows what the student gains at each tier
+   └── "Upgrade to Elite — $19.99/mo" CTA button (AI is Elite-only)
 
 4. Student clicks upgrade:
-   └── Redirected to Stripe Checkout (pre-filled with Pro monthly plan)
+   └── Redirected to Stripe Checkout (subscription mode for monthly/annual, payment mode for 4-year)
 
 5. Stripe Checkout:
    ├── Student enters payment details
    └── Stripe processes payment
 
-6. Stripe fires webhook: customer.subscription.updated
-   ├── SAPS updates subscriptions row: subscription_plan_id → Pro, status → active
+6. Stripe fires webhook: customer.subscription.created
+   ├── SAPS updates subscriptions row: subscription_plan_id → Elite, status → active
    └── Redis cache invalidated (new tier takes effect immediately)
 
 7. Student returned to app:
    └── AI Suggestions panel now loads without the gate
-   └── Toast: "Welcome to Pro! All Pro features are now unlocked."
+   └── Toast: "Welcome to Elite! All Elite features are now unlocked."
 ```
 
 ---
@@ -1000,7 +1000,7 @@ Trigger: Stripe fires invoice.payment_failed
    └── BullMQ job scheduled: "freeze in 5 days if still unpaid"
 
 2. Day 1 — Reminder email:
-   └── "Your payment failed. Please update your billing details to keep your Pro plan active."
+   └── "Your payment failed. Please update your billing details to keep your plan active."
    └── Link to Stripe billing portal
 
 3. Day 4 — Second reminder email:
@@ -1133,7 +1133,7 @@ Trigger: Stripe fires invoice.payment_failed
 |---|---|---|
 | Monthly Recurring Revenue (MRR) | Target defined by business | Stripe Dashboard |
 | Average Revenue Per User (ARPU) | Track vs. tier mix | MRR / paying users |
-| Tier distribution | >40% of paid on Pro or Elite | `subscription_plans.name` distribution |
+| Tier distribution | >40% of paid on Elite | `subscription_plans.name` distribution |
 | Counselor adoption | ≥1 active counselor using the platform | `users` WHERE `role = 'counselor'` AND active |
 | Net Promoter Score (NPS) | ≥40 | In-app survey (triggered at Day 30 for active users) |
 
@@ -1153,7 +1153,7 @@ A landing page is required before user acquisition begins. This is not a separat
 
 **Acquisition strategy (pre-launch):**
 - Seed 3-5 real students during Phase 1b user testing; leverage word-of-mouth
-- Consider a referral mechanism: "Invite a friend, both get 1 week of Pro free" (defer to post-launch)
+- Consider a referral mechanism: "Invite a friend, both get 1 week of Plus free" (defer to post-launch)
 - The success metric targets >50% word-of-mouth signups — landing page SEO provides the other half
 
 > The landing page is the first thing a parent or student sees. It must clearly communicate that SAPS is not a school tool (no sign-in with school credentials) — it's a personal planning tool that works alongside the school's process.

@@ -3,7 +3,7 @@
 
 **Prepared for:** Executive Leadership
 **Date:** March 2026
-**Status:** Phase 1b Complete — Active Development
+**Status:** Phase 2 Complete — Active Development
 
 ---
 
@@ -88,7 +88,7 @@ The build is structured across five phases over approximately 18+ weeks. Phase 1
 |---|---|---|---|
 | **1a** | Data Foundation + Auth | Weeks 1–3 | ✅ Complete — PDF extractor, course catalog database, user auth, course browser, analytics integration |
 | **1b** | Core Planning + Onboarding | Weeks 4–6 | ✅ Complete — 4-year planner grid (keyboard-accessible, mobile-responsive), course picker, prerequisite validation, enrollment rules, 6 plan templates, plan creation/deletion, per-semester status/grade editing, GPA calculation, semester course limits, credit display, core course removal warnings |
-| **2** | Grade Tracking + GPA + Billing | Weeks 7–10 | Transcript page (read-only, print button), GPA API (from plan_courses), graduation requirements with matching rules expanded to 4 requirement groups (graduation, il_public_university, non_course, course_load — 37 total requirements), Academic Progress page (`/progress`, two-column layout with filter bar + grouped sections + sticky sidebar with honors badge + summary card), dashboard (3-row 2-column grid: Active Plan/GPA, Attention Required/Achievements, Academic Progress/Quick Actions), planner validation side panel (380px, sticky, scrollable, with clickable warning links), plan selection persistence, Stripe integration, subscription enforcement |
+| **2** | Grade Tracking + GPA + Billing | Weeks 7–10 | ✅ Complete — Transcript page (read-only, print button), GPA API (from plan_courses), graduation requirements with matching rules expanded to 4 requirement groups (graduation, il_public_university, non_course, course_load — 37 total requirements), Academic Progress page (`/progress`, two-column layout with filter bar + grouped sections + sticky sidebar with honors badge + summary card), dashboard (3-row 2-column grid: Active Plan/GPA, Attention Required/Achievements, Academic Progress/Quick Actions), planner validation side panel (380px, sticky, scrollable, with clickable warning links), plan selection persistence, Stripe integration (Checkout, Webhook, Billing Portal), subscription enforcement with 8 feature flags, billing page at `/settings/billing` |
 | **3** | Plan Tools + Alert Engine | Weeks 11–14 | Plan history/undo, prerequisite graph visualization, dual credit tracking, plan comparison, PDF export, share links, template intensity levels (Easy/Moderate/Challenging/Intensive/Rigorous — auto-selects CP/Accelerated/AP course variants and load per template), NCAA eligibility tracking, Seal of Biliteracy, P.E. waiver rules |
 | **4** | AI Advisory | Weeks 15–17 | Claude AI integration, career-path course recommendations, AI plan review, AI chat interface |
 | **5** | Annual Workflow + Counselor + Polish | Week 18+ | Admin catalog update UI, counselor dashboard, parent dashboard, percentile comparison (Elite), WCAG AAA audit + edge-case accessibility fixes |
@@ -143,7 +143,7 @@ The stack is selected for speed of development, managed infrastructure (minimal 
 | **500 users** (ElastiCache trigger) | $25 | ~$10 | ~$18 (0.5 vCPU) | ~$46 (ElastiCache + NAT) | ~$75–150 | ~$20 | **~$194–269** |
 | **1,000 users** | $25 | ~$20 | ~$36 (1 vCPU) | ~$46 | ~$150–300 | ~$40 | **~$317–467** |
 
-> **Claude API cost estimate:** Assumes ~30% of users are on Pro/Elite (AI-eligible). Average 3 AI requests/user/day at ~5K input tokens + ~1K output tokens per request. At claude-sonnet-4-6 pricing ($3/M input, $15/M output): ~$0.03/request × 3 requests × 60–300 active AI users × 30 days = $5–$270/month depending on scale. **Monitor input token counts per request from Phase 4 onward.** Cost can be reduced by caching common AI responses (e.g., career recommendations for the same career path + grade level combo).
+> **Claude API cost estimate:** Assumes ~30% of users are on Elite (AI-eligible). Average 3 AI requests/user/day at ~5K input tokens + ~1K output tokens per request. At claude-sonnet-4-6 pricing ($3/M input, $15/M output): ~$0.03/request × 3 requests × 60–300 active AI users × 30 days = $5–$270/month depending on scale. **Monitor input token counts per request from Phase 4 onward.** Cost can be reduced by caching common AI responses (e.g., career recommendations for the same career path + grade level combo).
 
 ---
 
@@ -211,7 +211,7 @@ Frozen and suspended accounts are never silently degraded — users always see a
 | Item | Owner | Priority |
 |---|---|---|
 | Official GPA weight table from Stevenson | Product / School contact | **Critical** — blocks GPA calculator |
-| Exact subscription pricing (confirm ~$6/$12/$18) | Business | High — needed for Stripe setup |
+| ~~Exact subscription pricing~~ | ~~Business~~ | ✅ Done — 3 tiers finalized: Starter (free), Plus ($9.99/mo), Elite ($19.99/mo) with annual and 4-year billing |
 | Career path initial data (Pre-Med, CS, Engineering, etc.) | Product | High — needed for Phase 4 AI features |
 | COPPA consent flow legal review | Legal | High — needed before any public launch |
 | Dual credit partner college course codes (Harper College, etc.) | Product | Medium — needed for Phase 3 |
@@ -223,7 +223,7 @@ Frozen and suspended accounts are never silently degraded — users always see a
 ## Recommended Next Steps
 
 1. **Confirm GPA weight table and grade scale** with Stevenson — this single piece of data is the foundation of the GPA calculator and must be correct before any code is written.
-2. **Finalize subscription pricing** and confirm with business/finance before Stripe configuration begins.
+2. ~~**Finalize subscription pricing**~~ — ✅ Done. Stripe integration complete with 3 tiers, 3 billing intervals, and billing page at `/settings/billing`.
 3. **Engage legal counsel** on COPPA date-of-birth gating and data retention policy before public launch.
 4. **Identify 3–5 students** for Phase 1 user testing (ideally a freshman, a sophomore, a junior, and a senior).
 5. **Begin Phase 1 development** once GPA weights and pricing are confirmed.
@@ -243,7 +243,7 @@ Frozen and suspended accounts are never silently degraded — users always see a
 - **API**: 8 endpoints (health, signup, login, OAuth callback, course list, course detail, course prereqs, user profile). Course list supports `semester_offered`, `semester_both`, and `duration` filter params; returns `semestersOffered` field; sorted by name then code with composite cursor encoding. Course detail returns `linkedCourses` array (semester partners).
 - **Frontend**: Responsive horizontal top-nav layout, login/signup pages, course browser with 2-column grid, course detail modal, trial banner. Semester Offered radio filter (All/Sem 1/Sem 2/Sem 1 & 2/Full Year). Division filter values corrected to match actual Stevenson divisions.
 - **Infrastructure**: Supabase local dev, Drizzle migrations, pino structured logging, PostHog analytics helpers, CSP headers, rate limiting.
-- **Seed Data**: 4 subscription tiers, 15 divisions, 49 departments, 315 courses with prerequisites and semester offerings, 37 requirement definitions across 4 requirement groups.
+- **Seed Data**: 3 subscription tiers (Starter/Plus/Elite), 15 divisions, 49 departments, 315 courses with prerequisites and semester offerings, 37 requirement definitions across 4 requirement groups.
 
 - **Account model redesigned:** introducing an `accounts` table that separates person identity (users) from academic data context (accounts). Parents can create accounts for children, create plans, and manage billing. Students claim accounts via invite codes. Subscription, authorization, and RLS all operate on account_id for a consistent access pattern.
 
@@ -263,7 +263,7 @@ Frozen and suspended accounts are never silently degraded — users always see a
 - **Clear Semester / Clear Grade**: Confirmation dialogs for clearing all courses in a semester or entire grade.
 - **Core Course Removal Warning**: For template-based plans, removing a core course shows a warning with Reset to Template option. Reset uses `pc.semester` and `pc.gradeLevel` from actual course data (not group key), adds `skip_validation: true` for template reset, and logs failures.
 
-**Phase 2 Grade Tracking (in progress):** Transcript page (read-only view of completed courses from the primary plan with grades, semester GPA, grade-level GPA, and cumulative GPA — replaces the previously planned Grade Tracker; Print button with printer icon in header next to "Edit in Planner" button triggers `window.print()` for browser-native printing). GPA API calculates cumulative and projected GPA from `plan_courses` on the primary plan (not `grade_entries`). Graduation requirements rewritten with matching rules — each requirement has a `matching_rule` JSONB column supporting 5 rule types: `code_prefix` (e.g., ENG courses), `codes` (specific course codes), `division` (all courses in a division), `multi_division` (multiple divisions), and `remainder` (catch-all for unclaimed courses). Requirements API enhanced with optional `?planId=` query parameter to validate any plan, not just the primary plan. All grade entry happens in the planner page via status dropdown + grade dropdown on each course card.
+**Phase 2 Grade Tracking + Billing (complete):** Transcript page (read-only view of completed courses from the primary plan with grades, semester GPA, grade-level GPA, and cumulative GPA — replaces the previously planned Grade Tracker; Print button with printer icon in header next to "Edit in Planner" button triggers `window.print()` for browser-native printing). GPA API calculates cumulative and projected GPA from `plan_courses` on the primary plan (not `grade_entries`). Graduation requirements rewritten with matching rules — each requirement has a `matching_rule` JSONB column supporting 5 rule types: `code_prefix` (e.g., ENG courses), `codes` (specific course codes), `division` (all courses in a division), `multi_division` (multiple divisions), and `remainder` (catch-all for unclaimed courses). Requirements API enhanced with optional `?planId=` query parameter to validate any plan, not just the primary plan. All grade entry happens in the planner page via status dropdown + grade dropdown on each course card.
 
 - **Requirements system expanded** from 12 graduation-only requirements to **37 total requirements** across 4 requirement groups:
   - `graduation` — 12 course-match requirements (existing Stevenson graduation credit requirements, unchanged)
@@ -283,8 +283,11 @@ Frozen and suspended accounts are never silently degraded — users always see a
 - **Plan selection persistence**: Selected plan in planner persisted via `sessionStorage` so navigating away and back retains the selection.
 - **Planner auto-opens validation panel** when navigated with `?validation=open` URL parameter (used by Dashboard "View Report" button).
 
-**Next up (remaining Phase 2):** Stripe integration, subscription enforcement, year-end transition workflow.
+- **Stripe integration (Phase 2):** Stripe Checkout for payment (subscription mode for monthly/annual, payment mode for 4-year plans). Stripe Webhook handler processing 5 event types (`customer.subscription.created`, `customer.subscription.updated`, `customer.subscription.deleted`, `invoice.payment_failed`, `invoice.paid`), idempotent via `stripe_events` table with UNIQUE on `stripe_event_id`. Stripe Billing Portal for subscription management. Subscription middleware expanded with 8 feature flags (`canWhatIf`, `canExportPdf`, `canComparePlans`, `canSharePlans`, `canUseAi`, `canViewPercentile`, `canParentDraft`, `canCreateGoals`). Feature gating uses flag-based checks, not tier name lists. Pro tier backward compatibility: maps `pro` to `plus` in middleware. Billing page at `/settings/billing` with pricing cards and 3-interval toggle (monthly/annual/4-year). Schema: `priceFourYear` column on `subscription_plans`; `four_year` added to `billing_cycle` check constraint.
+- **New files:** `lib/stripe/client.ts` (Stripe SDK singleton), `lib/stripe/prices.ts` (price ID mapping), `app/api/v1/stripe/checkout/route.ts`, `app/api/v1/stripe/webhook/route.ts`, `app/api/v1/stripe/portal/route.ts`, `app/api/v1/subscriptions/route.ts`, `app/(app)/settings/billing/page.tsx`, `lib/db/migrations/` (Drizzle migration for schema changes).
+
+**Next up (Phase 3):** Plan history/undo, prerequisite graph visualization, dual credit tracking, plan comparison, PDF export, share links.
 
 ---
 
-*This document summarizes the full feature specification in FEATURE_ANALYSIS.md (rev 9, April 2026). For technical schema, API design, acceptance criteria, and testing strategy, refer to the full specification.*
+*This document summarizes the full feature specification in FEATURE_ANALYSIS.md (rev 10, April 2026). For technical schema, API design, acceptance criteria, and testing strategy, refer to the full specification.*

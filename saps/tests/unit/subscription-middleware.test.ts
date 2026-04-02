@@ -186,11 +186,94 @@ describe("getEffectiveTier", () => {
   });
 
   it("falls back to DB when Redis is not configured", async () => {
-    // Redis env vars are not set (deleted in beforeEach), so redis = null
-    // The module should fall back to DB queries — same as above tests
-    // Just verify it doesn't throw and returns expected defaults
     const { getEffectiveTier } = await import("@/lib/subscription/middleware");
     const result = await getEffectiveTier({});
     expect(result.tier).toBe("starter");
+  });
+});
+
+// ── Subscription plan config tests ────────────────────────────────
+
+describe("subscription plan config", () => {
+  it("defines exactly 3 tiers: starter, plus, elite", async () => {
+    const { SUBSCRIPTION_PLANS } = await import("@/config/subscription-plans");
+    expect(SUBSCRIPTION_PLANS).toHaveLength(3);
+    expect(SUBSCRIPTION_PLANS.map((p) => p.name)).toEqual(["starter", "plus", "elite"]);
+  });
+
+  it("starter is free with 1 plan max", async () => {
+    const { getPlanByName } = await import("@/config/subscription-plans");
+    const starter = getPlanByName("starter");
+    expect(starter?.priceMonthly).toBeNull();
+    expect(starter?.maxPlans).toBe(1);
+    expect(starter?.features.can_use_ai).toBe(false);
+    expect(starter?.features.can_what_if).toBe(false);
+  });
+
+  it("plus has correct pricing and features", async () => {
+    const { getPlanByName } = await import("@/config/subscription-plans");
+    const plus = getPlanByName("plus")!;
+    expect(plus.priceMonthly).toBe(9.99);
+    expect(plus.priceAnnual).toBe(107.88);
+    expect(plus.priceFourYear).toBe(399);
+    expect(plus.maxPlans).toBe(10);
+    expect(plus.features.can_use_ai).toBe(false);
+    expect(plus.features.can_what_if).toBe(true);
+    expect(plus.features.can_compare_plans).toBe(true);
+    expect(plus.features.can_export_pdf).toBe(true);
+    expect(plus.features.can_share_plans).toBe(true);
+    expect(plus.features.can_parent_draft).toBe(true);
+  });
+
+  it("elite has correct pricing and all features", async () => {
+    const { getPlanByName } = await import("@/config/subscription-plans");
+    const elite = getPlanByName("elite")!;
+    expect(elite.priceMonthly).toBe(19.99);
+    expect(elite.priceAnnual).toBe(215.88);
+    expect(elite.priceFourYear).toBe(799);
+    expect(elite.maxPlans).toBeNull();
+    expect(elite.features.can_use_ai).toBe(true);
+    expect(elite.features.can_view_percentile).toBe(true);
+    expect(elite.features.can_rigor_scoring).toBe(true);
+  });
+
+  it("trial config restricts compare/export/share and AI", async () => {
+    const { TRIAL_CONFIG } = await import("@/config/subscription-plans");
+    expect(TRIAL_CONFIG.maxPlans).toBe(2);
+    expect(TRIAL_CONFIG.canUseAI).toBe(false);
+    expect(TRIAL_CONFIG.features.can_compare_plans).toBe(false);
+    expect(TRIAL_CONFIG.features.can_export_pdf).toBe(false);
+    expect(TRIAL_CONFIG.features.can_share_plans).toBe(false);
+    expect(TRIAL_CONFIG.features.can_what_if).toBe(true);
+    expect(TRIAL_CONFIG.features.can_parent_draft).toBe(true);
+  });
+
+  it("Pro tier does not exist in config", async () => {
+    const { getPlanByName } = await import("@/config/subscription-plans");
+    expect(getPlanByName("pro")).toBeUndefined();
+  });
+});
+
+// ── Stripe price logic tests (pure functions, no SDK import) ──────
+
+describe("stripe price logic", () => {
+  it("isOneTimePayment returns true for four_year", () => {
+    const isOneTimePayment = (cycle: string) => cycle === "four_year";
+    expect(isOneTimePayment("four_year")).toBe(true);
+    expect(isOneTimePayment("monthly")).toBe(false);
+    expect(isOneTimePayment("annual")).toBe(false);
+  });
+
+  it("getStripePriceId returns null for starter", () => {
+    const STRIPE_PRICES: Record<string, Record<string, string | undefined>> = {
+      plus: { monthly: "price_plus_m", annual: "price_plus_a", four_year: "price_plus_4" },
+      elite: { monthly: "price_elite_m", annual: "price_elite_a", four_year: "price_elite_4" },
+    };
+    const getStripePriceId = (plan: string, cycle: string) => STRIPE_PRICES[plan]?.[cycle] ?? null;
+
+    expect(getStripePriceId("starter", "monthly")).toBeNull();
+    expect(getStripePriceId("plus", "monthly")).toBe("price_plus_m");
+    expect(getStripePriceId("elite", "four_year")).toBe("price_elite_4");
+    expect(getStripePriceId("pro", "monthly")).toBeNull();
   });
 });

@@ -2,7 +2,7 @@
 ## Technical Design Document
 
 **Audience:** Engineering team
-**Status:** Phase 1b Complete — Phase 2 development next.
+**Status:** Phase 2 Complete — Phase 3 development next.
 **Last updated:** 2026-04-01
 
 ---
@@ -179,9 +179,11 @@ User → Next.js frontend → API routes → PostgreSQL (Supabase + RLS)
 │   ├── api-client.ts  # apiFetch with X-Account-Id header
 │   ├── alerts/                 # (empty — future phase)
 │   ├── ai/                     # (empty — future phase)
-│   └── stripe/                 # (empty — future phase)
+│   └── stripe/                 # Stripe SDK singleton + price mapping
+│       ├── client.ts           # Stripe SDK singleton (initialized from STRIPE_SECRET_KEY)
+│       └── prices.ts           # Price ID mapping for all tier × interval combinations
 ├── worker/                     # BullMQ worker process (deployed separately)
-│   └── jobs/                   # (empty — Phase 2+)
+│   └── jobs/                   # BullMQ job definitions (Phase 2+)
 ├── extractor/                  # Python PDF extractor (independent)
 │   ├── extract.py
 │   ├── loader.py
@@ -349,8 +351,10 @@ export async function getAccountContext(userId: string, accountId?: string): Pro
 
 | Condition | HTTP Status | Body |
 |---|---|---|
-| Feature requires higher tier | `402` | `{ "upgrade_required": true, "feature": "ai_suggestions", "minimum_tier": "pro" }` |
+| Feature requires higher tier | `402` | `{ "upgrade_required": true, "feature": "ai_suggestions", "minimum_tier": "elite" }` |
 | Account frozen (any write) | `403` | `{ "account_frozen": true, "reason": "payment_lapsed", "reactivate_url": "..." }` |
+
+> **Feature flag-based gating (Phase 2 update):** Subscription middleware exposes 8 feature flags: `canWhatIf`, `canExportPdf`, `canComparePlans`, `canSharePlans`, `canUseAi`, `canViewPercentile`, `canParentDraft`, `canCreateGoals`. API routes and server components check these flags rather than tier name strings. This decouples feature access from tier naming. Pro tier backward compatibility: middleware maps `pro` to `plus` so any legacy references still resolve correctly.
 
 ---
 
@@ -558,7 +562,8 @@ CREATE TABLE subscriptions (
   subscription_plan_id   UUID NOT NULL REFERENCES subscription_plans(id) ON DELETE RESTRICT,
   status                 TEXT NOT NULL CHECK (status IN ('trialing','active','past_due','canceled','paused')),
   trial_ends_at          TIMESTAMPTZ NOT NULL,
-  billing_cycle          TEXT CHECK (billing_cycle IN ('monthly','annual') OR billing_cycle IS NULL),
+  billing_cycle          TEXT CHECK (billing_cycle IN ('monthly','annual','four_year') OR billing_cycle IS NULL),
+                                                -- four_year uses Stripe payment mode (not subscription)
   current_period_start   TIMESTAMPTZ,
   current_period_end     TIMESTAMPTZ,
   cancel_at_period_end   BOOLEAN DEFAULT FALSE,
@@ -1199,7 +1204,7 @@ All routes: `/api/v1/...`. Version from day one.
 }
 
 // Error
-{ "error": { "code": "UPGRADE_REQUIRED", "message": "...", "minimum_tier": "pro" } }
+{ "error": { "code": "UPGRADE_REQUIRED", "message": "...", "minimum_tier": "elite" } }
 ```
 
 ### Key routes
@@ -1227,17 +1232,18 @@ All routes: `/api/v1/...`. Version from day one.
 | PUT | `/api/v1/requirements/opt-in` | student | Enable/disable tracking for opt-in requirement groups. Body: `{ requirementGroup, enabled }`. Updates `student_requirement_opt_ins`. | Phase 2 |
 | GET | `/api/v1/alerts` | student | Active alerts (unresolved) |
 | PATCH | `/api/v1/alerts/:id/dismiss` | student | Dismiss alert |
-| GET | `/api/v1/suggestions` | student (Pro+) | Rule-based + AI course suggestions |
-| POST | `/api/v1/ai/chat` | student (Pro+) | AI advisor chat |
-| POST | `/api/v1/ai/plan-review` | student (Pro+) | AI review of active plan |
+| GET | `/api/v1/suggestions` | student (Elite) | Rule-based + AI course suggestions |
+| POST | `/api/v1/ai/chat` | student (Elite) | AI advisor chat |
+| POST | `/api/v1/ai/plan-review` | student (Elite) | AI review of active plan |
 | GET | `/api/v1/courses` | any | Course browser (search + filter). Params: `department` (UUID or name), `gpa_waiver` (true/false), `semester_offered` (1 or 2 — exclusive to that semester, excludes same-name partners), `semester_both` (true — courses with a same-name partner in the other semester), `duration` (semester or full_year). Returns `gpaWaiver`, `departmentId`, `departmentName`, `semestersOffered` per course; `total` count in pagination meta. Results sorted by name ascending, then code ascending. Cursor encoding: base64(JSON {name, code, id}) for composite sort. Accepts comma-separated values for `credit_type` and `grade_level` query parameters (e.g., `credit_type=AP,CP&grade_level=9,10`). Builds SQL IN(...) clause for multiple values. |
 | GET | `/api/v1/courses/:id` | any | Course detail. Returns full course data plus `linkedCourses` array: other courses with the same name (semester partners), each with id, code, name, semesters_offered. |
 | GET | `/api/v1/courses/:id/prereqs` | any | Full prerequisite chain (recursive CTE) |
 | POST | `/api/v1/plans/:id/share` | student | Generate share link |
 | GET | `/api/v1/share/:token` | unauthenticated | View shared plan (read-only) |
-| POST | `/api/v1/stripe/webhook` | Stripe signature | Handle Stripe events |
-| GET | `/api/v1/subscriptions/me` | student | Current subscription state |
-| POST | `/api/v1/subscriptions/checkout` | student | Create Stripe checkout session |
+| POST | `/api/v1/stripe/webhook` | Stripe signature | Handle Stripe events (5 event types: `customer.subscription.created`, `customer.subscription.updated`, `customer.subscription.deleted`, `invoice.payment_failed`, `invoice.paid`). Idempotent via `stripe_events` table UNIQUE on `stripe_event_id`. | Phase 2 |
+| POST | `/api/v1/stripe/checkout` | student | Create Stripe Checkout session. Subscription mode for monthly/annual; payment mode for 4-year. | Phase 2 |
+| POST | `/api/v1/stripe/portal` | student | Create Stripe Billing Portal session for subscription management. | Phase 2 |
+| GET | `/api/v1/subscriptions` | student | Current subscription state, tier, billing cycle, feature flags. | Phase 2 |
 | GET | `/api/v1/export/plan/:id` | student | Generate plan PDF |
 | GET | `/api/v1/percentile` | student (Elite) | Percentile stats |
 | GET | `/api/v1/plans/:id` | student/parent/counselor | Get single plan detail | Phase 1b |
@@ -1357,6 +1363,15 @@ This supports typo-tolerant search (e.g., "Calclus" matches "Calculus"). For exa
 
 ### Stripe integration
 
+**Implementation (Phase 2 complete):**
+- **Stripe SDK singleton:** `lib/stripe/client.ts` — initializes Stripe from `STRIPE_SECRET_KEY` env var.
+- **Price ID mapping:** `lib/stripe/prices.ts` — maps tier + billing interval to Stripe Price IDs.
+- **Checkout:** `app/api/v1/stripe/checkout/route.ts` — creates Stripe Checkout sessions. Uses subscription mode for monthly/annual billing; payment mode for 4-year plans (one-time charge).
+- **Webhook handler:** `app/api/v1/stripe/webhook/route.ts` — receives and processes Stripe events with signature verification.
+- **Billing Portal:** `app/api/v1/stripe/portal/route.ts` — creates Stripe Billing Portal sessions for subscription management.
+- **Subscriptions API:** `app/api/v1/subscriptions/route.ts` — returns current subscription state with tier and feature flags.
+- **Billing page:** `app/(app)/settings/billing/page.tsx` — pricing cards with 3-interval toggle (monthly/annual/4-year), current plan indicator, upgrade/manage subscription CTAs.
+
 **Webhook events handled** (all logged to `stripe_events` before processing):
 
 | Event | Action |
@@ -1370,7 +1385,7 @@ This supports typo-tolerant search (e.g., "Calclus" matches "Calculus"). For exa
 **Idempotency pattern:**
 
 ```typescript
-// lib/stripe/webhook-handler.ts
+// app/api/v1/stripe/webhook/route.ts
 async function handleWebhook(rawBody: Buffer, signature: string) {
   const event = stripe.webhooks.constructEvent(rawBody, signature, WEBHOOK_SECRET);
 

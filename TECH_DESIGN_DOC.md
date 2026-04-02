@@ -1763,18 +1763,20 @@ Underload warnings trigger for any semester with fewer than 5 academic courses, 
 > - **Row 2:** Attention Required card (renamed from "Validation Report", with warning icon), Achievements card
 > - **Row 3:** Academic Progress card, Quick Actions card
 >
-> **"Attention Required" card:** Displays a category summary line: "1 Graduation Gap | 7 Semester Issues | 8 Prerequisite Violations". Three validation categories:
+> **"Attention Required" card:** Simplified — no category summary line or "Issues found" badge in header. Shows only category titles with counts (Graduation Gaps, Semester Gaps, Prerequisite Violations) + "View Report" button that routes to `/planner?validation=open`. Three validation categories:
 > - **Graduation Requirement Gaps** (red) — missing credits for diploma
 > - **Semester Requirement Gaps** (amber) — course load, PW/Dance, GPA waiver eligibility issues
 > - **Prerequisite Violations** (amber) — course ordering conflicts
 >
-> Honors badge removed from this card (moved to Achievements).
+> Non-course requirements (ACT, FAFSA) are excluded from issue counts. Honors badge removed from this card (moved to Achievements).
 >
-> **"Achievements" card:** Displays earned/unearned badges: Honor Graduate tier (computed from GPA), Graduation Ready, Credit milestones (15/30/45), GPA milestones (3.0+/3.5+/4.0+), Credits Earned. Data from requirements API (`honorsStatus`) and plan validation API for the primary/active plan.
+> **"Academic Progress" card:** Shows all requirement groups (not just graduation) with per-group segmented progress bars showing earned/planned/remaining. Replaces old graduation-only credit progress and individual requirement list. Data from requirements API.
+>
+> **"Achievements" card:** All badges (earned + unearned) in a single 2-column grid: Honor Graduate tier (computed from GPA), Graduation Ready, Credit milestones (15/30/45), GPA milestones (3.0+/3.5+/4.0+), Credits Earned. Data from requirements API (`honorsStatus`) and plan validation API for the primary/active plan.
 
 ### Plan header bar validation indicator
 
-> **Phase 2 update:** The plan header bar shows prerequisite violation count only (not semester issues). Progress data is auto-fetched on plan load and auto-refreshed when the plan is updated while the validation side panel is open.
+> **Phase 2 update:** The plan bar "Issues found" count includes graduation gaps, semester issues, and prerequisite violations only — non-course requirements (ACT, FAFSA) are excluded. Progress data is auto-fetched on plan load and auto-refreshed when the plan is updated while the validation side panel is open.
 
 ### Planner validation report side panel
 
@@ -1785,7 +1787,7 @@ Underload warnings trigger for any semester with fewer than 5 academic courses, 
 > - **Semester Requirement Gaps** (course load, PW/Dance/DriverEd, GPA waiver eligibility)
 > - **Prerequisite Violations** (course ordering conflicts)
 >
-> Warning messages use consistent "Gr X Sem Y:" prefix format as clickable links that navigate to the grade/semester in the planner grid. Clicking a link expands only that grade and highlights the target semester cell (blue ring, fades after 3s). The panel works with any selected plan (not just primary) using the `?planId=` parameter on the requirements API. When the side panel is open and the plan is updated (course added/removed, grade or status changed), the requirements API is automatically called to refresh the validation data.
+> Warning messages use consistent "Gr X Sem Y:" prefix format as clickable links that navigate to the grade/semester in the planner grid. Clicking a link expands only that grade and highlights the target semester cell (blue ring, fades after 3s). The panel works with any selected plan (not just primary) using the `?planId=` parameter on the requirements API. When the side panel is open and the plan is updated (course added/removed, grade or status changed), the requirements API is automatically called to refresh the validation data. The planner auto-opens the validation panel when navigated with `?validation=open` URL parameter (used by the Dashboard "View Report" button).
 
 ### Plan selection persistence
 
@@ -2312,7 +2314,7 @@ config/seeds/
 // Environment-aware: test personas only seeded in development/staging
 ```
 
-> **Plan templates (Phase 1b):** All 6 templates use the standard math progression: Algebra 1 (Gr 9) then Geometry (Gr 10) then Algebra 2 (Gr 11) then Precalculus or AP Calculus (Gr 12). U.S. History is placed in Grade 11 and Government in Grade 12, matching grade eligibility. Templates are seeded with split full-year rows (two `plan_courses` per full-year course) to support independent per-semester status and grade tracking.
+> **Plan templates (Phase 1b):** All 6 templates use the standard math progression: Algebra 1 (Gr 9) then Geometry (Gr 10) then Algebra 2 (Gr 11) then Precalculus or AP Calculus (Gr 12). U.S. History is placed in Grade 11 and Government in Grade 12, matching grade eligibility. Templates are seeded with split full-year rows (two `plan_courses` per full-year course) to support independent per-semester status and grade tracking. All 6 templates pass validation with zero violations. Fixes applied: Driver Education added to Grade 10, correct grade-level placements (U.S. History Gr 11, Government Gr 12, Health Gr 10 only), Applied Health moved after Health prerequisite (Pre-Med), Economics added to STEM/CS, electives added for Grade 10 underloads, PW coverage via Choice PE for Gr 11/12. Reset to Template uses `pc.semester` and `pc.gradeLevel` from actual course data (not group key), adds `skip_validation: true` for template reset, and logs failures.
 
 ### Environment-specific seeding
 

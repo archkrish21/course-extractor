@@ -600,122 +600,67 @@ export default function DashboardPage() {
                 </Link>
               </div>
             ) : reqData ? (
-              <>
-                {/* Progress bar */}
-                <div className="mb-2 flex items-center justify-between text-sm">
-                  <span className="text-muted-foreground">Credit Progress</span>
-                  <span className="font-medium text-foreground">
-                    <span className="text-success">{reqData.totalEarned} earned</span>
-                    {(reqData.totalPlanned ?? 0) > 0 && (
-                      <span className="text-primary"> + {reqData.totalPlanned} planned</span>
-                    )}
-                    <span className="text-muted-foreground">
-                      {" "}= {reqData.totalEarned + (reqData.totalPlanned ?? 0)} / {reqData.totalRequired}
-                    </span>
-                  </span>
-                </div>
-                <div
-                  className="flex h-3 w-full overflow-hidden rounded-full bg-muted"
-                  role="progressbar"
-                  aria-valuenow={reqEarnedPct + reqPlannedPct}
-                  aria-valuemin={0}
-                  aria-valuemax={100}
-                  aria-label="Graduation credit progress"
-                >
-                  {reqEarnedPct > 0 && (
-                    <div
-                      className="h-full bg-success transition-all duration-500"
-                      style={{ width: `${reqEarnedPct}%` }}
-                      title={`${reqData.totalEarned} credits earned`}
-                    />
-                  )}
-                  {reqPlannedPct > 0 && (
-                    <div
-                      className="h-full bg-primary/50 transition-all duration-500"
-                      style={{ width: `${reqPlannedPct}%` }}
-                      title={`${reqData.totalPlanned} credits planned`}
-                    />
-                  )}
-                </div>
-                <div className="mt-1 flex items-center justify-between text-[10px] text-muted-foreground">
-                  <div className="flex items-center gap-3">
-                    <span className="flex items-center gap-1">
-                      <span className="inline-block h-2 w-2 rounded-full bg-success" /> Earned
-                    </span>
-                    <span className="flex items-center gap-1">
-                      <span className="inline-block h-2 w-2 rounded-full bg-primary/50" /> Planned
-                    </span>
-                  </div>
-                  <span>{reqEarnedPct + reqPlannedPct}% covered</span>
-                </div>
+              (() => {
+                const groups = (reqData.groups ?? []).filter((g) => !g.isOptIn || g.enabled);
+                return (
+                  <>
+                    {/* Per-group summary with segmented bars */}
+                    <div className="space-y-3">
+                      {groups.map((g) => {
+                        let earned = 0, planned = 0, gaps = 0;
+                        for (const r of g.requirements) {
+                          if (r.evaluationType === "course_match") {
+                            const e = r.earnedCredits ?? 0, p = r.plannedCredits ?? 0;
+                            if (e >= r.requiredCredits) earned++;
+                            else if (e + p >= r.requiredCredits) planned++;
+                            else gaps++;
+                          } else {
+                            if (r.status === "met" || r.status === "completed") earned++;
+                            else if (r.status === "in_progress") planned++;
+                            else gaps++;
+                          }
+                        }
+                        const total = g.requirements.length;
+                        const ePct = total > 0 ? Math.round((earned / total) * 100) : 0;
+                        const pPct = total > 0 ? Math.min(100 - ePct, Math.round((planned / total) * 100)) : 0;
 
-                {/* Requirement list */}
-                {reqData.requirements.length > 0 && (
-                  <ul className="mt-3 space-y-1.5">
-                    {visibleReqs.map((req) => {
-                      const earned = req.earnedCredits ?? 0;
-                      const planned = req.plannedCredits ?? 0;
-                      const required = req.requiredCredits ?? 0;
-                      const covered = earned + planned;
-                      const localStatus = earned >= required ? "met" : (covered >= required ? "in_progress" : "gap");
+                        return (
+                          <div key={g.group}>
+                            <div className="flex items-center justify-between">
+                              <p className="text-xs font-medium text-muted-foreground">{g.label}</p>
+                              <div className="flex items-center gap-1 text-[10px]">
+                                {earned > 0 && <span className="font-semibold text-success">{earned}</span>}
+                                {planned > 0 && <span className="font-semibold text-primary">{planned}</span>}
+                                {gaps > 0 && <span className="font-semibold text-destructive">{gaps}</span>}
+                                <span className="text-muted-foreground">/ {total}</span>
+                              </div>
+                            </div>
+                            <div className="mt-1 flex h-1.5 w-full overflow-hidden rounded-full bg-muted">
+                              {ePct > 0 && <div className="h-full bg-success" style={{ width: `${ePct}%` }} />}
+                              {pPct > 0 && <div className="h-full bg-primary/50" style={{ width: `${pPct}%` }} />}
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
 
-                      return (
-                        <li key={req.name} className="flex items-center justify-between text-sm">
-                          <span className="flex items-center gap-1.5">
-                            {localStatus === "met" && (
-                              <span className="text-success text-xs" aria-label="Met">&#x2713;</span>
-                            )}
-                            {localStatus === "in_progress" && (
-                              <span className="text-primary text-xs" aria-label="In progress">&#x25D0;</span>
-                            )}
-                            {localStatus === "gap" && (
-                              <span className="text-destructive text-xs" aria-label="Gap">&#x2717;</span>
-                            )}
-                            <span className="text-foreground">{req.name}</span>
-                          </span>
-                          <span className="tabular-nums text-xs text-muted-foreground">
-                            {earned > 0 && planned > 0
-                              ? <><span className="text-success">{earned}</span>+<span className="text-primary">{planned}</span>/{required}</>
-                              : earned > 0
-                                ? <><span className="text-success">{earned}</span>/{required}</>
-                                : planned > 0
-                                  ? <><span className="text-primary">{planned}</span>/{required}</>
-                                  : <>0/{required}</>
-                            }
-                          </span>
-                        </li>
-                      );
-                    })}
-                  </ul>
-                )}
+                    {/* Legend */}
+                    <div className="mt-3 flex items-center gap-3 text-[10px] text-muted-foreground">
+                      <span className="flex items-center gap-1"><span className="inline-block h-1.5 w-1.5 rounded-full bg-success" /> Earned</span>
+                      <span className="flex items-center gap-1"><span className="inline-block h-1.5 w-1.5 rounded-full bg-primary/50" /> Planned</span>
+                      <span className="flex items-center gap-1"><span className="inline-block h-1.5 w-1.5 rounded-full bg-muted-foreground/30" /> Remaining</span>
+                    </div>
 
-                {/* Show all / collapse toggle */}
-                {reqData.requirements.length > 5 && (
-                  <button
-                    type="button"
-                    onClick={() => setShowAllReqs((prev) => !prev)}
-                    className="mt-2 text-xs font-medium text-primary hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
-                  >
-                    {showAllReqs
-                      ? "Show less"
-                      : `Show all ${reqData.requirements.length} requirements`}
-                  </button>
-                )}
-
-                {reqData.requirements.length === 0 && (
-                  <p className="mt-3 text-sm text-muted-foreground">
-                    Build your course plan to track graduation requirements.
-                  </p>
-                )}
-
-                <div className="mt-3 flex justify-end">
-                  <Link href="/progress">
-                    <Button size="sm" variant="outline">
-                      View Progress
-                    </Button>
-                  </Link>
-                </div>
-              </>
+                    <div className="mt-3 flex justify-end">
+                      <Link href="/progress">
+                        <Button size="sm" variant="outline">
+                          View Progress
+                        </Button>
+                      </Link>
+                    </div>
+                  </>
+                );
+              })()
             ) : null}
           </CardContent>
         </Card>
@@ -1003,24 +948,6 @@ export default function DashboardPage() {
             <h2 className="text-lg font-semibold text-foreground">
               Attention Required
             </h2>
-            {!reqLoading && !planLoading && (
-              (() => {
-                const gapCount = reqData
-                  ? reqData.requirements.filter((r) => {
-                      const covered = (r.earnedCredits ?? 0) + (r.plannedCredits ?? 0);
-                      return covered < r.requiredCredits;
-                    }).length
-                  : 0;
-                const semIssues = (reqData?.groups?.find((g) => g.group === "course_load")
-                  ?.requirements.filter((r) => r.status === "gap").length ?? 0) + (reqData?.gpaWaiverWarnings?.length ?? 0);
-                const hasIssues = gapCount > 0 || warningCount > 0 || semIssues > 0;
-                return hasIssues ? (
-                  <Badge variant="destructive" className="text-[10px]">Issues found</Badge>
-                ) : (
-                  <Badge className="bg-success/15 text-success text-[10px]">Valid</Badge>
-                );
-              })()
-            )}
           </div>
         </CardHeader>
         <CardContent className="flex-1">
@@ -1052,21 +979,6 @@ export default function DashboardPage() {
 
             return (
               <div className="space-y-4">
-                {/* Category summary */}
-                <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs">
-                  <span className={gaps.length > 0 ? "text-destructive" : "text-success"}>
-                    <span className="font-semibold">{gaps.length}</span> Graduation Gap{gaps.length !== 1 ? "s" : ""}
-                  </span>
-                  <span className="text-border">|</span>
-                  <span className={semesterIssues.length > 0 ? "text-warning" : "text-success"}>
-                    <span className="font-semibold">{semesterIssues.length}</span> Semester Issue{semesterIssues.length !== 1 ? "s" : ""}
-                  </span>
-                  <span className="text-border">|</span>
-                  <span className={warningCount > 0 ? "text-warning" : "text-success"}>
-                    <span className="font-semibold">{warningCount}</span> Prerequisite Violation{warningCount !== 1 ? "s" : ""}
-                  </span>
-                </div>
-
                 {hasNoIssues && (
                   <div className="flex items-center gap-2 py-2 text-sm text-success">
                     <svg aria-hidden="true" className="h-5 w-5" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
@@ -1076,75 +988,45 @@ export default function DashboardPage() {
                   </div>
                 )}
 
-                {/* 1. Graduation Requirement Gaps */}
-                {gaps.length > 0 && (
-                  <div className="rounded-lg border border-destructive/30 bg-destructive/5 p-3">
-                    <p className="mb-2 flex items-center gap-1.5 text-sm font-semibold text-destructive">
-                      <svg aria-hidden="true" className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126ZM12 15.75h.007v.008H12v-.008Z" />
-                      </svg>
-                      Graduation Requirement Gaps ({gaps.length})
-                    </p>
-                    <ul className="space-y-1.5">
-                      {gaps.map((r) => {
-                        const covered = (r.earnedCredits ?? 0) + (r.plannedCredits ?? 0);
-                        const needed = r.requiredCredits - covered;
-                        return (
-                          <li key={r.name} className="flex items-center justify-between text-sm">
-                            <span className="flex items-center gap-1.5">
-                              <span className="text-destructive text-xs">&#x2717;</span>
-                              <span className="text-foreground">{r.name}</span>
-                            </span>
-                            <span className="rounded bg-destructive/10 px-1.5 py-0.5 text-xs font-semibold text-destructive">
-                              {needed} credit{needed !== 1 ? "s" : ""} needed
-                            </span>
-                          </li>
-                        );
-                      })}
-                    </ul>
+                {!hasNoIssues && (
+                  <div className="space-y-2">
+                    {gaps.length > 0 && (
+                      <div className="flex items-center gap-2 text-sm text-destructive">
+                        <svg aria-hidden="true" className="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126ZM12 15.75h.007v.008H12v-.008Z" />
+                        </svg>
+                        <span className="font-semibold">Graduation Requirement Gaps</span>
+                        <span className="ml-auto rounded bg-destructive/10 px-1.5 py-0.5 text-xs font-semibold">{gaps.length}</span>
+                      </div>
+                    )}
+                    {semesterIssues.length > 0 && (
+                      <div className="flex items-center gap-2 text-sm text-warning">
+                        <svg aria-hidden="true" className="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 0 1 2.25-2.25h13.5A2.25 2.25 0 0 1 21 7.5v11.25m-18 0A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75m-18 0v-7.5A2.25 2.25 0 0 1 5.25 9h13.5A2.25 2.25 0 0 1 21 11.25v7.5" />
+                        </svg>
+                        <span className="font-semibold">Semester Requirement Gaps</span>
+                        <span className="ml-auto rounded bg-warning/10 px-1.5 py-0.5 text-xs font-semibold">{semesterIssues.length}</span>
+                      </div>
+                    )}
+                    {warningCount > 0 && (
+                      <div className="flex items-center gap-2 text-sm text-warning">
+                        <svg aria-hidden="true" className="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126ZM12 15.75h.007v.008H12v-.008Z" />
+                        </svg>
+                        <span className="font-semibold">Prerequisite Violations</span>
+                        <span className="ml-auto rounded bg-warning/10 px-1.5 py-0.5 text-xs font-semibold">{warningCount}</span>
+                      </div>
+                    )}
                   </div>
                 )}
 
-                {/* 2. Semester Requirement Gaps */}
-                {semesterIssues.length > 0 && (
-                  <div className="rounded-lg border border-warning/30 bg-warning/5 p-3">
-                    <p className="mb-2 flex items-center gap-1.5 text-sm font-semibold text-warning">
-                      <svg aria-hidden="true" className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 0 1 2.25-2.25h13.5A2.25 2.25 0 0 1 21 7.5v11.25m-18 0A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75m-18 0v-7.5A2.25 2.25 0 0 1 5.25 9h13.5A2.25 2.25 0 0 1 21 11.25v7.5" />
-                      </svg>
-                      Semester Requirement Gaps ({semesterIssues.length})
-                    </p>
-                    <ul className="space-y-1">
-                      {semesterIssues.map((msg, i) => (
-                        <li key={i} className="flex items-start gap-1.5 text-sm text-foreground">
-                          <span className="mt-1.5 h-1 w-1 shrink-0 rounded-full bg-warning" />
-                          {msg}
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                )}
-
-                {/* 3. Prerequisite Violations */}
-                {warningCount > 0 && (
-                  <div className="rounded-lg border border-warning/30 bg-warning/5 p-3">
-                    <p className="mb-2 flex items-center gap-1.5 text-sm font-semibold text-warning">
-                      <svg aria-hidden="true" className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126ZM12 15.75h.007v.008H12v-.008Z" />
-                      </svg>
-                      Prerequisite Violations ({warningCount})
-                    </p>
-                    <ul className="space-y-1">
-                      {warningMessages.map((msg, i) => (
-                        <li key={i} className="flex items-start gap-1.5 text-sm text-foreground">
-                          <span className="mt-1.5 h-1 w-1 shrink-0 rounded-full bg-warning" />
-                          {msg}
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                )}
-
+                <div className="mt-3 flex justify-end">
+                  <Link href="/planner?validation=open">
+                    <Button size="sm" variant="outline">
+                      View Report
+                    </Button>
+                  </Link>
+                </div>
               </div>
             );
           })()}
@@ -1266,39 +1148,31 @@ export default function DashboardPage() {
             }
 
             return (
-              <div className="space-y-3">
-                {earnedBadges.length > 0 && (
-                  <div className="grid grid-cols-2 gap-2">
-                    {earnedBadges.map((b) => (
-                      <div
-                        key={b.label}
-                        className={`flex items-center gap-2 rounded-lg border px-3 py-2 ${colorMap[b.color] ?? colorMap.primary}`}
-                      >
-                        {iconMap[b.icon]}
-                        <div>
-                          <p className="text-sm font-semibold">{b.label}</p>
-                          <p className="text-[10px] opacity-70">{b.detail}</p>
-                        </div>
-                      </div>
-                    ))}
+              <div className="grid grid-cols-2 gap-2">
+                {earnedBadges.map((b) => (
+                  <div
+                    key={b.label}
+                    className={`flex items-center gap-2 rounded-lg border px-3 py-2 ${colorMap[b.color] ?? colorMap.primary}`}
+                  >
+                    {iconMap[b.icon]}
+                    <div>
+                      <p className="text-sm font-semibold">{b.label}</p>
+                      <p className="text-[10px] opacity-70">{b.detail}</p>
+                    </div>
                   </div>
-                )}
-                {unearnedBadges.length > 0 && (
-                  <div className="grid grid-cols-2 gap-2">
-                    {unearnedBadges.map((b) => (
-                      <div
-                        key={b.label}
-                        className="flex items-center gap-2 rounded-lg border border-border bg-muted/30 px-3 py-2 text-muted-foreground opacity-50"
-                      >
-                        {iconMap[b.icon]}
-                        <div>
-                          <p className="text-sm font-semibold">{b.label}</p>
-                          <p className="text-[10px]">{b.detail}</p>
-                        </div>
-                      </div>
-                    ))}
+                ))}
+                {unearnedBadges.map((b) => (
+                  <div
+                    key={b.label}
+                    className="flex items-center gap-2 rounded-lg border border-border bg-muted/30 px-3 py-2 text-muted-foreground opacity-50"
+                  >
+                    {iconMap[b.icon]}
+                    <div>
+                      <p className="text-sm font-semibold">{b.label}</p>
+                      <p className="text-[10px]">{b.detail}</p>
+                    </div>
                   </div>
-                )}
+                ))}
               </div>
             );
           })()}

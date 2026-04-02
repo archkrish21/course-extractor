@@ -163,30 +163,34 @@ export default function ProgressPage() {
     await fetchData();
   };
 
-  // Overall summary across all groups
+  // Overall summary across all groups — with earned/planned/gap breakdown
   const groupSummaries = (data?.groups ?? [])
     .filter((g) => !g.isOptIn || g.enabled)
     .map((g) => {
-      const met = g.requirements.filter((r) => {
+      let earned = 0;
+      let planned = 0;
+      let gaps = 0;
+      for (const r of g.requirements) {
         if (r.evaluationType === "course_match") {
-          const covered = (r.earnedCredits ?? 0) + (r.plannedCredits ?? 0);
-          return covered >= r.requiredCredits;
+          const e = r.earnedCredits ?? 0;
+          const p = r.plannedCredits ?? 0;
+          if (e >= r.requiredCredits) earned++;
+          else if (e + p >= r.requiredCredits) planned++;
+          else gaps++;
+        } else {
+          if (r.status === "met" || r.status === "completed") earned++;
+          else if (r.status === "in_progress") planned++;
+          else gaps++;
         }
-        return r.status === "met" || r.status === "completed";
-      }).length;
-      const gaps = g.requirements.filter((r) => {
-        if (r.evaluationType === "course_match") {
-          const covered = (r.earnedCredits ?? 0) + (r.plannedCredits ?? 0);
-          return covered < r.requiredCredits;
-        }
-        return r.status === "gap" || r.status === "not_started";
-      }).length;
-      return { group: g.group, label: g.label, total: g.requirements.length, met, gaps };
+      }
+      return { group: g.group, label: g.label, total: g.requirements.length, earned, planned, gaps };
     });
   const totalReqsAll = groupSummaries.reduce((s, g) => s + g.total, 0);
-  const totalMetAll = groupSummaries.reduce((s, g) => s + g.met, 0);
+  const totalEarnedAll = groupSummaries.reduce((s, g) => s + g.earned, 0);
+  const totalPlannedAll = groupSummaries.reduce((s, g) => s + g.planned, 0);
   const totalGapsAll = groupSummaries.reduce((s, g) => s + g.gaps, 0);
-  const overallPct = totalReqsAll > 0 ? Math.round((totalMetAll / totalReqsAll) * 100) : 0;
+  const overallEarnedPct = totalReqsAll > 0 ? Math.round((totalEarnedAll / totalReqsAll) * 100) : 0;
+  const overallPlannedPct = totalReqsAll > 0 ? Math.min(100 - overallEarnedPct, Math.round((totalPlannedAll / totalReqsAll) * 100)) : 0;
 
   if (loading) {
     return (
@@ -637,53 +641,63 @@ export default function ProgressPage() {
                 {/* Overall stats */}
                 <div className="flex items-center justify-between py-1">
                   <p className="text-sm text-muted-foreground">Overall</p>
-                  <p className="text-lg font-bold text-foreground">
-                    {totalMetAll}<span className="text-sm font-normal text-muted-foreground">/{totalReqsAll}</span>
-                  </p>
+                  <div className="flex items-center gap-2 text-xs">
+                    <span className="text-success font-semibold">{totalEarnedAll} earned</span>
+                    <span className="text-primary font-semibold">{totalPlannedAll} planned</span>
+                    {totalGapsAll > 0 && <span className="text-destructive font-semibold">{totalGapsAll} gap{totalGapsAll !== 1 ? "s" : ""}</span>}
+                  </div>
                 </div>
 
-                {/* Overall progress bar */}
+                {/* Overall segmented progress bar */}
                 <div className="mt-1">
                   <div className="flex h-2.5 w-full overflow-hidden rounded-full bg-muted">
-                    {overallPct > 0 && (
-                      <div
-                        className={`h-full transition-all duration-500 ${totalGapsAll === 0 ? "bg-success" : "bg-primary"}`}
-                        style={{ width: `${overallPct}%` }}
-                      />
+                    {overallEarnedPct > 0 && (
+                      <div className="h-full bg-success transition-all duration-500" style={{ width: `${overallEarnedPct}%` }} />
+                    )}
+                    {overallPlannedPct > 0 && (
+                      <div className="h-full bg-primary/50 transition-all duration-500" style={{ width: `${overallPlannedPct}%` }} />
                     )}
                   </div>
                   <div className="mt-1 flex items-center justify-between text-[10px] text-muted-foreground">
-                    <span>{overallPct}% met</span>
-                    {totalGapsAll > 0 ? (
-                      <span className="text-destructive">{totalGapsAll} issue{totalGapsAll !== 1 ? "s" : ""}</span>
-                    ) : (
-                      <span className="text-success">All clear</span>
-                    )}
+                    <div className="flex items-center gap-2">
+                      <span className="flex items-center gap-0.5"><span className="inline-block h-1.5 w-1.5 rounded-full bg-success" />Earned</span>
+                      <span className="flex items-center gap-0.5"><span className="inline-block h-1.5 w-1.5 rounded-full bg-primary/50" />Planned</span>
+                    </div>
+                    <span>{totalEarnedAll + totalPlannedAll}/{totalReqsAll}</span>
                   </div>
                 </div>
 
                 {/* Per-category breakdown */}
                 <div className="mt-6 border-t border-border pt-4 space-y-3">
                   {groupSummaries.map((gs) => {
-                    const pct = gs.total > 0 ? Math.round((gs.met / gs.total) * 100) : 0;
-                    const allGood = gs.gaps === 0;
+                    const ePct = gs.total > 0 ? Math.round((gs.earned / gs.total) * 100) : 0;
+                    const pPct = gs.total > 0 ? Math.min(100 - ePct, Math.round((gs.planned / gs.total) * 100)) : 0;
                     return (
                       <div key={gs.group}>
                         <div className="flex items-center justify-between">
                           <p className="text-xs text-muted-foreground">{gs.label}</p>
-                          <p className="text-xs font-semibold text-foreground">
-                            {gs.met}/{gs.total}
-                          </p>
+                          <div className="flex items-center gap-1.5 text-[10px]">
+                            {gs.earned > 0 && <span className="text-success font-semibold">{gs.earned}</span>}
+                            {gs.planned > 0 && <span className="text-primary font-semibold">{gs.planned}</span>}
+                            {gs.gaps > 0 && <span className="text-destructive font-semibold">{gs.gaps}</span>}
+                            <span className="text-muted-foreground">/ {gs.total}</span>
+                          </div>
                         </div>
                         <div className="mt-1 flex h-1.5 w-full overflow-hidden rounded-full bg-muted">
-                          <div className={`h-full ${allGood ? "bg-success" : "bg-primary"}`} style={{ width: `${pct}%` }} />
+                          {ePct > 0 && <div className="h-full bg-success" style={{ width: `${ePct}%` }} />}
+                          {pPct > 0 && <div className="h-full bg-primary/50" style={{ width: `${pPct}%` }} />}
                         </div>
                         <div className="mt-0.5 flex items-center justify-between text-[10px] text-muted-foreground">
-                          <span>{pct}% met</span>
+                          <span>
+                            {gs.earned > 0 && <><span className="text-success">{gs.earned} earned</span> </>}
+                            {gs.planned > 0 && <><span className="text-primary">{gs.planned} planned</span> </>}
+                          </span>
                           {gs.gaps > 0 ? (
                             <span className="text-destructive">{gs.gaps} gap{gs.gaps !== 1 ? "s" : ""}</span>
+                          ) : gs.earned === gs.total ? (
+                            <span className="text-success">Complete</span>
                           ) : (
-                            <span className="text-success">All clear</span>
+                            <span className="text-primary">On track</span>
                           )}
                         </div>
                       </div>

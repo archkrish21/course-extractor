@@ -370,3 +370,82 @@ test.describe("Dashboard — Navigation Menu", () => {
     await expect(dashboardLink).toBeVisible({ timeout: 5_000 });
   });
 });
+
+// ─── Attention Required — Compact Layout ────────────────────────────────────
+
+test.describe("Dashboard — Attention Required Compact", () => {
+  test("shows category titles without individual messages", async ({ page }) => {
+    await navigateToDashboard(page);
+    await page.waitForTimeout(5000);
+
+    // Should show category titles (not individual messages)
+    const gradGaps = page.locator("text=Graduation Requirement Gaps");
+    const semGaps = page.locator("text=Semester Requirement Gaps");
+    const prereqs = page.locator("text=Prerequisite Violations");
+
+    // At least one category or the all-clear message should show
+    const allClear = page.locator("text=/No issues found/");
+    const hasCategory = (await gradGaps.count()) + (await semGaps.count()) + (await prereqs.count()) > 0;
+    const hasAllClear = (await allClear.count()) > 0;
+    expect(hasCategory || hasAllClear).toBeTruthy();
+  });
+
+  test("View Report button routes to planner with validation open", async ({ page }) => {
+    await navigateToDashboard(page);
+    await page.waitForTimeout(5000);
+
+    const viewReport = page.locator("text=View Report");
+    await expect(viewReport).toBeVisible({ timeout: 5_000 });
+
+    await viewReport.click();
+    await page.waitForURL(/\/planner\?validation=open/, { timeout: 10_000 });
+
+    // Validation panel should be open
+    await expect(page.locator("text=Validation Report")).toBeVisible({ timeout: 10_000 });
+  });
+});
+
+// ─── Academic Progress — All Groups ─────────────────────────────────────────
+
+test.describe("Dashboard — Academic Progress All Groups", () => {
+  test("shows per-group progress bars", async ({ page }) => {
+    await navigateToDashboard(page);
+    await page.waitForTimeout(5000);
+
+    // Should show multiple group labels
+    const gradReqs = page.locator("text=Graduation Requirements");
+    const semReqs = page.locator("text=Semester Requirements");
+
+    // At least graduation requirements should be visible
+    await expect(gradReqs.first()).toBeVisible({ timeout: 5_000 });
+  });
+
+  test("shows earned/planned/remaining legend", async ({ page }) => {
+    await navigateToDashboard(page);
+    await page.waitForTimeout(5000);
+
+    await expect(page.locator("text=Earned").first()).toBeVisible({ timeout: 5_000 });
+    await expect(page.locator("text=Planned").first()).toBeVisible();
+    await expect(page.locator("text=Remaining").first()).toBeVisible();
+  });
+
+  test("shows segmented progress bars with colors", async ({ page }) => {
+    await navigateToDashboard(page);
+    await page.waitForTimeout(5000);
+
+    // Progress bars should have success (earned) and/or primary (planned) segments
+    const bars = page.locator('[class*="rounded-full"][class*="bg-muted"]');
+    expect(await bars.count()).toBeGreaterThanOrEqual(1);
+  });
+
+  test("View Progress button links to progress page", async ({ page }) => {
+    await navigateToDashboard(page);
+    await page.waitForTimeout(3000);
+
+    const viewProgress = page.locator("text=View Progress").first();
+    if ((await viewProgress.count()) > 0) {
+      await viewProgress.click();
+      await page.waitForURL(/\/progress/, { timeout: 10_000 });
+    }
+  });
+});

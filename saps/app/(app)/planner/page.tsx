@@ -80,6 +80,12 @@ export default function PlannerPage() {
   const [showProgressPanel, setShowProgressPanel] = useState(false);
   const showProgressPanelRef = useRef(false);
   useEffect(() => { showProgressPanelRef.current = showProgressPanel; }, [showProgressPanel]);
+  // Auto-open validation panel if URL has ?validation=open
+  useEffect(() => {
+    if (typeof window !== "undefined" && new URLSearchParams(window.location.search).get("validation") === "open") {
+      setShowProgressPanel(true);
+    }
+  }, []);
   const [progressData, setProgressData] = useState<{
     totalEarned: number;
     totalPlanned: number;
@@ -652,17 +658,23 @@ export default function PlannerPage() {
             if (!Array.isArray(arr)) continue;
             for (const pc of arr) {
               const courseId = pc.courseId ?? pc.course?.id;
-              const semVal = sem === "full_year" ? null : Number(sem);
-              await apiFetch(`/api/v1/plans/${selectedPlanId}/courses`, {
+              if (!courseId) continue;
+              const semVal = pc.semester ?? (sem === "full_year" ? null : Number(sem));
+              const res = await apiFetch(`/api/v1/plans/${selectedPlanId}/courses`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
                   course_id: courseId,
-                  grade_level: Number(gl),
+                  grade_level: pc.gradeLevel ?? Number(gl),
                   semester: semVal,
                   force_add: true,
+                  skip_validation: true,
                 }),
               });
+              if (!res.ok) {
+                const err = await res.json().catch(() => ({}));
+                console.warn(`[reset] Failed to add ${pc.course?.code ?? courseId}: ${err.error?.message ?? res.status}`);
+              }
             }
           }
         }
@@ -943,10 +955,8 @@ export default function PlannerPage() {
   const gradReqGapCount = progressData
     ? progressData.requirements.filter((r) => (r.earnedCredits ?? 0) + (r.plannedCredits ?? 0) < r.requiredCredits).length
     : 0;
-  const nonCourseGapCount = progressData?.groups
-    ?.find((g) => g.group === "non_course")
-    ?.requirements.filter((r) => r.status === "gap" || r.status === "not_started").length ?? 0;
-  const hasIssues = totalViolations > 0 || gradReqGapCount > 0 || nonCourseGapCount > 0;
+  const semesterIssueCount = courseLoadWarnings.length + gpaWaiverWarnings.length;
+  const hasIssues = totalViolations > 0 || gradReqGapCount > 0 || semesterIssueCount > 0;
   // Credit per row: full-year courses are stored as 2 rows with creditValue=2.0 each,
   // so each row represents 1 credit (half the course). Semester courses are 1 row = 1 credit.
   const creditPerRow = (c: PlanCourse) => {

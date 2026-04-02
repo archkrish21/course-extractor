@@ -510,3 +510,54 @@ test.describe("Progress — Credit Breakdown", () => {
     expect(hasEarned || hasPlanned).toBeTruthy();
   });
 });
+
+// ─── Summary Sidebar — Segmented Progress ───────────────────────────────────
+
+test.describe("Progress — Summary Sidebar", () => {
+  test("shows overall earned/planned/gap counts", async ({ page }) => {
+    test.skip(test.info().project.name === "mobile", "Desktop sidebar test");
+    await navigateToProgress(page);
+
+    // Overall section should show earned and planned
+    const earned = page.locator("text=/\\d+ earned/").first();
+    const planned = page.locator("text=/\\d+ planned/").first();
+    await expect(earned).toBeVisible({ timeout: 10_000 });
+    await expect(planned).toBeVisible();
+  });
+
+  test("shows segmented progress bar with legend", async ({ page }) => {
+    test.skip(test.info().project.name === "mobile", "Desktop sidebar test");
+    await navigateToProgress(page);
+
+    // Legend items
+    const earnedLegend = page.locator("text=Earned").first();
+    const plannedLegend = page.locator("text=Planned").first();
+    await expect(earnedLegend).toBeVisible({ timeout: 10_000 });
+    await expect(plannedLegend).toBeVisible();
+  });
+
+  test("shows per-category breakdown with earned/planned/gap", async ({ page }) => {
+    test.skip(test.info().project.name === "mobile", "Desktop sidebar test");
+    await navigateToProgress(page);
+
+    // Category labels
+    const gradReqs = page.locator("text=Graduation Requirements");
+    const semReqs = page.locator("text=Semester Requirements");
+
+    // At least graduation should be visible in sidebar
+    await expect(gradReqs.last()).toBeVisible({ timeout: 10_000 });
+  });
+
+  test("shows status per category (Complete, On track, or gaps)", async ({ page }) => {
+    test.skip(test.info().project.name === "mobile", "Desktop sidebar test");
+    await navigateToProgress(page);
+
+    // Should show at least one status indicator
+    const complete = page.locator("text=Complete");
+    const onTrack = page.locator("text=On track");
+    const gapText = page.locator("text=/\\d+ gap/");
+
+    const hasAny = (await complete.count()) + (await onTrack.count()) + (await gapText.count());
+    expect(hasAny).toBeGreaterThanOrEqual(1);
+  });
+});

@@ -711,8 +711,8 @@ The dashboard uses a 3-row, 2-column grid layout:
 
 | Req | Description | Priority |
 |---|---|---|
-| F-SB-01 | 4 tiers: Starter (free), Plus (~$6/mo), Pro (~$12/mo), Elite (~$18/mo). Annual pricing at ~2 months discount. Exact pricing confirmed before Stripe setup. | Must |
-| F-SB-02 | 14-day Elite trial at signup. No credit card required. Auto-downgrade to Starter at expiry. | Must |
+| F-SB-01 | 3 tiers: Starter (free), Plus ($9.99/mo), Elite ($19.99/mo). 3 billing intervals: monthly, annual (save 10%), 4-year (save 17%). Annual: Plus $107.88/yr ($8.99/mo), Elite $215.88/yr ($17.99/mo). 4-Year: Plus $399, Elite $799. Pro tier removed — Plus absorbs non-AI features, AI stays Elite-only. | Must |
+| F-SB-02 | 14-day trial at signup. No credit card required. Trial gives Plus-level features EXCEPT plan comparison, PDF export, and share links (to prevent extract-and-leave). Max 2 plans during trial. Auto-downgrade to Starter at expiry. AI features NOT included in trial (Elite-only). | Must |
 | F-SB-03 | Stripe Checkout for payment; Stripe Billing Portal for subscription management. | Must |
 | F-SB-04 | Subscription enforcement middleware: Redis-cached tier (5-min TTL); HTTP 402 on gated feature access; HTTP 403 on frozen account write. | Must |
 | F-SB-05 | Downgrade guard: excess plans archived (never deleted). Alert history, AI history, prerequisite data preserved. | Must |
@@ -725,25 +725,36 @@ The dashboard uses a 3-row, 2-column grid layout:
 
 ### 5.13 Tier Feature Matrix
 
-| Feature | Starter | Plus | Pro | Elite |
+| Feature | Trial (14-day) | Starter (free) | Plus ($9.99/mo) | Elite ($19.99/mo) |
 |---|---|---|---|---|
 | Course browser & search | ✓ | ✓ | ✓ | ✓ |
 | Prerequisite validation | ✓ | ✓ | ✓ | ✓ |
 | Graduation requirement tracking | ✓ | ✓ | ✓ | ✓ |
 | GPA tracking (cumulative) | ✓ | ✓ | ✓ | ✓ |
-| Max active plans | 1 | 5 | Unlimited | Unlimited |
-| What-if GPA simulator | — | ✓ | ✓ | ✓ |
-| Plan comparison | — | ✓ | ✓ | ✓ |
-| PDF export | — | ✓ | ✓ | ✓ |
-| Goal tracking | — | ✓ | ✓ | ✓ |
-| AI course suggestions | — | — | ✓ | ✓ |
-| AI plan review | — | — | ✓ | ✓ |
-| AI chat | — | — | ✓ | ✓ |
-| Full alert system | — | — | ✓ | ✓ |
-| Dual credit tracking | — | — | ✓ | ✓ |
+| Max active plans | 2 | 1 | 10 | Unlimited |
+| What-if GPA simulator | ✓ | — | ✓ | ✓ |
+| Goal tracking | ✓ | — | ✓ | ✓ |
+| Full alert system | ✓ | — | ✓ | ✓ |
+| Dual credit tracking | ✓ | — | ✓ | ✓ |
+| Parent plan drafts | ✓ | — | ✓ | ✓ |
+| Plan comparison | — | — | ✓ | ✓ |
+| PDF export | — | — | ✓ | ✓ |
 | Share links | — | — | ✓ | ✓ |
+| AI course suggestions | — | — | — | ✓ |
+| AI plan review | — | — | — | ✓ |
+| AI chat | — | — | — | ✓ |
 | Percentile comparison | — | — | — | ✓ |
 | Course rigor scoring | — | — | — | ✓ |
+
+### 5.13a Pricing
+
+| Billing | Plus | Elite |
+|---|---|---|
+| Monthly | $9.99/mo | $19.99/mo |
+| Annual (save 10%) | $107.88/yr ($8.99/mo) | $215.88/yr ($17.99/mo) |
+| 4-Year (save 17%) | $399 one-time ($8.31/mo) | $799 one-time ($16.65/mo) |
+
+**Trial design:** 14-day free trial with Plus-level features except plan comparison, PDF export, and share links. Max 2 plans. No credit card required. AI features NOT included (Elite-only). Auto-downgrades to Starter at expiry. This prevents the "build-export-leave" pattern while giving enough value to demonstrate the product.
 
 ### 5.14 Account Lifecycle
 

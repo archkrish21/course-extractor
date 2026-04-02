@@ -43,21 +43,22 @@ The platform is designed as a **personal/family planning tool** — no school sy
 
 ## Subscription Model & Revenue
 
-Every new user receives a **14-day free trial of the Elite tier** (no credit card required). At trial end, the account automatically moves to the free Starter tier unless the user upgrades.
+Every new user receives a **14-day free trial** (no credit card required) with Plus-level features except plan comparison, PDF export, and share links. Max 2 plans during trial. AI features are NOT included (Elite-only). At trial end, the account automatically moves to the free Starter tier unless the user upgrades. This prevents the "build-export-leave" pattern while demonstrating the product's value.
 
-| Tier | Monthly | Annual | Key Capabilities |
-|---|---|---|---|
-| **Starter** | Free | Free | 1 plan, course browser, requirement validation, GPA tracking |
-| **Plus** | ~$6/mo | ~$50/yr | Up to 5 plans, what-if GPA, plan comparison, PDF export, goal tracking |
-| **Pro** | ~$12/mo | ~$95/yr | Unlimited plans, AI course suggestions, full alert system, dual credit tracking |
-| **Elite** | ~$18/mo | ~$130/yr | Everything in Pro + percentile comparison and course rigor scoring vs. peers |
+| Tier | Monthly | Annual (save 10%) | 4-Year (save 17%) | Key Capabilities |
+|---|---|---|---|---|
+| **Starter** | Free | — | — | 1 plan, course browser, requirement validation, GPA tracking |
+| **Plus** | $9.99/mo | $107.88/yr ($8.99/mo) | $399 ($8.31/mo) | 10 plans, what-if GPA, plan comparison, PDF export, share links, goal tracking, full alerts, dual credit, parent plan drafts |
+| **Elite** | $19.99/mo | $215.88/yr ($17.99/mo) | $799 ($16.65/mo) | Everything in Plus + AI course suggestions, AI plan review, AI chat, percentile comparison, course rigor scoring, unlimited plans |
 
 **Key monetization principles:**
+- 3 tiers (Starter/Plus/Elite) — Pro tier eliminated. Plus absorbs non-AI features at an accessible price; Elite is the premium AI-powered tier.
+- 3 billing intervals: monthly, annual (10% discount), and **4-year** (17% discount). The 4-year plan matches the product's natural lifecycle — students plan all 4 years of high school.
 - Starter is genuinely useful — core planning is free, not crippled. This drives adoption.
 - Upgrades are prompted in-context when a student hits a plan limit or tries a gated feature.
-- Annual billing offers approximately 2 months free vs. monthly — designed to capture families before school year starts.
 - A student's subscription covers their linked parent accounts — no separate parent subscription required. The subscription is per student account (not per person). Parent accounts are always free. Any family member can be the billing contact. Parents with multiple children see an account switcher — each child's account has its own subscription tier.
 - Downgrading never deletes data. Excess plans become read-only archives; all history and grades are preserved.
+- Parent plan draft creation requires Plus or Elite — parents on Starter accounts cannot create draft plans in their child's account.
 
 **Payment infrastructure:** Stripe handles billing, subscription lifecycle, and failure recovery. A 5-day grace period applies before a lapsed payment results in account restrictions.
 

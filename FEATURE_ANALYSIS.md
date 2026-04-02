@@ -255,27 +255,31 @@ Show a countdown banner in the app from day 10 onward: "X days left in your free
 
 ### Subscription Tiers
 
-| | Starter | Plus | Pro | Elite |
+3 tiers (Pro tier eliminated). Plus absorbs non-AI features; Elite is the premium AI-powered tier. 14-day trial with restricted Plus-level features (no export/share/compare, max 2 plans, no AI).
+
+| | Trial (14-day) | Starter | Plus | Elite |
 |---|---|---|---|---|
-| **Price (monthly)** | Free | ~$6/mo | ~$12/mo | ~$18/mo |
-| **Price (annual)** | Free | ~$50/yr | ~$95/yr | ~$130/yr |
-| **Max active plans** | 1 | 5 | Unlimited | Unlimited |
+| **Price** | Free | Free | $9.99/mo · $107.88/yr · $399/4yr | $19.99/mo · $215.88/yr · $799/4yr |
+| **Max active plans** | 2 | 1 | 10 | Unlimited |
 | Course browser & search | ✓ | ✓ | ✓ | ✓ |
 | Prerequisite validation | ✓ | ✓ | ✓ | ✓ |
 | Graduation requirement tracking | ✓ | ✓ | ✓ | ✓ |
 | GPA tracking (cumulative) | ✓ | ✓ | ✓ | ✓ |
-| What-if GPA simulator | — | ✓ | ✓ | ✓ |
-| Plan comparison | — | ✓ | ✓ | ✓ |
-| PDF export | — | ✓ | ✓ | ✓ |
-| Goal tracking | — | ✓ | ✓ | ✓ |
-| AI course suggestions | — | — | ✓ | ✓ |
-| AI plan review | — | — | ✓ | ✓ |
-| AI chat | — | — | ✓ | ✓ |
-| Full alert system | — | — | ✓ | ✓ |
-| Dual credit tracking | — | — | ✓ | ✓ |
+| What-if GPA simulator | ✓ | — | ✓ | ✓ |
+| Goal tracking | ✓ | — | ✓ | ✓ |
+| Full alert system | ✓ | — | ✓ | ✓ |
+| Dual credit tracking | ✓ | — | ✓ | ✓ |
+| Parent plan drafts | ✓ | — | ✓ | ✓ |
+| Plan comparison | — | — | ✓ | ✓ |
+| PDF export | — | — | ✓ | ✓ |
 | Share links | — | — | ✓ | ✓ |
+| AI course suggestions | — | — | — | ✓ |
+| AI plan review | — | — | — | ✓ |
+| AI chat | — | — | — | ✓ |
 | **Percentile comparison** | — | — | — | ✓ |
 | **Course rigor scoring** | — | — | — | ✓ |
+
+Billing intervals: monthly, annual (save 10%), 4-year (save 17%). The 4-year plan matches the product's natural lifecycle.
 
 > Annual pricing is approximately 2 months free vs. monthly. Confirm exact pricing with business requirements before launch.
 
@@ -931,10 +935,10 @@ change_summary      JSONB DEFAULT '[]'       -- [{code, name, change_type, detai
 ```sql
 id            UUID PRIMARY KEY DEFAULT gen_random_uuid(),
 name          TEXT NOT NULL UNIQUE,     -- 'starter', 'plus', 'pro', 'elite'
-display_name  TEXT NOT NULL,            -- 'Starter', 'Plus', 'Pro', 'Elite'
+display_name  TEXT NOT NULL,            -- 'Starter', 'Plus', 'Elite'
 price_monthly DECIMAL(6,2),             -- NULL = free tier
 price_annual  DECIMAL(7,2),             -- NULL = free tier; ~2 months free vs monthly
-max_plans     SMALLINT,                  -- 1 for Starter, 5 for Plus, NULL = unlimited (Pro/Elite)
+max_plans     SMALLINT,                  -- 1 for Starter, 10 for Plus, NULL = unlimited (Elite)
 features      JSONB NOT NULL            -- feature flag map mirroring tier table above
                                         -- e.g., {"can_create_goals": true, "can_use_ai": false, "can_view_percentile": false}
 ```

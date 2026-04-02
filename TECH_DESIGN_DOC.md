@@ -533,15 +533,19 @@ CREATE TABLE counselor_student_links (
 
 ```sql
 CREATE TABLE subscription_plans (
-  id            UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  name          TEXT NOT NULL UNIQUE,     -- 'starter','plus','pro','elite'
-  display_name  TEXT NOT NULL,
-  price_monthly DECIMAL(6,2),             -- NULL = free
-  price_annual  DECIMAL(7,2),
-  max_plans     SMALLINT,                 -- 1 for Starter, 5 for Plus, NULL = unlimited
-  features      JSONB NOT NULL
-                -- e.g., {"can_create_goals": true, "can_use_ai": false, "can_view_percentile": false}
+  id             UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  name           TEXT NOT NULL UNIQUE,     -- 'starter','plus','elite' (Pro removed)
+  display_name   TEXT NOT NULL,
+  price_monthly  DECIMAL(6,2),             -- NULL = free. Plus: 9.99, Elite: 19.99
+  price_annual   DECIMAL(7,2),             -- Plus: 107.88, Elite: 215.88 (save 10%)
+  price_four_year DECIMAL(7,2),            -- Plus: 399.00, Elite: 799.00 (save 17%)
+  max_plans      SMALLINT,                 -- 1 for Starter, 10 for Plus, NULL = unlimited (Elite)
+  features       JSONB NOT NULL
+                 -- e.g., {"can_create_goals": true, "can_use_ai": false, "can_view_percentile": false,
+                 --        "can_parent_draft": true, "can_what_if": true, ...}
 );
+-- Trial: 14-day, Plus-level features except can_compare_plans/can_export_pdf/can_share_plans,
+-- max 2 plans, no AI. Auto-downgrades to Starter at expiry.
 ```
 
 ### Table: `subscriptions`

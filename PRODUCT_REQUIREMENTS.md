@@ -1156,7 +1156,10 @@ The following are explicitly not in scope for the current product, and should no
 | Out of Scope Item | Reason |
 |---|---|
 | Official school system integration / transcript sync | FERPA complexity; requires formal district agreement |
-| NCAA eligibility tracking | Specialized; requires ongoing rule maintenance |
+| NCAA eligibility tracking | Specialized; requires ongoing rule maintenance. Phase 3 |
+| Template intensity levels (Easy/Moderate/Challenging/Intensive/Rigorous) | Auto-selects CP/Accelerated/AP course variants and load per template. ~600 course placements to validate across 6 templates × 5 levels. Phase 3 |
+| Seal of Biliteracy | Requires exam score tracking. Phase 3 |
+| P.E. waiver rules | Complex per-semester logic with multiple waiver types. Phase 3 |
 | College admission requirement validation | Too complex to maintain accurately; liability risk |
 | Mobile native app (iOS/Android) | Web responsive is sufficient for MVP; defer to Phase 6+ |
 | Multi-school support | Stevenson-specific for launch; architecture supports expansion later |

@@ -1472,6 +1472,10 @@ Phase 5 includes a formal WCAG audit and remediation of any gaps, but the core p
 - Course suggestion for GPA targeting (heuristic-based)
 - Multiple plan drafts + side-by-side plan comparison
 - Plan export to PDF + read-only share link
+- Template intensity levels (Easy/Moderate/Challenging/Intensive/Rigorous) — auto-selects CP/Accelerated/AP course variants and load per template
+- NCAA eligibility tracking
+- Seal of Biliteracy
+- P.E. waiver rules (complex per-semester logic with multiple waiver types)
 
 ### Phase 4 — AI Advisory (Weeks 15-17)
 - Claude API integration with course catalog as context

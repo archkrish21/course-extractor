@@ -2087,6 +2087,15 @@ Seed script generates 5 student personas:
 
 Never use real student data in non-production environments.
 
+### Deferred to Phase 3
+
+| Feature | Notes |
+|---|---|
+| Template intensity levels | 5 levels (Easy/Moderate/Challenging/Intensive/Rigorous) auto-select CP/Accelerated/AP course variants and load per template. ~600 course placements across 6 templates × 5 levels. Requires substitution rules engine + prerequisite chain validation per level. |
+| NCAA eligibility tracking | Complex sliding-scale rules. Schema supports via `requirementGroup: "ncaa"` and `isOptIn: true`. |
+| Seal of Biliteracy | Requires exam score tracking (AAPPL, STAMP, AP language exams). |
+| P.E. waiver rules | Per-semester logic with multiple waiver types (athletic Jr/Sr, Marching Band, academic Sr). Requires tracking athletic status and band membership. |
+
 ---
 
 ## 22. Deployment & Infrastructure

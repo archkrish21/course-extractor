@@ -8,6 +8,7 @@ import {
   courseCatalogVersions,
   accountMembers,
   accounts,
+  users,
 } from "@/lib/db/schema";
 import { eq, and, sql, count, or } from "drizzle-orm";
 import { successResponse, errorResponse } from "@/lib/api/response";
@@ -78,6 +79,13 @@ export async function GET(request: NextRequest) {
           activatedAt: fourYearPlans.activatedAt,
           createdAt: fourYearPlans.createdAt,
           updatedAt: fourYearPlans.updatedAt,
+          createdBy: fourYearPlans.createdBy,
+          creatorRole: sql<string | null>`(
+            SELECT am.role FROM account_members am
+            WHERE am.user_id = ${fourYearPlans.createdBy}
+              AND am.account_id = ${fourYearPlans.accountId}
+            LIMIT 1
+          )`,
           courseCount: sql<number>`(
             SELECT COUNT(*)::int FROM plan_courses
             WHERE plan_courses.plan_id = ${fourYearPlans.id}
@@ -109,6 +117,13 @@ export async function GET(request: NextRequest) {
         activatedAt: fourYearPlans.activatedAt,
         createdAt: fourYearPlans.createdAt,
         updatedAt: fourYearPlans.updatedAt,
+        createdBy: fourYearPlans.createdBy,
+        creatorRole: sql<string | null>`(
+          SELECT am.role FROM account_members am
+          WHERE am.user_id = ${fourYearPlans.createdBy}
+            AND am.account_id = ${fourYearPlans.accountId}
+          LIMIT 1
+        )`,
         courseCount: sql<number>`(
           SELECT COUNT(*)::int FROM plan_courses
           WHERE plan_courses.plan_id = ${fourYearPlans.id}
@@ -172,6 +187,16 @@ export async function POST(request: NextRequest) {
 
     // Check subscription plan limit
     const tier = await getEffectiveTier({ accountId: accountCtx?.accountId, userId: user.id });
+
+    // Parent plan draft gating: parents need canParentDraft (Plus+)
+    if (accountCtx && accountCtx.role !== "student" && !tier.canParentDraft) {
+      return errorResponse(
+        "UPGRADE_REQUIRED",
+        "Creating plan drafts as a parent requires a Plus or Elite subscription.",
+        402,
+        { minimum_tier: "plus", current_tier: tier.tier }
+      );
+    }
 
     // Count plans by accountId if available, otherwise by studentId
     const planCountCondition = accountId

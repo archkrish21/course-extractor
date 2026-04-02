@@ -14,6 +14,7 @@ import { apiFetch } from "@/lib/api-client";
 import { calculateGPA, formatGPA } from "@/lib/gpa/calc";
 import { useUndoStack } from "@/lib/hooks/use-undo-stack";
 import { useToast } from "@/components/ui/toast";
+import { useUpgradeModal, UpgradeModal } from "@/components/upgrade-modal";
 
 interface Plan {
   id: string;
@@ -24,6 +25,8 @@ interface Plan {
   createdAt: string;
   createdFromTemplateId?: string | null;
   templateName?: string;
+  createdBy?: string | null;
+  creatorRole?: string | null;
 }
 
 interface PlanCoursesResponse {
@@ -134,6 +137,7 @@ export default function PlannerPage() {
   const [templates, setTemplates] = useState<Array<{ id: string; name: string; courseCount: number }>>([]);
 
   const undoStack = useUndoStack();
+  const { modalState: upgradeModal, checkResponse: checkUpgrade, closeModal: closeUpgradeModal } = useUpgradeModal();
   const { showToast } = useToast();
   const performUndoRef = useRef<() => Promise<void>>(async () => {});
   const performUndo = useCallback(() => performUndoRef.current(), []);
@@ -889,6 +893,11 @@ export default function PlannerPage() {
         setSelectedPlanId(newPlan.id);
         await fetchPlanData(newPlan.id);
         setShowNewPlanModal(false);
+      } else if (res.status === 402) {
+        // Show upgrade modal
+        const data = json.data ?? json;
+        await checkUpgrade(new Response(JSON.stringify(json), { status: 402 }), "Creating a new plan");
+        setShowNewPlanModal(false);
       } else {
         setError(json?.error?.message ?? `Failed to create plan (${res.status}).`);
       }
@@ -1076,11 +1085,16 @@ export default function PlannerPage() {
                     aria-label="Select a plan"
                     className="h-8 rounded-lg border border-border bg-background px-2 pr-7 text-sm font-medium text-foreground focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
                   >
-                    {plans.map((plan) => (
-                      <option key={plan.id} value={plan.id}>
-                        {plan.name}{plan.isPrimary ? " ★" : ""}
-                      </option>
-                    ))}
+                    {plans.map((plan) => {
+                      const creatorLabel = plan.creatorRole && plan.creatorRole !== "student"
+                        ? ` (by ${plan.creatorRole.charAt(0).toUpperCase() + plan.creatorRole.slice(1)})`
+                        : plan.createdFromTemplateId ? " (from template)" : "";
+                      return (
+                        <option key={plan.id} value={plan.id}>
+                          {plan.name}{plan.isPrimary ? " ★" : ""}{creatorLabel}
+                        </option>
+                      );
+                    })}
                   </select>
                 ) : (
                   <span className="text-sm font-medium text-foreground">
@@ -2011,6 +2025,14 @@ export default function PlannerPage() {
           } : undefined}
         />
       )}
+      {/* Upgrade modal */}
+      <UpgradeModal
+        isOpen={upgradeModal.isOpen}
+        onClose={closeUpgradeModal}
+        feature={upgradeModal.feature}
+        minimumTier={upgradeModal.minimumTier}
+        currentTier={upgradeModal.currentTier}
+      />
     </div>
   );
 }

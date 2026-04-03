@@ -311,8 +311,8 @@ Account Switcher (parent with multiple children):
 | US-20 | As a student, I want to enter grades for each course via the planner page (status dropdown + grade dropdown) so my GPA is always up to date. Midterm grades are not tracked — Stevenson uses a single final grade per semester. | Must | 2 |
 | US-21 | As a student, I want to see my cumulative GPA (completed courses only), projected GPA (including planned future courses with estimated grades), and weighted GPA side by side so I understand where I stand now and where I'm headed. | Must | 2 |
 | US-22 | As a student, I want to use a what-if GPA simulator to try course swaps (e.g., "replace AP Chemistry with Honors Chemistry") and see the GPA impact without saving any changes so I can explore safely. | Should | 2 |
-| US-23 | As a student, I want to see a GPA trend chart over time (from semester snapshots) so I can show improvement to colleges. | Should | 2 |
-| US-24 | As a student, I want my GPA to automatically take a snapshot at the end of each semester (when I mark grades final) so I don't have to remember to do it manually. | Should | 2 |
+| US-23 | As a student, I want to see a GPA trend chart over time (from semester snapshots) so I can show improvement to colleges. **Implemented:** Recharts `LineChart` on the Progress page right sidebar showing unweighted (primary color) and weighted (success color) GPA over time. Only renders when 2+ snapshots exist. Fetches from `GET /api/v1/gpa/snapshots`. | Should | 2 |
+| US-24 | As a student, I want my GPA to automatically take a snapshot at the end of each semester (when I mark grades final) so I don't have to remember to do it manually. **Implemented:** Year-end wizard auto-creates a GPA snapshot with trigger `semester_end` from completed `plan_courses`. Non-fatal if snapshot creation fails. | Should | 2 |
 | US-25 | As a student, I want to store my SAT, ACT, and AP exam scores in my profile so the AI advisor can factor them into its recommendations. | Could | 4 |
 
 ### Graduation Requirements
@@ -566,7 +566,7 @@ The dashboard uses a 3-row, 2-column grid layout:
 | F-GR-01 | Enter a single final grade per course per semester via the planner page. Midterm grades are not tracked (Stevenson proficiency-based model). | Must |
 | F-GR-02 | Support letter grades (A/B/C/D/F for standard GPA), Pass/Fail (excluded from GPA), and Incomplete (excluded from GPA). | Must |
 | F-GR-03 | Grade corrections allowed at any time. If a correction would change a past GPA snapshot by more than 0.05 points, display a notice: "Your historical GPA chart has been updated." | Must |
-| F-GR-04 | Automatic GPA snapshot at semester-end when all grades are marked final. Manual snapshot available on demand. | Must |
+| F-GR-04 | Automatic GPA snapshot at semester-end when all grades are marked final. Manual snapshot available on demand. **Phase 2 update:** Year-end wizard auto-triggers snapshot creation with `semester_end` trigger; non-fatal on failure. | Must |
 | F-GR-05 | "Data entered by you" badge on all self-reported grades — never implied to be official school records. | Must |
 
 ### 5.4 GPA Calculator
@@ -576,7 +576,7 @@ The dashboard uses a 3-row, 2-column grid layout:
 | F-GPA-01 | Cumulative GPA: all completed courses. | Must |
 | F-GPA-02 | Projected GPA: completed + enrolled + planned courses using `planned_grade`. | Must |
 | F-GPA-03 | Weighted GPA: applies credit type bonus. Values configurable — not hardcoded. Must be confirmed with school before implementation. **Placeholder weights:** CP = +0.0; Accelerated = +0.5; Honors = +0.5 (placeholder — confirm with school); AP = +1.0; Pass/Fail = N/A (excluded from GPA). | Must |
-| F-GPA-04 | GPA trend chart: line chart from `gpa_snapshots` over time. | Should |
+| F-GPA-04 | GPA trend chart: line chart from `gpa_snapshots` over time. **Implemented:** Recharts `LineChart` on Progress page right sidebar; shows unweighted + weighted GPA lines; renders only with 2+ snapshots; data from `GET /api/v1/gpa/snapshots`. | Should |
 | F-GPA-05 | **What-if GPA simulator**: read-only mode. Student swaps courses; GPA recalculates in memory. No changes persisted. | Should |
 | F-GPA-06 | GPA waiver is a student-initiated per-course toggle, not automatic. Waiver-eligible courses (CP-level Applied Arts, Fine Arts, CSET, specific Communication Arts/PE courses) show a 'GPA Waiver' checkbox on the course card. When checked, the course is excluded from GPA calculation. The waiver can be toggled on/off at any time. The GPA waiver checkbox is hidden for P/F-only courses (regular PE and Driver Ed) since they are already excluded from GPA. | Must |
 

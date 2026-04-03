@@ -1229,7 +1229,8 @@ All routes: `/api/v1/...`. Version from day one.
 | GET | `/api/v1/transcript` | student | Read-only transcript: completed courses from primary plan with grades, semester GPA, grade-level GPA, cumulative GPA, credits earned. Frontend has Print button (printer icon) next to "Edit in Planner" that triggers `window.print()`. | Phase 2 |
 | POST | `/api/v1/transcript` | student | Bulk upsert grade entries (for onboarding import) | Phase 2 |
 | GET | `/api/v1/gpa` | student | Live GPA from `plan_courses` on primary plan: cumulative (completed only), projected (all graded), plan totals (`totalCredits`, `earnedCredits`, `totalCourses`), `hasGrades` flag | Phase 2 |
-| POST | `/api/v1/gpa/snapshots` | student | Take/list GPA snapshot history | Phase 2 |
+| GET | `/api/v1/gpa/snapshots` | student | List GPA snapshot history (used by trend chart on Progress page; returns array of snapshots with unweighted + weighted GPA, ordered by date) | Phase 2 |
+| POST | `/api/v1/gpa/snapshots` | student | Take manual GPA snapshot; also auto-triggered by year-end wizard with `semester_end` trigger | Phase 2 |
 | POST | `/api/v1/gpa/what-if` | student (Plus+) | What-if GPA simulation (read-only) | Phase 2 |
 | GET | `/api/v1/requirements` | student | Graduation progress with matching rules (code_prefix, codes, division, multi_division, remainder). Returns both flat `requirements[]` (backwards compatible) and `groups[]` array with group key, label, isOptIn, enabled, requirements[], and totals. Also returns `gpaWaiverWarnings[]` (validates 4+ GPA-counted courses per semester when waiver applied; P/F-only courses excluded from GPA-counted course count) and `honorsStatus` (achievement badge, not requirement). Optional `?planId=` query parameter to validate any plan (defaults to primary plan). 4 evaluation types: course_match, manual_checkbox, auto_from_course, course_load_check. Course load checks count only academic courses (PW division, DNC-prefix, D/E-prefix excluded). Group order: graduation, course_load, il_public_university, non_course. | Phase 2 |
 | PUT | `/api/v1/requirements/status` | student | Toggle manual checkbox requirements (for non_course group). Body: `{ requirementId, isChecked }`. Updates `student_requirement_status`. | Phase 2 |
@@ -1474,6 +1475,8 @@ BullMQ runs on a **dedicated AWS ECS Fargate task** (not serverless). The task c
 // Action: UPDATE student_profiles SET year_end_transition_state = 'pending' WHERE account_status = 'active'
 // Note: The year-end API accepts a `grade` query param to complete a specific grade (not just current).
 // On completion, the wizard adds the grade to four_year_plans.locked_grade_levels.
+// Phase 2 update (US-24): On completion, also auto-creates a GPA snapshot with trigger 'semester_end'
+// from completed plan_courses. Snapshot creation is non-fatal (try/catch, logged on failure).
 
 // worker/jobs/weekly-digest.ts
 // Schedule: weekly (cron: '0 9 * * 0')  -- Sunday 09:00
@@ -1674,7 +1677,7 @@ Weighted GPA   = SUM((gradePoints + weightBonus) × creditValue) / SUM(creditVal
                  for same set of courses
 ```
 
-GPA is **always recomputed from `plan_courses` on the primary plan at read time**. Snapshots in `gpa_snapshots` are historical markers for the trend chart only — never used for the live GPA display.
+GPA is **always recomputed from `plan_courses` on the primary plan at read time**. Snapshots in `gpa_snapshots` are historical markers for the trend chart only — never used for the live GPA display. **Phase 2 update (US-23/US-24):** Snapshots are auto-created when the year-end wizard completes (trigger: `semester_end`). The GPA trend chart on the Progress page right sidebar uses a Recharts `LineChart` showing unweighted (primary color) and weighted (success color) GPA lines; renders only when 2+ snapshots exist; data from `GET /api/v1/gpa/snapshots`.
 
 > **Phase 2 update:** The GPA API (`GET /api/v1/gpa`) reads exclusively from `plan_courses` on the primary plan — not from `grade_entries`. Grades are set via the planner page (status dropdown + grade dropdown on each course card) and stored in `plan_courses.planned_grade`. The API returns cumulative GPA (completed courses only), projected GPA (all courses with grades), plan totals (`totalCredits`, `earnedCredits`, `totalCourses` with per-row adjusted credits), and a `hasGrades` boolean flag.
 

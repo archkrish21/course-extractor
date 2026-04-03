@@ -7,6 +7,25 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { useAccount } from "@/lib/account-context";
 import { apiFetch } from "@/lib/api-client";
+import {
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+  Legend,
+} from "recharts";
+
+interface GpaSnapshot {
+  id: string;
+  snapshotDate: string;
+  trigger: string;
+  cumulativeGpa: string | null;
+  weightedGpa: string | null;
+  creditsEarned: string | null;
+}
 
 // ─── Types ──────────────────────────────────────────────────────────────────
 
@@ -92,6 +111,7 @@ export default function ProgressPage() {
   const [error, setError] = useState(false);
   const [expandedGroups, setExpandedGroups] = useState<Set<string>>(new Set(["graduation", "non_course", "course_load", "course_load:count", "course_load:pw"]));
   const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [snapshots, setSnapshots] = useState<GpaSnapshot[]>([]);
 
   const matchesFilter = (status: string, evaluationType?: string) => {
     if (statusFilter === "all") return true;
@@ -131,6 +151,20 @@ export default function ProgressPage() {
   }, []);
 
   useEffect(() => { fetchData(); }, [fetchData, currentAccount]);
+
+  // Fetch GPA snapshots for trend chart
+  useEffect(() => {
+    async function fetchSnapshots() {
+      try {
+        const res = await apiFetch("/api/v1/gpa/snapshots");
+        if (res.ok) {
+          const json = await res.json();
+          setSnapshots(json.data ?? json ?? []);
+        }
+      } catch { /* silent */ }
+    }
+    fetchSnapshots();
+  }, [currentAccount]);
 
   const toggleGroup = (group: string) => {
     setExpandedGroups((prev) => {
@@ -634,6 +668,39 @@ export default function ProgressPage() {
                 </div>
               </div>
             )}
+
+            {/* GPA Trend Chart */}
+            {snapshots.length >= 2 && (() => {
+              const chartData = [...snapshots]
+                .reverse()
+                .map((s) => ({
+                  date: new Date(s.snapshotDate).toLocaleDateString("en-US", { month: "short", year: "2-digit" }),
+                  unweighted: s.cumulativeGpa ? parseFloat(s.cumulativeGpa) : null,
+                  weighted: s.weightedGpa ? parseFloat(s.weightedGpa) : null,
+                }));
+
+              return (
+                <Card>
+                  <CardContent>
+                    <p className="mb-3 text-sm font-semibold text-foreground">GPA Trend</p>
+                    <ResponsiveContainer width="100%" height={180}>
+                      <LineChart data={chartData} margin={{ top: 5, right: 5, left: -20, bottom: 0 }}>
+                        <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
+                        <XAxis dataKey="date" tick={{ fontSize: 10 }} className="text-muted-foreground" />
+                        <YAxis domain={[0, 5]} tick={{ fontSize: 10 }} className="text-muted-foreground" />
+                        <Tooltip
+                          contentStyle={{ fontSize: 12, borderRadius: 8, border: "1px solid var(--color-border)", background: "var(--color-card)" }}
+                          formatter={(value: unknown, name: unknown) => [Number(value)?.toFixed(3), String(name) === "unweighted" ? "Unweighted" : "Weighted"]}
+                        />
+                        <Legend wrapperStyle={{ fontSize: 10 }} formatter={(value) => value === "unweighted" ? "Unweighted" : "Weighted"} />
+                        <Line type="monotone" dataKey="unweighted" stroke="var(--color-primary)" strokeWidth={2} dot={{ r: 3 }} connectNulls />
+                        <Line type="monotone" dataKey="weighted" stroke="var(--color-success)" strokeWidth={2} dot={{ r: 3 }} connectNulls />
+                      </LineChart>
+                    </ResponsiveContainer>
+                  </CardContent>
+                </Card>
+              );
+            })()}
 
             {/* Overall summary card */}
             <Card>

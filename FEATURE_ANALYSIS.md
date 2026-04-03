@@ -85,7 +85,11 @@ Stevenson uses a weighted GPA scale:
 
 > **Phase 2 update:** Stevenson uses a single final grade per semester (proficiency-based grading model). Midterm grades have been removed from the schema (`midterm_grade` and `grade_type` columns dropped from `grade_entries`). Grades live exclusively in `plan_courses.planned_grade`, set via the planner page. The Grades page has been renamed to **Transcript** (`/transcript`) — a read-only view showing completed courses from the primary plan with their grades, semester GPA, grade-level GPA, cumulative GPA, and credits earned. No editing on the transcript; all grade entry happens in the planner page.
 
-**GPA snapshots** are taken automatically at two points: (1) end of each semester when a student marks all grades as final, and (2) on-demand when the student requests a snapshot. These form the historical GPA trend chart on the dashboard.
+**GPA snapshots** are taken automatically at two points: (1) end of each semester when a student marks all grades as final, and (2) on-demand when the student requests a snapshot. These form the historical GPA trend chart on the Progress page right sidebar.
+
+> **GPA snapshot auto-trigger (Phase 2 — US-24):** When the year-end wizard completes, a GPA snapshot with trigger `semester_end` is automatically created from completed `plan_courses`. Snapshot creation is non-fatal — if it fails, the year-end completion still succeeds.
+>
+> **GPA trend chart (Phase 2 — US-23):** Recharts `LineChart` on the Progress page right sidebar showing unweighted GPA (primary color line) and weighted GPA (success color line) over time. Only renders when 2+ snapshots exist. Data fetched from `GET /api/v1/gpa/snapshots`.
 
 Also track **standardized test scores** (SAT, ACT, AP exam scores) — these are critical for college planning and AI recommendations. Store as optional profile data, never required. Test score entry UI ships in Phase 4 (alongside AI advisory features that consume this data). Test scores are included in AI context from Phase 4.
 

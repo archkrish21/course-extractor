@@ -216,6 +216,8 @@ User → Next.js frontend → API routes → PostgreSQL (Supabase + RLS)
 
 All pages under the `(app)/` route group require authentication. The app layout checks the Supabase session on mount and redirects unauthenticated users to `/login?redirect=...`.
 
+**Sign out:** The user avatar dropdown in the top navigation contains Settings, Billing, and Sign out. Sign out calls `supabase.auth.signOut()`, clears the client session, and redirects to `/login`. The mobile hamburger menu also includes a Sign out option. Settings is no longer in the main navigation bar — it was moved into the avatar dropdown.
+
 **Google OAuth first-time user provisioning:** The OAuth callback (`/api/v1/auth/callback`) detects first-time Google users (no `users` row for the auth ID) and provisions all app-level records: `users` (role: student, email verified: true), `accounts`, `account_members`, `student_profiles`, and `subscriptions` (14-day Elite trial). The student name is extracted from Google profile metadata (`full_name`). First-time users are redirected to `/onboarding`; returning users go to their intended destination. If provisioning fails, the user is redirected to `/dashboard?error=setup_incomplete` for graceful recovery.
 
 ### User roles

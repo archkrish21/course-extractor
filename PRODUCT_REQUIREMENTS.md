@@ -221,6 +221,7 @@ It replaces guesswork with:
 | ID | Story | Priority | Phase |
 |---|---|---|---|
 | US-01 | As a new student, I want to sign up with my email or Google account so I can get started quickly without creating a separate password. | Must | 1 |
+| US-01a | As a logged-in user, I want to sign out from the user avatar dropdown in the top navigation (or from the mobile hamburger menu) so I can securely end my session. Sign out calls Supabase `signOut()` and redirects to `/login`. | Must | 1 |
 | US-02 | As a new student, I want to enter my current grade level and completed course history in bulk (table view, not one at a time) so that my GPA and progress tracker are accurate from day one. | Must | 1 |
 | US-03 | As a new student, I want to select a starting plan template (e.g., "STEM Track", "Pre-Med", "Dual Credit Maximizer") so I don't start from a blank canvas. | Must | 1 |
 | US-04 | As a new user, I want to see a 14-day free trial of the Elite tier automatically activated so I can explore all features before deciding whether to pay. | Must | 1 |
@@ -494,7 +495,7 @@ Templates are tied to a specific `catalog_version_id`. During annual catalog upd
 
 > **Design principle:** Mobile is the student's primary device during registration season. The planner must be usable (not just viewable) on a phone. Desktop is the power-user experience; mobile is the "check my plan, add a course, review an alert" experience.
 
-> **Phase 1a implementation note:** The top navigation bar uses a horizontal layout with logo, nav items (Dashboard, Courses, Planner, Progress, Transcript, Settings), and user avatar. Mobile uses a hamburger dropdown menu. The sidebar layout described earlier was replaced during implementation for better screen real estate. "Progress" was added in Phase 2 between Planner and Transcript.
+> **Phase 1a implementation note:** The top navigation bar uses a horizontal layout with logo, nav items (Dashboard, Courses, Planner, Progress, Transcript), and user avatar dropdown. The user avatar dropdown contains Settings, Billing, and Sign out. Settings was moved out of the main nav bar into this dropdown. Mobile uses a hamburger dropdown menu (which also includes Sign out). The sidebar layout described earlier was replaced during implementation for better screen real estate. "Progress" was added in Phase 2 between Planner and Transcript.
 
 > **Phase 1b implementation note:** Planner grid, course picker, prerequisite validation (AND/OR groups), 6 plan templates, per-semester status/grade editing, GPA display (projected + actual weighted), plan creation/deletion/reset-to-template, credit display per semester and grade, and semester course limits (5 min, 7 max, 8 with early bird) are all functional. Full-year courses are stored as two `plan_courses` rows (one per semester) with independent status and grade per semester. Course status transitions (planned → enrolled → completed/dropped) are supported per semester via dropdown on each course card. Course detail modal accessible from planner grid and course picker (clicking any course card). Template-based plans support core course deletion warnings and Reset to Template. Redis performance optimized (short-circuits when not configured). Course loader uses UPSERT to preserve IDs. Set Primary UI (student-only, star icon button). Primary = active status merge (setting primary auto-activates, old primary demotes to draft). Multi-select credit type/grade level filters with comma-separated API support. Semester partner exclusion in course picker (same-name courses hidden). Multiple grade expansion (no forced single-accordion). E2E global teardown for test data cleanup. Add to Plan from course detail modal on /courses page (plan/grade/semester selection). Auth guard on all app pages. Improved duplicate validation (cross-grade, semester partners). Bulk status and grade update per semester. Credit calculation corrected for full-year courses. Plan print view at /planner/print — opens in new tab with clean print-optimized landscape layout. Shows student info, plan name, grade tables with semester columns, course status/grades, credits, GPA summary, and legend footer. Auto-triggers browser print dialog. Screen controls (Back to Planner, Print/Save as PDF) hidden when printing.
 
@@ -637,7 +638,7 @@ The dashboard uses a 3-row, 2-column grid layout:
 | F-CB-18 | Course detail: "What This Unlocks" section also merges semester pairs. | Must |
 | F-CB-19 | Course detail: Division and Department names are clickable (sets the corresponding filter and closes the modal). | Should |
 | F-CB-20 | Course detail: Prerequisite and unlock course codes are clickable (navigates to that course's detail). | Should |
-| F-CB-21 | Navigation uses a horizontal top bar instead of a sidebar. Nav order: Dashboard, Courses, Planner, Progress, Transcript, Settings. | Must |
+| F-CB-21 | Navigation uses a horizontal top bar instead of a sidebar. Nav order: Dashboard, Courses, Planner, Progress, Transcript. User avatar dropdown contains Settings, Billing, and Sign out. | Must |
 
 ### 5.7 Prerequisite Visualization
 

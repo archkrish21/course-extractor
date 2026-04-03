@@ -126,7 +126,7 @@ function DesktopGrid({
   focusGrade,
   readOnly,
 }: PlannerGridProps) {
-  // Effective current grade = first unlocked grade level
+  // Effective current grade = first unlocked grade level at or after account grade level
   const effectiveGrade = GRADE_LEVELS.find((g) => !lockedGradeLevels.includes(g)) ?? currentGradeLevel;
   const gridRef = useRef<HTMLDivElement>(null);
   const [collapsedGrades, setCollapsedGrades] = useState<Set<number>>(

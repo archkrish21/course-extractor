@@ -47,7 +47,7 @@ type PickerTarget = {
 
 export default function PlannerPage() {
   const router = useRouter();
-  const { currentAccount } = useAccount();
+  const { currentAccount, refetchAccounts } = useAccount();
   const [plans, setPlans] = useState<Plan[]>([]);
   const [selectedPlanId, setSelectedPlanIdState] = useState<string | null>(null);
 
@@ -792,6 +792,8 @@ export default function PlannerPage() {
               p.id === selectedPlanId ? { ...p, lockedGradeLevels: updatedLocked } : p
             )
           );
+          // Refresh account context so gradeLevel stays in sync
+          await refetchAccounts();
           showToast(locked ? `Grade ${gradeLevel} locked` : `Grade ${gradeLevel} unlocked`);
         }
       } catch {

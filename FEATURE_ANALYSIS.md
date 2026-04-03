@@ -1384,7 +1384,7 @@ human review of diff → approve → DB reload → insert course_catalog_version
 | Plan Export | Student | Generate PDF or shareable read-only link of the active plan |
 | Pricing & Upgrade | Student | Tier comparison table, upgrade CTA, billing portal link, trial countdown; shown during trial and on 402 feature-gate |
 | Billing (`/settings/billing`) | Student / billing contact | Pricing cards with 3-interval toggle (monthly/annual/4-year), current plan indicator, upgrade button (Stripe Checkout), manage subscription button (Stripe Billing Portal) |
-| Settings | All users | Notification preferences, password change, linked accounts, subscription management, delete account |
+| Settings (via avatar dropdown) | All users | Notification preferences, password change, linked accounts, subscription management, delete account. Accessed from user avatar dropdown in top nav (not main nav bar). |
 | Year-End Transition | Student | Confirm final grades, advance grade level, review plan for next year |
 | Parent View | Parent | Read-only dashboard of student's plan, grades, GPA, and alerts |
 | Counselor Dashboard | Counselor | View multiple students, filter by alert severity, bulk export plans |
@@ -1449,7 +1449,7 @@ Phase 5 includes a formal WCAG audit and remediation of any gaps, but the core p
 - **Progress page** (`/progress`) renamed to **"Academic Progress"** (page title; nav label unchanged): Two-column layout — left (2/3) has status filter bar (All/Gap-Missing/In Progress/OK-Complete/Not Started) + Expand All/Collapse All buttons + grouped sections (Graduation, Semester Requirements, IL Public University, Additional Requirements); right (1/3) sticky sidebar with honors badge + summary card showing three-state segmented progress bars per category (earned green, planned blue, remaining grey) with earned/planned/gap counts and status labels: "Complete" (all earned), "On track" (earned+planned covers all), or "N gaps" (uncovered). Course Load group has 2 sub-categories: "Course Count Per Semester" and "Physical Welfare / Dance / Driver Ed". Course-match cards show earned/planned/needed breakdown below progress bar. Print button in header.
 - **Dashboard restructured**: 3-row, 2-column grid — Row 1 (Active Plan, GPA), Row 2 (Attention Required, Achievements), Row 3 (Academic Progress, Quick Actions). "Validation Report" card renamed to **"Attention Required"** — simplified: no category summary line or "Issues found" badge in header; shows only category titles with counts (Graduation Gaps, Semester Gaps, Prerequisite Violations) + "View Report" button routing to `/planner?validation=open`. Honors badge removed from this card. **Academic Progress** card now shows all requirement groups (not just graduation) with per-group segmented progress bars showing earned/planned/remaining, replacing old graduation-only credit progress and individual requirement list. New **"Achievements"** card with all badges (earned + unearned) in a single 2-column grid: Honor Graduate tier, Graduation Ready, Credit milestones (15/30/45), GPA milestones (3.0+/3.5+/4.0+), Credits Earned.
 - **Validation categories** across planner and dashboard: Graduation Requirement Gaps (red, missing credits for diploma), Semester Requirement Gaps (amber, course load/PW-Dance/GPA waiver eligibility), Prerequisite Violations (amber, course ordering conflicts). Non-course requirements (ACT, FAFSA) are excluded from plan bar "Issues found" count.
-- **Navigation**: "Progress" nav item between Planner and Transcript. Menu order: Dashboard, Courses, Planner, Progress, Transcript, Settings.
+- **Navigation**: "Progress" nav item between Planner and Transcript. Menu order: Dashboard, Courses, Planner, Progress, Transcript. Settings was moved from the main nav bar into the user avatar dropdown, which contains Settings, Billing, and Sign out. Sign out calls Supabase `signOut()` and redirects to `/login`. Mobile hamburger menu also includes Sign out.
 - **Planner validation report** is now a **side panel** (380px, right side, sticky, scrollable): Frozen title "Validation Report". Collapsible summary: collapsed shows "Credits 48/45 | Reqs 11/12 | 1 gap | 15 warnings". Expanded summary has 3 groups: Credits (Total/Earned/Planned), Graduation Requirements (Met/In Progress/Gaps), Warnings (Semester/Prerequisite). 3 collapsible detail sections: Graduation Gaps (with credit progress bar inside), Semester Requirement Gaps, Prerequisite Violations. Warning messages use consistent "Gr X Sem Y:" prefix format as clickable links that navigate to the grade/semester in the planner grid. Clicking a link expands only that grade and highlights the target semester cell (blue ring, fades after 3s). Plan bar "Issues found" count includes graduation gaps, semester issues, and prerequisite violations only — non-course requirements (ACT, FAFSA) excluded. Planner auto-opens validation panel when navigated with `?validation=open` URL parameter (used by Dashboard "View Report" button). Works with any selected plan. Progress data auto-fetched on plan load. Auto-refreshes when the side panel is open and the plan is updated (course added/removed, grade/status changed) by automatically calling the requirements API.
 - **Plan selection persistence**: selected plan in planner persisted via `sessionStorage`.
 - **Plan templates fixed**: All 6 templates now pass validation with zero violations. Fixes: Driver Education added to Grade 10, correct grade-level placements (U.S. History Gr 11, Government Gr 12, Health Gr 10 only), Applied Health moved after Health prerequisite (Pre-Med), Economics added to STEM/CS, electives for Grade 10 underloads, PW coverage via Choice PE for Gr 11/12.
@@ -1472,6 +1472,7 @@ Phase 5 includes a formal WCAG audit and remediation of any gaps, but the core p
 - **Downgrade guard:** excess plans archived (read-only) on plan-limit downgrade, never deleted
 
 ### Phase 3 — Plan Tools + Alerts (Weeks 11-14)
+- Plan management page (`/plans` — own plans, shared plans, share with family members with view/edit/delete permissions, disable/enable plans, multi-channel notifications on shared plan changes via push/email/SMS)
 - Drag-and-drop planner grid upgrade
 - Plan history / undo (last 20 changes)
 - Prerequisite graph visualization (DAG view)
@@ -1485,6 +1486,9 @@ Phase 5 includes a formal WCAG audit and remediation of any gaps, but the core p
 - Multiple plan drafts + side-by-side plan comparison
 - Plan export to PDF + read-only share link
 - Template intensity levels (Easy/Moderate/Challenging/Intensive/Rigorous) — auto-selects CP/Accelerated/AP course variants and load per template
+- Goal setting (GPA targets, credit milestones, course goals — Plus+ gated)
+- Terms of Service & Privacy Policy acceptance on signup
+- User profile dropdown (Settings moved from main nav into top-right user avatar dropdown)
 - NCAA eligibility tracking
 - Seal of Biliteracy
 - P.E. waiver rules (complex per-semester logic with multiple waiver types)

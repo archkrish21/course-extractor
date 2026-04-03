@@ -24,7 +24,7 @@ interface CourseEntry {
 }
 
 export default function YearEndPage() {
-  const { currentAccount } = useAccount();
+  const { currentAccount, refetchAccounts } = useAccount();
   const router = useRouter();
   const searchParams = useSearchParams();
   const gradeParam = searchParams.get("grade");
@@ -90,6 +90,8 @@ export default function YearEndPage() {
       });
 
       if (res.ok) {
+        // Refresh account context so gradeLevel is up to date everywhere
+        await refetchAccounts();
         // If came from planner lock, go back to planner; otherwise dashboard
         if (gradeParam) {
           router.push("/planner");

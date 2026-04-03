@@ -2,7 +2,7 @@
 
 import { useState, type FormEvent } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
@@ -108,8 +108,14 @@ export default function SignupPage() {
         return;
       }
 
-      // Parents go to onboarding with add_child flow; students go to onboarding
-      if (role === "parent") {
+      // Check if this signup is from an invite link
+      const inviteCode = new URLSearchParams(window.location.search).get("invite") ?? new URLSearchParams(window.location.search).get("code");
+      const inviteAccount = new URLSearchParams(window.location.search).get("account");
+
+      if (inviteCode && inviteAccount) {
+        // Invite flow: skip onboarding, go straight to join
+        router.push(`/join?code=${inviteCode}&account=${inviteAccount}`);
+      } else if (role === "parent") {
         router.push("/onboarding?add_child=true");
       } else {
         router.push("/onboarding");

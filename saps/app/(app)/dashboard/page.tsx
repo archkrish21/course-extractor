@@ -747,30 +747,6 @@ export default function DashboardPage() {
                     </span>
                   )}
 
-                  {/* Warnings */}
-                  {warningCount > 0 && (
-                    <span className="relative group/planwarn flex items-center gap-0.5 text-warning cursor-default">
-                      <svg aria-hidden="true" className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126ZM12 15.75h.007v.008H12v-.008Z" />
-                      </svg>
-                      {warningCount}
-                      <span className="pointer-events-none absolute left-0 top-full z-50 mt-2 w-72 rounded-lg border border-warning/30 bg-card px-3 py-2 shadow-lg opacity-0 transition-opacity group-hover/planwarn:opacity-100">
-                        <span className="mb-1 block text-[10px] font-semibold uppercase tracking-wide text-warning">
-                          {warningCount} Warning{warningCount !== 1 ? "s" : ""}
-                        </span>
-                        {warningMessages.slice(0, 8).map((msg, i) => (
-                          <span key={i} className="block text-[11px] text-foreground leading-relaxed">
-                            • {msg}
-                          </span>
-                        ))}
-                        {warningMessages.length > 8 && (
-                          <span className="block text-[10px] text-muted-foreground mt-1">
-                            +{warningMessages.length - 8} more
-                          </span>
-                        )}
-                      </span>
-                    </span>
-                  )}
                 </div>
               </div>
             ) : (

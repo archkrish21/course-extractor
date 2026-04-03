@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback, useRef } from "react";
+import { useRouter } from "next/navigation";
 import { PlannerGrid } from "@/components/planner/planner-grid";
 import { CoursePicker } from "@/components/planner/course-picker";
 import { Button } from "@/components/ui/button";
@@ -27,6 +28,8 @@ interface Plan {
   templateName?: string;
   createdBy?: string | null;
   creatorRole?: string | null;
+  creatorEmail?: string | null;
+  lockedGradeLevels?: number[];
 }
 
 interface PlanCoursesResponse {
@@ -43,6 +46,7 @@ type PickerTarget = {
 } | null;
 
 export default function PlannerPage() {
+  const router = useRouter();
   const { currentAccount } = useAccount();
   const [plans, setPlans] = useState<Plan[]>([]);
   const [selectedPlanId, setSelectedPlanIdState] = useState<string | null>(null);
@@ -80,6 +84,7 @@ export default function PlannerPage() {
     courseCount: number;
   } | null>(null);
   const [clearing, setClearing] = useState(false);
+  const [unlockConfirm, setUnlockConfirm] = useState<number | null>(null);
   const [showProgressPanel, setShowProgressPanel] = useState(false);
   const showProgressPanelRef = useRef(false);
   useEffect(() => { showProgressPanelRef.current = showProgressPanel; }, [showProgressPanel]);
@@ -768,6 +773,34 @@ export default function PlannerPage() {
     [selectedPlanId, fetchPlanData, courses, undoStack]
   );
 
+  // ─── Grade lock toggle ─────────────────────────────────────────────────────
+
+  const handleToggleGradeLock = useCallback(
+    async (gradeLevel: number, locked: boolean) => {
+      if (!selectedPlanId) return;
+      try {
+        const res = await apiFetch(`/api/v1/plans/${selectedPlanId}/lock-grade`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ grade_level: gradeLevel, locked }),
+        });
+        if (res.ok) {
+          const data = await res.json();
+          const updatedLocked = data?.data?.locked_grade_levels ?? data?.locked_grade_levels ?? [];
+          setPlans((prev) =>
+            prev.map((p) =>
+              p.id === selectedPlanId ? { ...p, lockedGradeLevels: updatedLocked } : p
+            )
+          );
+          showToast(locked ? `Grade ${gradeLevel} locked` : `Grade ${gradeLevel} unlocked`);
+        }
+      } catch {
+        setError("Failed to toggle grade lock.");
+      }
+    },
+    [selectedPlanId, showToast]
+  );
+
   // ─── Undo logic ──────────────────────────────────────────────────────────────
 
   // Assign the actual undo implementation to the ref (keeps performUndo stable)
@@ -1069,11 +1102,21 @@ export default function PlannerPage() {
           <h1 className="text-2xl font-bold tracking-tight text-foreground sm:text-3xl">
             Course Planner
           </h1>
-          {currentAccount && (
-            <p className="text-xs text-muted-foreground">
-              Created by {currentAccount.studentName}
-            </p>
-          )}
+          {selectedPlan && (() => {
+            const creatorName = selectedPlan.creatorEmail
+              ? selectedPlan.creatorEmail.split("@")[0].charAt(0).toUpperCase() + selectedPlan.creatorEmail.split("@")[0].slice(1)
+              : null;
+            return (
+              <p className="text-xs text-muted-foreground">
+                {selectedPlan.creatorRole && selectedPlan.creatorRole !== "student"
+                  ? `${creatorName ?? selectedPlan.creatorRole}'s plan`
+                  : selectedPlan.createdFromTemplateId
+                    ? "Created from template"
+                    : `${currentAccount?.studentName ?? "Student"}'s plan`
+                }
+              </p>
+            );
+          })()}
           {selectedPlan && (
             <div className="mt-1 flex flex-col gap-1">
               {/* Line 1: Plan selector + status badges */}
@@ -1086,8 +1129,11 @@ export default function PlannerPage() {
                     className="h-8 rounded-lg border border-border bg-background px-2 pr-7 text-sm font-medium text-foreground focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
                   >
                     {plans.map((plan) => {
+                      const creatorName = plan.creatorEmail
+                        ? plan.creatorEmail.split("@")[0].charAt(0).toUpperCase() + plan.creatorEmail.split("@")[0].slice(1)
+                        : null;
                       const creatorLabel = plan.creatorRole && plan.creatorRole !== "student"
-                        ? ` (by ${plan.creatorRole.charAt(0).toUpperCase() + plan.creatorRole.slice(1)})`
+                        ? ` (by ${creatorName ?? plan.creatorRole})`
                         : plan.createdFromTemplateId ? " (from template)" : "";
                       return (
                         <option key={plan.id} value={plan.id}>
@@ -1388,6 +1434,16 @@ export default function PlannerPage() {
             } catch {
               setError("Failed to update GPA waiver.");
             }
+          }}
+          lockedGradeLevels={selectedPlan?.lockedGradeLevels ?? []}
+          onToggleGradeLock={(gradeLevel, locked) => {
+            if (!locked) {
+              // Unlocking — show confirmation first
+              setUnlockConfirm(gradeLevel);
+              return;
+            }
+            // Locking — redirect to year-end wizard to complete the grade
+            router.push(`/year-end?grade=${gradeLevel}`);
           }}
           violations={violations}
           semesterGaps={semesterGapsMap}
@@ -2025,6 +2081,60 @@ export default function PlannerPage() {
           } : undefined}
         />
       )}
+      {/* Unlock grade confirmation dialog */}
+      {unlockConfirm !== null && (
+        <>
+          <div
+            className="fixed inset-0 z-40 bg-black/50"
+            onClick={() => setUnlockConfirm(null)}
+            aria-hidden="true"
+          />
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+            <div
+              className="w-full max-w-md rounded-xl bg-card shadow-xl"
+              role="alertdialog"
+              aria-modal="true"
+              aria-label="Unlock grade confirmation"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="p-6">
+                <div className="flex items-start gap-3">
+                  <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-warning-light">
+                    <svg aria-hidden="true" className="h-5 w-5 text-warning" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 10.5V6.75a4.5 4.5 0 1 1 9 0v3.75M3.75 21.75h10.5a2.25 2.25 0 0 0 2.25-2.25v-6.75a2.25 2.25 0 0 0-2.25-2.25H3.75a2.25 2.25 0 0 0-2.25 2.25v6.75a2.25 2.25 0 0 0 2.25 2.25Z" />
+                    </svg>
+                  </span>
+                  <div>
+                    <h3 className="text-base font-semibold text-foreground">
+                      Unlock Grade {unlockConfirm}?
+                    </h3>
+                    <p className="mt-1 text-sm text-muted-foreground">
+                      This will allow editing completed courses in Grade {unlockConfirm} — including
+                      changing statuses, grades, and removing courses. You can re-lock it when done.
+                    </p>
+                  </div>
+                </div>
+              </div>
+              <div className="flex items-center justify-end gap-2 border-t border-border px-6 py-3">
+                <Button variant="ghost" size="sm" onClick={() => setUnlockConfirm(null)}>
+                  Cancel
+                </Button>
+                <Button
+                  variant="default"
+                  size="sm"
+                  onClick={() => {
+                    handleToggleGradeLock(unlockConfirm, false);
+                    setUnlockConfirm(null);
+                  }}
+                >
+                  Unlock Grade {unlockConfirm}
+                </Button>
+              </div>
+            </div>
+          </div>
+        </>
+      )}
+
       {/* Upgrade modal */}
       <UpgradeModal
         isOpen={upgradeModal.isOpen}

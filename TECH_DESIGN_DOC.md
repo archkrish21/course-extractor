@@ -634,6 +634,10 @@ CREATE TABLE four_year_plans (
   created_at               TIMESTAMPTZ DEFAULT NOW(),
   updated_at               TIMESTAMPTZ DEFAULT NOW(),
   CHECK (is_template = TRUE OR student_id IS NOT NULL),
+  locked_grade_levels      JSONB DEFAULT '[]'::jsonb,
+                             -- Array of integer grade levels (9-12) that are locked after year-end completion.
+                             -- Locked grades block all course modifications except GPA waiver toggles.
+                             -- Example: [9, 10] means grades 9 and 10 are locked.
   CHECK (is_primary = FALSE OR is_template = FALSE),
   CHECK (is_primary = FALSE OR activated_at IS NOT NULL)
 );
@@ -703,7 +707,7 @@ CREATE INDEX idx_plan_courses_plan_id ON plan_courses (plan_id);
 
 > **GPA waiver toggle:** Students can apply a GPA waiver per plan-course by toggling a checkbox on waiver-eligible course cards. The GPA calculation checks `gpa_waiver_applied` (student's choice on plan_courses) rather than `gpa_waiver` (catalog-level flag on courses). Only courses where the student explicitly applies the waiver are excluded from GPA. The GPA waiver checkbox is hidden for P/F-only courses (identified by `isPassFailCourse()`) since they are already excluded from GPA calculation.
 
-> **Completed-course locking:** Once `status = 'completed'`, the API must reject DELETE, and changes to `course_id`, `grade_level`, or `semester` with `HTTP 409 Conflict`. Only `planned_grade` and `notes` remain editable. Enforced at API layer with an integration test asserting 409 on DELETE of a completed row.
+> **Grade-level locking (replaces per-course completed-status locking):** After completing a grade via the year-end wizard, the grade level is added to `four_year_plans.locked_grade_levels`. When a grade is locked, the API enforces: `POST /api/v1/plans/:id/courses` returns 409 for that grade, `DELETE /api/v1/plans/:id/courses/:planCourseId` returns 409, `PATCH /api/v1/plans/:id/courses/:planCourseId` returns 409 for any change except `gpa_waiver_applied`. GPA waiver toggles are the only permitted modification on locked grades. The "current grade" in the planner is the first unlocked grade level. Lock/unlock is managed via `POST /api/v1/plans/:id/lock-grade` with body `{ grade_level, locked }`. Locking redirects to `/year-end?grade=X`; unlocking requires a confirmation dialog.
 
 > **Full-year course storage (Phase 1b update):** Full-year courses are now stored as two rows (`semester=1` and `semester=2`) instead of one row with `semester=null`. This change was made to enable independent per-semester status and grade tracking. The `UNIQUE (plan_id, course_id, grade_level, semester)` constraint accommodates this pattern — each semester gets its own row. Adding a full-year course creates both rows; removing either semester removes both.
 
@@ -1217,8 +1221,8 @@ All routes: `/api/v1/...`. Version from day one.
 | POST | `/api/v1/plans` | member (can_edit) | Create plan (check plan limit) |
 | PATCH | `/api/v1/plans/:id/set-primary` | student | Set plan as primary + active. Demotes old primary to draft. Student role only. Archived plans blocked (409). |
 | GET | `/api/v1/plans/:id/courses` | student/parent/counselor | Plan courses |
-| POST | `/api/v1/plans/:id/courses` | member (can_edit) | Add course to plan |
-| DELETE | `/api/v1/plans/:id/courses/:planCourseId` | student | Remove course (reject if completed) |
+| POST | `/api/v1/plans/:id/courses` | member (can_edit) | Add course to plan (returns 409 if grade is locked) |
+| DELETE | `/api/v1/plans/:id/courses/:planCourseId` | student | Remove course (reject if grade is locked — 409) |
 | GET | `/api/v1/gpa` | student | Compute live GPA |
 | POST | `/api/v1/gpa/snapshot` | student | Take manual GPA snapshot |
 | POST | `/api/v1/gpa/what-if` | student (Plus+) | What-if GPA simulation (read-only); body: `{ "swaps": [{ "remove_course_id": "...", "add_course_id": "...", "planned_grade": "B+" }] }` |
@@ -1249,7 +1253,8 @@ All routes: `/api/v1/...`. Version from day one.
 | GET | `/api/v1/plans/:id` | student/parent/counselor | Get single plan detail | Phase 1b |
 | PATCH | `/api/v1/plans/:id` | student | Rename plan, set active/archived | Phase 1b |
 | DELETE | `/api/v1/plans/:id` | student | Delete a plan | Phase 1b |
-| PATCH | `/api/v1/plans/:id/courses/:planCourseId` | student | Update course semester/status/grade | Phase 1b |
+| PATCH | `/api/v1/plans/:id/courses/:planCourseId` | student | Update course semester/status/grade. Returns 409 for non-waiver changes on locked grades. | Phase 1b |
+| POST | `/api/v1/plans/:id/lock-grade` | student | Lock or unlock a grade level. Body: `{ grade_level: number, locked: boolean }`. Adds/removes grade from `locked_grade_levels` array. Locking triggers year-end wizard redirect. Unlocking requires confirmation. | Phase 2 |
 | GET | `/api/v1/plans/:id/history` | student | Get plan change history (paginated) | Phase 3 |
 | PATCH | `/api/v1/users/me` | student | Update notification preferences | Phase 1a |
 | PATCH | `/api/v1/users/me/profile` | student | Update student profile (goals in Phase 2; test scores in Phase 4) | Phase 2 |
@@ -1467,6 +1472,8 @@ BullMQ runs on a **dedicated AWS ECS Fargate task** (not serverless). The task c
 // worker/jobs/year-end-reset.ts
 // Schedule: annually (cron: '0 6 1 8 *')  -- Aug 1 at 06:00
 // Action: UPDATE student_profiles SET year_end_transition_state = 'pending' WHERE account_status = 'active'
+// Note: The year-end API accepts a `grade` query param to complete a specific grade (not just current).
+// On completion, the wizard adds the grade to four_year_plans.locked_grade_levels.
 
 // worker/jobs/weekly-digest.ts
 // Schedule: weekly (cron: '0 9 * * 0')  -- Sunday 09:00
@@ -2089,7 +2096,8 @@ Mobile (<640px):
   - Onboarding (enter prior grades, select template, create plan)
   - Add course to plan → prerequisite violation detected
   - Enter grade → GPA updates
-  - Year-end transition workflow
+  - Year-end transition workflow (grade locked after completion, lockedGradeLevels updated)
+  - Grade-level locking: 409 on POST/DELETE/PATCH (non-waiver) for locked grades; GPA waiver toggle succeeds; lock/unlock via `POST /api/v1/plans/:id/lock-grade`
   - Upgrade flow (402 → checkout → plan unlocked)
 
 ### Test data

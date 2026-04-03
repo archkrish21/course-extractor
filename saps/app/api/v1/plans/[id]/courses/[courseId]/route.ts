@@ -121,21 +121,18 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
       return errorResponse("NOT_FOUND", "Plan course not found.", 404);
     }
 
-    // Cannot modify completed courses (unless the student is doing it via account)
-    if (planCourse.status === "completed") {
-      if (plan.accountId) {
-        const accountCtx = await getAccountContext(user.id, plan.accountId);
-        if (!accountCtx || accountCtx.role !== "student") {
-          return errorResponse(
-            "CONFLICT",
-            "Only the student can modify a completed course.",
-            409
-          );
-        }
-      } else {
+    // F-PL-10: Grade-level lock — only GPA waiver toggle allowed
+    const lockedGrades = (plan.lockedGradeLevels as number[]) ?? [];
+    if (lockedGrades.includes(planCourse.gradeLevel)) {
+      const isOnlyGpaWaiver =
+        updates.semester === undefined &&
+        updates.status === undefined &&
+        updates.planned_grade === undefined &&
+        updates.gpa_waiver_applied !== undefined;
+      if (!isOnlyGpaWaiver) {
         return errorResponse(
           "CONFLICT",
-          "Cannot modify a completed course.",
+          `Grade ${planCourse.gradeLevel} is locked. Unlock it first to make changes.`,
           409
         );
       }
@@ -269,24 +266,14 @@ export async function DELETE(request: NextRequest, context: RouteContext) {
       return errorResponse("NOT_FOUND", "Plan course not found.", 404);
     }
 
-    // Cannot remove completed courses (unless student via account)
-    if (planCourse.status === "completed") {
-      if (plan.accountId) {
-        const accountCtx = await getAccountContext(user.id, plan.accountId);
-        if (!accountCtx || accountCtx.role !== "student") {
-          return errorResponse(
-            "CONFLICT",
-            "Only the student can remove a completed course.",
-            409
-          );
-        }
-      } else {
-        return errorResponse(
-          "CONFLICT",
-          "Cannot remove a completed course.",
-          409
-        );
-      }
+    // F-PL-10: Grade-level lock — cannot remove courses from locked grades
+    const lockedGrades = (plan.lockedGradeLevels as number[]) ?? [];
+    if (lockedGrades.includes(planCourse.gradeLevel)) {
+      return errorResponse(
+        "CONFLICT",
+        `Grade ${planCourse.gradeLevel} is locked. Unlock it first to remove courses.`,
+        409
+      );
     }
 
     // Get transitive downstream courses (blast radius) before deletion

@@ -46,7 +46,10 @@ export async function GET(request: NextRequest) {
       .where(eq(accounts.id, accountId))
       .limit(1);
 
-    const gradeLevel = account?.gradeLevel ?? 9;
+    // Allow overriding grade level via query param (for locking a specific grade from planner)
+    const gradeParam = request.nextUrl.searchParams.get("grade");
+    const accountGradeLevel = account?.gradeLevel ?? 9;
+    const gradeLevel = gradeParam ? parseInt(gradeParam, 10) : accountGradeLevel;
 
     // Get transition state
     const [profile] = await db
@@ -168,7 +171,7 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { grades, action } = body;
+    const { grades, action, grade: gradeOverride } = body;
 
     if (action !== "complete") {
       return errorResponse("VALIDATION_ERROR", "Invalid action.", 400);
@@ -181,7 +184,8 @@ export async function POST(request: NextRequest) {
       .where(eq(accounts.id, accountId))
       .limit(1);
 
-    const gradeLevel = account?.gradeLevel ?? 9;
+    const accountGradeLevel = account?.gradeLevel ?? 9;
+    const gradeLevel = typeof gradeOverride === "number" ? gradeOverride : accountGradeLevel;
     const isGraduating = gradeLevel >= 12;
 
     // Get primary plan
@@ -231,8 +235,23 @@ export async function POST(request: NextRequest) {
         AND planned_grade IS NOT NULL
     `);
 
-    // Advance grade level (unless graduating)
-    if (!isGraduating) {
+    // Lock the completed grade level
+    const currentLocked = await db
+      .select({ lockedGradeLevels: fourYearPlans.lockedGradeLevels })
+      .from(fourYearPlans)
+      .where(eq(fourYearPlans.id, plan.id))
+      .limit(1);
+    const existing = (currentLocked[0]?.lockedGradeLevels as number[]) ?? [];
+    if (!existing.includes(gradeLevel)) {
+      await db
+        .update(fourYearPlans)
+        .set({ lockedGradeLevels: [...existing, gradeLevel] })
+        .where(eq(fourYearPlans.id, plan.id));
+    }
+
+    // Only advance grade level and promote courses if completing the current grade
+    const isCurrentGrade = gradeLevel === accountGradeLevel;
+    if (isCurrentGrade && !isGraduating) {
       await db
         .update(accounts)
         .set({ gradeLevel: gradeLevel + 1 })
@@ -248,11 +267,13 @@ export async function POST(request: NextRequest) {
       `);
     }
 
-    // Update transition state
-    await db
-      .update(studentProfiles)
-      .set({ yearEndTransitionState: "completed" })
-      .where(eq(studentProfiles.userId, user.id));
+    // Update transition state only if completing current grade
+    if (isCurrentGrade) {
+      await db
+        .update(studentProfiles)
+        .set({ yearEndTransitionState: "completed" })
+        .where(eq(studentProfiles.userId, user.id));
+    }
 
     return successResponse({
       success: true,

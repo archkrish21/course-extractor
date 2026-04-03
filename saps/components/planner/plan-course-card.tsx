@@ -154,7 +154,7 @@ export function PlanCourseCard({
   const hasViolations = violations.length > 0;
   const isDropped = course.status === "dropped";
   const isCompleted = course.status === "completed";
-  const canRemove = !readOnly && !isCompleted && onRemove;
+  const canRemove = !readOnly && onRemove;
   const [showWarnings, setShowWarnings] = useState(false);
   const [statusMenuOpen, setStatusMenuOpen] = useState(false);
   const warningRef = useRef<HTMLDivElement>(null);
@@ -349,7 +349,7 @@ export function PlanCourseCard({
             </Badge>
           ) : null}
 
-          {/* GPA Waiver toggle — only for courses that count toward GPA */}
+          {/* GPA Waiver toggle — only for non-P/F courses */}
           {course.gpaWaiver && !isPassFailCourse(course.code) && !readOnly && onGpaWaiverToggle && (
             <button
               type="button"

@@ -28,7 +28,9 @@ export default function SettingsPage() {
   const [members, setMembers] = useState<AccountMember[]>([]);
   const [inviteCode, setInviteCode] = useState<string | null>(null);
   const [inviteRole, setInviteRole] = useState("parent");
+  const [inviteEmail, setInviteEmail] = useState("");
   const [generating, setGenerating] = useState(false);
+  const [inviteSent, setInviteSent] = useState(false);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -47,19 +49,23 @@ export default function SettingsPage() {
     fetchMembers();
   }, [currentAccount]);
 
-  const handleGenerateInvite = async () => {
-    if (!currentAccount?.id) return;
+  const handleSendInvite = async () => {
+    if (!currentAccount?.id || !inviteEmail.trim()) return;
     setGenerating(true);
+    setInviteSent(false);
     try {
+      // Generate invite code
       const res = await apiFetch(`/api/v1/accounts/${currentAccount.id}/members`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ target_role: inviteRole }),
+        body: JSON.stringify({ target_role: inviteRole, email: inviteEmail.trim() }),
       });
       if (res.ok) {
         const json = await res.json();
         const data = json.data ?? json;
-        setInviteCode(data.invite_code ?? data.code ?? data.inviteCode ?? null);
+        setInviteCode(data.invite_code ?? data.code ?? null);
+        setInviteSent(true);
+        setInviteEmail("");
       }
     } catch { /* silent */ }
     finally { setGenerating(false); }
@@ -160,9 +166,16 @@ export default function SettingsPage() {
           </CardHeader>
           <CardContent>
             <p className="mb-3 text-sm text-muted-foreground">
-              Generate an invite code to share with a parent, guardian, or counselor. The code expires in 7 days.
+              Send an email invitation to a parent, guardian, or counselor to join this account.
             </p>
-            <div className="flex items-center gap-2">
+            <div className="flex flex-col gap-2 sm:flex-row">
+              <input
+                type="email"
+                value={inviteEmail}
+                onChange={(e) => setInviteEmail(e.target.value)}
+                placeholder="Email address"
+                className="h-9 flex-1 rounded-lg border border-border bg-background px-3 text-sm placeholder:text-muted-foreground focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
+              />
               <select
                 value={inviteRole}
                 onChange={(e) => setInviteRole(e.target.value)}
@@ -170,18 +183,26 @@ export default function SettingsPage() {
               >
                 <option value="parent">Parent</option>
                 <option value="guardian">Guardian</option>
-                <option value="counselor">Counselor</option>
               </select>
-              <Button onClick={handleGenerateInvite} disabled={generating}>
-                {generating ? "Generating..." : "Generate Invite Code"}
+              <Button onClick={handleSendInvite} disabled={generating || !inviteEmail.trim()}>
+                {generating ? "Sending..." : "Send Invite"}
               </Button>
             </div>
 
-            {inviteCode && (
-              <div className="mt-3 rounded-lg border border-primary/30 bg-primary/5 p-3">
-                <p className="text-sm text-muted-foreground">Share this code with your {inviteRole}:</p>
-                <p className="mt-1 text-2xl font-bold tracking-widest text-primary">{inviteCode}</p>
-                <p className="mt-1 text-xs text-muted-foreground">They can use this at signup or on the claim page. Expires in 7 days.</p>
+            {inviteSent && inviteCode && (
+              <div className="mt-3 rounded-lg border border-success/30 bg-success/5 p-3">
+                <p className="flex items-center gap-2 text-sm font-semibold text-success">
+                  <svg aria-hidden="true" className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="m4.5 12.75 6 6 9-13.5" />
+                  </svg>
+                  Invitation sent!
+                </p>
+                <p className="mt-1 text-xs text-muted-foreground">
+                  An email with a join link has been sent. The invite expires in 7 days.
+                </p>
+                <p className="mt-1 text-xs text-muted-foreground">
+                  Invite code: <span className="font-mono font-semibold text-foreground">{inviteCode}</span> (can also be shared manually)
+                </p>
               </div>
             )}
           </CardContent>

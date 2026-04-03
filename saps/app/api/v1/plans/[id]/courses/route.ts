@@ -235,6 +235,16 @@ export async function POST(request: NextRequest, context: RouteContext) {
       }
     }
 
+    // F-PL-10: Cannot add courses to a locked grade level
+    const lockedGrades = (plan.lockedGradeLevels as number[]) ?? [];
+    if (lockedGrades.includes(grade_level)) {
+      return errorResponse(
+        "CONFLICT",
+        `Grade ${grade_level} is locked. Unlock it first to add courses.`,
+        409
+      );
+    }
+
     // Verify the course exists
     const [course] = await db
       .select({ id: courses.id, code: courses.code, name: courses.name })

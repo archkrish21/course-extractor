@@ -565,6 +565,7 @@ export const fourYearPlans = pgTable(
       .notNull()
       .default("draft"),
     isPrimary: boolean("is_primary").notNull().default(false),
+    lockedGradeLevels: jsonb("locked_grade_levels").$type<number[]>().default([]),
     activatedAt: timestamp("activated_at", { withTimezone: true }),
     createdAt: timestamp("created_at", { withTimezone: true }).defaultNow(),
     updatedAt: timestamp("updated_at", { withTimezone: true })

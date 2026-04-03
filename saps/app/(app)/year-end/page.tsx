@@ -5,7 +5,7 @@ import { Card, CardHeader, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useAccount } from "@/lib/account-context";
 import { apiFetch } from "@/lib/api-client";
 import { GRADE_OPTIONS } from "@/config/grade-scale";
@@ -26,6 +26,8 @@ interface CourseEntry {
 export default function YearEndPage() {
   const { currentAccount } = useAccount();
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const gradeParam = searchParams.get("grade");
   const [step, setStep] = useState(1);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
@@ -38,7 +40,8 @@ export default function YearEndPage() {
   useEffect(() => {
     async function fetchData() {
       try {
-        const res = await apiFetch("/api/v1/year-end");
+        const url = gradeParam ? `/api/v1/year-end?grade=${gradeParam}` : "/api/v1/year-end";
+        const res = await apiFetch(url);
         if (res.ok) {
           const json = await res.json();
           const data = json.data ?? json;
@@ -58,7 +61,7 @@ export default function YearEndPage() {
       finally { setLoading(false); }
     }
     fetchData();
-  }, [currentAccount]);
+  }, [currentAccount, gradeParam]);
 
   const handleGradeChange = (courseId: string, grade: string) => {
     setGrades((prev) => ({ ...prev, [courseId]: grade }));
@@ -79,11 +82,20 @@ export default function YearEndPage() {
       const res = await apiFetch("/api/v1/year-end", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ grades: gradeEntries, action: "complete" }),
+        body: JSON.stringify({
+          grades: gradeEntries,
+          action: "complete",
+          ...(gradeParam ? { grade: parseInt(gradeParam, 10) } : {}),
+        }),
       });
 
       if (res.ok) {
-        router.push("/dashboard?yearEndComplete=true");
+        // If came from planner lock, go back to planner; otherwise dashboard
+        if (gradeParam) {
+          router.push("/planner");
+        } else {
+          router.push("/dashboard?yearEndComplete=true");
+        }
       }
     } catch { /* silent */ }
     finally { setSubmitting(false); }
@@ -169,7 +181,6 @@ export default function YearEndPage() {
                                   ))}
                                 </select>
                               )}
-                              {isPF && <Badge className="bg-muted text-muted-foreground text-[10px]">P/F</Badge>}
                             </div>
                           </div>
                         );

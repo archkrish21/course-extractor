@@ -95,6 +95,8 @@ Also track **standardized test scores** (SAT, ACT, AP exam scores) — these are
 
 > **GPA waiver toggle:** GPA waiver is a per-plan-course toggle (`gpa_waiver_applied` on plan_courses). The catalog-level `gpa_waiver` flag indicates eligibility; the student must explicitly apply it via a checkbox on the course card. Applied waivers show in yellow. The GPA calculator excludes courses where `gpa_waiver_applied = true`. The GPA waiver checkbox is hidden for P/F-only courses (identified by `isPassFailCourse()`) since they are already excluded from GPA calculation.
 
+> **Grade-level locking (Phase 2 update):** After completing a grade via the year-end wizard, the entire grade level is locked in the planner. Completed grades are locked at the grade level (not per-course) — once locked, no courses can be added/removed, no status/grade changes are allowed, and bulk operations (clear grade, bulk status/grade) are disabled. The GPA waiver toggle is the only exception and remains functional on locked grades. The "current grade" in the planner is defined as the first unlocked grade level, which may differ from the account's `current_grade_level` if grades are manually unlocked. Lock state is stored as a `lockedGradeLevels` JSONB integer array on `four_year_plans`.
+
 ### Dual Credit Tracking
 
 Several Stevenson courses earn transferable college credit through partner institutions (e.g., Harper College). This is a significant college planning consideration and must be tracked explicitly:
@@ -163,7 +165,7 @@ CREATE TABLE career_path_courses (
 - **What-if analysis** — a read-only simulation mode where students try changes and see the impact on GPA, requirements, and alerts without saving.
 - **Plan export / share** — students can export their active plan as a PDF (to share with a counselor or parent) or generate a read-only shareable link. The PDF includes the course grid, GPA projections, and requirement status.
 - **Plan print/export** — browser-native print dialog via `/planner/print?id=planId`. Landscape layout with grade tables, semester columns, status, grades, credits, GPA. Print button (printer icon) in planner header bar.
-- **Year-end transition workflow** — at the end of each school year, the app prompts the student to: (1) confirm final grades for completed courses, (2) advance their current grade level, and (3) review the active plan for the upcoming year. Courses marked `completed` are locked and their grades feed into the cumulative GPA. This is a critical operational workflow — without it, the plan becomes stale.
+- **Year-end transition workflow** — at the end of each school year, the app prompts the student to: (1) confirm final grades for completed courses, (2) lock the entire completed grade level, (3) advance their current grade level, and (4) review the active plan for the upcoming year. Completed grades are locked at the grade level (not per-course) via `lockedGradeLevels` on the plan. Locked grades block all course modifications (add/remove/status/grade changes) except GPA waiver toggles. Lock/unlock icons appear on grade bars for current and previous grades; unlocking requires a confirmation dialog. The "current grade" in the planner is defined as the first unlocked grade level, not just the account's grade level. The year-end API accepts a `grade` query param to complete a specific grade (not just current). This is a critical operational workflow — without it, the plan becomes stale.
 - **Enrollment rule enforcement** — the planner enforces scheduling rules automatically:
   - `One Semester` courses can only occupy one semester slot
   - `Full Year` courses must span both semesters of a grade year
@@ -1568,7 +1570,8 @@ Phase 5 includes a formal WCAG audit and remediation of any gaps, but the core p
 - All dual credit courses show partner college in the UI
 - Prerequisite violation alert fires within 2 seconds of adding a violating course to a plan
 - Plan export PDF renders correctly and matches screen state
-- Year-end transition workflow completes without data loss (grade entries preserved, plan_courses status updated)
+- Year-end transition workflow completes without data loss (grade entries preserved, plan_courses status updated, grade level added to lockedGradeLevels)
+- Grade-level locking enforced: API returns 409 on POST/DELETE/PATCH (non-waiver) for courses in locked grades; GPA waiver toggle succeeds on locked grades; lock/unlock endpoint tested
 - RLS policy test: authenticated student cannot read another student's `plan_courses` row (assert 0 rows returned)
 - RLS: student API token attempting INSERT on another student's `plan_courses` is rejected
 - Counselor API token can read linked student's plans/grades/alerts; cannot read non-linked student data (0 rows)

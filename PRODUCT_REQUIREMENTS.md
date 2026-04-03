@@ -452,7 +452,7 @@ Templates are tied to a specific `catalog_version_id`. During annual catalog upd
 | F-PL-07 | Multiple plan drafts per student. First plan auto-set to Primary. Additional plans default to Draft. | Must |
 | F-PL-08 | Primary plan designation (one per student at a time). Switching primary requires a confirmation step. Logged in plan_history. | Must |
 | F-PL-09 | Plan status lifecycle: Draft → Active → Archived. Archived plans are read-only but data is fully preserved. | Must |
-| F-PL-10 | Completed course locking: once a plan_courses row is marked `completed` (year-end transition), it cannot be deleted or have course_id/grade_level/semester changed. API returns 409 Conflict. | Must |
+| F-PL-10 | **Grade-level locking:** after completing a grade via the year-end wizard, the entire grade level is locked in the planner (`lockedGradeLevels` JSONB integer array on `four_year_plans`). When a grade is locked: no add/remove courses, no bulk status/grade/clear, no individual course status/grade changes, no clear grade. GPA waiver toggle remains functional on locked grades (only exception). Lock/unlock icons appear on current and previous grade bars. Unlocking requires a confirmation dialog ("Unlock Grade X?"). Locking redirects to `/year-end?grade=X` for the grade completion wizard. API enforcement: PATCH returns 409 for non-waiver changes on locked grades, DELETE returns 409, POST (add course) returns 409. New endpoint: `POST /api/v1/plans/:id/lock-grade` with `{ grade_level, locked }` body. "Current grade" = first unlocked grade level, not just account grade level. | Must |
 | F-PL-11 | Plan history / undo: last 20 changes per plan stored with timestamp, actor, before/after state. Undo restores the last change. | Should |
 | F-PL-12 | Plan template copy: selecting a template during onboarding or plan creation copies template courses into a new student-owned plan. | Must |
 | F-PL-13 | `created_from_template_id` tracked on each plan for analytics. | Should |
@@ -879,10 +879,12 @@ Trigger: School year is ending (student receives email reminder + dashboard bann
    ├── Shows all enrolled/in-progress courses for the current year
    ├── Student confirms or corrects final grades for each course
    └── Grades locked → plan_courses.status → 'completed'
+   └── Entire grade level locked → grade added to four_year_plans.lockedGradeLevels
 
 3. Year-End Wizard — Step 2: Advance grade level
    ├── Shows: "You're completing Grade X. Continue as Grade X+1?"
    └── Student confirms → student_profiles.current_grade_level += 1
+   └── "Current grade" in planner = first unlocked grade level (not just profile grade)
 
 4. Year-End Wizard — Step 3: Review next year's plan
    ├── Shows the upcoming year's planned courses

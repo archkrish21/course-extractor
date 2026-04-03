@@ -80,10 +80,16 @@ export async function GET(request: NextRequest) {
           createdAt: fourYearPlans.createdAt,
           updatedAt: fourYearPlans.updatedAt,
           createdBy: fourYearPlans.createdBy,
+          lockedGradeLevels: fourYearPlans.lockedGradeLevels,
           creatorRole: sql<string | null>`(
             SELECT am.role FROM account_members am
             WHERE am.user_id = ${fourYearPlans.createdBy}
               AND am.account_id = ${fourYearPlans.accountId}
+            LIMIT 1
+          )`,
+          creatorEmail: sql<string | null>`(
+            SELECT u.email FROM users u
+            WHERE u.id = ${fourYearPlans.createdBy}
             LIMIT 1
           )`,
           courseCount: sql<number>`(
@@ -118,10 +124,16 @@ export async function GET(request: NextRequest) {
         createdAt: fourYearPlans.createdAt,
         updatedAt: fourYearPlans.updatedAt,
         createdBy: fourYearPlans.createdBy,
+        lockedGradeLevels: fourYearPlans.lockedGradeLevels,
         creatorRole: sql<string | null>`(
           SELECT am.role FROM account_members am
           WHERE am.user_id = ${fourYearPlans.createdBy}
             AND am.account_id = ${fourYearPlans.accountId}
+          LIMIT 1
+        )`,
+        creatorEmail: sql<string | null>`(
+          SELECT u.email FROM users u
+          WHERE u.id = ${fourYearPlans.createdBy}
           LIMIT 1
         )`,
         courseCount: sql<number>`(

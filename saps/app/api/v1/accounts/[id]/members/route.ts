@@ -1,10 +1,12 @@
 import { NextRequest } from "next/server";
 import { z } from "zod";
 import { db } from "@/lib/db";
-import { accountMembers, accountInviteCodes, users } from "@/lib/db/schema";
+import { accountMembers, accountInviteCodes, accounts, users } from "@/lib/db/schema";
 import { eq, and } from "drizzle-orm";
 import { successResponse, errorResponse } from "@/lib/api/response";
 import { requireAuth, getAccountContext } from "@/lib/auth/get-user";
+import { sendEmail } from "@/lib/email/client";
+import { inviteEmail as inviteEmailTemplate } from "@/lib/email/templates";
 
 function generateInviteCode(): string {
   const chars = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789";
@@ -17,6 +19,7 @@ function generateInviteCode(): string {
 
 const inviteSchema = z.object({
   target_role: z.enum(["parent", "guardian"]),
+  email: z.string().email().optional(),
 });
 
 interface RouteContext {
@@ -113,10 +116,46 @@ export async function POST(request: NextRequest, context: RouteContext) {
       })
       .returning();
 
+    // Send email invite if email provided
+    console.log("[members] Invite created:", inviteCode, "email:", parsed.data.email ?? "none");
+    if (parsed.data.email) {
+      const [account] = await db
+        .select({ studentName: accounts.studentName })
+        .from(accounts)
+        .where(eq(accounts.id, accountId))
+        .limit(1);
+
+      const [inviter] = await db
+        .select({ email: users.email })
+        .from(users)
+        .where(eq(users.id, user.id))
+        .limit(1);
+
+      const origin = request.nextUrl.origin;
+      const claimUrl = `${origin}/signup?invite=${inviteCode}&account=${accountId}&role=${target_role}`;
+
+      const template = inviteEmailTemplate({
+        inviterName: inviter?.email ?? "A student",
+        studentName: account?.studentName ?? "a student",
+        role: target_role,
+        inviteCode,
+        claimUrl,
+      });
+
+      console.log("[members] Sending invite email to:", parsed.data.email);
+      const emailSent = await sendEmail({
+        to: parsed.data.email,
+        subject: template.subject,
+        html: template.html,
+      });
+      console.log("[members] Email sent:", emailSent);
+    }
+
     return successResponse(
       {
         invite_code: invite.code,
         expires_at: invite.expiresAt,
+        email_sent: !!parsed.data.email,
       },
       undefined,
       201

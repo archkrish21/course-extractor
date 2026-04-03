@@ -220,9 +220,9 @@ export default function YearEndPage() {
                 <p className="text-sm text-foreground">
                   You've completed Grade 12! Your courses and grades will be locked as a permanent record.
                 </p>
-                <div className="rounded-lg border border-amber-400/40 bg-gradient-to-r from-amber-50 to-yellow-50 p-4 dark:from-amber-950/20 dark:to-yellow-950/20">
-                  <p className="font-bold text-amber-700 dark:text-amber-400">Graduation Complete</p>
-                  <p className="mt-1 text-sm text-amber-600/80 dark:text-amber-400/60">
+                <div className="rounded-lg border border-amber-400/40 bg-gradient-to-r from-amber-50 to-yellow-50 p-4">
+                  <p className="font-bold text-amber-700">Graduation Complete</p>
+                  <p className="mt-1 text-sm text-amber-600/80">
                     Your account will remain accessible as a read-only archive.
                   </p>
                 </div>

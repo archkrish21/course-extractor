@@ -1110,7 +1110,7 @@ export default function DashboardPage() {
             };
 
             const colorMap: Record<string, string> = {
-              amber: "border-amber-400/40 bg-gradient-to-r from-amber-50 to-yellow-50 text-amber-700 dark:from-amber-950/20 dark:to-yellow-950/20 dark:text-amber-400",
+              amber: "border-amber-400/40 bg-gradient-to-r from-amber-50 to-yellow-50 text-amber-700",
               success: "border-success/30 bg-success/5 text-success",
               primary: "border-primary/30 bg-primary/5 text-primary",
             };

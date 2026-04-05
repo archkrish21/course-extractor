@@ -30,6 +30,8 @@ interface Plan {
   creatorRole?: string | null;
   creatorEmail?: string | null;
   lockedGradeLevels?: number[];
+  permission?: string | null;
+  isHidden?: boolean | null;
 }
 
 interface PlanCoursesResponse {
@@ -89,9 +91,15 @@ export default function PlannerPage() {
   const showProgressPanelRef = useRef(false);
   useEffect(() => { showProgressPanelRef.current = showProgressPanel; }, [showProgressPanel]);
   // Auto-open validation panel if URL has ?validation=open
+  // Auto-open new plan modal if URL has ?newPlan=true
   useEffect(() => {
-    if (typeof window !== "undefined" && new URLSearchParams(window.location.search).get("validation") === "open") {
+    if (typeof window === "undefined") return;
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("validation") === "open") {
       setShowProgressPanel(true);
+    }
+    if (params.get("newPlan") === "true") {
+      openNewPlanModal();
     }
   }, []);
   const [progressData, setProgressData] = useState<{
@@ -1309,9 +1317,21 @@ export default function PlannerPage() {
             variant="outline"
             onClick={openNewPlanModal}
             aria-label="Create new plan"
+            title="New Plan"
           >
             <svg aria-hidden="true" className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+            </svg>
+          </Button>
+
+          <Button
+            variant="outline"
+            onClick={() => router.push("/plans")}
+            aria-label="Manage plans"
+            title="Manage Plans"
+          >
+            <svg aria-hidden="true" className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M10.5 6h9.75M10.5 6a1.5 1.5 0 1 1-3 0m3 0a1.5 1.5 0 1 0-3 0M3.75 6H7.5m3 12h9.75m-9.75 0a1.5 1.5 0 0 1-3 0m3 0a1.5 1.5 0 0 0-3 0m-3.75 0H7.5m9-6h3.75m-3.75 0a1.5 1.5 0 0 1-3 0m3 0a1.5 1.5 0 0 0-3 0m-9.75 0h9.75" />
             </svg>
           </Button>
 
@@ -1450,7 +1470,7 @@ export default function PlannerPage() {
           violations={violations}
           semesterGaps={semesterGapsMap}
           focusGrade={focusGradeTarget}
-          readOnly={selectedPlan?.status === "archived"}
+          readOnly={selectedPlan?.status === "archived" || selectedPlan?.permission === "view"}
         />
       )}
         </div>{/* end main planner area */}

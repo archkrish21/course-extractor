@@ -654,6 +654,34 @@ export const planShareLinks = pgTable("plan_share_links", {
   createdAt: timestamp("created_at", { withTimezone: true }).defaultNow(),
 });
 
+// ─── PLAN SHARES (per-user permissions) ────────────────────────────────────
+
+export const planShares = pgTable(
+  "plan_shares",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    planId: uuid("plan_id")
+      .notNull()
+      .references(() => fourYearPlans.id, { onDelete: "cascade" }),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    grantedBy: uuid("granted_by").references(() => users.id, { onDelete: "set null" }),
+    permission: text("permission", {
+      enum: ["owner", "view", "edit", "delete"],
+    }).notNull(),
+    isHidden: boolean("is_hidden").notNull().default(false),
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true })
+      .defaultNow()
+      .$onUpdate(() => new Date()),
+  },
+  (table) => [
+    uniqueIndex("plan_shares_plan_user_unique").on(table.planId, table.userId),
+    index("idx_plan_shares_user").on(table.userId),
+  ]
+);
+
 // ─── PLAN HISTORY ───────────────────────────────────────────────────────────
 
 export const planHistory = pgTable(
@@ -1299,12 +1327,24 @@ export const fourYearPlansRelations = relations(
     }),
     planCourses: many(planCourses),
     planShareLinks: many(planShareLinks),
+    planShares: many(planShares),
     planHistory: many(planHistory),
     alerts: many(alerts),
     dualCreditLog: many(dualCreditLog),
     requirementProgress: many(requirementProgress),
   })
 );
+
+export const planSharesRelations = relations(planShares, ({ one }) => ({
+  plan: one(fourYearPlans, {
+    fields: [planShares.planId],
+    references: [fourYearPlans.id],
+  }),
+  user: one(users, {
+    fields: [planShares.userId],
+    references: [users.id],
+  }),
+}));
 
 export const planCoursesRelations = relations(planCourses, ({ one }) => ({
   plan: one(fourYearPlans, {

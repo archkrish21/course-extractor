@@ -4,6 +4,7 @@ import { db } from "@/lib/db";
 import {
   fourYearPlans,
   planCourses,
+  planShares,
   courses,
   courseCatalogVersions,
   accountMembers,
@@ -59,6 +60,8 @@ export async function GET(request: NextRequest) {
 
     const accountId = await resolveAccountId(request, user.id);
 
+    const includeHidden = request.nextUrl.searchParams.get("include_hidden") === "true";
+
     // If we have an account context, verify membership and query by accountId
     if (accountId) {
       const accountCtx = await getAccountContext(user.id, accountId);
@@ -81,6 +84,8 @@ export async function GET(request: NextRequest) {
           updatedAt: fourYearPlans.updatedAt,
           createdBy: fourYearPlans.createdBy,
           lockedGradeLevels: fourYearPlans.lockedGradeLevels,
+          permission: planShares.permission,
+          isHidden: planShares.isHidden,
           creatorRole: sql<string | null>`(
             SELECT am.role FROM account_members am
             WHERE am.user_id = ${fourYearPlans.createdBy}
@@ -96,17 +101,35 @@ export async function GET(request: NextRequest) {
             SELECT COUNT(*)::int FROM plan_courses
             WHERE plan_courses.plan_id = ${fourYearPlans.id}
           )`,
+          sharedCount: sql<number>`(
+            SELECT COUNT(*)::int FROM plan_shares ps
+            WHERE ps.plan_id = ${fourYearPlans.id}
+              AND ps.permission != 'owner'
+          )`,
         })
         .from(fourYearPlans)
+        .leftJoin(
+          planShares,
+          and(
+            eq(planShares.planId, fourYearPlans.id),
+            eq(planShares.userId, user.id)
+          )
+        )
         .where(
           and(
             eq(fourYearPlans.accountId, accountId),
-            eq(fourYearPlans.isTemplate, false)
+            eq(fourYearPlans.isTemplate, false),
+            // Only show plans the user has access to (via plan_shares or as account member)
+            or(
+              sql`${planShares.id} IS NOT NULL`,
+              eq(fourYearPlans.createdBy, user.id)
+            )
           )
         )
         .orderBy(fourYearPlans.createdAt);
 
-      return successResponse(plans);
+      const filtered = includeHidden ? plans : plans.filter((p) => !p.isHidden);
+      return successResponse(filtered);
     }
 
     // Backward compatibility: no account, fall back to studentId
@@ -125,6 +148,8 @@ export async function GET(request: NextRequest) {
         updatedAt: fourYearPlans.updatedAt,
         createdBy: fourYearPlans.createdBy,
         lockedGradeLevels: fourYearPlans.lockedGradeLevels,
+        permission: planShares.permission,
+        isHidden: planShares.isHidden,
         creatorRole: sql<string | null>`(
           SELECT am.role FROM account_members am
           WHERE am.user_id = ${fourYearPlans.createdBy}
@@ -140,8 +165,20 @@ export async function GET(request: NextRequest) {
           SELECT COUNT(*)::int FROM plan_courses
           WHERE plan_courses.plan_id = ${fourYearPlans.id}
         )`,
+        sharedCount: sql<number>`(
+          SELECT COUNT(*)::int FROM plan_shares ps
+          WHERE ps.plan_id = ${fourYearPlans.id}
+            AND ps.permission != 'owner'
+        )`,
       })
       .from(fourYearPlans)
+      .leftJoin(
+        planShares,
+        and(
+          eq(planShares.planId, fourYearPlans.id),
+          eq(planShares.userId, user.id)
+        )
+      )
       .where(
         and(
           eq(fourYearPlans.studentId, user.id),
@@ -150,7 +187,8 @@ export async function GET(request: NextRequest) {
       )
       .orderBy(fourYearPlans.createdAt);
 
-    return successResponse(plans);
+    const filtered = includeHidden ? plans : plans.filter((p) => !p.isHidden);
+    return successResponse(filtered);
   } catch (error) {
     console.error("[plans] GET error:", error);
     return errorResponse(
@@ -310,6 +348,14 @@ export async function POST(request: NextRequest) {
         activatedAt: isFirstPlan ? new Date() : undefined,
       })
       .returning();
+
+    // Auto-create owner share for the plan creator
+    await db.insert(planShares).values({
+      planId: newPlan.id,
+      userId: user.id,
+      grantedBy: user.id,
+      permission: "owner",
+    });
 
     // If from_template_id, copy template courses into the new plan
     if (from_template_id) {

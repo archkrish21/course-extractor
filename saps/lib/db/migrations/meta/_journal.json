@@ -15,6 +15,13 @@
       "when": 1775173346794,
       "tag": "0001_tiny_ultimatum",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1775356932028,
+      "tag": "0002_bent_golden_guardian",
+      "breakpoints": true
     }
   ]
 }

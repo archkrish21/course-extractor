@@ -301,6 +301,10 @@ Account Switcher (parent with multiple children):
 | US-15 | As a student, I want to undo the last 20 changes to my plan so I can experiment without fear of losing my work. | Should | 3 |
 | US-16 | As a student, I want to export my primary plan as a PDF so I can share it with my counselor or parents. | Should | 3 |
 | US-17 | As a student, I want to generate a read-only shareable link to my plan so others can view it without needing an account. | Should | 3 |
+| US-17a | As a student, I want to share a plan with a family member and set their permission level (view only / can edit / full access) so I control who can modify my plans. **Implemented:** Share modal on `/plans` page sets per-family-member permissions. `plan_shares` table stores per-plan, per-user permissions (owner/view/edit/delete) with permission hierarchy: owner > delete > edit > view. | Must | 3 |
+| US-17b | As a student, I want to see all my plans and plans shared with me in one place so I can manage them easily. **Implemented:** `/plans` page with "My Plans" and "Shared with Me" tabs. Plan cards show status badges and permission level. | Must | 3 |
+| US-17c | As a student, I want to hide a plan from my planner without deleting it so I can reduce clutter while preserving the plan. **Implemented:** `isHidden` toggle on `plan_shares`; hidden plans excluded from planner dropdown. | Should | 3 |
+| US-17d | As a parent, I want per-plan permission enforcement so I can only edit plans I have been granted edit access to. **Implemented:** All mutation endpoints use `getPlanAccess()` instead of `accountCtx.canEdit`. Backward-compatible: plans without `plan_shares` rows fall back to `account_members.canEdit`. | Must | 3 |
 | US-18 | As a student, I want to complete a year-end transition wizard each summer that locks my final grades, advances my grade level, and prompts me to review my upcoming year plan so my plan never becomes stale. | Must | 2 |
 
 ### Grade Tracking & GPA
@@ -468,6 +472,10 @@ Templates are tied to a specific `catalog_version_id`. During annual catalog upd
 | F-PL-22 | Clear semester and clear grade with confirmation dialogs. | Should |
 | F-PL-23 | Core course removal warning for template-based plans with Reset to Template option. Reset uses `pc.semester` and `pc.gradeLevel` from actual course data (not group key), adds `skip_validation: true` for template reset, and logs failures. | Should |
 | F-PL-24 | Credits display: planned and earned credits per grade and total. Stevenson uses 1 credit per semester course, 2 credits per full-year course, 45 credits required for graduation. Credits displayed as: 'X credits planned, Y earned' (earned in green). Per-row credit = creditValue/2 for full-year courses to avoid double-counting. 1.5 period courses show 1.5 credits per semester row. | Must |
+| F-PL-25 | **Plan sharing with permissions (Phase 3):** Per-plan, per-user permissions via `plan_shares` table. Permission levels: owner, view, edit, delete. Hierarchy: owner > delete > edit > view. Share modal on `/plans` page lets plan owner set permission per family member (No access / View only / Can edit / Full access). Owner share auto-created on plan creation. | Must |
+| F-PL-26 | **Per-plan permission enforcement (Phase 3):** All plan mutation endpoints (PATCH/DELETE/POST courses, lock-grade) use `getPlanAccess()` helper instead of `accountCtx.canEdit`. Backward compatibility: plans without `plan_shares` rows fall back to `account_members.canEdit`. | Must |
+| F-PL-27 | **Plan management page (Phase 3):** `/plans` page with "My Plans" and "Shared with Me" tabs. Plan cards display status badge, permission level badge, hide/show toggle, share button, open-in-planner link, delete action. "Plans" removed from nav bar; accessible via "Manage" button in planner header. New Plan button links to `/planner?newPlan=true`. | Must |
+| F-PL-28 | **Plan visibility (Phase 3):** `isHidden` toggle on `plan_shares`. Hidden plans are excluded from the planner plan dropdown but remain accessible on the `/plans` page. Hiding a plan does not delete it. | Should |
 
 **Accessibility Requirements (Phase 1 — build in, not bolt on):**
 

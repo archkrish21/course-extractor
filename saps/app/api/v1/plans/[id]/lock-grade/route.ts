@@ -4,7 +4,8 @@ import { db } from "@/lib/db";
 import { fourYearPlans, accounts } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
 import { successResponse, errorResponse } from "@/lib/api/response";
-import { requireAuth, getAccountContext } from "@/lib/auth/get-user";
+import { requireAuth } from "@/lib/auth/get-user";
+import { getPlanAccess, hasPermission } from "@/lib/auth/plan-permissions";
 
 const lockGradeSchema = z.object({
   grade_level: z.number().int().min(9).max(12),
@@ -53,17 +54,10 @@ export async function POST(request: NextRequest, context: RouteContext) {
       return errorResponse("NOT_FOUND", "Plan not found.", 404);
     }
 
-    // Authorization
-    if (plan.accountId) {
-      const accountCtx = await getAccountContext(user.id, plan.accountId);
-      if (!accountCtx) {
-        return errorResponse("FORBIDDEN", "Not a member of this account.", 403);
-      }
-      if (!accountCtx.canEdit) {
-        return errorResponse("FORBIDDEN", "Read-only access.", 403);
-      }
-    } else if (plan.studentId !== user.id) {
-      return errorResponse("FORBIDDEN", "You do not have access to this plan.", 403);
+    // Per-plan permissions check
+    const access = await getPlanAccess(user.id, planId, plan.accountId);
+    if (!access || !hasPermission(access.permission, "edit")) {
+      return errorResponse("FORBIDDEN", "You do not have permission to edit this plan.", 403);
     }
 
     const existing = (plan.lockedGradeLevels as number[]) ?? [];

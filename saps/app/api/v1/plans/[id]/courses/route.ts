@@ -13,6 +13,7 @@ import {
 import { eq, and } from "drizzle-orm";
 import { successResponse, errorResponse } from "@/lib/api/response";
 import { requireAuth, getAccountContext } from "@/lib/auth/get-user";
+import { getPlanAccess, hasPermission } from "@/lib/auth/plan-permissions";
 import { validateCourseAddition } from "@/lib/prereq/validator";
 
 import { ALL_GRADES } from "@/config/grade-scale";
@@ -215,24 +216,10 @@ export async function POST(request: NextRequest, context: RouteContext) {
       return errorResponse("NOT_FOUND", "Plan not found.", 404);
     }
 
-    // Account-based authorization
-    if (plan.accountId) {
-      const accountCtx = await getAccountContext(user.id, plan.accountId);
-      if (!accountCtx) {
-        return errorResponse("FORBIDDEN", "Not a member of this account.", 403);
-      }
-      if (!accountCtx.canEdit) {
-        return errorResponse("FORBIDDEN", "Read-only access.", 403);
-      }
-    } else {
-      // Backward compatibility: only the owning student can add courses
-      if (plan.studentId !== user.id) {
-        return errorResponse(
-          "FORBIDDEN",
-          "You do not have access to modify this plan.",
-          403
-        );
-      }
+    // Per-plan permissions check
+    const access = await getPlanAccess(user.id, planId, plan.accountId);
+    if (!access || !hasPermission(access.permission, "edit")) {
+      return errorResponse("FORBIDDEN", "You do not have permission to edit this plan.", 403);
     }
 
     // F-PL-10: Cannot add courses to a locked grade level

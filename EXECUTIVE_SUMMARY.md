@@ -3,7 +3,7 @@
 
 **Prepared for:** Executive Leadership
 **Date:** March 2026
-**Status:** Phase 2 Complete — Active Development
+**Status:** Phase 3 In Progress — Active Development
 
 ---
 
@@ -89,7 +89,7 @@ The build is structured across five phases over approximately 18+ weeks. Phase 1
 | **1a** | Data Foundation + Auth | Weeks 1–3 | ✅ Complete — PDF extractor, course catalog database, user auth, course browser, analytics integration |
 | **1b** | Core Planning + Onboarding | Weeks 4–6 | ✅ Complete — 4-year planner grid (keyboard-accessible, mobile-responsive), course picker, prerequisite validation, enrollment rules, 6 plan templates, plan creation/deletion, per-semester status/grade editing, GPA calculation, semester course limits, credit display, core course removal warnings |
 | **2** | Grade Tracking + GPA + Billing | Weeks 7–10 | ✅ Complete — Transcript page (read-only, print button), GPA API (from plan_courses), graduation requirements with matching rules expanded to 4 requirement groups (graduation, il_public_university, non_course, course_load — 37 total requirements), Academic Progress page (`/progress`, two-column layout with filter bar + grouped sections + sticky sidebar with honors badge + summary card), dashboard (3-row 2-column grid: Active Plan/GPA, Attention Required/Achievements, Academic Progress/Quick Actions), planner validation side panel (380px, sticky, scrollable, with clickable warning links), plan selection persistence, Stripe integration (Checkout, Webhook, Billing Portal), subscription enforcement with 8 feature flags, billing page at `/settings/billing` |
-| **3** | Plan Tools + Alert Engine | Weeks 11–14 | Plan management page (/plans — own plans, shared plans, share with family members with view/edit/delete permissions, disable/enable plans, multi-channel notifications on shared plan changes via push/email/SMS), plan history/undo, prerequisite graph visualization, dual credit tracking, plan comparison, PDF export, share links, template intensity levels (Easy/Moderate/Challenging/Intensive/Rigorous — auto-selects CP/Accelerated/AP course variants and load per template), goal setting (GPA targets, credit milestones, course goals — Plus+ gated), Terms of Service & Privacy Policy acceptance on signup, user profile (move settings into profile dropdown from top-right user icon), NCAA eligibility tracking, Seal of Biliteracy, P.E. waiver rules |
+| **3** | Plan Tools + Alert Engine | Weeks 11–14 | **In progress.** ✅ Plan management page (`/plans` — "My Plans" / "Shared with Me" tabs, plan cards with status/permission badges, hide/show toggle, share with family members via per-plan permissions using `plan_shares` table (owner/view/edit/delete + isHidden), `getPlanAccess()` enforced on all mutation endpoints, auto-create owner share on plan creation, backward-compatible fallback to `account_members.canEdit`, migration script for existing plans, 14 API + 15 E2E tests). Remaining: plan history/undo, prerequisite graph visualization, dual credit tracking, plan comparison, PDF export, share links, template intensity levels (Easy/Moderate/Challenging/Intensive/Rigorous — auto-selects CP/Accelerated/AP course variants and load per template), goal setting (GPA targets, credit milestones, course goals — Plus+ gated), Terms of Service & Privacy Policy acceptance on signup, user profile (move settings into profile dropdown from top-right user icon), NCAA eligibility tracking, Seal of Biliteracy, P.E. waiver rules |
 | **4** | AI Advisory | Weeks 15–17 | Claude AI integration, career-path course recommendations, AI plan review, AI chat interface |
 | **5** | Annual Workflow + Counselor + Polish | Week 18+ | Admin catalog update UI, counselor dashboard, parent dashboard, percentile comparison (Elite), WCAG AAA audit + edge-case accessibility fixes |
 
@@ -286,8 +286,18 @@ Frozen and suspended accounts are never silently degraded — users always see a
 - **Stripe integration (Phase 2):** Stripe Checkout for payment (subscription mode for monthly/annual, payment mode for 4-year plans). Stripe Webhook handler processing 5 event types (`customer.subscription.created`, `customer.subscription.updated`, `customer.subscription.deleted`, `invoice.payment_failed`, `invoice.paid`), idempotent via `stripe_events` table with UNIQUE on `stripe_event_id`. Stripe Billing Portal for subscription management. Subscription middleware expanded with 8 feature flags (`canWhatIf`, `canExportPdf`, `canComparePlans`, `canSharePlans`, `canUseAi`, `canViewPercentile`, `canParentDraft`, `canCreateGoals`). Feature gating uses flag-based checks, not tier name lists. Pro tier backward compatibility: maps `pro` to `plus` in middleware. Billing page at `/settings/billing` with pricing cards and 3-interval toggle (monthly/annual/4-year). Schema: `priceFourYear` column on `subscription_plans`; `four_year` added to `billing_cycle` check constraint.
 - **New files:** `lib/stripe/client.ts` (Stripe SDK singleton), `lib/stripe/prices.ts` (price ID mapping), `app/api/v1/stripe/checkout/route.ts`, `app/api/v1/stripe/webhook/route.ts`, `app/api/v1/stripe/portal/route.ts`, `app/api/v1/subscriptions/route.ts`, `app/(app)/settings/billing/page.tsx`, `lib/db/migrations/` (Drizzle migration for schema changes).
 
-**Next up (Phase 3):** Plan history/undo, prerequisite graph visualization, dual credit tracking, plan comparison, PDF export, share links.
+**Phase 3 (in progress).** Plan management with sharing and permissions is complete:
+
+- **Plan Management page** (`/plans`): "My Plans" and "Shared with Me" tabs, plan cards with status/permission badges, hide/show toggle, share button, open in planner, delete. New Plan button links to `/planner?newPlan=true`. "Plans" removed from nav bar — accessible via "Manage" button in planner header.
+- **Plan sharing**: Share modal sets per-family-member permission levels (No access / View only / Can edit / Full access). New `plan_shares` table with per-plan, per-user permissions (owner/view/edit/delete) and `isHidden` toggle. Permission hierarchy: owner > delete > edit > view.
+- **Per-plan permission enforcement**: All mutation endpoints (PATCH/DELETE/POST courses, lock-grade) use `getPlanAccess()` instead of `accountCtx.canEdit`. Auto-creates owner share on plan creation. Backward compatibility: plans without `plan_shares` rows fall back to `account_members.canEdit`.
+- **Plan visibility**: Hide plans from planner without deleting them.
+- **API endpoints**: `GET/POST /plans/:id/shares`, `PATCH/DELETE /plans/:id/shares/:userId`, `PATCH /plans/:id/visibility`.
+- **Migration script** for existing plans (creates owner share rows).
+- **Tests**: 14 API tests + 15 E2E tests.
+
+**Next up (Phase 3 remaining):** Plan history/undo, prerequisite graph visualization, dual credit tracking, plan comparison, PDF export, share links.
 
 ---
 
-*This document summarizes the full feature specification in FEATURE_ANALYSIS.md (rev 10, April 2026). For technical schema, API design, acceptance criteria, and testing strategy, refer to the full specification.*
+*This document summarizes the full feature specification in FEATURE_ANALYSIS.md (rev 11, April 2026). For technical schema, API design, acceptance criteria, and testing strategy, refer to the full specification.*

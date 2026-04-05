@@ -349,6 +349,25 @@ export async function getAccountContext(userId: string, accountId?: string): Pro
 }
 ```
 
+**Per-plan permission enforcement (Phase 3):**
+
+```typescript
+// lib/plans/access.ts
+export async function getPlanAccess(planId: string, userId: string): Promise<PlanAccess> {
+  // 1. Check plan_shares for a row matching (planId, userId)
+  // 2. If found, return { permission, isHidden } from the share row
+  // 3. If not found (no plan_shares rows for this plan), fall back to accountCtx.canEdit
+  //    - canEdit=true → 'edit' permission; canEdit=false → 'view' permission
+  // 4. Permission hierarchy: owner > delete > edit > view
+  //    - 'delete' implies edit + view; 'edit' implies view
+  // Returns: { permission: 'owner'|'delete'|'edit'|'view', isHidden: boolean }
+}
+```
+
+All plan mutation endpoints (POST/PATCH/DELETE on `/plans/:id/courses`, `lock-grade`) call `getPlanAccess()` and check the returned permission level instead of using `accountCtx.canEdit`. This enables per-plan permission control for shared plans. Owner shares are auto-created when a plan is created via `POST /api/v1/plans`.
+
+> **Migration:** `lib/db/migrations/` contains a migration script that creates owner share rows in `plan_shares` for all existing plans, ensuring backward compatibility.
+
 **API responses for gated access:**
 
 | Condition | HTTP Status | Body |
@@ -667,6 +686,31 @@ COMMIT;
 ```
 
 The partial unique index makes this race-safe: two concurrent requests to set different plans as primary will result in one succeeding and one hitting a unique constraint error (to be retried).
+
+### Table: `plan_shares`
+
+```sql
+CREATE TABLE plan_shares (
+  id          UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  plan_id     UUID NOT NULL REFERENCES four_year_plans(id) ON DELETE CASCADE,
+  user_id     UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  permission  TEXT NOT NULL DEFAULT 'view'
+                CHECK (permission IN ('owner', 'view', 'edit', 'delete')),
+  is_hidden   BOOLEAN NOT NULL DEFAULT FALSE,
+  created_at  TIMESTAMPTZ DEFAULT NOW(),
+  updated_at  TIMESTAMPTZ DEFAULT NOW(),
+  UNIQUE (plan_id, user_id)
+);
+
+CREATE INDEX idx_plan_shares_plan_id ON plan_shares (plan_id);
+CREATE INDEX idx_plan_shares_user_id ON plan_shares (user_id);
+```
+
+> **Permission hierarchy:** owner > delete > edit > view. A user with `delete` permission can also edit and view. A user with `edit` permission can also view. The `owner` permission is auto-created when a plan is created and cannot be changed or removed.
+>
+> **Backward compatibility:** Plans without any `plan_shares` rows fall back to `account_members.canEdit` for permission checks. This ensures existing plans work without migration, though a migration script (`lib/db/migrations/`) creates owner share rows for all existing plans.
+>
+> **`isHidden` toggle:** When `is_hidden = true`, the plan is excluded from the planner plan dropdown but remains accessible on the `/plans` page. Hiding does not affect permissions.
 
 ### Table: `plan_share_links`
 
@@ -1258,6 +1302,11 @@ All routes: `/api/v1/...`. Version from day one.
 | DELETE | `/api/v1/plans/:id` | student | Delete a plan | Phase 1b |
 | PATCH | `/api/v1/plans/:id/courses/:planCourseId` | student | Update course semester/status/grade. Returns 409 for non-waiver changes on locked grades. | Phase 1b |
 | POST | `/api/v1/plans/:id/lock-grade` | student | Lock or unlock a grade level. Body: `{ grade_level: number, locked: boolean }`. Adds/removes grade from `locked_grade_levels` array. Locking triggers year-end wizard redirect. Unlocking requires confirmation. | Phase 2 |
+| GET | `/api/v1/plans/:id/shares` | member | List all shares for a plan. Returns array of share rows with user info and permission level. | Phase 3 |
+| POST | `/api/v1/plans/:id/shares` | owner | Create or update a share for a user on a plan. Body: `{ userId, permission }`. Cannot modify owner shares. | Phase 3 |
+| PATCH | `/api/v1/plans/:id/shares/:userId` | owner | Update permission level for an existing share. Body: `{ permission }`. | Phase 3 |
+| DELETE | `/api/v1/plans/:id/shares/:userId` | owner | Remove a share (revoke access). Cannot remove owner share. | Phase 3 |
+| PATCH | `/api/v1/plans/:id/visibility` | member | Toggle plan visibility (hide/show). Body: `{ isHidden }`. Updates `plan_shares.is_hidden`. | Phase 3 |
 | GET | `/api/v1/plans/:id/history` | student | Get plan change history (paginated) | Phase 3 |
 | PATCH | `/api/v1/users/me` | student | Update notification preferences | Phase 1a |
 | PATCH | `/api/v1/users/me/profile` | student | Update student profile (goals in Phase 2; test scores in Phase 4) | Phase 2 |

@@ -149,8 +149,8 @@ User → Next.js frontend → API routes → PostgreSQL (Supabase + RLS)
 │   ├── (app)/                  # authenticated group
 │   │   ├── dashboard/
 │   │   ├── courses/
-│   │   ├── progress/           # Academic Progress page — two-column layout with filter bar, grouped sections, sticky sidebar (print button in header)
-│   │   └── transcript/         # read-only transcript page (print button in header)
+│   │   ├── progress/           # Academic Progress page — two-column layout with filter bar, grouped sections, sticky sidebar (print button in header, Plus+ gated)
+│   │   └── transcript/         # read-only transcript page (print button in header, Plus+ gated)
 │   └── api/v1/                 # API routes
 │       ├── auth/
 │       ├── courses/
@@ -375,7 +375,7 @@ All plan mutation endpoints (POST/PATCH/DELETE on `/plans/:id/courses`, `lock-gr
 | Feature requires higher tier | `402` | `{ "upgrade_required": true, "feature": "ai_suggestions", "minimum_tier": "elite" }` |
 | Account frozen (any write) | `403` | `{ "account_frozen": true, "reason": "payment_lapsed", "reactivate_url": "..." }` |
 
-> **Feature flag-based gating (Phase 2 update):** Subscription middleware exposes 8 feature flags: `canWhatIf`, `canExportPdf`, `canComparePlans`, `canSharePlans`, `canUseAi`, `canViewPercentile`, `canParentDraft`, `canCreateGoals`. API routes and server components check these flags rather than tier name strings. This decouples feature access from tier naming. Pro tier backward compatibility: middleware maps `pro` to `plus` so any legacy references still resolve correctly.
+> **Feature flag-based gating (Phase 2 update):** Subscription middleware exposes 8 feature flags: `canWhatIf`, `canExportPdf`, `canComparePlans`, `canSharePlans`, `canUseAi`, `canViewPercentile`, `canParentDraft`, `canCreateGoals`. API routes and server components check these flags rather than tier name strings. This decouples feature access from tier naming. Pro tier backward compatibility: middleware maps `pro` to `plus` so any legacy references still resolve correctly. **Print button gating (implemented):** The `canExportPdf` flag gates all print buttons across the app (planner, progress, transcript, dashboard "Print Plan" quick action). Client-side check: `subscriptionTier === "plus" || "elite"`. Disabled buttons wrapped in `<span>` with `title="Upgrade to Plus to print"` tooltip for accessibility.
 
 ---
 
@@ -781,7 +781,7 @@ CREATE INDEX idx_plan_history_plan_id_at ON plan_history (plan_id, changed_at DE
 
 ### Table: `grade_entries`
 
-> **Phase 2 update:** The `midterm_grade` and `grade_type` columns have been removed. Stevenson uses a single final grade per semester (proficiency-based grading model) — there is no midterm grade. The primary grade source is now `plan_courses.planned_grade`, set via the planner page. The `grade_entries` table is retained for future use (e.g., onboarding bulk import, historical records) but is **not** the authoritative source for GPA calculation or transcript display. The Transcript page includes a Print button (printer icon) next to "Edit in Planner" that triggers `window.print()`; the Progress page includes a Print button next to "Edit Plan" with the same behavior.
+> **Phase 2 update:** The `midterm_grade` and `grade_type` columns have been removed. Stevenson uses a single final grade per semester (proficiency-based grading model) — there is no midterm grade. The primary grade source is now `plan_courses.planned_grade`, set via the planner page. The `grade_entries` table is retained for future use (e.g., onboarding bulk import, historical records) but is **not** the authoritative source for GPA calculation or transcript display. The Transcript page includes a Print button (printer icon) next to "Edit in Planner" that triggers `window.print()`; the Progress page includes a Print button next to "Edit Plan" with the same behavior. All print buttons are gated by `canExportPdf` (Plus+ only); Trial and Starter users see disabled buttons with "Upgrade to Plus to print" tooltip.
 
 ```sql
 CREATE TABLE grade_entries (
@@ -1275,7 +1275,7 @@ All routes: `/api/v1/...`. Version from day one.
 | GET | `/api/v1/gpa` | student | Compute live GPA |
 | POST | `/api/v1/gpa/snapshot` | student | Take manual GPA snapshot |
 | POST | `/api/v1/gpa/what-if` | student (Plus+) | What-if GPA simulation (read-only); body: `{ "swaps": [{ "remove_course_id": "...", "add_course_id": "...", "planned_grade": "B+" }] }` |
-| GET | `/api/v1/transcript` | student | Read-only transcript: completed courses from primary plan with grades, semester GPA, grade-level GPA, cumulative GPA, credits earned. Frontend has Print button (printer icon) next to "Edit in Planner" that triggers `window.print()`. | Phase 2 |
+| GET | `/api/v1/transcript` | student | Read-only transcript: completed courses from primary plan with grades, semester GPA, grade-level GPA, cumulative GPA, credits earned. Frontend has Print button (printer icon) next to "Edit in Planner" that triggers `window.print()`. Print gated by `canExportPdf` (Plus+ only). | Phase 2 |
 | POST | `/api/v1/transcript` | student | Bulk upsert grade entries (for onboarding import) | Phase 2 |
 | GET | `/api/v1/gpa` | student | Live GPA from `plan_courses` on primary plan: cumulative (completed only), projected (all graded), plan totals (`totalCredits`, `earnedCredits`, `totalCourses`), `hasGrades` flag | Phase 2 |
 | GET | `/api/v1/gpa/snapshots` | student | List GPA snapshot history (used by trend chart on Progress page; returns array of snapshots with unweighted + weighted GPA, ordered by date) | Phase 2 |
@@ -1335,7 +1335,7 @@ All routes: `/api/v1/...`. Version from day one.
 | GET | `/api/v1/plans/templates` | any | List all plan templates with courses | 1b |
 | GET | `/api/v1/plans/:id/validate` | member | Full plan validation | 1b |
 | GET | `/api/v1/accounts/:id/members` | member | List account members | 1b |
-| GET | `/planner/print` | student/parent | Print-optimized plan view. Opens in new tab with landscape layout, auto-triggers browser print. | 1b |
+| GET | `/planner/print` | student/parent | Print-optimized plan view. Opens in new tab with landscape layout, auto-triggers browser print. Print button gated by `canExportPdf` (Plus+ only). | 1b |
 
 > **Note:** All existing plan, grade, and GPA routes now require account context. For students, this is implicit (their one account). For parents, the account_id is derived from the route's resource or from the `X-Account-Id` request header.
 

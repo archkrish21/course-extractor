@@ -43,12 +43,12 @@ The platform is designed as a **personal/family planning tool** — no school sy
 
 ## Subscription Model & Revenue
 
-Every new user receives a **14-day free trial** (no credit card required) with Plus-level features except plan comparison, PDF export, and share links. Max 2 plans during trial. AI features are NOT included (Elite-only). New signups are assigned the Plus plan with `status = 'trialing'` for 14 days. At trial end, the account automatically moves to the free Starter tier unless the user upgrades. This prevents the "build-export-leave" pattern while demonstrating the product's value. The Accounts API returns "trial" as the plan name when `status = 'trialing'`, and the UI shows a "Trial" badge (amber) and "Free Trial" label on the billing page with a "X days left" countdown.
+Every new user receives a **14-day free trial** (no credit card required) with Plus-level features except plan comparison, PDF export/print, and share links. Max 2 plans during trial. AI features are NOT included (Elite-only). New signups are assigned the Plus plan with `status = 'trialing'` for 14 days. At trial end, the account automatically moves to the free Starter tier unless the user upgrades. This prevents the "build-export-leave" pattern while demonstrating the product's value. The Accounts API returns "trial" as the plan name when `status = 'trialing'`, and the UI shows a "Trial" badge (amber) and "Free Trial" label on the billing page with a "X days left" countdown.
 
 | Tier | Monthly | Annual (save 10%) | 4-Year (save 17%) | Key Capabilities |
 |---|---|---|---|---|
 | **Starter** | Free | — | — | 1 plan, course browser, requirement validation, GPA tracking |
-| **Plus** | $9.99/mo | $107.88/yr ($8.99/mo) | $399 ($8.31/mo) | 10 plans, what-if GPA, plan comparison, PDF export, share links, goal tracking, full alerts, dual credit, parent plan drafts |
+| **Plus** | $9.99/mo | $107.88/yr ($8.99/mo) | $399 ($8.31/mo) | 10 plans, what-if GPA, plan comparison, PDF export/print, share links, goal tracking, full alerts, dual credit, parent plan drafts |
 | **Elite** | $19.99/mo | $215.88/yr ($17.99/mo) | $799 ($16.65/mo) | Everything in Plus + AI course suggestions, AI plan review, AI chat, percentile comparison, course rigor scoring, unlimited plans |
 
 **Key monetization principles:**

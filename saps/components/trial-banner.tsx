@@ -2,6 +2,9 @@
 
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
+import Link from "next/link";
+import { useAccount } from "@/lib/account-context";
+import { apiFetch } from "@/lib/api-client";
 
 /**
  * Trial banner that shows "X days left in your free trial" when trial is active.
@@ -9,39 +12,39 @@ import { Button } from "@/components/ui/button";
  * Dismissible for the session.
  */
 export function TrialBanner() {
+  const { currentAccount } = useAccount();
   const [dismissed, setDismissed] = useState(false);
   const [daysLeft, setDaysLeft] = useState<number | null>(null);
   const [visible, setVisible] = useState(false);
 
   useEffect(() => {
-    // Check session storage for dismissal
+    // Only show for trialing users
+    if (currentAccount?.subscriptionTier !== "trial") return;
+
     const wasDismissed = sessionStorage.getItem("trial-banner-dismissed");
     if (wasDismissed === "true") {
       setDismissed(true);
       return;
     }
 
-    // In production, this would come from the user's subscription data.
-    // For now, simulate a trial that started some days ago.
-    // We check if the user has a trial_start in localStorage for demo purposes.
-    const trialStart = localStorage.getItem("saps-trial-start");
-    if (!trialStart) {
-      // No trial data - set a default for demo (day 11 of 14)
-      const now = new Date();
-      const start = new Date(now);
-      start.setDate(start.getDate() - 11);
-      localStorage.setItem("saps-trial-start", start.toISOString());
+    // Fetch actual trial data from subscriptions API
+    async function fetchTrialData() {
+      try {
+        const res = await apiFetch("/api/v1/subscriptions");
+        if (res.ok) {
+          const json = await res.json();
+          const data = json.data ?? json;
+          const trial = data.trial;
+          if (trial?.active && trial.daysRemaining != null) {
+            setDaysLeft(trial.daysRemaining);
+            // Show banner when 4 or fewer days remaining
+            setVisible(trial.daysRemaining <= 4);
+          }
+        }
+      } catch { /* silent */ }
     }
-
-    const start = new Date(localStorage.getItem("saps-trial-start") || new Date().toISOString());
-    const now = new Date();
-    const daysPassed = Math.floor((now.getTime() - start.getTime()) / (1000 * 60 * 60 * 24));
-    const remaining = Math.max(0, 14 - daysPassed);
-
-    setDaysLeft(remaining);
-    // Show banner from day 10 onward (4 or fewer days remaining)
-    setVisible(daysPassed >= 10 && remaining > 0);
-  }, []);
+    fetchTrialData();
+  }, [currentAccount]);
 
   if (dismissed || !visible || daysLeft === null) return null;
 
@@ -75,14 +78,16 @@ export function TrialBanner() {
           {daysLeft === 1
             ? "1 day left in your free trial"
             : `${daysLeft} days left in your free trial`}
-          <span className="text-muted-foreground"> - Upgrade to keep all features</span>
+          <span className="text-muted-foreground"> — Upgrade to keep your features</span>
         </p>
       </div>
 
       <div className="flex items-center gap-2 sm:shrink-0">
-        <Button size="sm">
-          Upgrade now
-        </Button>
+        <Link href="/settings/billing">
+          <Button size="sm">
+            Upgrade now
+          </Button>
+        </Link>
         <button
           type="button"
           className="min-h-[44px] min-w-[44px] flex items-center justify-center rounded-lg text-muted-foreground hover:bg-warning/10 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"

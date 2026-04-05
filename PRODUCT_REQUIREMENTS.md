@@ -310,7 +310,7 @@ Account Switcher (parent with multiple children):
 
 ### Grade Tracking & GPA
 
-> **Phase 2 update:** Grades are entered via the planner page (status dropdown + grade dropdown on each course card) and stored in `plan_courses.planned_grade`. The Transcript page (`/transcript`) is a read-only view showing completed courses from the primary plan with their grades, semester GPA, grade-level GPA, and cumulative GPA. Print button (printer icon) in header next to "Edit in Planner" button triggers `window.print()`. No editing on the transcript — all grade changes happen via the planner. The GPA API reads from `plan_courses` on the primary plan, not from `grade_entries`.
+> **Phase 2 update:** Grades are entered via the planner page (status dropdown + grade dropdown on each course card) and stored in `plan_courses.planned_grade`. The Transcript page (`/transcript`) is a read-only view showing completed courses from the primary plan with their grades, semester GPA, grade-level GPA, and cumulative GPA. Print button (printer icon) in header next to "Edit in Planner" button triggers `window.print()`. **Subscription gated:** print button requires `canExportPdf` (Plus+ only); Trial and Starter users see a disabled button with "Upgrade to Plus to print" tooltip. No editing on the transcript — all grade changes happen via the planner. The GPA API reads from `plan_courses` on the primary plan, not from `grade_entries`.
 
 | ID | Story | Priority | Phase |
 |---|---|---|---|
@@ -528,7 +528,7 @@ Templates are tied to a specific `catalog_version_id`. During annual catalog upd
 | F-PR-04 | Per-requirement cards with: status badge (Met/In Progress/Gap), segmented progress bar, notes, and course chips color-coded by earned vs planned. Course-match cards show earned/planned/needed breakdown below progress bar. | Must |
 | F-PR-05 | Gap message per requirement showing credits still needed. | Must |
 | F-PR-06 | "View Progress" button on the Dashboard Academic Progress card links to `/progress`. | Must |
-| F-PR-07 | Print button (printer icon) in the Progress page header. Triggers `window.print()` for browser-native print dialog. | Must |
+| F-PR-07 | Print button (printer icon) in the Progress page header. Triggers `window.print()` for browser-native print dialog. **Subscription gated:** requires `canExportPdf` (Plus+ only). Trial and Starter users see a disabled button with "Upgrade to Plus to print" tooltip. | Must |
 | F-PR-08 | Grouped sections: Graduation, Semester Requirements (unified name for course_load group), IL Public University (opt-in), Additional Requirements. Each is a collapsible section with its own header. | Must |
 | F-PR-09 | Manual checkbox requirements (`non_course` group): clickable checkbox cards that toggle via `PUT /api/v1/requirements/status`. | Must |
 | F-PR-10 | Auto-from-course requirements: status cards showing auto-satisfaction notes (e.g., "Satisfied by 46th credit" or "Satisfied by Civics course"). | Must |
@@ -748,7 +748,7 @@ The dashboard uses a 3-row, 2-column grid layout:
 | Dual credit tracking | ✓ | — | ✓ | ✓ |
 | Parent plan drafts | ✓ | — | ✓ | ✓ |
 | Plan comparison | — | — | ✓ | ✓ |
-| PDF export | — | — | ✓ | ✓ |
+| PDF export / print | — | — | ✓ | ✓ |
 | Share links | — | — | ✓ | ✓ |
 | AI course suggestions | — | — | — | ✓ |
 | AI plan review | — | — | — | ✓ |
@@ -764,7 +764,7 @@ The dashboard uses a 3-row, 2-column grid layout:
 | Annual (save 10%) | $107.88/yr ($8.99/mo) | $215.88/yr ($17.99/mo) |
 | 4-Year (save 17%) | $399 one-time ($8.31/mo) | $799 one-time ($16.65/mo) |
 
-**Trial design:** 14-day free trial with Plus plan (trialing status). Plus-level features except plan comparison, PDF export, and share links. Max 2 plans. No credit card required. AI features NOT included (Elite-only). Auto-downgrades to Starter at expiry. This prevents the "build-export-leave" pattern while giving enough value to demonstrate the product. Accounts API returns "trial" as the plan name when `status = 'trialing'`. TierBadge component shows "Trial" (amber). Billing page shows "Free Trial" with "X days left" badge. Pricing cards do not show "Current Plan" indicator for trialing users.
+**Trial design:** 14-day free trial with Plus plan (trialing status). Plus-level features except plan comparison, PDF export/print, and share links. Max 2 plans. No credit card required. AI features NOT included (Elite-only). Auto-downgrades to Starter at expiry. This prevents the "build-export-leave" pattern while giving enough value to demonstrate the product. Accounts API returns "trial" as the plan name when `status = 'trialing'`. TierBadge component shows "Trial" (amber). Billing page shows "Free Trial" with "X days left" badge. Pricing cards do not show "Current Plan" indicator for trialing users.
 
 ### 5.14 Account Lifecycle
 

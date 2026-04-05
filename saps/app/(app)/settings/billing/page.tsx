@@ -145,9 +145,9 @@ export default function BillingPage() {
             <div>
               <p className="text-sm text-muted-foreground">Current Plan</p>
               <p className="text-xl font-bold text-foreground">
-                {subscription?.planDisplayName ?? "Starter"}
+                {subscription?.status === "trialing" ? "Free Trial" : (subscription?.planDisplayName ?? "Starter")}
                 {subscription?.status === "trialing" && (
-                  <Badge className="ml-2 bg-warning/15 text-warning text-[10px]">Trial</Badge>
+                  <Badge className="ml-2 bg-warning/15 text-warning text-[10px]">{trial?.daysRemaining ?? 14} days left</Badge>
                 )}
                 {subscription?.status === "active" && (
                   <Badge className="ml-2 bg-success/15 text-success text-[10px]">Active</Badge>
@@ -219,7 +219,8 @@ export default function BillingPage() {
       {/* Pricing cards */}
       <div className="grid gap-4 md:grid-cols-3">
         {PLANS.map((plan) => {
-          const isCurrent = subscription?.planName === plan.name;
+          // Trialing users are not on any paid plan — all paid plans show as upgrade
+          const isCurrent = subscription?.status !== "trialing" && subscription?.planName === plan.name;
           const isUpgrade = plan.name !== "starter" && !isCurrent;
 
           return (
@@ -250,8 +251,8 @@ export default function BillingPage() {
                   )}
                 </div>
               </CardHeader>
-              <CardContent className="flex-1">
-                <ul className="space-y-2">
+              <CardContent className="flex flex-1 flex-col">
+                <ul className="flex-1 space-y-2">
                   {plan.features.map((f) => (
                     <li key={f} className="flex items-center gap-2 text-sm text-foreground">
                       <svg aria-hidden="true" className="h-4 w-4 shrink-0 text-success" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
@@ -261,7 +262,7 @@ export default function BillingPage() {
                     </li>
                   ))}
                 </ul>
-                <div className="mt-4">
+                <div className="mt-4 pt-4 border-t border-border">
                   {isCurrent ? (
                     <Button variant="outline" className="w-full" disabled>
                       Current Plan

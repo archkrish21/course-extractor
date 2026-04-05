@@ -587,6 +587,13 @@ export default function DashboardPage() {
                   <div className="h-4 w-32 rounded bg-muted" />
                 </div>
               </div>
+            ) : !primaryPlan ? (
+              <div className="py-4 text-center">
+                <p className="text-sm text-muted-foreground">Create a plan to track academic progress.</p>
+                <Link href="/planner" className="mt-2 inline-block text-sm font-medium text-primary hover:text-primary-hover">
+                  Go to Planner
+                </Link>
+              </div>
             ) : reqError ? (
               /* Error state */
               <div className="text-center py-4">
@@ -932,6 +939,13 @@ export default function DashboardPage() {
               <div className="h-4 w-32 rounded bg-muted" />
               <div className="h-4 w-48 rounded bg-muted" />
               <div className="h-4 w-40 rounded bg-muted" />
+            </div>
+          ) : !primaryPlan ? (
+            <div className="py-4 text-center">
+              <p className="text-sm text-muted-foreground">Create a plan to see requirement status.</p>
+              <Link href="/planner" className="mt-2 inline-block text-sm font-medium text-primary hover:text-primary-hover">
+                Go to Planner
+              </Link>
             </div>
           ) : (() => {
             const gaps = reqData

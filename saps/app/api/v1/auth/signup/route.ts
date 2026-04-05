@@ -137,22 +137,23 @@ export async function POST(request: NextRequest) {
         currentGradeLevel: 9,
       });
 
-      // Create subscription on the account: 14-day trial on elite plan
-      const elitePlan = await db
+      // Create subscription on the account: 14-day trial on plus plan
+      // Trial gives Plus-level features with restrictions (max 2 plans, no AI, no compare/export/share)
+      const plusPlan = await db
         .select({ id: subscriptionPlans.id })
         .from(subscriptionPlans)
-        .where(eq(subscriptionPlans.name, "elite"))
+        .where(eq(subscriptionPlans.name, "plus"))
         .limit(1)
         .then((rows) => rows[0]);
 
-      if (elitePlan) {
+      if (plusPlan) {
         const trialEndsAt = new Date();
         trialEndsAt.setDate(trialEndsAt.getDate() + 14);
 
         await db.insert(subscriptions).values({
           userId,
           accountId: newAccount.id,
-          subscriptionPlanId: elitePlan.id,
+          subscriptionPlanId: plusPlan.id,
           status: "trialing",
           trialEndsAt,
         });

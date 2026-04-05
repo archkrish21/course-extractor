@@ -63,6 +63,9 @@ export default function PlansPage() {
     fetchPlans();
   }, [fetchPlans, currentAccount]);
 
+  const [deleteConfirm, setDeleteConfirm] = useState<{ id: string; name: string } | null>(null);
+  const [deleting, setDeleting] = useState(false);
+
   const myPlans = plans.filter(
     (p) => p.permission === "owner" || !p.permission
   );
@@ -88,15 +91,21 @@ export default function PlansPage() {
     } catch { /* silent */ }
   };
 
-  const handleDeletePlan = async (planId: string, planName: string) => {
-    if (!confirm(`Delete "${planName}"? This cannot be undone.`)) return;
+  const executeDeletePlan = async () => {
+    if (!deleteConfirm) return;
+    setDeleting(true);
     try {
-      const res = await apiFetch(`/api/v1/plans/${planId}`, { method: "DELETE" });
+      const res = await apiFetch(`/api/v1/plans/${deleteConfirm.id}`, { method: "DELETE" });
       if (res.ok) {
-        setPlans((prev) => prev.filter((p) => p.id !== planId));
-        showToast(`"${planName}" deleted`);
+        setPlans((prev) => prev.filter((p) => p.id !== deleteConfirm.id));
+        showToast(`"${deleteConfirm.name}" deleted`);
+        setDeleteConfirm(null);
+      } else {
+        const json = await res.json().catch(() => null);
+        showToast(json?.error?.message ?? "Failed to delete plan.");
       }
     } catch { /* silent */ }
+    finally { setDeleting(false); }
   };
 
   if (loading) {
@@ -218,16 +227,22 @@ export default function PlansPage() {
 
             {/* Delete (owner or delete permission) */}
             {(isOwner || perm === "delete") && (
+              <span title={plan.isPrimary ? "Cannot delete the primary plan. Set another plan as primary first." : "Delete plan"}>
               <button
                 type="button"
-                onClick={() => handleDeletePlan(plan.id, plan.name)}
-                className="flex h-8 w-8 items-center justify-center rounded-lg text-muted-foreground hover:bg-destructive-light hover:text-destructive transition-colors"
-                title="Delete plan"
+                onClick={() => !plan.isPrimary && setDeleteConfirm({ id: plan.id, name: plan.name })}
+                disabled={plan.isPrimary}
+                className={`flex h-8 w-8 items-center justify-center rounded-lg transition-colors ${
+                  plan.isPrimary
+                    ? "text-muted-foreground/30 cursor-not-allowed"
+                    : "text-muted-foreground hover:bg-destructive-light hover:text-destructive"
+                }`}
               >
                 <svg aria-hidden="true" className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 0 0-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 0 0-7.5 0" />
                 </svg>
               </button>
+              </span>
             )}
           </div>
         </CardContent>
@@ -318,6 +333,57 @@ export default function PlansPage() {
       </div>
 
       {/* Share modal */}
+      {/* Delete plan confirmation */}
+      {deleteConfirm && (
+        <>
+          <div
+            className="fixed inset-0 z-40 bg-black/50"
+            onClick={() => setDeleteConfirm(null)}
+            aria-hidden="true"
+          />
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+            <div
+              className="w-full max-w-md rounded-xl bg-card shadow-xl"
+              role="alertdialog"
+              aria-modal="true"
+              aria-label="Delete plan confirmation"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="p-6">
+                <div className="flex items-start gap-3">
+                  <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-destructive-light">
+                    <svg aria-hidden="true" className="h-5 w-5 text-destructive" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 0 0-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 0 0-7.5 0" />
+                    </svg>
+                  </span>
+                  <div>
+                    <h3 className="text-base font-semibold text-foreground">
+                      Delete &ldquo;{deleteConfirm.name}&rdquo;?
+                    </h3>
+                    <p className="mt-1 text-sm text-muted-foreground">
+                      This will permanently delete the plan and all its courses. This action cannot be undone.
+                    </p>
+                  </div>
+                </div>
+              </div>
+              <div className="flex items-center justify-end gap-2 border-t border-border px-6 py-3">
+                <Button variant="ghost" size="sm" onClick={() => setDeleteConfirm(null)}>
+                  Cancel
+                </Button>
+                <Button
+                  variant="destructive"
+                  size="sm"
+                  onClick={executeDeletePlan}
+                  disabled={deleting}
+                >
+                  {deleting ? "Deleting..." : "Delete Plan"}
+                </Button>
+              </div>
+            </div>
+          </div>
+        </>
+      )}
+
       {shareModal && currentAccount && (
         <ShareModal
           planId={shareModal.planId}

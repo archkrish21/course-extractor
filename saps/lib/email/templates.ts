@@ -39,9 +39,10 @@ export function inviteEmail(params: {
         </div>
 
         <p style="font-size: 14px; color: #888; line-height: 1.5;">
-          As a ${role}, you'll be able to view ${studentName}'s course plans,
-          graduation progress, and academic records.
-          ${role === "parent" || role === "guardian" ? "You can also create plan suggestions for them to consider." : ""}
+          ${role === "student"
+            ? `As the student, you'll be able to manage your course plans, track grades and GPA, and monitor graduation progress.`
+            : `As a ${role}, you'll be able to view ${studentName}'s course plans, graduation progress, and academic records.${role === "parent" || role === "guardian" ? " You can also create plan suggestions for them to consider." : ""}`
+          }
         </p>
 
         <p style="font-size: 14px; color: #888; line-height: 1.5;">

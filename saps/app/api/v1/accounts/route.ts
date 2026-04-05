@@ -1,8 +1,8 @@
 import { NextRequest } from "next/server";
 import { z } from "zod";
 import { db } from "@/lib/db";
-import { accounts, accountMembers, studentProfiles, users } from "@/lib/db/schema";
-import { eq, and } from "drizzle-orm";
+import { accounts, accountMembers, studentProfiles, users, subscriptions, subscriptionPlans } from "@/lib/db/schema";
+import { eq, and, sql } from "drizzle-orm";
 import { successResponse, errorResponse } from "@/lib/api/response";
 import { requireAuth } from "@/lib/auth/get-user";
 
@@ -138,6 +138,15 @@ export async function GET() {
         role: accountMembers.role,
         isClaimed: accounts.claimedAt,
         studentUserId: accounts.studentUserId,
+        subscriptionTier: sql<string | null>`(
+          SELECT CASE WHEN s.status = 'trialing' THEN 'trial' ELSE sp.name END
+          FROM subscriptions s
+          JOIN subscription_plans sp ON s.subscription_plan_id = sp.id
+          WHERE (s.account_id = ${accounts.id} OR s.user_id = ${accounts.studentUserId})
+            AND s.status IN ('trialing', 'active', 'past_due')
+          ORDER BY s.created_at DESC
+          LIMIT 1
+        )`,
       })
       .from(accountMembers)
       .innerJoin(accounts, eq(accountMembers.accountId, accounts.id))
@@ -150,6 +159,7 @@ export async function GET() {
       graduation_year: r.graduationYear,
       role: r.role,
       is_claimed: r.isClaimed !== null,
+      subscription_tier: r.subscriptionTier ?? "free",
     }));
 
     return successResponse(data);

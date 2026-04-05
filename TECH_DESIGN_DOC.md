@@ -216,9 +216,9 @@ User → Next.js frontend → API routes → PostgreSQL (Supabase + RLS)
 
 All pages under the `(app)/` route group require authentication. The app layout checks the Supabase session on mount and redirects unauthenticated users to `/login?redirect=...`.
 
-**Sign out:** The user avatar dropdown in the top navigation contains Settings, Billing, and Sign out. Sign out calls `supabase.auth.signOut()`, clears the client session, and redirects to `/login`. The mobile hamburger menu also includes a Sign out option. Settings is no longer in the main navigation bar — it was moved into the avatar dropdown.
+**Sign out:** The user avatar dropdown in the top navigation contains Settings, Billing, and Sign out. Sign out calls `supabase.auth.signOut()`, clears the client session, and redirects to `/login`. The mobile hamburger menu also includes a Sign out option. Settings is no longer in the main navigation bar — it was moved into the avatar dropdown. For parent users: the avatar shows the parent's own name/email (not the student's), with a "Managing: StudentName · Gr X" subtitle below. "Add Another Child" removed from the dropdown.
 
-**Google OAuth first-time user provisioning:** The OAuth callback (`/api/v1/auth/callback`) detects first-time Google users (no `users` row for the auth ID) and provisions all app-level records: `users` (role: student, email verified: true), `accounts`, `account_members`, `student_profiles`, and `subscriptions` (14-day Elite trial). The student name is extracted from Google profile metadata (`full_name`). First-time users are redirected to `/onboarding`; returning users go to their intended destination. If provisioning fails, the user is redirected to `/dashboard?error=setup_incomplete` for graceful recovery.
+**Google OAuth first-time user provisioning:** The OAuth callback (`/api/v1/auth/callback`) detects first-time Google users (no `users` row for the auth ID) and provisions all app-level records: `users` (role: student, email verified: true), `accounts`, `account_members`, `student_profiles`, and `subscriptions` (14-day Plus trial with trialing status). The student name is extracted from Google profile metadata (`full_name`). First-time users are redirected to `/onboarding`; returning users go to their intended destination. If provisioning fails, the user is redirected to `/dashboard?error=setup_incomplete` for graceful recovery.
 
 ### User roles
 
@@ -506,6 +506,8 @@ CREATE TABLE account_invite_codes (
 );
 ```
 
+> **Child invite flow (Phase 3):** Parents can invite a child (student) via email from Settings. When the student joins via the invite: (1) if the student already has an account, the parent is added as a member of the student's existing account; (2) if no account exists, a new account is created with both student and parent added as members. The active account auto-switches to the joined account.
+
 > **Migration note (Phase 2):** All data tables (`four_year_plans`, `subscriptions`, `grade_entries`, `gpa_snapshots`, `goals`, `alerts`, `notifications`, `requirement_progress`, `dual_credit_log`) gain an `account_id UUID REFERENCES accounts(id)` column. The `four_year_plans` table gains `created_by UUID REFERENCES users(id)` and `visibility TEXT DEFAULT 'shared' CHECK (visibility IN ('shared', 'private'))`. The `student_parent_links` and `parent_invite_codes` tables are deprecated in favor of `account_members` and `accounts.claim_code`. subscriptions gains an account_id column alongside the existing user_id (both retained for backward compatibility during migration). Existing data is migrated by creating an account row per existing student user and updating all foreign keys.
 
 ### Table: `student_profiles`
@@ -596,7 +598,7 @@ CREATE TABLE subscriptions (
 );
 ```
 
-> On signup: `INSERT INTO subscriptions (user_id, subscription_plan_id, status, trial_ends_at) VALUES (:userId, :elitePlanId, 'trialing', NOW() + INTERVAL '14 days')`.
+> On signup: `INSERT INTO subscriptions (user_id, subscription_plan_id, status, trial_ends_at) VALUES (:userId, :plusPlanId, 'trialing', NOW() + INTERVAL '14 days')`. The Accounts API returns "trial" as the tier name when `status = 'trialing'`, regardless of `subscription_plan_id`.
 
 ### Table: `stripe_events`
 
@@ -1261,8 +1263,9 @@ All routes: `/api/v1/...`. Version from day one.
 
 | Method | Route | Auth | Description |
 |---|---|---|---|
-| POST | `/api/v1/auth/signup` | — | Create user + subscription row |
+| POST | `/api/v1/auth/signup` | — | Create user + subscription row (Plus plan, trialing status) |
 | GET | `/api/v1/auth/callback` | — | OAuth callback. Exchanges code for session. First-time users: provisions app records + redirects to /onboarding. Returning users: redirects to intended page. |
+| GET | `/api/v1/auth/me` | any authenticated | Returns logged-in user's email and role. | Phase 3 |
 | GET | `/api/v1/plans` | member | List student's plans |
 | POST | `/api/v1/plans` | member (can_edit) | Create plan (check plan limit) |
 | PATCH | `/api/v1/plans/:id/set-primary` | student | Set plan as primary + active. Demotes old primary to draft. Student role only. Archived plans blocked (409). |
@@ -1299,7 +1302,7 @@ All routes: `/api/v1/...`. Version from day one.
 | GET | `/api/v1/percentile` | student (Elite) | Percentile stats |
 | GET | `/api/v1/plans/:id` | student/parent/counselor | Get single plan detail | Phase 1b |
 | PATCH | `/api/v1/plans/:id` | student | Rename plan, set active/archived | Phase 1b |
-| DELETE | `/api/v1/plans/:id` | student | Delete a plan | Phase 1b |
+| DELETE | `/api/v1/plans/:id` | owner/delete permission | Delete a plan. Uses `getPlanAccess()` permissions — requires owner or delete permission; no student role override. Delete button shown on planner and manage plans pages, disabled for primary plans with tooltip. | Phase 1b |
 | PATCH | `/api/v1/plans/:id/courses/:planCourseId` | student | Update course semester/status/grade. Returns 409 for non-waiver changes on locked grades. | Phase 1b |
 | POST | `/api/v1/plans/:id/lock-grade` | student | Lock or unlock a grade level. Body: `{ grade_level: number, locked: boolean }`. Adds/removes grade from `locked_grade_levels` array. Locking triggers year-end wizard redirect. Unlocking requires confirmation. | Phase 2 |
 | GET | `/api/v1/plans/:id/shares` | member | List all shares for a plan. Returns array of share rows with user info and permission level. | Phase 3 |
@@ -1427,7 +1430,7 @@ This supports typo-tolerant search (e.g., "Calclus" matches "Calculus"). For exa
 - **Webhook handler:** `app/api/v1/stripe/webhook/route.ts` — receives and processes Stripe events with signature verification.
 - **Billing Portal:** `app/api/v1/stripe/portal/route.ts` — creates Stripe Billing Portal sessions for subscription management.
 - **Subscriptions API:** `app/api/v1/subscriptions/route.ts` — returns current subscription state with tier and feature flags.
-- **Billing page:** `app/(app)/settings/billing/page.tsx` — pricing cards with 3-interval toggle (monthly/annual/4-year), current plan indicator, upgrade/manage subscription CTAs.
+- **Billing page:** `app/(app)/settings/billing/page.tsx` — pricing cards with 3-interval toggle (monthly/annual/4-year), current plan indicator, upgrade/manage subscription CTAs. Pricing card buttons aligned at same level using flex layout. For trialing users: shows "Free Trial" with "X days left" badge; pricing cards suppress "Current Plan" indicator.
 
 **Webhook events handled** (all logged to `stripe_events` before processing):
 

@@ -94,6 +94,7 @@ vi.mock("drizzle-orm", () => ({
   eq: vi.fn((...args: unknown[]) => ({ type: "eq", args })),
   and: vi.fn((...args: unknown[]) => ({ type: "and", args })),
   or: vi.fn((...args: unknown[]) => ({ type: "or", args })),
+  count: vi.fn(() => ({ type: "count" })),
   sql: Object.assign(
     (strings: TemplateStringsArray, ..._values: unknown[]) => ({
       type: "sql",
@@ -107,6 +108,7 @@ import { requireAuth } from "@/lib/auth/get-user";
 import { GET as getShares, POST as createShare } from "@/app/api/v1/plans/[id]/shares/route";
 import { PATCH as patchShare, DELETE as deleteShare } from "@/app/api/v1/plans/[id]/shares/[userId]/route";
 import { PATCH as patchVisibility } from "@/app/api/v1/plans/[id]/visibility/route";
+import { DELETE as deletePlan } from "@/app/api/v1/plans/[id]/route";
 
 // ── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -422,5 +424,154 @@ describe("PATCH /api/v1/plans/:id/visibility", () => {
 
     expect(response.status).toBe(403);
     expect(body.error.code).toBe("FORBIDDEN");
+  });
+});
+
+describe("DELETE /api/v1/plans/:id", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    dbChain = createQueryChain();
+    (requireAuth as ReturnType<typeof vi.fn>).mockResolvedValue(TEST_USER);
+    mockGetPlanAccess.mockResolvedValue({ permission: "owner", isHidden: false });
+  });
+
+  it("returns 403 when user has view permission", async () => {
+    // Query 1: plan fetch
+    dbChain.then = vi.fn().mockImplementation((resolve: (v: unknown) => unknown) =>
+      Promise.resolve(resolve([{ id: TEST_PLAN_ID, accountId: "acc-1", isPrimary: false }]))
+    );
+    mockGetPlanAccess.mockResolvedValue({ permission: "view", isHidden: false });
+
+    const request = createRequest(
+      `http://localhost:3000/api/v1/plans/${TEST_PLAN_ID}`,
+      { method: "DELETE" }
+    );
+    const response = await deletePlan(request, planContext(TEST_PLAN_ID));
+    const body = await response.json();
+
+    expect(response.status).toBe(403);
+    expect(body.error.code).toBe("FORBIDDEN");
+  });
+
+  it("returns 403 when user has edit permission", async () => {
+    dbChain.then = vi.fn().mockImplementation((resolve: (v: unknown) => unknown) =>
+      Promise.resolve(resolve([{ id: TEST_PLAN_ID, accountId: "acc-1", isPrimary: false }]))
+    );
+    mockGetPlanAccess.mockResolvedValue({ permission: "edit", isHidden: false });
+
+    const request = createRequest(
+      `http://localhost:3000/api/v1/plans/${TEST_PLAN_ID}`,
+      { method: "DELETE" }
+    );
+    const response = await deletePlan(request, planContext(TEST_PLAN_ID));
+    const body = await response.json();
+
+    expect(response.status).toBe(403);
+    expect(body.error.code).toBe("FORBIDDEN");
+  });
+
+  it("succeeds when user has delete permission", async () => {
+    let queryIndex = 0;
+    dbChain.then = vi.fn().mockImplementation((resolve: (v: unknown) => unknown) => {
+      queryIndex++;
+      if (queryIndex === 1) return Promise.resolve(resolve([{ id: TEST_PLAN_ID, accountId: "acc-1", isPrimary: false }])); // plan fetch
+      if (queryIndex === 2) return Promise.resolve(resolve([{ count: 3 }])); // plan count
+      if (queryIndex === 3) return Promise.resolve(resolve([{ count: 0 }])); // completed courses count
+      if (queryIndex === 4) return Promise.resolve(resolve([])); // delete
+      return Promise.resolve(resolve([]));
+    });
+    mockGetPlanAccess.mockResolvedValue({ permission: "delete", isHidden: false });
+
+    const request = createRequest(
+      `http://localhost:3000/api/v1/plans/${TEST_PLAN_ID}`,
+      { method: "DELETE" }
+    );
+    const response = await deletePlan(request, planContext(TEST_PLAN_ID));
+    const body = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(body.data.deleted).toBe(true);
+  });
+
+  it("succeeds when user has owner permission", async () => {
+    let queryIndex = 0;
+    dbChain.then = vi.fn().mockImplementation((resolve: (v: unknown) => unknown) => {
+      queryIndex++;
+      if (queryIndex === 1) return Promise.resolve(resolve([{ id: TEST_PLAN_ID, accountId: "acc-1", isPrimary: false }])); // plan fetch
+      if (queryIndex === 2) return Promise.resolve(resolve([{ count: 2 }])); // plan count
+      if (queryIndex === 3) return Promise.resolve(resolve([{ count: 0 }])); // completed courses count
+      if (queryIndex === 4) return Promise.resolve(resolve([])); // delete
+      return Promise.resolve(resolve([]));
+    });
+    mockGetPlanAccess.mockResolvedValue({ permission: "owner", isHidden: false });
+
+    const request = createRequest(
+      `http://localhost:3000/api/v1/plans/${TEST_PLAN_ID}`,
+      { method: "DELETE" }
+    );
+    const response = await deletePlan(request, planContext(TEST_PLAN_ID));
+    const body = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(body.data.deleted).toBe(true);
+  });
+
+  it("returns 409 when plan is primary (only plan)", async () => {
+    let queryIndex = 0;
+    dbChain.then = vi.fn().mockImplementation((resolve: (v: unknown) => unknown) => {
+      queryIndex++;
+      if (queryIndex === 1) return Promise.resolve(resolve([{ id: TEST_PLAN_ID, accountId: "acc-1", isPrimary: true }])); // plan fetch
+      if (queryIndex === 2) return Promise.resolve(resolve([{ count: 1 }])); // plan count — only plan
+      return Promise.resolve(resolve([]));
+    });
+
+    const request = createRequest(
+      `http://localhost:3000/api/v1/plans/${TEST_PLAN_ID}`,
+      { method: "DELETE" }
+    );
+    const response = await deletePlan(request, planContext(TEST_PLAN_ID));
+    const body = await response.json();
+
+    expect(response.status).toBe(409);
+    expect(body.error.code).toBe("CONFLICT");
+    expect(body.error.message).toContain("only plan");
+  });
+
+  it("returns 409 when plan has completed courses", async () => {
+    let queryIndex = 0;
+    dbChain.then = vi.fn().mockImplementation((resolve: (v: unknown) => unknown) => {
+      queryIndex++;
+      if (queryIndex === 1) return Promise.resolve(resolve([{ id: TEST_PLAN_ID, accountId: "acc-1", isPrimary: false }])); // plan fetch
+      if (queryIndex === 2) return Promise.resolve(resolve([{ count: 3 }])); // plan count — multiple plans
+      if (queryIndex === 3) return Promise.resolve(resolve([{ count: 5 }])); // completed courses count
+      return Promise.resolve(resolve([]));
+    });
+
+    const request = createRequest(
+      `http://localhost:3000/api/v1/plans/${TEST_PLAN_ID}`,
+      { method: "DELETE" }
+    );
+    const response = await deletePlan(request, planContext(TEST_PLAN_ID));
+    const body = await response.json();
+
+    expect(response.status).toBe(409);
+    expect(body.error.code).toBe("CONFLICT");
+    expect(body.error.message).toContain("completed courses");
+  });
+
+  it("returns 404 for non-existent plan", async () => {
+    dbChain.then = vi.fn().mockImplementation((resolve: (v: unknown) => unknown) =>
+      Promise.resolve(resolve([]))
+    );
+
+    const request = createRequest(
+      `http://localhost:3000/api/v1/plans/nonexistent-plan-id`,
+      { method: "DELETE" }
+    );
+    const response = await deletePlan(request, planContext("nonexistent-plan-id"));
+    const body = await response.json();
+
+    expect(response.status).toBe(404);
+    expect(body.error.code).toBe("NOT_FOUND");
   });
 });

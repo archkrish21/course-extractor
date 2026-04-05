@@ -166,7 +166,7 @@ export default function SettingsPage() {
           </CardHeader>
           <CardContent>
             <p className="mb-3 text-sm text-muted-foreground">
-              Send an email invitation to a parent, guardian, or counselor to join this account.
+              Send an email invitation to a family member to join this account.
             </p>
             <div className="flex flex-col gap-2 sm:flex-row">
               <input
@@ -181,6 +181,7 @@ export default function SettingsPage() {
                 onChange={(e) => setInviteRole(e.target.value)}
                 className="h-9 rounded-lg border border-border bg-background px-3 text-sm"
               >
+                {currentAccount?.role === "parent" && <option value="student">Child (Student)</option>}
                 <option value="parent">Parent</option>
                 <option value="guardian">Guardian</option>
               </select>

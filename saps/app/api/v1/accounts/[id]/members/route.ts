@@ -18,7 +18,7 @@ function generateInviteCode(): string {
 }
 
 const inviteSchema = z.object({
-  target_role: z.enum(["parent", "guardian"]),
+  target_role: z.enum(["student", "parent", "guardian"]),
   email: z.string().email().optional(),
 });
 

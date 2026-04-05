@@ -25,6 +25,8 @@ export interface AccountContextType {
   switchAccount: (accountId: string) => void;
   loading: boolean;
   refetchAccounts: () => Promise<void>;
+  userEmail: string | null;
+  userRole: string | null;
 }
 
 const STORAGE_KEY = "saps_current_account_id";
@@ -35,11 +37,15 @@ const AccountContext = createContext<AccountContextType>({
   switchAccount: () => {},
   loading: true,
   refetchAccounts: async () => {},
+  userEmail: null,
+  userRole: null,
 });
 
 export function AccountProvider({ children }: { children: ReactNode }) {
   const [accounts, setAccounts] = useState<Account[]>([]);
   const [currentAccountId, setCurrentAccountId] = useState<string | null>(null);
+  const [userEmail, setUserEmail] = useState<string | null>(null);
+  const [userRole, setUserRole] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
   const fetchAccounts = useCallback(async () => {
@@ -87,6 +93,17 @@ export function AccountProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     fetchAccounts();
+    // Fetch logged-in user info
+    fetch("/api/v1/auth/me")
+      .then((r) => (r.ok ? r.json() : null))
+      .then((data) => {
+        const u = data?.data ?? data;
+        if (u) {
+          setUserEmail(u.email ?? null);
+          setUserRole(u.role ?? null);
+        }
+      })
+      .catch(() => {});
   }, [fetchAccounts]);
 
   const switchAccount = useCallback(
@@ -115,6 +132,8 @@ export function AccountProvider({ children }: { children: ReactNode }) {
         switchAccount,
         loading,
         refetchAccounts: fetchAccounts,
+        userEmail,
+        userRole,
       }}
     >
       {children}

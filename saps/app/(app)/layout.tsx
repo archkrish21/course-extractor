@@ -85,7 +85,7 @@ function TierBadge({ tier }: { tier: string }) {
 // ─── Account Switcher ─────────────────────────────────────────────────────────
 
 function AccountSwitcher() {
-  const { currentAccount, accounts, switchAccount, loading } = useAccount();
+  const { currentAccount, accounts, switchAccount, loading, userEmail, userRole } = useAccount();
   const [open, setOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -128,6 +128,13 @@ function AccountSwitcher() {
     window.location.href = "/login";
   };
 
+  // Display name: student sees their name, parent/counselor sees email prefix
+  const isStudentRole = userRole === "student";
+  const displayName = isStudentRole
+    ? currentAccount.studentName
+    : userEmail?.split("@")[0] ?? currentAccount.studentName;
+  const displayInitial = displayName.charAt(0).toUpperCase();
+
   // Single account, non-parent: avatar + name with user menu dropdown
   if (!showSwitcher) {
     return (
@@ -140,10 +147,10 @@ function AccountSwitcher() {
           className="flex items-center gap-2 rounded-lg px-2 py-1 transition-colors hover:bg-muted focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
         >
           <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/10 text-sm font-semibold text-primary">
-            {currentAccount.studentName.charAt(0).toUpperCase()}
+            {displayInitial}
           </div>
           <span className="hidden text-sm font-medium text-foreground sm:inline">
-            {currentAccount.studentName}
+            {displayName}
           </span>
         </button>
         {open && (
@@ -174,42 +181,28 @@ function AccountSwitcher() {
         onClick={() => setOpen((prev) => !prev)}
         aria-expanded={open}
         aria-haspopup="listbox"
-        aria-label="Switch account"
-        className="flex min-h-[44px] items-center gap-2 rounded-lg border border-border bg-background px-3 py-1.5 text-sm font-medium text-foreground transition-colors hover:bg-muted focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
+        aria-label="User menu"
+        className="flex items-center gap-2 rounded-lg px-2 py-1 transition-colors hover:bg-muted focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
       >
-        <span className="flex h-7 w-7 items-center justify-center rounded-full bg-primary/10 text-xs font-semibold text-primary">
-          {currentAccount.studentName.charAt(0).toUpperCase()}
-        </span>
-        <span className="hidden sm:flex sm:items-center sm:gap-1.5">
-          <span className="max-w-[120px] truncate">
-            {currentAccount.studentName}
+        <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/10 text-sm font-semibold text-primary">
+          {displayInitial}
+        </div>
+        <span className="hidden sm:flex sm:flex-col sm:items-start">
+          <span className="text-sm font-medium text-foreground">{displayName}</span>
+          <span className="text-[10px] text-muted-foreground leading-tight">
+            Managing: {currentAccount.studentName} · Gr {currentAccount.gradeLevel}
           </span>
-          <span className="text-xs text-muted-foreground">
-            Gr {currentAccount.gradeLevel}
-          </span>
-          <TierBadge tier={currentAccount.subscriptionTier} />
         </span>
-        {/* Chevron */}
-        <svg
-          aria-hidden="true"
-          className={`h-4 w-4 text-muted-foreground transition-transform ${open ? "rotate-180" : ""}`}
-          fill="none"
-          viewBox="0 0 24 24"
-          strokeWidth={2}
-          stroke="currentColor"
-        >
-          <path strokeLinecap="round" strokeLinejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" />
-        </svg>
       </button>
 
       {/* Dropdown */}
       {open && (
         <div
           role="listbox"
-          aria-label="Select account"
-          className="absolute right-0 top-full z-50 mt-1 w-72 overflow-hidden rounded-xl border border-border bg-card shadow-lg"
+          aria-label="User menu"
+          className="absolute right-0 top-full z-50 mt-2 w-64 overflow-hidden rounded-lg border border-border bg-card shadow-lg"
         >
-          <div className="px-3 py-2 text-xs font-medium uppercase tracking-wide text-muted-foreground">
+          <div className="px-3 py-2 text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
             Accounts
           </div>
 
@@ -276,32 +269,6 @@ function AccountSwitcher() {
               );
             })}
           </ul>
-
-          {/* Add Another Child — only for parents */}
-          {isParent && (
-            <>
-              <div className="border-t border-border" />
-              <Link
-                href="/onboarding?add_child=true"
-                onClick={() => setOpen(false)}
-                className="flex min-h-[44px] items-center gap-3 px-3 py-2.5 text-sm font-medium text-primary transition-colors hover:bg-muted focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-ring"
-              >
-                <span className="flex h-8 w-8 items-center justify-center rounded-full border-2 border-dashed border-primary/40">
-                  <svg
-                    aria-hidden="true"
-                    className="h-4 w-4"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    strokeWidth={2}
-                    stroke="currentColor"
-                  >
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
-                  </svg>
-                </span>
-                Add Another Child
-              </Link>
-            </>
-          )}
 
           {/* Settings / Billing / Sign out */}
           <div className="border-t border-border">

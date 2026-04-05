@@ -224,12 +224,13 @@ It replaces guesswork with:
 | US-01a | As a logged-in user, I want to sign out from the user avatar dropdown in the top navigation (or from the mobile hamburger menu) so I can securely end my session. Sign out calls Supabase `signOut()` and redirects to `/login`. | Must | 1 |
 | US-02 | As a new student, I want to enter my current grade level and completed course history in bulk (table view, not one at a time) so that my GPA and progress tracker are accurate from day one. | Must | 1 |
 | US-03 | As a new student, I want to select a starting plan template (e.g., "STEM Track", "Pre-Med", "Dual Credit Maximizer") so I don't start from a blank canvas. | Must | 1 |
-| US-04 | As a new user, I want to see a 14-day free trial of the Elite tier automatically activated so I can explore all features before deciding whether to pay. | Must | 1 |
+| US-04 | As a new user, I want to see a 14-day free trial of the Plus tier (with trialing status) automatically activated so I can explore features before deciding whether to pay. | Must | 1 |
 | US-05 | As a student, I want to set my GPA goal, target colleges, and career interests during onboarding so the system can personalize its recommendations. | Should | 1 |
 | US-06 | As a parent, I want to create an account for my child by entering their name, date of birth, grade level, and graduation year, so I can start building course plans before my child signs up. | Must | 1b |
 | US-06a | As a parent who created an account, I want to generate an invite code so my child can claim their account and set their own email/password. | Must | 1b |
 | US-06b | As a student, I want to claim an account created by my parent using an invite code, so I take ownership of my academic data. | Must | 1b |
 | US-07 | As a student, I want to invite my parent to join my account so they can view my plans and create plan suggestions for me. | Must | 1b |
+| US-07c | As a parent, I want to invite my child (student) via email from Settings so they can join the account. If the student already has an account, the parent is added to the student's existing account; if not, a new account is created with both members. The active account auto-switches to the joined account. | Must | 3 |
 | US-07a | As a parent with multiple children, I want to switch between my children's accounts using an account switcher, with each child's subscription tier governing available features. | Must | 1b |
 | US-07b | As a student, I want to mark any of my plans as "private" so my parents cannot see them. | Should | 1b |
 
@@ -257,7 +258,7 @@ Account Creation — Parent Initiates:
 4. Student signs up → enters claim code
    └── accounts.student_user_id set, claimed_at set
    └── account_members row created (role: student, can_edit: true)
-   └── 14-day Elite trial starts at claim time
+   └── 14-day Plus trial (trialing status) starts at claim time
    └── Parent notified: "Your child [name] has claimed their account"
 
 Unclaimed Account Behavior:
@@ -431,7 +432,7 @@ The rigor score is recomputed nightly by the percentile stats job (Elite tier). 
 | F-ON-04 | Plan template selection during onboarding (Pre-Med, STEM/Engineering, Arts, Dual Credit Maximizer, 4-Year College Prep, General). Templates are pre-seeded — no admin UI required. | Must |
 | F-ON-05 | Goal setting: GPA target, college targets (reach/match/safety), career interest field. | Should |
 | F-ON-06 | Skip-and-complete-later option for grade history and goals. Dashboard shows a "Complete your profile" banner for incomplete onboarding. | Must |
-| F-ON-07 | 14-day Elite trial activated automatically at signup. No credit card required. | Must |
+| F-ON-07 | 14-day Plus trial (trialing status) activated automatically at signup. No credit card required. Accounts API returns "trial" as the plan name when status is trialing. TierBadge shows "Trial" (amber). Billing page shows "Free Trial" with "X days left" badge. Pricing cards do not show "Current Plan" for trialing users. | Must |
 
 **Plan Templates at Launch:**
 Six pre-seeded templates, each containing a recommended 4-year course sequence:
@@ -467,8 +468,8 @@ Templates are tied to a specific `catalog_version_id`. During annual catalog upd
 | F-PL-17 | Course sort order within semester cells: Early Bird, Language Arts, Math, Science, World Language, Social Studies, Electives, PE. | Should |
 | F-PL-18 | Semester course limits: minimum 5, maximum 7 (or 8 with early bird) for academic courses only. Physical Welfare division, DNC-prefix (Dance), and D/E-prefix (Driver Ed) courses are excluded from the count — they represent the "sixth supervised period", not part of the 5 academic credits. Add Course button disabled at max. Count shown as X/7 in cell header. | Must |
 | F-PL-19 | GPA display in grade header (projected weighted + actual weighted) and plan header (total projected + actual + /45 required). GPA is displayed as both unweighted and weighted simultaneously: 'Proj: 3.75 / 4.25' (blue, projected from all graded courses) and 'Actual: 4.00 / 5.00' (green, completed courses only). Format is always unweighted / weighted. | Must |
-| F-PL-20 | Plan creation modal with name input and template selection (Blank Plan or any of 6 templates). | Must |
-| F-PL-21 | Plan deletion with confirmation dialog (non-primary plans only). | Must |
+| F-PL-20 | Plan creation modal with name input and template selection (Blank Plan or any of 6 templates). Extracted into reusable `renderNewPlanModal()` function so it renders in both empty state and normal planner views. Single "Create Your First Plan" button replaces duplicate buttons in the empty state. | Must |
+| F-PL-21 | Plan deletion with confirmation dialog (non-primary plans only). `DELETE /api/v1/plans/:id` uses `getPlanAccess()` permissions — requires owner or delete permission; no student role override. Delete button shown on both planner and manage plans pages, disabled for primary plans with tooltip explaining why. | Must |
 | F-PL-22 | Clear semester and clear grade with confirmation dialogs. | Should |
 | F-PL-23 | Core course removal warning for template-based plans with Reset to Template option. Reset uses `pc.semester` and `pc.gradeLevel` from actual course data (not group key), adds `skip_validation: true` for template reset, and logs failures. | Should |
 | F-PL-24 | Credits display: planned and earned credits per grade and total. Stevenson uses 1 credit per semester course, 2 credits per full-year course, 45 credits required for graduation. Credits displayed as: 'X credits planned, Y earned' (earned in green). Per-row credit = creditValue/2 for full-year courses to avoid double-counting. 1.5 period courses show 1.5 credits per semester row. | Must |
@@ -521,7 +522,7 @@ Templates are tied to a specific `catalog_version_id`. During annual catalog upd
 
 | Req | Description | Priority |
 |---|---|---|
-| F-PR-01 | Dedicated requirements progress page at `/progress` with page title "Academic Progress" (nav menu item label remains "Progress"). Two-column layout: left (2/3) content area, right (1/3) sticky sidebar. | Must |
+| F-PR-01 | Dedicated requirements progress page at `/progress` with page title "Academic Progress" (nav menu item label remains "Progress"). Two-column layout: left (2/3) content area, right (1/3) sticky sidebar. **Empty state:** When no primary plan exists, shows "No active plan yet" message with a link to create a plan. | Must |
 | F-PR-02 | Sticky sidebar with honors badge (achievement computed from GPA) and overall summary card showing three-state segmented progress bars per category (earned green, planned blue, remaining grey) with earned/planned/gap counts. Status labels: "Complete" (all earned), "On track" (earned+planned covers all), or "N gaps" (uncovered requirements). | Must |
 | F-PR-03 | Status filter bar: All, Gap/Missing, In Progress, OK/Complete, Not Started. Plus Expand All / Collapse All buttons. | Must |
 | F-PR-04 | Per-requirement cards with: status badge (Met/In Progress/Gap), segmented progress bar, notes, and course chips color-coded by earned vs planned. Course-match cards show earned/planned/needed breakdown below progress bar. | Must |
@@ -544,8 +545,8 @@ The dashboard uses a 3-row, 2-column grid layout:
 
 | Req | Description | Priority |
 |---|---|---|
-| F-DVR-01 | **"Attention Required"** card (renamed from "Validation Report") with warning icon. Simplified: no category summary line or "Issues found" badge in header. Shows only category titles with counts (Graduation Gaps, Semester Gaps, Prerequisite Violations) + "View Report" button that routes to `/planner?validation=open`. Honors badge removed from this card. | Must |
-| F-DVR-02 | **"Academic Progress"** card shows all requirement groups (not just graduation) with per-group segmented progress bars showing earned/planned/remaining. Replaces old graduation-only credit progress and individual requirement list. | Must |
+| F-DVR-01 | **"Attention Required"** card (renamed from "Validation Report") with warning icon. Simplified: no category summary line or "Issues found" badge in header. Shows only category titles with counts (Graduation Gaps, Semester Gaps, Prerequisite Violations) + "View Report" button that routes to `/planner?validation=open`. Honors badge removed from this card. **Empty state:** When no primary plan exists, shows a "Create a plan" message instead of false gap counts. | Must |
+| F-DVR-02 | **"Academic Progress"** card shows all requirement groups (not just graduation) with per-group segmented progress bars showing earned/planned/remaining. Replaces old graduation-only credit progress and individual requirement list. **Empty state:** When no primary plan exists, shows a "Create a plan" message instead of misleading progress data. | Must |
 | F-DVR-03 | Three validation categories in Attention Required: **Graduation Requirement Gaps** (red, missing credits for diploma), **Semester Requirement Gaps** (amber, course load/PW-Dance/GPA waiver eligibility), **Prerequisite Violations** (amber, course ordering conflicts). Non-course requirements (ACT, FAFSA) are excluded from issue counts. | Must |
 | F-DVR-04 | New **"Achievements"** card with all badges (earned + unearned) in a single 2-column grid: Honor Graduate tier (computed from GPA), Graduation Ready, Credit milestones (15/30/45), GPA milestones (3.0+/3.5+/4.0+), Credits Earned. | Must |
 | F-DVR-05 | Uses data from the requirements API (which returns grouped data, `gpaWaiverWarnings[]`, `honorsStatus`) and plan validation API for the primary/active plan. | Must |
@@ -646,7 +647,7 @@ The dashboard uses a 3-row, 2-column grid layout:
 | F-CB-18 | Course detail: "What This Unlocks" section also merges semester pairs. | Must |
 | F-CB-19 | Course detail: Division and Department names are clickable (sets the corresponding filter and closes the modal). | Should |
 | F-CB-20 | Course detail: Prerequisite and unlock course codes are clickable (navigates to that course's detail). | Should |
-| F-CB-21 | Navigation uses a horizontal top bar instead of a sidebar. Nav order: Dashboard, Courses, Planner, Progress, Transcript. User avatar dropdown contains Settings, Billing, and Sign out. | Must |
+| F-CB-21 | Navigation uses a horizontal top bar instead of a sidebar. Nav order: Dashboard, Courses, Planner, Progress, Transcript. User avatar dropdown contains Settings, Billing, and Sign out. For parent users: avatar shows the parent's own name/email (not the student's), with a "Managing: StudentName · Gr X" subtitle below the parent's name. "Add Another Child" removed from the dropdown. | Must |
 
 ### 5.7 Prerequisite Visualization
 
@@ -721,7 +722,7 @@ The dashboard uses a 3-row, 2-column grid layout:
 | Req | Description | Priority |
 |---|---|---|
 | F-SB-01 | 3 tiers: Starter (free), Plus ($9.99/mo), Elite ($19.99/mo). 3 billing intervals: monthly, annual (save 10%), 4-year (save 17%). Annual: Plus $107.88/yr ($8.99/mo), Elite $215.88/yr ($17.99/mo). 4-Year: Plus $399, Elite $799. Pro tier removed — Plus absorbs non-AI features, AI stays Elite-only. | Must |
-| F-SB-02 | 14-day trial at signup. No credit card required. Trial gives Plus-level features EXCEPT plan comparison, PDF export, and share links (to prevent extract-and-leave). Max 2 plans during trial. Auto-downgrade to Starter at expiry. AI features NOT included in trial (Elite-only). | Must |
+| F-SB-02 | 14-day trial at signup with Plus plan (trialing status). No credit card required. Trial gives Plus-level features EXCEPT plan comparison, PDF export, and share links (to prevent extract-and-leave). Max 2 plans during trial. Auto-downgrade to Starter at expiry. AI features NOT included in trial (Elite-only). Billing page shows "Free Trial" with days-left badge. Pricing cards suppress "Current Plan" for trialing users. Billing card buttons aligned at same level using flex layout. | Must |
 | F-SB-03 | Stripe Checkout for payment; Stripe Billing Portal for subscription management. | Must |
 | F-SB-04 | Subscription enforcement middleware: Redis-cached tier (5-min TTL); HTTP 402 on gated feature access; HTTP 403 on frozen account write. | Must |
 | F-SB-05 | Downgrade guard: excess plans archived (never deleted). Alert history, AI history, prerequisite data preserved. | Must |
@@ -763,7 +764,7 @@ The dashboard uses a 3-row, 2-column grid layout:
 | Annual (save 10%) | $107.88/yr ($8.99/mo) | $215.88/yr ($17.99/mo) |
 | 4-Year (save 17%) | $399 one-time ($8.31/mo) | $799 one-time ($16.65/mo) |
 
-**Trial design:** 14-day free trial with Plus-level features except plan comparison, PDF export, and share links. Max 2 plans. No credit card required. AI features NOT included (Elite-only). Auto-downgrades to Starter at expiry. This prevents the "build-export-leave" pattern while giving enough value to demonstrate the product.
+**Trial design:** 14-day free trial with Plus plan (trialing status). Plus-level features except plan comparison, PDF export, and share links. Max 2 plans. No credit card required. AI features NOT included (Elite-only). Auto-downgrades to Starter at expiry. This prevents the "build-export-leave" pattern while giving enough value to demonstrate the product. Accounts API returns "trial" as the plan name when `status = 'trialing'`. TierBadge component shows "Trial" (amber). Billing page shows "Free Trial" with "X days left" badge. Pricing cards do not show "Current Plan" indicator for trialing users.
 
 ### 5.14 Account Lifecycle
 
@@ -810,7 +811,7 @@ The dashboard uses a 3-row, 2-column grid layout:
    ├── Option A: Email + password
    │   └── Verify email before proceeding
    └── Option B: Google OAuth
-       └── First-time: auto-provisions app records (user, account, profile, 14-day Elite trial) using Google profile name. Email marked as verified. Redirects to /onboarding.
+       └── First-time: auto-provisions app records (user, account, profile, 14-day Plus trial with trialing status) using Google profile name. Email marked as verified. Redirects to /onboarding.
        └── Returning: resumes session, redirects to intended page.
 
 3. Date of birth check
@@ -835,7 +836,7 @@ The dashboard uses a 3-row, 2-column grid layout:
    └── Select → creates first plan from template (Primary, Active)
 
 8. Trial activation banner
-   └── "Your 14-day Elite trial has started. X days left."
+   └── "Your 14-day free trial has started. X days left."
 
 9. Dashboard (first view)
    ├── GPA: shows entered grades if any, else "Enter grades to see GPA"
@@ -1068,7 +1069,7 @@ Trigger: Stripe fires invoice.payment_failed
 
 ### Flow 10: Trial Expiry & Downgrade
 
-1. **Day 10 of 14:** A persistent banner appears: "Your Elite trial ends in 4 days. Upgrade to keep [specific features they've used]."
+1. **Day 10 of 14:** A persistent banner appears: "Your free trial ends in 4 days. Upgrade to keep [specific features they've used]."
 2. **Day 13:** Email reminder: "Your trial ends tomorrow."
 3. **Day 14 (expiry):**
    - Account tier changes to Starter immediately.
@@ -1158,7 +1159,7 @@ A landing page is required before user acquisition begins. This is not a separat
 - Clear value proposition: "Plan your 4-year course path. Track your GPA. Graduate on track."
 - Feature highlights for the three pillars (Planning, Tracking, Advisory)
 - Tier comparison table (Starter → Elite) with pricing
-- "Get Started Free — 14-day Elite trial" CTA → signup flow
+- "Get Started Free — 14-day free trial" CTA → signup flow
 - Mobile-responsive
 - SEO-optimized for: "Stevenson High School course planner", "high school academic planner", "4-year plan tool"
 

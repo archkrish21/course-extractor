@@ -41,6 +41,12 @@ export default function JoinPage() {
         body: JSON.stringify({ invite_code: icode }),
       });
       if (res.ok) {
+        // Switch to the joined/created account so it becomes the active one
+        const json = await res.json();
+        const joinedId = json?.data?.account_id ?? aid;
+        if (typeof window !== "undefined") {
+          localStorage.setItem("saps_current_account_id", joinedId);
+        }
         setSuccess(true);
       } else {
         const json = await res.json();

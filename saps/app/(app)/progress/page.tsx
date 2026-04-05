@@ -239,6 +239,8 @@ export default function ProgressPage() {
     );
   }
 
+  const hasNoPlan = data && data.totalEarned === 0 && data.totalPlanned === 0;
+
   if (error || !data) {
     return (
       <div className="mx-auto max-w-6xl">
@@ -249,6 +251,28 @@ export default function ProgressPage() {
               <p className="text-muted-foreground">Unable to load requirements.</p>
               <Link href="/planner">
                 <Button size="sm" variant="outline" className="mt-3">Open Planner</Button>
+              </Link>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  if (hasNoPlan) {
+    return (
+      <div className="mx-auto max-w-6xl">
+        <h1 className="mb-6 text-2xl font-bold tracking-tight text-foreground sm:text-3xl">Academic Progress</h1>
+        <Card>
+          <CardContent>
+            <div className="py-12 text-center">
+              <svg aria-hidden="true" className="mx-auto mb-3 h-10 w-10 text-muted-foreground/40" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75 11.25 15 15 9.75M21 12c0 1.268-.63 2.39-1.593 3.068a3.745 3.745 0 0 1-1.043 3.296 3.745 3.745 0 0 1-3.296 1.043A3.745 3.745 0 0 1 12 21c-1.268 0-2.39-.63-3.068-1.593a3.746 3.746 0 0 1-3.296-1.043 3.745 3.745 0 0 1-1.043-3.296A3.745 3.745 0 0 1 3 12c0-1.268.63-2.39 1.593-3.068a3.745 3.745 0 0 1 1.043-3.296 3.746 3.746 0 0 1 3.296-1.043A3.746 3.746 0 0 1 12 3c1.268 0 2.39.63 3.068 1.593a3.746 3.746 0 0 1 3.296 1.043 3.745 3.745 0 0 1 1.043 3.296A3.745 3.745 0 0 1 21 12Z" />
+              </svg>
+              <p className="text-base font-semibold text-foreground">No active plan yet</p>
+              <p className="mt-1 text-sm text-muted-foreground">Create a course plan to start tracking your graduation progress.</p>
+              <Link href="/planner">
+                <Button size="sm" className="mt-4">Go to Planner</Button>
               </Link>
             </div>
           </CardContent>

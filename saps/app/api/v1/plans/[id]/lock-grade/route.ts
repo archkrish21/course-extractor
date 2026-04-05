@@ -72,7 +72,8 @@ export async function POST(request: NextRequest, context: RouteContext) {
     if (locked) {
       updated = existing.includes(grade_level) ? existing : [...existing, grade_level].sort();
     } else {
-      updated = existing.filter((g) => g !== grade_level);
+      // Unlocking a grade also unlocks all grades above it
+      updated = existing.filter((g) => g < grade_level);
     }
 
     await db

@@ -17,6 +17,8 @@ export interface Account {
   role: string;
   isClaimed: boolean;
   subscriptionTier: string;
+  state: string | null;
+  schoolName: string | null;
 }
 
 export interface AccountContextType {
@@ -74,6 +76,8 @@ export function AccountProvider({ children }: { children: ReactNode }) {
           role: a.role ?? "",
           isClaimed: a.is_claimed ?? a.isClaimed ?? false,
           subscriptionTier: a.subscription_tier ?? a.subscriptionTier ?? "free",
+          state: a.state ?? null,
+          schoolName: a.school_name ?? a.schoolName ?? null,
         })
       );
       setAccounts(list);

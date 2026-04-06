@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { US_STATES } from "@/config/us-states";
 import Link from "next/link";
 import { useAccount } from "@/lib/account-context";
 import { apiFetch } from "@/lib/api-client";
@@ -255,6 +256,16 @@ export default function SettingsPage() {
             <div>
               <p className="text-xs text-muted-foreground">Graduation</p>
               <p className="mt-0.5 text-sm font-medium text-foreground">{currentAccount?.graduationYear ?? "—"}</p>
+            </div>
+            <div>
+              <p className="text-xs text-muted-foreground">State</p>
+              <p className="mt-0.5 text-sm font-medium text-foreground">
+                {US_STATES.find((s) => s.code === currentAccount?.state)?.name ?? currentAccount?.state ?? "—"}
+              </p>
+            </div>
+            <div>
+              <p className="text-xs text-muted-foreground">School</p>
+              <p className="mt-0.5 text-sm font-medium text-foreground">{currentAccount?.schoolName ?? "—"}</p>
             </div>
           </div>
         </section>

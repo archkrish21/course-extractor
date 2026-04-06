@@ -132,6 +132,8 @@ export const accounts = pgTable("accounts", {
   studentDateOfBirth: date("student_date_of_birth"),
   gradeLevel: smallint("grade_level"),
   graduationYear: smallint("graduation_year"),
+  state: text("state"),
+  schoolName: text("school_name"),
   schoolId: uuid("school_id"),
   studentUserId: uuid("student_user_id").unique().references(() => users.id, { onDelete: "set null" }),
   createdBy: uuid("created_by").notNull().references(() => users.id, { onDelete: "restrict" }),

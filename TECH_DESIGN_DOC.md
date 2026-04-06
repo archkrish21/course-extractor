@@ -2,7 +2,7 @@
 ## Technical Design Document
 
 **Audience:** Engineering team
-**Status:** Phase 2 Complete — Phase 3 development next.
+**Status:** Phase 3 In Progress — Active Development
 **Last updated:** 2026-04-02
 
 ---
@@ -218,7 +218,9 @@ All pages under the `(app)/` route group require authentication. The app layout 
 
 **Sign out:** The user avatar dropdown in the top navigation contains Settings, Billing, and Sign out. Sign out calls `supabase.auth.signOut()`, clears the client session, and redirects to `/login`. The mobile hamburger menu also includes a Sign out option. Settings is no longer in the main navigation bar — it was moved into the avatar dropdown. The avatar and layout display the user's full name (from `firstName` + `lastName` columns) instead of the email prefix. For parent users: the avatar shows the parent's own name/email (not the student's), with a "Managing: StudentName · Gr X" subtitle below. "Add Another Child" removed from the dropdown.
 
-**Google OAuth first-time user provisioning:** The OAuth callback (`/api/v1/auth/callback`) detects first-time Google users (no `users` row for the auth ID) and provisions all app-level records: `users` (role: student, email verified: true), `accounts`, `account_members`, `student_profiles`, and `subscriptions` (14-day Plus trial with trialing status). The student name is extracted from Google profile metadata (`full_name`). First-time users are redirected to `/onboarding`; returning users go to their intended destination. If provisioning fails, the user is redirected to `/dashboard?error=setup_incomplete` for graceful recovery.
+**Signup page redesign (Phase 3):** Wider layout (max-w-lg), 2-column grids for credentials and personal info. Role selector with description cards (Student/Parent/Counselor). Frozen state (IL) and school (Stevenson) fields with "Request yours" link for unsupported schools. School request form submits to `POST /api/v1/school-request` (no auth) and stores in `school_requests` table. "Claim your account" link removed from signup page.
+
+**Google OAuth first-time user provisioning:** The OAuth callback (`/api/v1/auth/callback`) detects first-time Google users (no `users` row for the auth ID) and provisions all app-level records: `users` (role: student, email verified: true), `accounts` (with `state` = 'IL', `schoolName` = 'Stevenson'), `account_members`, `student_profiles`, and `subscriptions` (14-day Plus trial with trialing status). The student name is extracted from Google profile metadata (`full_name`). First-time users are redirected to `/onboarding`; returning users go to their intended destination. If provisioning fails, the user is redirected to `/dashboard?error=setup_incomplete` for graceful recovery.
 
 ### User roles
 
@@ -462,6 +464,8 @@ CREATE TABLE accounts (
   grade_level           SMALLINT CHECK (grade_level BETWEEN 9 AND 12),
   graduation_year       SMALLINT,
   school_id             UUID,
+  state                 TEXT,              -- frozen to 'IL' at signup; for future multi-state expansion
+  school_name           TEXT,              -- frozen to 'Stevenson' at signup; for future multi-school expansion
   student_user_id       UUID UNIQUE REFERENCES users(id) ON DELETE SET NULL,
   created_by            UUID NOT NULL REFERENCES users(id) ON DELETE RESTRICT,
   billing_contact_id    UUID REFERENCES users(id) ON DELETE SET NULL,
@@ -508,9 +512,26 @@ CREATE TABLE account_invite_codes (
 );
 ```
 
+### Table: `school_requests`
+
+```sql
+CREATE TABLE school_requests (
+  id          UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  email       TEXT NOT NULL,
+  school_name TEXT NOT NULL,
+  state       TEXT NOT NULL,
+  message     TEXT,
+  created_at  TIMESTAMPTZ DEFAULT NOW()
+);
+```
+
+> **School request system (Phase 3):** Signup page includes frozen state/school fields with a "Request yours" link. The school request form submits to `POST /api/v1/school-request` (no auth required) and stores requests in the `school_requests` table for future outreach and multi-school expansion.
+
 > **Child invite flow (Phase 3):** Parents can invite a child (student) via email from Settings. When the student joins via the invite: (1) if the student already has an account, the parent is added as a member of the student's existing account; (2) if no account exists, a new account is created with both student and parent added as members. The active account auto-switches to the joined account.
 
-> **Family member removal (Phase 3 update):** Any member can remove other members (except themselves). The previous restriction preventing student removal has been lifted — non-student members can remove the student. Remove button shows for all members except self. Settings merges Family Members and Invite into a single collapsible card.
+> **Family member removal (Phase 3 update):** Any member can remove other members (except themselves). The previous restriction preventing student removal has been lifted — non-student members can remove the student. Remove button shows for all members except self.
+
+> **Settings redesign (Phase 3):** Flat sections with uppercase headers (no collapsible cards). 3x3 profile grid: Name/Email/Password/Role/Grade/Graduation/State/School (state and school read-only). Clean family member list. Compact subscription/legal/danger zone sections.
 
 > **Migration note (Phase 2):** All data tables (`four_year_plans`, `subscriptions`, `grade_entries`, `gpa_snapshots`, `goals`, `alerts`, `notifications`, `requirement_progress`, `dual_credit_log`) gain an `account_id UUID REFERENCES accounts(id)` column. The `four_year_plans` table gains `created_by UUID REFERENCES users(id)` and `visibility TEXT DEFAULT 'shared' CHECK (visibility IN ('shared', 'private'))`. The `student_parent_links` and `parent_invite_codes` tables are deprecated in favor of `account_members` and `accounts.claim_code`. subscriptions gains an account_id column alongside the existing user_id (both retained for backward compatibility during migration). Existing data is migrated by creating an account row per existing student user and updating all foreign keys.
 
@@ -1299,7 +1320,7 @@ All routes: `/api/v1/...`. Version from day one.
 
 | Method | Route | Auth | Description |
 |---|---|---|---|
-| POST | `/api/v1/auth/signup` | — | Create user + subscription row (Plus plan, trialing status) |
+| POST | `/api/v1/auth/signup` | — | Create user + subscription row (Plus plan, trialing status). Signup page: wider layout (max-w-lg), 2-column grids, role selector with description cards (Student/Parent/Counselor), frozen state (IL) and school (Stevenson) fields. Sets firstName from email prefix. Sets `state` and `schoolName` on accounts. |
 | GET | `/api/v1/auth/callback` | — | OAuth callback. Exchanges code for session. First-time users: provisions app records + redirects to /onboarding. Returning users: redirects to intended page. |
 | GET | `/api/v1/auth/me` | any authenticated | Returns logged-in user's email, role, first_name, and last_name. | Phase 3 |
 | PATCH | `/api/v1/auth/me` | any authenticated | Update first_name and/or last_name on the logged-in user. | Phase 3 |
@@ -1368,6 +1389,7 @@ All routes: `/api/v1/...`. Version from day one.
 | POST | `/api/v1/accounts/:id/members/join` | any | Join account with invite code. | 1b |
 | DELETE | `/api/v1/accounts/:id/members/:userId` | member | Remove a member. Any member can remove other members (except themselves). Students can be removed by non-student members. | 1b |
 | PATCH | `/api/v1/accounts/:id` | member | Update account fields (student_name). | Phase 3 |
+| POST | `/api/v1/school-request` | — (no auth) | Submit a school request (email, school_name, state, message). Stored in `school_requests` table for future outreach. | Phase 3 |
 | PATCH | `/api/v1/accounts/:id/billing` | member | Transfer billing contact to another member. | 2 |
 | POST | `/api/v1/auth/onboarding` | student/parent | Complete onboarding (grade level, template, goals) | 1b |
 | GET | `/api/v1/plans/templates` | any | List all plan templates with courses | 1b |
@@ -2195,7 +2217,8 @@ Mobile (<640px):
   - Grade-level locking: 409 on POST/DELETE/PATCH (non-waiver) for locked grades; GPA waiver toggle succeeds; lock/unlock via `POST /api/v1/plans/:id/lock-grade`
   - Upgrade flow (402 → checkout → plan unlocked)
   - Consent flow (signup checkbox, `/consent` interstitial, consent gate redirect)
-  - Settings page (inline name editing, account editing, family member removal, password toggle)
+  - Settings page (flat sections with 3x3 profile grid including state/school, family member list, compact sections)
+  - Signup page (2-column grids, role selector cards, frozen state/school fields, school request form)
   - Legal pages (`/terms`, `/privacy` rendering)
 
 **Current test count: 250 total** (13 API tests for consent/auth-me/accounts, 20+ E2E tests for consent/settings/legal pages, plus existing plan/requirement/progress/planner tests).

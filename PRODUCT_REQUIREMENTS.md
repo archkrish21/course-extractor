@@ -94,7 +94,7 @@ It replaces guesswork with:
 - GPA weights (AP/Honors/Accelerated bonuses) and the letter grade scale must be confirmed with the school before any GPA code is written.
 - The platform is a personal/family planning tool — it does not connect to the school's information systems, does not read official transcripts, and is not subject to FERPA at launch.
 - All grades entered are self-reported by students; they are not verified against official school records.
-- The platform launches for Stevenson specifically and may expand to other schools in a future phase.
+- The platform launches for Stevenson specifically and may expand to other schools in a future phase. Accounts store `state` (frozen to IL) and `schoolName` (frozen to Stevenson) for future multi-school expansion. Signup captures these as frozen fields with a "Request yours" link for unsupported schools; requests are stored in `school_requests` table.
 - The platform uses a student-centric account model. Each account represents one student. Parents, guardians, and counselors are account members with defined permissions. Either a student or parent can create an account.
 
 ---
@@ -427,7 +427,7 @@ The rigor score is recomputed nightly by the percentile stats job (Elite tier). 
 
 | Req | Description | Priority |
 |---|---|---|
-| F-ON-01 | Email/password signup + Google OAuth. Email verification required before plan creation. | Must |
+| F-ON-01 | Email/password signup + Google OAuth. Email verification required before plan creation. Signup page: wider layout (max-w-lg), 2-column grids for credentials and personal info. Role selector with description cards (Student/Parent/Counselor). State (frozen to IL) and school (frozen to Stevenson) fields with "Request yours" link for unsupported schools. School request form stores to `school_requests` table via `POST /api/v1/school-request` (no auth). "Claim your account" link removed from signup. | Must |
 | F-ON-02 | Date of birth captured at signup. Block registration for users under 13 (COPPA). | Must |
 | F-ON-03 | **Bulk grade entry table** during onboarding: student selects courses from a dropdown and enters letter grades in a spreadsheet-style table. Not one course at a time. | Must |
 | F-ON-04 | Plan template selection during onboarding (Pre-Med, STEM/Engineering, Arts, Dual Credit Maximizer, 4-Year College Prep, General). Templates are pre-seeded — no admin UI required. | Must |
@@ -649,7 +649,7 @@ The dashboard uses a 3-row, 2-column grid layout:
 | F-CB-18 | Course detail: "What This Unlocks" section also merges semester pairs. | Must |
 | F-CB-19 | Course detail: Division and Department names are clickable (sets the corresponding filter and closes the modal). | Should |
 | F-CB-20 | Course detail: Prerequisite and unlock course codes are clickable (navigates to that course's detail). | Should |
-| F-CB-21 | Navigation uses a horizontal top bar instead of a sidebar. Nav order: Dashboard, Courses, Planner, Progress, Transcript. User avatar dropdown contains Settings, Billing, and Sign out. For parent users: avatar shows the parent's own name/email (not the student's), with a "Managing: StudentName · Gr X" subtitle below the parent's name. "Add Another Child" removed from the dropdown. | Must |
+| F-CB-21 | Navigation uses a horizontal top bar instead of a sidebar. Nav order: Dashboard, Courses, Planner, Progress, Transcript. User avatar dropdown contains Settings, Billing, and Sign out. For parent users: avatar shows the parent's own name/email (not the student's), with a "Managing: StudentName · Gr X" subtitle below the parent's name. "Add Another Child" removed from the dropdown. Settings page uses flat sections with uppercase headers (no collapsible cards): 3x3 profile grid (Name/Email/Password/Role/Grade/Graduation/State/School — state and school are read-only), clean family member list, compact subscription/legal/danger zone sections. | Must |
 
 ### 5.7 Prerequisite Visualization
 
@@ -809,12 +809,16 @@ The dashboard uses a 3-row, 2-column grid layout:
 1. Student arrives at landing page
    └── Clicks "Get Started Free"
 
-2. Signup screen
-   ├── Option A: Email + password
+2. Signup screen (max-w-lg, 2-column grids)
+   ├── Option A: Email + password (2-column credential grid)
    │   └── Verify email before proceeding
    └── Option B: Google OAuth
        └── First-time: auto-provisions app records (user, account, profile, 14-day Plus trial with trialing status) using Google profile name. Email marked as verified. Redirects to /onboarding.
        └── Returning: resumes session, redirects to intended page.
+   ├── Personal info: first name, last name, date of birth (2-column grid)
+   └── Role selector: Student / Parent / Counselor cards with descriptions
+   └── State (frozen to IL) + School (frozen to Stevenson) with "Request yours" link
+       └── School request form → POST /api/v1/school-request (no auth) → school_requests table
 
 3. Date of birth check
    └── If under 13 → blocked; show COPPA notice

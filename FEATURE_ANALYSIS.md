@@ -50,9 +50,12 @@ The platform uses a student-centric account model. Each `account` represents one
 - Support email login + Google OAuth. The OAuth callback auto-provisions first-time Google users (creates `users`, `accounts`, `student_profiles`, `subscriptions` with 14-day Plus trial, trialing status) and redirects to `/onboarding`. Student name is extracted from Google profile metadata. Email is marked as pre-verified.
 - `GET /api/v1/auth/me` endpoint returns the logged-in user's email, role, first_name, and last_name. `PATCH /api/v1/auth/me` accepts first_name/last_name updates.
 - **User names:** `firstName` and `lastName` columns on users table. Signup sets firstName from email prefix. Layout displays full name instead of email prefix. Settings has inline name editing. Family members show full names.
-- **Account editing:** `PATCH /api/v1/accounts/:id` endpoint for updating student_name. Settings Account card has 2-column stacked layout (Name/Email/Password | Role/Grade Level/Graduation Year).
+- **Account editing:** `PATCH /api/v1/accounts/:id` endpoint for updating student_name. Settings profile grid displays account fields.
 - **Family member removal:** Any member can remove other members (not just non-students). API updated to allow student removal by non-student members. Remove button shows for all members except self.
-- **Settings UI improvements:** Collapsible cards (Account open by default), merged Family Members + Invite into one card, 2-column Account layout with stacked label/value fields, password show/hide toggle on all password inputs.
+- **State and school on accounts:** `state` and `schoolName` columns on accounts table. Signup captures state (frozen to IL) and school (frozen to Stevenson). Displayed read-only in Settings profile grid. Stored for future multi-school expansion.
+- **Signup page redesign:** Wider layout (max-w-lg), 2-column grids for credentials and personal info. Role selector with description cards (Student/Parent/Counselor). Frozen state/school fields with "Request yours" link. Removed "Claim your account" link.
+- **School request system:** `POST /api/v1/school-request` endpoint (no auth required), `school_requests` table for future outreach.
+- **Settings redesign:** Flat sections with uppercase headers (no collapsible cards), 3x3 profile grid (Name/Email/Password/Role/Grade/Graduation/State/School), clean family member list, compact subscription/legal/danger zone sections.
 - **Consent system:** `legal_documents` + `consent_records` tables, `/terms` and `/privacy` pages, `/consent` interstitial, consent gate in app layout, signup checkbox, OAuth redirect to consent, account deletion with full cleanup (Stripe, Supabase, Redis, PostHog).
 - **Parent user menu:** Parent sees their own name/email in the avatar (not the student's name). A "Managing: StudentName · Gr X" subtitle is shown below the parent's name. "Add Another Child" removed from the dropdown.
 - **Child invite flow:** Parents can invite a child (student) via email from Settings. When the student joins via the invite: (1) if the student already has an account, the parent is added to the student's existing account; (2) if no account exists, a new account is created with both student and parent as members. The active account auto-switches to the joined account.
@@ -573,6 +576,8 @@ CREATE TABLE accounts (
   grade_level           SMALLINT CHECK (grade_level BETWEEN 9 AND 12),
   graduation_year       SMALLINT,
   school_id             UUID,
+  state                 TEXT,              -- frozen to 'IL' at signup; for future multi-state expansion
+  school_name           TEXT,              -- frozen to 'Stevenson' at signup; for future multi-school expansion
   student_user_id       UUID UNIQUE REFERENCES users(id),
   created_by            UUID NOT NULL REFERENCES users(id),
   billing_contact_id    UUID REFERENCES users(id),
@@ -1104,7 +1109,7 @@ CREATE INDEX idx_requirement_progress_student ON requirement_progress (student_i
 - **Phase 1b:** four_year_plans, plan_courses, plan_history, subscription_plans (seed only)
 - **Phase 2:** accounts, account_members, account_invite_codes, grade_entries, gpa_snapshots, subscriptions, account_events, requirement_progress, graduation_requirements, student_requirement_status, student_requirement_opt_ins, stripe_events. Schema changes: `priceFourYear` column on `subscription_plans`; `four_year` added to `billing_cycle` check constraint on `subscriptions`. Drizzle migrations in `lib/db/migrations/`.
 - **Phase 2 (deprecated):** ~~student_parent_links~~, ~~parent_invite_codes~~ — superseded by accounts model
-- **Phase 3:** alerts, notifications, dual_credit_log, plan_share_links
+- **Phase 3:** alerts, notifications, dual_credit_log, plan_share_links, school_requests
 - **Phase 4:** career_paths, career_path_courses, ai_recommendations (if persisted)
 - **Phase 5:** counselor_student_links, goals
 
@@ -1399,7 +1404,7 @@ human review of diff → approve → DB reload → insert course_catalog_version
 | Plan Export | Student | Generate PDF or shareable read-only link of the active plan |
 | Pricing & Upgrade | Student | Tier comparison table, upgrade CTA, billing portal link, trial countdown; shown during trial and on 402 feature-gate |
 | Billing (`/settings/billing`) | Student / billing contact | Pricing cards with 3-interval toggle (monthly/annual/4-year), current plan indicator, upgrade button (Stripe Checkout), manage subscription button (Stripe Billing Portal) |
-| Settings (via avatar dropdown) | All users | Notification preferences, password change, linked accounts, subscription management, delete account. Accessed from user avatar dropdown in top nav (not main nav bar). For parents: avatar shows parent's own name/email with "Managing: StudentName · Gr X" subtitle. "Add Another Child" removed from dropdown. Child invite flow available from Settings. |
+| Settings (via avatar dropdown) | All users | Flat sections with uppercase headers (no collapsible cards). 3x3 profile grid: Name/Email/Password/Role/Grade/Graduation/State/School (state and school read-only). Clean family member list. Compact subscription/legal/danger zone sections. Accessed from user avatar dropdown in top nav (not main nav bar). For parents: avatar shows parent's own name/email with "Managing: StudentName · Gr X" subtitle. "Add Another Child" removed from dropdown. Child invite flow available from Settings. |
 | Year-End Transition | Student | Confirm final grades, advance grade level, review plan for next year |
 | Parent View | Parent | Read-only dashboard of student's plan, grades, GPA, and alerts |
 | Counselor Dashboard | Counselor | View multiple students, filter by alert severity, bulk export plans |
@@ -1489,9 +1494,12 @@ Phase 5 includes a formal WCAG audit and remediation of any gaps, but the core p
 ### Phase 3 — Plan Tools + Alerts (Weeks 11-14)
 - ✅ Plan management page (`/plans` — "My Plans" / "Shared with Me" tabs, plan cards with status/permission badges, hide/show toggle, share with family members via `plan_shares` table with per-plan per-user permissions (owner/view/edit/delete + isHidden), `getPlanAccess()` enforced on all mutation endpoints, auto-create owner share, backward-compatible fallback, migration script, 14 API + 15 E2E tests)
 - ✅ First name / last name on users (`firstName` and `lastName` columns; signup sets firstName from email prefix; auth/me returns and accepts PATCH for names; layout displays full name; family members show full names)
-- ✅ Account editing (`PATCH /api/v1/accounts/:id` for student_name; Settings Account card with 2-column stacked layout)
+- ✅ Account editing (`PATCH /api/v1/accounts/:id` for student_name; Settings profile grid)
 - ✅ Family member removal (any member can remove other members except self; student removal allowed by non-student members)
-- ✅ Settings UI improvements (collapsible cards, merged Family Members + Invite card, 2-column Account layout, password show/hide toggle, inline name editing)
+- ✅ State and school on accounts (`state` and `schoolName` columns; signup captures frozen IL/Stevenson; read-only in Settings profile grid)
+- ✅ Signup page redesign (max-w-lg, 2-column grids, role selector cards, frozen state/school fields, "Request yours" link, removed "Claim your account" link)
+- ✅ School request system (`POST /api/v1/school-request`, `school_requests` table)
+- ✅ Settings redesign (flat sections with uppercase headers, 3x3 profile grid, clean family member list, compact sections)
 - ✅ Consent system (`legal_documents` + `consent_records` tables, `/terms` and `/privacy` pages, `/consent` interstitial, consent gate in app layout, signup checkbox, OAuth redirect to consent, account deletion with full cleanup)
 - ✅ 250 total tests (13 API tests for consent/auth-me/accounts + 20+ E2E tests for consent/settings/legal pages)
 - Drag-and-drop planner grid upgrade

@@ -138,6 +138,8 @@ export async function GET() {
         role: accountMembers.role,
         isClaimed: accounts.claimedAt,
         studentUserId: accounts.studentUserId,
+        state: accounts.state,
+        schoolName: accounts.schoolName,
         subscriptionTier: sql<string | null>`(
           SELECT CASE WHEN s.status = 'trialing' THEN 'trial' ELSE sp.name END
           FROM subscriptions s
@@ -159,6 +161,8 @@ export async function GET() {
       graduation_year: r.graduationYear,
       role: r.role,
       is_claimed: r.isClaimed !== null,
+      state: r.state,
+      school_name: r.schoolName,
       subscription_tier: r.subscriptionTier ?? "free",
     }));
 

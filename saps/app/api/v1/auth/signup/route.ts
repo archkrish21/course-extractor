@@ -22,6 +22,8 @@ const signupSchema = z.object({
   date_of_birth: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Date must be YYYY-MM-DD format"),
   role: z.enum(["student", "parent", "counselor"]),
   name: z.string().min(1).max(200).optional(),
+  state: z.string().length(2).optional(),
+  school_name: z.string().min(1).max(200).optional(),
   tos_accepted: z.literal(true, {
     message: "You must agree to the Terms of Service and Privacy Policy.",
   }),
@@ -62,7 +64,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const { email, password, date_of_birth, role, name } = parsed.data;
+    const { email, password, date_of_birth, role, name, state, school_name } = parsed.data;
 
     // COPPA check: must be 13 or older
     const age = calculateAge(date_of_birth);
@@ -143,6 +145,8 @@ export async function POST(request: NextRequest) {
           studentDateOfBirth: date_of_birth,
           gradeLevel: 9,
           graduationYear: defaultGradYear,
+          state: state ?? "IL",
+          schoolName: school_name ?? "Adlai E. Stevenson High School",
           studentUserId: userId,
           createdBy: userId,
           claimedAt: new Date(),

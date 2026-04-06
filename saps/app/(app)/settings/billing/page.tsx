@@ -57,15 +57,16 @@ const PLANS = [
 type BillingInterval = "monthly" | "annual" | "four_year";
 
 export default function BillingPage() {
-  const { currentAccount } = useAccount();
+  const { currentAccount, refetchAccounts } = useAccount();
   const [subscription, setSubscription] = useState<SubscriptionData | null>(null);
   const [trial, setTrial] = useState<TrialData | null>(null);
   const [loading, setLoading] = useState(true);
   const [billingInterval, setBillingInterval] = useState<BillingInterval>("annual");
   const [upgrading, setUpgrading] = useState<string | null>(null);
+  const [upgraded, setUpgraded] = useState(false);
 
   useEffect(() => {
-    async function fetch() {
+    async function fetchSub() {
       try {
         const res = await apiFetch("/api/v1/subscriptions");
         if (res.ok) {
@@ -77,8 +78,20 @@ export default function BillingPage() {
       } catch { /* silent */ }
       finally { setLoading(false); }
     }
-    fetch();
-  }, [currentAccount]);
+
+    // If redirected from Stripe checkout, wait a moment for webhook then refresh
+    const params = typeof window !== "undefined" ? new URLSearchParams(window.location.search) : null;
+    if (params?.get("upgraded") === "true") {
+      setUpgraded(true);
+      // Give webhook time to process, then fetch
+      setTimeout(() => {
+        fetchSub();
+        refetchAccounts();
+      }, 3000);
+    } else {
+      fetchSub();
+    }
+  }, [currentAccount, refetchAccounts]);
 
   const handleUpgrade = async (planName: string) => {
     setUpgrading(planName);
@@ -137,6 +150,20 @@ export default function BillingPage() {
   return (
     <div className="mx-auto max-w-4xl">
       <h1 className="mb-6 text-2xl font-bold tracking-tight text-foreground sm:text-3xl">Billing & Subscription</h1>
+
+      {upgraded && (
+        <div className="mb-6 rounded-lg border border-success/30 bg-success/5 p-4">
+          <div className="flex items-center gap-2">
+            <svg aria-hidden="true" className="h-5 w-5 text-success" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75 11.25 15 15 9.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
+            </svg>
+            <p className="text-sm font-semibold text-success">Upgrade successful!</p>
+          </div>
+          <p className="mt-1 ml-7 text-sm text-muted-foreground">
+            Your subscription has been updated. It may take a moment to reflect below.
+          </p>
+        </div>
+      )}
 
       {/* Current plan */}
       <Card className="mb-6">

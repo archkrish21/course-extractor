@@ -51,6 +51,8 @@ export const users = pgTable(
       .defaultNow()
       .$onUpdate(() => new Date()),
     lastLogin: timestamp("last_login", { withTimezone: true }),
+    tosAcceptedAt: timestamp("tos_accepted_at", { withTimezone: true }),
+    ppAcceptedAt: timestamp("pp_accepted_at", { withTimezone: true }),
     notificationPreferences: jsonb("notification_preferences").default({
       alert_triggered: { email: true, in_app: true },
       catalog_update: { email: true, in_app: true },
@@ -72,6 +74,51 @@ export const users = pgTable(
       "frozen_consistency",
       sql`(${table.accountStatus} = 'frozen' AND ${table.freezeReason} IS NOT NULL AND ${table.frozenAt} IS NOT NULL) OR (${table.accountStatus} <> 'frozen' AND ${table.freezeReason} IS NULL AND ${table.frozenAt} IS NULL)`
     ),
+  ]
+);
+
+// ─── LEGAL DOCUMENTS & CONSENT ──────────────────────────────────────────────
+
+export const legalDocuments = pgTable(
+  "legal_documents",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    type: text("type", {
+      enum: ["terms_of_service", "privacy_policy"],
+    }).notNull(),
+    version: text("version").notNull(),
+    effectiveDate: date("effective_date").notNull(),
+    contentHash: text("content_hash").notNull(),
+    summaryOfChanges: text("summary_of_changes"),
+    isCurrent: boolean("is_current").notNull().default(false),
+    publishedAt: timestamp("published_at", { withTimezone: true }),
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow(),
+  },
+  (table) => [
+    uniqueIndex("legal_documents_type_version_unique").on(table.type, table.version),
+  ]
+);
+
+export const consentRecords = pgTable(
+  "consent_records",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    userId: uuid("user_id").references(() => users.id, { onDelete: "set null" }),
+    legalDocumentId: uuid("legal_document_id")
+      .notNull()
+      .references(() => legalDocuments.id, { onDelete: "restrict" }),
+    action: text("action", {
+      enum: ["accepted", "withdrawn"],
+    }).notNull(),
+    ipAddress: text("ip_address"),
+    userAgent: text("user_agent"),
+    consentedAt: timestamp("consented_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => [
+    index("idx_consent_records_user").on(table.userId),
+    index("idx_consent_records_user_date").on(table.userId, table.consentedAt),
   ]
 );
 

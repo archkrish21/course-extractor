@@ -9,6 +9,8 @@ import {
   subscriptionPlans,
   accounts,
   accountMembers,
+  legalDocuments,
+  consentRecords,
 } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
 import { successResponse, errorResponse } from "@/lib/api/response";
@@ -20,6 +22,9 @@ const signupSchema = z.object({
   date_of_birth: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Date must be YYYY-MM-DD format"),
   role: z.enum(["student", "parent", "counselor"]),
   name: z.string().min(1).max(200).optional(),
+  tos_accepted: z.literal(true, {
+    message: "You must agree to the Terms of Service and Privacy Policy.",
+  }),
 });
 
 function calculateAge(dateOfBirth: string): number {
@@ -90,13 +95,34 @@ export async function POST(request: NextRequest) {
     const userId = authData.user.id;
 
     // Insert into users table
+    const now = new Date();
     await db.insert(users).values({
       id: userId,
       email,
       role,
       dateOfBirth: date_of_birth,
       isEmailVerified: false,
+      tosAcceptedAt: now,
+      ppAcceptedAt: now,
     });
+
+    // Record consent for current legal documents
+    const currentDocs = await db
+      .select({ id: legalDocuments.id })
+      .from(legalDocuments)
+      .where(eq(legalDocuments.isCurrent, true));
+
+    const userAgent = request.headers.get("user-agent") ?? null;
+    for (const doc of currentDocs) {
+      await db.insert(consentRecords).values({
+        userId,
+        legalDocumentId: doc.id,
+        action: "accepted",
+        ipAddress: ip,
+        userAgent,
+        consentedAt: now,
+      });
+    }
 
     if (role === "student") {
       // ── Student signup: create account, membership, profile, subscription ──

@@ -6,9 +6,11 @@ import {
   studentProfiles,
   fourYearPlans,
   planCourses,
+  planShares,
   gradeEntries,
   courses,
   courseCatalogVersions,
+  accountMembers,
 } from "@/lib/db/schema";
 import { eq, and, desc } from "drizzle-orm";
 import { successResponse, errorResponse } from "@/lib/api/response";
@@ -153,6 +155,14 @@ export async function POST(request: NextRequest) {
       }
     }
 
+    // Resolve user's account ID
+    const [membership] = await db
+      .select({ accountId: accountMembers.accountId })
+      .from(accountMembers)
+      .where(eq(accountMembers.userId, user.id))
+      .limit(1);
+    const accountId = membership?.accountId ?? null;
+
     // Create plan from template
     let planId: string | null = null;
     if (template_id && latestVersion) {
@@ -184,6 +194,8 @@ export async function POST(request: NextRequest) {
         .insert(fourYearPlans)
         .values({
           studentId: user.id,
+          accountId: accountId ?? undefined,
+          createdBy: user.id,
           name: `My ${template.name} Plan`,
           schoolYear: template.schoolYear,
           catalogVersionId: template.catalogVersionId,
@@ -196,6 +208,14 @@ export async function POST(request: NextRequest) {
         .returning({ id: fourYearPlans.id });
 
       planId = newPlan.id;
+
+      // Create owner share for the plan
+      await db.insert(planShares).values({
+        planId: newPlan.id,
+        userId: user.id,
+        grantedBy: user.id,
+        permission: "owner",
+      });
 
       // Copy template courses into the new plan
       const templateCourses = await db

@@ -25,6 +25,12 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
       <div className="w-full max-w-md rounded-xl border border-border bg-card p-6 shadow-sm sm:p-8">
         {children}
       </div>
+
+      <div className="mt-6 flex items-center gap-3 text-xs text-muted-foreground">
+        <a href="/terms" className="hover:text-foreground">Terms of Service</a>
+        <span>&middot;</span>
+        <a href="/privacy" className="hover:text-foreground">Privacy Policy</a>
+      </div>
     </div>
   );
 }

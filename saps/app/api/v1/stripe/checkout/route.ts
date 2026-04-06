@@ -119,7 +119,7 @@ export async function POST(request: NextRequest) {
       customer: stripeCustomerId,
       mode,
       line_items: [{ price: priceId, quantity: 1 }],
-      success_url: `${origin}/dashboard?upgraded=true`,
+      success_url: `${origin}/settings/billing?upgraded=true`,
       cancel_url: `${origin}/settings/billing`,
       metadata: {
         accountId,

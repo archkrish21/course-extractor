@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Checkbox } from "@/components/ui/checkbox";
 
 type Role = "student" | "parent" | "counselor";
 
@@ -14,6 +15,7 @@ interface FieldErrors {
   confirmPassword?: string;
   dob?: string;
   role?: string;
+  tos?: string;
   form?: string;
 }
 
@@ -41,6 +43,7 @@ export default function SignupPage() {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [dob, setDob] = useState("");
   const [role, setRole] = useState<Role>("student");
+  const [tosAccepted, setTosAccepted] = useState(false);
   const [errors, setErrors] = useState<FieldErrors>({});
   const [loading, setLoading] = useState(false);
   const [coppaBlocked, setCoppaBlocked] = useState(false);
@@ -69,6 +72,9 @@ export default function SignupPage() {
     }
     if (!role) {
       errs.role = "Please select a role.";
+    }
+    if (!tosAccepted) {
+      errs.tos = "You must agree to the Terms of Service and Privacy Policy.";
     }
     return errs;
   }
@@ -99,7 +105,7 @@ export default function SignupPage() {
       const res = await fetch("/api/v1/auth/signup", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password, date_of_birth: dob, role }),
+        body: JSON.stringify({ email, password, date_of_birth: dob, role, tos_accepted: true }),
       });
 
       if (!res.ok) {
@@ -271,9 +277,29 @@ export default function SignupPage() {
           )}
         </fieldset>
 
+        <Checkbox
+          id="tos-checkbox"
+          checked={tosAccepted}
+          onChange={(e) => setTosAccepted(e.target.checked)}
+          error={errors.tos}
+          label={
+            <span>
+              I agree to the{" "}
+              <Link href="/terms" target="_blank" className="text-primary hover:underline">Terms of Service</Link>
+              {" "}and{" "}
+              <Link href="/privacy" target="_blank" className="text-primary hover:underline">Privacy Policy</Link>.
+              {role === "parent" && (
+                <span className="block mt-1 text-xs text-muted-foreground">
+                  By creating this account, I confirm that I am the parent or legal guardian of the student.
+                </span>
+              )}
+            </span>
+          }
+        />
+
         <Button
           type="submit"
-          disabled={loading || coppaBlocked}
+          disabled={loading || coppaBlocked || !tosAccepted}
           className="mt-2 w-full"
         >
           {loading ? "Creating account..." : "Create account"}

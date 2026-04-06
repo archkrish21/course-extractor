@@ -300,21 +300,50 @@ function AppLayoutInner({ children }: { children: React.ReactNode }) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [authChecked, setAuthChecked] = useState(false);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [consentChecked, setConsentChecked] = useState(false);
 
   const closeMenu = useCallback(() => setMobileMenuOpen(false), []);
 
-  // Auth guard: redirect to /login if not authenticated
+  // Auth guard: redirect to /login if not authenticated or account doesn't exist
   useEffect(() => {
     const supabase = createSupabaseBrowserClient();
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    supabase.auth.getSession().then(async ({ data: { session } }) => {
       if (!session) {
         router.replace(`/login?redirect=${encodeURIComponent(pathname)}`);
-      } else {
-        setIsAuthenticated(true);
+        setAuthChecked(true);
+        return;
       }
+      // Verify user exists in our DB (not just Supabase auth)
+      try {
+        const res = await fetch("/api/v1/auth/me");
+        if (res.status === 404) {
+          // Orphaned auth user — sign out and redirect to login
+          await supabase.auth.signOut();
+          router.replace("/login?error=account_not_found");
+          setAuthChecked(true);
+          return;
+        }
+      } catch { /* proceed — API might be slow */ }
+      setIsAuthenticated(true);
       setAuthChecked(true);
     });
   }, [pathname, router]);
+
+  // Consent gate: redirect to /consent if user hasn't accepted current ToS/PP
+  useEffect(() => {
+    if (!isAuthenticated) return;
+    fetch("/api/v1/auth/consent")
+      .then((r) => (r.ok ? r.json() : null))
+      .then((json) => {
+        const data = json?.data ?? json;
+        if (data?.consent_required) {
+          router.replace(`/consent?next=${encodeURIComponent(pathname)}`);
+        } else {
+          setConsentChecked(true);
+        }
+      })
+      .catch(() => setConsentChecked(true));
+  }, [isAuthenticated, pathname, router]);
 
   // Close menu on route change
   useEffect(() => {
@@ -330,8 +359,8 @@ function AppLayoutInner({ children }: { children: React.ReactNode }) {
     return () => document.removeEventListener("keydown", handleKeyDown);
   }, [mobileMenuOpen, closeMenu]);
 
-  // Show loading while checking auth
-  if (!authChecked || !isAuthenticated) {
+  // Show loading while checking auth and consent
+  if (!authChecked || !isAuthenticated || !consentChecked) {
     return (
       <div className="flex min-h-screen items-center justify-center">
         <div className="h-8 w-8 animate-spin rounded-full border-4 border-muted border-t-primary" />

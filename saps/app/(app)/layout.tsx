@@ -85,7 +85,7 @@ function TierBadge({ tier }: { tier: string }) {
 // ─── Account Switcher ─────────────────────────────────────────────────────────
 
 function AccountSwitcher() {
-  const { currentAccount, accounts, switchAccount, loading, userEmail, userRole } = useAccount();
+  const { currentAccount, accounts, switchAccount, loading, userEmail, userRole, userFirstName, userLastName } = useAccount();
   const [open, setOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -128,11 +128,9 @@ function AccountSwitcher() {
     window.location.href = "/login";
   };
 
-  // Display name: student sees their name, parent/counselor sees email prefix
-  const isStudentRole = userRole === "student";
-  const displayName = isStudentRole
-    ? currentAccount.studentName
-    : userEmail?.split("@")[0] ?? currentAccount.studentName;
+  // Display name: use firstName + lastName if available, fallback to email prefix
+  const fullName = [userFirstName, userLastName].filter(Boolean).join(" ");
+  const displayName = fullName || userEmail?.split("@")[0] || currentAccount.studentName;
   const displayInitial = displayName.charAt(0).toUpperCase();
 
   // Single account, non-parent: avatar + name with user menu dropdown

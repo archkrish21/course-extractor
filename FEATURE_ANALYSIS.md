@@ -48,7 +48,12 @@ The platform uses a student-centric account model. Each `account` represents one
 
 - Use an established auth library (Auth.js or Supabase Auth) — do not build auth from scratch.
 - Support email login + Google OAuth. The OAuth callback auto-provisions first-time Google users (creates `users`, `accounts`, `student_profiles`, `subscriptions` with 14-day Plus trial, trialing status) and redirects to `/onboarding`. Student name is extracted from Google profile metadata. Email is marked as pre-verified.
-- New `GET /api/v1/auth/me` endpoint returns the logged-in user's email and role.
+- `GET /api/v1/auth/me` endpoint returns the logged-in user's email, role, first_name, and last_name. `PATCH /api/v1/auth/me` accepts first_name/last_name updates.
+- **User names:** `firstName` and `lastName` columns on users table. Signup sets firstName from email prefix. Layout displays full name instead of email prefix. Settings has inline name editing. Family members show full names.
+- **Account editing:** `PATCH /api/v1/accounts/:id` endpoint for updating student_name. Settings Account card has 2-column stacked layout (Name/Email/Password | Role/Grade Level/Graduation Year).
+- **Family member removal:** Any member can remove other members (not just non-students). API updated to allow student removal by non-student members. Remove button shows for all members except self.
+- **Settings UI improvements:** Collapsible cards (Account open by default), merged Family Members + Invite into one card, 2-column Account layout with stacked label/value fields, password show/hide toggle on all password inputs.
+- **Consent system:** `legal_documents` + `consent_records` tables, `/terms` and `/privacy` pages, `/consent` interstitial, consent gate in app layout, signup checkbox, OAuth redirect to consent, account deletion with full cleanup (Stripe, Supabase, Redis, PostHog).
 - **Parent user menu:** Parent sees their own name/email in the avatar (not the student's name). A "Managing: StudentName · Gr X" subtitle is shown below the parent's name. "Add Another Child" removed from the dropdown.
 - **Child invite flow:** Parents can invite a child (student) via email from Settings. When the student joins via the invite: (1) if the student already has an account, the parent is added to the student's existing account; (2) if no account exists, a new account is created with both student and parent as members. The active account auto-switches to the joined account.
 
@@ -516,6 +521,8 @@ If no action is taken within 6 months of graduation, show a dashboard banner: *"
 ```sql
 id                       UUID PRIMARY KEY DEFAULT gen_random_uuid(),
 email                    TEXT UNIQUE NOT NULL,
+first_name               TEXT,              -- set from email prefix at signup; editable via PATCH /api/v1/auth/me
+last_name                TEXT,              -- editable via PATCH /api/v1/auth/me
 role                     TEXT NOT NULL CHECK (role IN ('student','parent','counselor','admin')),
 is_email_verified        BOOLEAN DEFAULT FALSE,         -- required for email auth flow
 date_of_birth            DATE,                          -- required for COPPA under-13 check at signup
@@ -1481,6 +1488,12 @@ Phase 5 includes a formal WCAG audit and remediation of any gaps, but the core p
 
 ### Phase 3 — Plan Tools + Alerts (Weeks 11-14)
 - ✅ Plan management page (`/plans` — "My Plans" / "Shared with Me" tabs, plan cards with status/permission badges, hide/show toggle, share with family members via `plan_shares` table with per-plan per-user permissions (owner/view/edit/delete + isHidden), `getPlanAccess()` enforced on all mutation endpoints, auto-create owner share, backward-compatible fallback, migration script, 14 API + 15 E2E tests)
+- ✅ First name / last name on users (`firstName` and `lastName` columns; signup sets firstName from email prefix; auth/me returns and accepts PATCH for names; layout displays full name; family members show full names)
+- ✅ Account editing (`PATCH /api/v1/accounts/:id` for student_name; Settings Account card with 2-column stacked layout)
+- ✅ Family member removal (any member can remove other members except self; student removal allowed by non-student members)
+- ✅ Settings UI improvements (collapsible cards, merged Family Members + Invite card, 2-column Account layout, password show/hide toggle, inline name editing)
+- ✅ Consent system (`legal_documents` + `consent_records` tables, `/terms` and `/privacy` pages, `/consent` interstitial, consent gate in app layout, signup checkbox, OAuth redirect to consent, account deletion with full cleanup)
+- ✅ 250 total tests (13 API tests for consent/auth-me/accounts + 20+ E2E tests for consent/settings/legal pages)
 - Drag-and-drop planner grid upgrade
 - Plan history / undo (last 20 changes)
 - Prerequisite graph visualization (DAG view)
@@ -1495,7 +1508,6 @@ Phase 5 includes a formal WCAG audit and remediation of any gaps, but the core p
 - Plan export to PDF + read-only share link
 - Template intensity levels (Easy/Moderate/Challenging/Intensive/Rigorous) — auto-selects CP/Accelerated/AP course variants and load per template
 - Goal setting (GPA targets, credit milestones, course goals — Plus+ gated)
-- Terms of Service & Privacy Policy acceptance on signup
 - User profile dropdown (Settings moved from main nav into top-right user avatar dropdown)
 - NCAA eligibility tracking
 - Seal of Biliteracy
@@ -1686,6 +1698,7 @@ This section must be revisited before any public launch or school partnership.
 - Not subject to FERPA (no connection to school systems)
 - Standard data privacy practices: encrypted at rest, TLS in transit, no sale of user data
 - Grades and goals entered by users are personal data — handle accordingly
+- **Consent system (Phase 3 — implemented):** `legal_documents` and `consent_records` tables track versioned legal document acceptance. `/terms` and `/privacy` pages render legal content. `/consent` interstitial enforced via consent gate in app layout for users who haven't accepted current terms. Signup includes a consent checkbox. OAuth users redirected to `/consent` after first login. Account deletion performs full cleanup (Stripe customer deleted, Supabase auth user deleted, Redis cache cleared, PostHog user data removed).
 
 **If the school officially adopts this tool:**
 - FERPA applies immediately — consult legal counsel before storing data transmitted from school systems

@@ -38,11 +38,11 @@ export async function DELETE(request: NextRequest, context: RouteContext) {
       return errorResponse("NOT_FOUND", "Account not found.", 404);
     }
 
-    // Cannot remove the student (the account subject)
-    if (account.studentUserId === targetUserId) {
+    // Cannot remove the student who owns the account (they should delete the account instead)
+    if (account.studentUserId === targetUserId && account.studentUserId !== user.id) {
       return errorResponse(
         "CONFLICT",
-        "Cannot remove the student from their own account.",
+        "Only the student can remove themselves from their own account.",
         409
       );
     }

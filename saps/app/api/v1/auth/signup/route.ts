@@ -99,6 +99,7 @@ export async function POST(request: NextRequest) {
     await db.insert(users).values({
       id: userId,
       email,
+      firstName: name ?? email.split("@")[0],
       role,
       dateOfBirth: date_of_birth,
       isEmailVerified: false,

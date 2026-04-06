@@ -12,6 +12,8 @@ import { useToast } from "@/components/ui/toast";
 interface AccountMember {
   userId: string;
   email: string;
+  firstName?: string | null;
+  lastName?: string | null;
   role: string;
   canEdit: boolean;
   joinedAt: string;
@@ -25,11 +27,15 @@ interface InviteCode {
 }
 
 export default function SettingsPage() {
-  const { currentAccount, refetchAccounts, userEmail } = useAccount();
+  const { currentAccount, refetchAccounts, userEmail, userFirstName, userLastName, refetchUser } = useAccount();
   const { showToast } = useToast();
   const [editingName, setEditingName] = useState(false);
   const [editName, setEditName] = useState("");
   const [savingName, setSavingName] = useState(false);
+  const [editingUserName, setEditingUserName] = useState(false);
+  const [editFirstName, setEditFirstName] = useState("");
+  const [editLastName, setEditLastName] = useState("");
+  const [savingUserName, setSavingUserName] = useState(false);
   const [removingMember, setRemovingMember] = useState<string | null>(null);
   const [members, setMembers] = useState<AccountMember[]>([]);
   const [inviteCode, setInviteCode] = useState<string | null>(null);
@@ -64,7 +70,16 @@ export default function SettingsPage() {
         if (res.ok) {
           const json = await res.json();
           const data = json.data ?? json;
-          setMembers(Array.isArray(data) ? data : data.members ?? []);
+          const list = Array.isArray(data) ? data : data.members ?? [];
+          setMembers(list.map((m: Record<string, unknown>) => ({
+            userId: m.user_id ?? m.userId,
+            email: m.email,
+            firstName: m.first_name ?? m.firstName ?? null,
+            lastName: m.last_name ?? m.lastName ?? null,
+            role: m.role,
+            canEdit: m.can_edit ?? m.canEdit ?? false,
+            joinedAt: m.joined_at ?? m.joinedAt ?? "",
+          })) as AccountMember[]);
         }
       } catch { /* silent */ }
       finally { setLoading(false); }
@@ -120,6 +135,24 @@ export default function SettingsPage() {
       }
     } catch { /* silent */ }
     finally { setDeleting(false); }
+  };
+
+  const handleSaveUserName = async () => {
+    if (!editFirstName.trim()) return;
+    setSavingUserName(true);
+    try {
+      const res = await apiFetch("/api/v1/auth/me", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ first_name: editFirstName.trim(), last_name: editLastName.trim() || null }),
+      });
+      if (res.ok) {
+        await refetchUser();
+        setEditingUserName(false);
+        showToast("Name updated");
+      }
+    } catch { /* silent */ }
+    finally { setSavingUserName(false); }
   };
 
   const handleSaveName = async () => {
@@ -205,13 +238,65 @@ export default function SettingsPage() {
             <svg aria-hidden="true" className={`h-5 w-5 text-muted-foreground transition-transform ${expanded.has("account") ? "rotate-180" : ""}`} fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" /></svg>
           </button>
           {expanded.has("account") && <CardContent>
-            <div className="space-y-3">
-              <div className="flex items-center justify-between">
-                <span className="text-sm text-muted-foreground">Username</span>
-                <span className="text-sm font-medium text-foreground">{userEmail ?? "—"}</span>
+            {/* Name edit mode */}
+            {editingUserName ? (
+              <div className="mb-6 rounded-lg border border-border bg-muted/30 p-4">
+                <p className="mb-3 text-sm font-medium text-foreground">Edit your name</p>
+                <div className="flex flex-col gap-2 sm:flex-row sm:items-end">
+                  <div className="flex-1">
+                    <label className="mb-1 block text-xs text-muted-foreground">First name</label>
+                    <input
+                      type="text"
+                      value={editFirstName}
+                      onChange={(e) => setEditFirstName(e.target.value)}
+                      className="h-9 w-full rounded-lg border border-border bg-background px-3 text-sm"
+                      autoFocus
+                    />
+                  </div>
+                  <div className="flex-1">
+                    <label className="mb-1 block text-xs text-muted-foreground">Last name</label>
+                    <input
+                      type="text"
+                      value={editLastName}
+                      onChange={(e) => setEditLastName(e.target.value)}
+                      className="h-9 w-full rounded-lg border border-border bg-background px-3 text-sm"
+                    />
+                  </div>
+                  <div className="flex gap-2">
+                    <Button size="sm" variant="ghost" onClick={() => setEditingUserName(false)}>Cancel</Button>
+                    <Button size="sm" onClick={handleSaveUserName} disabled={!editFirstName.trim() || savingUserName}>
+                      {savingUserName ? "Saving..." : "Save"}
+                    </Button>
+                  </div>
+                </div>
               </div>
-              <div className="flex items-center justify-between">
-                <span className="text-sm text-muted-foreground">Password</span>
+            ) : null}
+
+            {/* Stacked label/value fields in 2-column grid */}
+            <div className="grid grid-cols-2 gap-x-8 gap-y-4 sm:grid-cols-3">
+              <div>
+                <p className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">Name</p>
+                {!editingUserName ? (
+                  <button
+                    type="button"
+                    onClick={() => { setEditFirstName(userFirstName ?? ""); setEditLastName(userLastName ?? ""); setEditingUserName(true); }}
+                    className="mt-0.5 flex items-center gap-1 text-sm font-medium text-foreground hover:text-primary transition-colors"
+                  >
+                    {[userFirstName, userLastName].filter(Boolean).join(" ") || "—"}
+                    <svg aria-hidden="true" className="h-3 w-3 text-muted-foreground" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Z" />
+                    </svg>
+                  </button>
+                ) : (
+                  <p className="mt-0.5 text-sm text-muted-foreground/50">Editing above...</p>
+                )}
+              </div>
+              <div>
+                <p className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">Email</p>
+                <p className="mt-0.5 text-sm font-medium text-foreground">{userEmail ?? "—"}</p>
+              </div>
+              <div>
+                <p className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">Password</p>
                 <button
                   type="button"
                   onClick={async () => {
@@ -234,64 +319,27 @@ export default function SettingsPage() {
                       showToast("Failed to send reset email.");
                     }
                   }}
-                  className="flex items-center gap-1 text-sm font-medium text-primary hover:text-primary-hover transition-colors"
+                  className="mt-0.5 flex items-center gap-1.5 text-sm font-medium text-primary hover:text-primary-hover transition-colors"
                 >
-                  ••••••••
-                  <svg aria-hidden="true" className="h-3 w-3" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0 3.181 3.183a8.25 8.25 0 0 0 13.803-3.7M4.031 9.865a8.25 8.25 0 0 1 13.803-3.7l3.181 3.182" />
-                  </svg>
-                  Reset
+                  •••••••
+                  <span className="text-xs underline">Reset</span>
                 </button>
               </div>
-              <div className="flex items-center justify-between">
-                <span className="text-sm text-muted-foreground">Student Name</span>
-                {editingName && currentAccount?.role === "student" ? (
-                  <div className="flex items-center gap-2">
-                    <input
-                      type="text"
-                      value={editName}
-                      onChange={(e) => setEditName(e.target.value)}
-                      className="h-8 w-40 rounded border border-border bg-background px-2 text-sm"
-                      autoFocus
-                      onKeyDown={(e) => {
-                        if (e.key === "Enter" && editName.trim()) handleSaveName();
-                        if (e.key === "Escape") setEditingName(false);
-                      }}
-                    />
-                    <Button size="sm" variant="ghost" onClick={() => setEditingName(false)}>Cancel</Button>
-                    <Button size="sm" onClick={handleSaveName} disabled={!editName.trim() || savingName}>
-                      {savingName ? "Saving..." : "Save"}
-                    </Button>
-                  </div>
-                ) : currentAccount?.role === "student" ? (
-                  <button
-                    type="button"
-                    onClick={() => { setEditName(currentAccount?.studentName ?? ""); setEditingName(true); }}
-                    className="flex items-center gap-1 text-sm font-medium text-foreground hover:text-primary transition-colors"
-                    title="Click to edit"
-                  >
-                    {currentAccount?.studentName ?? "—"}
-                    <svg aria-hidden="true" className="h-3 w-3 text-muted-foreground" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Z" />
-                    </svg>
-                  </button>
-                ) : (
-                  <span className="text-sm font-medium text-foreground">{currentAccount?.studentName ?? "—"}</span>
-                )}
+              <div>
+                <p className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">Role</p>
+                <div className="mt-1">
+                  <Badge className={roleColor(currentAccount?.role ?? "student")}>
+                    {currentAccount?.role ?? "student"}
+                  </Badge>
+                </div>
               </div>
-              <div className="flex items-center justify-between">
-                <span className="text-sm text-muted-foreground">Grade Level</span>
-                <span className="text-sm font-medium text-foreground">{currentAccount?.gradeLevel ?? "—"}</span>
+              <div>
+                <p className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">Grade Level</p>
+                <p className="mt-0.5 text-sm font-medium text-foreground">{currentAccount?.gradeLevel ?? "—"}</p>
               </div>
-              <div className="flex items-center justify-between">
-                <span className="text-sm text-muted-foreground">Graduation Year</span>
-                <span className="text-sm font-medium text-foreground">{currentAccount?.graduationYear ?? "—"}</span>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-sm text-muted-foreground">Your Role</span>
-                <Badge className={roleColor(currentAccount?.role ?? "student")}>
-                  {currentAccount?.role ?? "student"}
-                </Badge>
+              <div>
+                <p className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">Graduation Year</p>
+                <p className="mt-0.5 text-sm font-medium text-foreground">{currentAccount?.graduationYear ?? "—"}</p>
               </div>
             </div>
           </CardContent>}
@@ -320,29 +368,28 @@ export default function SettingsPage() {
                       <div key={m.userId} className="flex items-center justify-between rounded-lg border border-border px-3 py-2">
                         <div className="flex items-center gap-3">
                           <div className="flex h-8 w-8 items-center justify-center rounded-full bg-muted text-sm font-semibold text-muted-foreground">
-                            {m.email.charAt(0).toUpperCase()}
+                            {(m.firstName ?? m.email).charAt(0).toUpperCase()}
                           </div>
                           <div>
-                            <p className="text-sm font-medium text-foreground">{m.email}</p>
-                            <p className="text-[10px] text-muted-foreground">Joined {new Date(m.joinedAt).toLocaleDateString()}</p>
+                            <p className="text-sm font-medium text-foreground">
+                              {[m.firstName, m.lastName].filter(Boolean).join(" ") || m.email}
+                            </p>
+                            <p className="text-[10px] text-muted-foreground">{m.email} · Joined {new Date(m.joinedAt).toLocaleDateString()}</p>
                           </div>
                         </div>
                         <div className="flex items-center gap-2">
                           <Badge className={`${roleColor(m.role)} text-[10px]`}>{m.role}</Badge>
-                          {m.canEdit && <Badge className="bg-muted text-muted-foreground text-[10px]">Can edit</Badge>}
-                          {m.role !== "student" && (
-                            <button
-                              type="button"
-                              onClick={() => handleRemoveMember(m.userId, m.email)}
-                              disabled={removingMember === m.userId}
-                              className="flex h-6 w-6 items-center justify-center rounded text-muted-foreground hover:text-destructive hover:bg-destructive-light transition-colors"
-                              title={`Remove ${m.email}`}
-                            >
-                              <svg aria-hidden="true" className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
-                                <path strokeLinecap="round" strokeLinejoin="round" d="M6 18 18 6M6 6l12 12" />
-                              </svg>
-                            </button>
-                          )}
+                          <button
+                            type="button"
+                            onClick={() => handleRemoveMember(m.userId, m.email)}
+                            disabled={removingMember === m.userId}
+                            className="flex h-6 w-6 items-center justify-center rounded text-muted-foreground hover:text-destructive hover:bg-destructive-light transition-colors"
+                            title={`Remove ${[m.firstName, m.lastName].filter(Boolean).join(" ") || m.email}`}
+                          >
+                            <svg aria-hidden="true" className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" d="M6 18 18 6M6 6l12 12" />
+                            </svg>
+                          </button>
                         </div>
                       </div>
                     ))}

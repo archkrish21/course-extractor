@@ -270,7 +270,8 @@ Unclaimed Account Behavior:
 Unlinking:
 - Any member can leave an account from Settings
 - Removing a member revokes their access; plans they created remain
-- Students cannot be removed (they are the account subject)
+- Any member can remove other members (except themselves); students can be removed by non-student members
+- Remove button shows for all members except self
 
 Account Switcher (parent with multiple children):
 - Parent sees a dropdown in the top nav showing each child's name, grade, and tier
@@ -433,6 +434,7 @@ The rigor score is recomputed nightly by the percentile stats job (Elite tier). 
 | F-ON-05 | Goal setting: GPA target, college targets (reach/match/safety), career interest field. | Should |
 | F-ON-06 | Skip-and-complete-later option for grade history and goals. Dashboard shows a "Complete your profile" banner for incomplete onboarding. | Must |
 | F-ON-07 | 14-day Plus trial (trialing status) activated automatically at signup. No credit card required. Accounts API returns "trial" as the plan name when status is trialing. TierBadge shows "Trial" (amber). Billing page shows "Free Trial" with "X days left" badge. Pricing cards do not show "Current Plan" for trialing users. | Must |
+| F-ON-08 | **Consent system (Phase 3 — implemented):** Terms of Service and Privacy Policy acceptance required at signup (checkbox) and enforced via `/consent` interstitial for existing users. `legal_documents` table stores versioned legal documents; `consent_records` table tracks user acceptance with timestamps. `/terms` and `/privacy` pages display legal content. Consent gate in app layout redirects users who haven't accepted current terms. OAuth users redirected to `/consent` after first login. | Must |
 
 **Plan Templates at Launch:**
 Six pre-seeded templates, each containing a recommended 4-year course sequence:
@@ -1061,9 +1063,10 @@ Trigger: Stripe fires invoice.payment_failed
 3. Student confirms by typing their email address.
 4. Account status changes to `deactivated`. All linked parent accounts lose access immediately.
 5. Active Stripe subscription is canceled immediately (no further charges).
-6. A confirmation email is sent with a "Cancel Deletion" link valid for 30 days.
-7. After 30 days, all personal data is purged. Anonymized aggregate analytics data is retained.
-8. If the student clicks "Cancel Deletion" within 30 days, the account is restored to its previous state (including subscription, if still within the billing period).
+6. Full cleanup performed: Stripe customer deleted, Supabase auth user deleted, Redis cache cleared, PostHog user data removed.
+7. A confirmation email is sent with a "Cancel Deletion" link valid for 30 days.
+8. After 30 days, all personal data is purged. Anonymized aggregate analytics data is retained.
+9. If the student clicks "Cancel Deletion" within 30 days, the account is restored to its previous state (including subscription, if still within the billing period).
 
 ---
 

@@ -50,6 +50,8 @@ export async function GET(request: NextRequest, context: RouteContext) {
         canEdit: accountMembers.canEdit,
         joinedAt: accountMembers.joinedAt,
         email: users.email,
+        firstName: users.firstName,
+        lastName: users.lastName,
       })
       .from(accountMembers)
       .innerJoin(users, eq(accountMembers.userId, users.id))
@@ -59,6 +61,8 @@ export async function GET(request: NextRequest, context: RouteContext) {
       members.map((m) => ({
         user_id: m.userId,
         email: m.email,
+        first_name: m.firstName,
+        last_name: m.lastName,
         role: m.role,
         can_edit: m.canEdit,
         joined_at: m.joinedAt,

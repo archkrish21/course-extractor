@@ -27,6 +27,9 @@ export interface AccountContextType {
   refetchAccounts: () => Promise<void>;
   userEmail: string | null;
   userRole: string | null;
+  userFirstName: string | null;
+  userLastName: string | null;
+  refetchUser: () => Promise<void>;
 }
 
 const STORAGE_KEY = "saps_current_account_id";
@@ -39,6 +42,9 @@ const AccountContext = createContext<AccountContextType>({
   refetchAccounts: async () => {},
   userEmail: null,
   userRole: null,
+  userFirstName: null,
+  userLastName: null,
+  refetchUser: async () => {},
 });
 
 export function AccountProvider({ children }: { children: ReactNode }) {
@@ -46,6 +52,8 @@ export function AccountProvider({ children }: { children: ReactNode }) {
   const [currentAccountId, setCurrentAccountId] = useState<string | null>(null);
   const [userEmail, setUserEmail] = useState<string | null>(null);
   const [userRole, setUserRole] = useState<string | null>(null);
+  const [userFirstName, setUserFirstName] = useState<string | null>(null);
+  const [userLastName, setUserLastName] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
   const fetchAccounts = useCallback(async () => {
@@ -91,20 +99,26 @@ export function AccountProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
-  useEffect(() => {
-    fetchAccounts();
-    // Fetch logged-in user info
-    fetch("/api/v1/auth/me")
-      .then((r) => (r.ok ? r.json() : null))
-      .then((data) => {
+  const fetchUser = useCallback(async () => {
+    try {
+      const r = await fetch("/api/v1/auth/me");
+      if (r.ok) {
+        const data = await r.json();
         const u = data?.data ?? data;
         if (u) {
           setUserEmail(u.email ?? null);
           setUserRole(u.role ?? null);
+          setUserFirstName(u.first_name ?? null);
+          setUserLastName(u.last_name ?? null);
         }
-      })
-      .catch(() => {});
-  }, [fetchAccounts]);
+      }
+    } catch { /* silent */ }
+  }, []);
+
+  useEffect(() => {
+    fetchAccounts();
+    fetchUser();
+  }, [fetchAccounts, fetchUser]);
 
   const switchAccount = useCallback(
     (accountId: string) => {
@@ -134,6 +148,9 @@ export function AccountProvider({ children }: { children: ReactNode }) {
         refetchAccounts: fetchAccounts,
         userEmail,
         userRole,
+        userFirstName,
+        userLastName,
+        refetchUser: fetchUser,
       }}
     >
       {children}

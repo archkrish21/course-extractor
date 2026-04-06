@@ -3,7 +3,7 @@
 
 **Audience:** Engineering team
 **Status:** Phase 2 Complete — Phase 3 development next.
-**Last updated:** 2026-04-01
+**Last updated:** 2026-04-02
 
 ---
 
@@ -216,7 +216,7 @@ User → Next.js frontend → API routes → PostgreSQL (Supabase + RLS)
 
 All pages under the `(app)/` route group require authentication. The app layout checks the Supabase session on mount and redirects unauthenticated users to `/login?redirect=...`.
 
-**Sign out:** The user avatar dropdown in the top navigation contains Settings, Billing, and Sign out. Sign out calls `supabase.auth.signOut()`, clears the client session, and redirects to `/login`. The mobile hamburger menu also includes a Sign out option. Settings is no longer in the main navigation bar — it was moved into the avatar dropdown. For parent users: the avatar shows the parent's own name/email (not the student's), with a "Managing: StudentName · Gr X" subtitle below. "Add Another Child" removed from the dropdown.
+**Sign out:** The user avatar dropdown in the top navigation contains Settings, Billing, and Sign out. Sign out calls `supabase.auth.signOut()`, clears the client session, and redirects to `/login`. The mobile hamburger menu also includes a Sign out option. Settings is no longer in the main navigation bar — it was moved into the avatar dropdown. The avatar and layout display the user's full name (from `firstName` + `lastName` columns) instead of the email prefix. For parent users: the avatar shows the parent's own name/email (not the student's), with a "Managing: StudentName · Gr X" subtitle below. "Add Another Child" removed from the dropdown.
 
 **Google OAuth first-time user provisioning:** The OAuth callback (`/api/v1/auth/callback`) detects first-time Google users (no `users` row for the auth ID) and provisions all app-level records: `users` (role: student, email verified: true), `accounts`, `account_members`, `student_profiles`, and `subscriptions` (14-day Plus trial with trialing status). The student name is extracted from Google profile metadata (`full_name`). First-time users are redirected to `/onboarding`; returning users go to their intended destination. If provisioning fails, the user is redirected to `/dashboard?error=setup_incomplete` for graceful recovery.
 
@@ -412,6 +412,8 @@ CREATE TABLE users (
   -- Authentication handled by Supabase Auth (auth.users); no credentials stored in public schema
   id                       UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   email                    TEXT UNIQUE NOT NULL,
+  first_name               TEXT,              -- set from email prefix at signup; editable via PATCH /api/v1/auth/me
+  last_name                TEXT,              -- editable via PATCH /api/v1/auth/me
   role                     TEXT NOT NULL CHECK (role IN ('student','parent','counselor','admin')),
   is_email_verified        BOOLEAN DEFAULT FALSE,
   date_of_birth            DATE,
@@ -507,6 +509,8 @@ CREATE TABLE account_invite_codes (
 ```
 
 > **Child invite flow (Phase 3):** Parents can invite a child (student) via email from Settings. When the student joins via the invite: (1) if the student already has an account, the parent is added as a member of the student's existing account; (2) if no account exists, a new account is created with both student and parent added as members. The active account auto-switches to the joined account.
+
+> **Family member removal (Phase 3 update):** Any member can remove other members (except themselves). The previous restriction preventing student removal has been lifted — non-student members can remove the student. Remove button shows for all members except self. Settings merges Family Members and Invite into a single collapsible card.
 
 > **Migration note (Phase 2):** All data tables (`four_year_plans`, `subscriptions`, `grade_entries`, `gpa_snapshots`, `goals`, `alerts`, `notifications`, `requirement_progress`, `dual_credit_log`) gain an `account_id UUID REFERENCES accounts(id)` column. The `four_year_plans` table gains `created_by UUID REFERENCES users(id)` and `visibility TEXT DEFAULT 'shared' CHECK (visibility IN ('shared', 'private'))`. The `student_parent_links` and `parent_invite_codes` tables are deprecated in favor of `account_members` and `accounts.claim_code`. subscriptions gains an account_id column alongside the existing user_id (both retained for backward compatibility during migration). Existing data is migrated by creating an account row per existing student user and updating all foreign keys.
 
@@ -617,6 +621,38 @@ CREATE TABLE stripe_events (
 
 CREATE INDEX idx_stripe_events_unprocessed ON stripe_events (received_at) WHERE processed = FALSE;
 ```
+
+### Table: `legal_documents`
+
+```sql
+CREATE TABLE legal_documents (
+  id            UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  type          TEXT NOT NULL CHECK (type IN ('terms_of_service', 'privacy_policy')),
+  version       TEXT NOT NULL,
+  content_url   TEXT NOT NULL,             -- path to rendered page (e.g., /terms, /privacy)
+  effective_at  TIMESTAMPTZ NOT NULL,
+  created_at    TIMESTAMPTZ DEFAULT NOW(),
+  UNIQUE (type, version)
+);
+```
+
+### Table: `consent_records`
+
+```sql
+CREATE TABLE consent_records (
+  id                  UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id             UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  legal_document_id   UUID NOT NULL REFERENCES legal_documents(id) ON DELETE RESTRICT,
+  consented_at        TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  ip_address          TEXT,
+  user_agent          TEXT,
+  UNIQUE (user_id, legal_document_id)
+);
+
+CREATE INDEX idx_consent_records_user ON consent_records (user_id);
+```
+
+> **Consent system (Phase 3):** `/terms` and `/privacy` pages render legal document content. `/consent` interstitial page shown to users who haven't accepted the current legal document versions — the app layout consent gate redirects unauthenticated-consent users before they can access any app page. Signup includes a consent checkbox. OAuth users are redirected to `/consent` after first login. Account deletion performs full cleanup: Stripe customer deleted, Supabase auth user deleted, Redis cache cleared, PostHog user data removed.
 
 ### Table: `account_events`
 
@@ -1265,7 +1301,8 @@ All routes: `/api/v1/...`. Version from day one.
 |---|---|---|---|
 | POST | `/api/v1/auth/signup` | — | Create user + subscription row (Plus plan, trialing status) |
 | GET | `/api/v1/auth/callback` | — | OAuth callback. Exchanges code for session. First-time users: provisions app records + redirects to /onboarding. Returning users: redirects to intended page. |
-| GET | `/api/v1/auth/me` | any authenticated | Returns logged-in user's email and role. | Phase 3 |
+| GET | `/api/v1/auth/me` | any authenticated | Returns logged-in user's email, role, first_name, and last_name. | Phase 3 |
+| PATCH | `/api/v1/auth/me` | any authenticated | Update first_name and/or last_name on the logged-in user. | Phase 3 |
 | GET | `/api/v1/plans` | member | List student's plans |
 | POST | `/api/v1/plans` | member (can_edit) | Create plan (check plan limit) |
 | PATCH | `/api/v1/plans/:id/set-primary` | student | Set plan as primary + active. Demotes old primary to draft. Student role only. Archived plans blocked (409). |
@@ -1329,7 +1366,8 @@ All routes: `/api/v1/...`. Version from day one.
 | GET | `/api/v1/accounts` | any | List accounts the user is a member of. Parents see multiple, students see one. | 1b |
 | POST | `/api/v1/accounts/:id/members` | member | Generate invite for new member. | 1b |
 | POST | `/api/v1/accounts/:id/members/join` | any | Join account with invite code. | 1b |
-| DELETE | `/api/v1/accounts/:id/members/:userId` | member | Remove a member (cannot remove the student). | 1b |
+| DELETE | `/api/v1/accounts/:id/members/:userId` | member | Remove a member. Any member can remove other members (except themselves). Students can be removed by non-student members. | 1b |
+| PATCH | `/api/v1/accounts/:id` | member | Update account fields (student_name). | Phase 3 |
 | PATCH | `/api/v1/accounts/:id/billing` | member | Transfer billing contact to another member. | 2 |
 | POST | `/api/v1/auth/onboarding` | student/parent | Complete onboarding (grade level, template, goals) | 1b |
 | GET | `/api/v1/plans/templates` | any | List all plan templates with courses | 1b |
@@ -2156,6 +2194,11 @@ Mobile (<640px):
   - Year-end transition workflow (grade locked after completion, lockedGradeLevels updated)
   - Grade-level locking: 409 on POST/DELETE/PATCH (non-waiver) for locked grades; GPA waiver toggle succeeds; lock/unlock via `POST /api/v1/plans/:id/lock-grade`
   - Upgrade flow (402 → checkout → plan unlocked)
+  - Consent flow (signup checkbox, `/consent` interstitial, consent gate redirect)
+  - Settings page (inline name editing, account editing, family member removal, password toggle)
+  - Legal pages (`/terms`, `/privacy` rendering)
+
+**Current test count: 250 total** (13 API tests for consent/auth-me/accounts, 20+ E2E tests for consent/settings/legal pages, plus existing plan/requirement/progress/planner tests).
 
 ### Test data
 
@@ -2506,4 +2549,4 @@ FERPA applies immediately. Before storing any school-transmitted data:
 
 ---
 
-*References: FEATURE_ANALYSIS.md (rev 8, 2026-04-01)*
+*References: FEATURE_ANALYSIS.md (rev 12, 2026-04-02)*

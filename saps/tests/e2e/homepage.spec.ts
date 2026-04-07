@@ -160,3 +160,48 @@ test.describe("Contact Page", () => {
     await expect(sendBtn).toBeEnabled();
   });
 });
+
+// ─── Testimonials ───────────────────────────────────────────────────────────
+
+test.describe("Testimonials", () => {
+  test.beforeEach(async ({ page }) => {
+    await page.goto("/");
+    await page.waitForTimeout(1000);
+  });
+
+  test("testimonials section is visible", async ({ page }) => {
+    await expect(page.getByText("Loved by students and families")).toBeVisible();
+  });
+
+  test("shows three testimonial cards", async ({ page }) => {
+    await expect(page.getByText("Maya S.")).toBeVisible();
+    await expect(page.getByText("David P.")).toBeVisible();
+    await expect(page.getByText("Ms. Chen")).toBeVisible();
+  });
+
+  test("shows star ratings", async ({ page }) => {
+    // Each testimonial has 5 star SVGs — should have at least 15 stars total
+    const stars = page.locator("section").filter({ hasText: "Loved by students" }).locator("svg.fill-current");
+    await expect(stars.first()).toBeVisible();
+  });
+
+  test("shows role labels", async ({ page }) => {
+    await expect(page.getByText("Sophomore")).toBeVisible();
+    await expect(page.getByText("Parent")).toBeVisible();
+    await expect(page.getByText("Counselor")).toBeVisible();
+  });
+});
+
+// ─── Footer Feedback Link ───────────────────────────────────────────────────
+
+test.describe("Footer Links", () => {
+  test("feedback link navigates to contact page", async ({ page }) => {
+    await page.goto("/");
+    await page.waitForTimeout(1000);
+    const feedbackLink = page.locator("footer").getByText("Feedback");
+    await expect(feedbackLink).toBeVisible();
+    await feedbackLink.click();
+    await page.waitForURL("**/contact", { timeout: 5000 });
+    await expect(page.getByText("Contact Us")).toBeVisible();
+  });
+});

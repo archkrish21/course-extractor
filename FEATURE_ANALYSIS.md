@@ -65,12 +65,13 @@ The platform uses a student-centric account model. Each `account` represents one
 
 ### Public Pages & Acquisition (Phase 3 — implemented)
 
-- **Public homepage (`/`):** Hero section with gradient text, animated stats bar (courses, prerequisites, requirements tracked), animated trial badge ("14-day free trial"). "Why SAPS?" problem section. 5 feature cards with unique color accents. 3-step timeline how-it-works. FAQ accordion. Final CTA ("Get Started Free"). Feature-flagged pricing and testimonials sections (dormant for v1 via `config/homepage-features.ts`: `showTestimonials: false`, `showContactPage: false`, `showPricing: false`).
-- **Public layout:** Shared by homepage, about, and contact pages. Sticky navbar with glass blur effect, logo, nav links (About, FAQ section anchor), Sign in button, Get Started Free CTA button. Mobile hamburger menu. Footer with Product/Legal/Connect columns, social media icons (Instagram, Facebook, Twitter, LinkedIn), feedback mailto link, school request link, copyright with disclaimer.
+- **Public homepage (`/`):** Hero section with gradient text, animated stats bar (courses, prerequisites, requirements tracked), animated trial badge ("14-day free trial"). "Why SAPS?" problem section. 5 feature cards with unique color accents. 3-step timeline how-it-works. FAQ accordion. Final CTA ("Get Started Free"). Feature-flagged pricing section (dormant for v1 via `config/homepage-features.ts`: `showPricing: false`). Testimonials section enabled (`showTestimonials: true`) with three placeholder testimonials (student/parent/counselor personas with star ratings).
+- **Public layout:** Shared by homepage, about, and contact pages. Sticky navbar with glass blur effect, logo, nav links (About, FAQ section anchor), Sign in button, Get Started Free CTA button. Mobile hamburger menu. Footer with Product/Legal/Connect columns, social media icons (Instagram, Facebook, Twitter, LinkedIn), feedback link (points to /contact page instead of mailto), school request link, copyright with disclaimer.
 - **About page (`/about`):** Story (origin and motivation), mission statement, what-we-do section (Plan/Track/Connect cards), looking-ahead section, disclaimer (personal planning tool, not affiliated with the school).
 - **Contact page (`/contact`):** Form with name, email, subject, message fields. Submissions stored in `contact_messages` table via `POST /api/v1/contact` (no auth required). Feature-flagged and dormant for v1 (`showContactPage: false`).
 - **SEO:** Root layout includes meta description, keywords, and Open Graph tags (og:title, og:description, og:type, og:url).
-- **Database:** New `contact_messages` table (name, email, subject, message, created_at).
+- **Database:** New `contact_messages` table (name, email, subject, message, created_at). New `feedback` table (id, user_id FK users SET NULL on delete, rating 1-5, comment, page, created_at).
+- **In-app feedback widget:** Floating "Feedback" button on all authenticated app pages (bottom-right). Opens panel with 5-star rating + optional comment. Captures current page path. Stores in `feedback` table via `POST /api/v1/feedback` (auth required). Success animation, auto-closes.
 
 **Onboarding flow for existing students** (non-freshman) is critical: students must be able to enter grades already completed before using the planner. Without prior grade history, the GPA calculator and requirement progress tracker are meaningless. Make bulk entry fast — a table-style entry form, not one course at a time.
 
@@ -1121,7 +1122,7 @@ CREATE INDEX idx_requirement_progress_student ON requirement_progress (student_i
 - **Phase 1b:** four_year_plans, plan_courses, plan_history, subscription_plans (seed only)
 - **Phase 2:** accounts, account_members, account_invite_codes, grade_entries, gpa_snapshots, subscriptions, account_events, requirement_progress, graduation_requirements, student_requirement_status, student_requirement_opt_ins, stripe_events. Schema changes: `priceFourYear` column on `subscription_plans`; `four_year` added to `billing_cycle` check constraint on `subscriptions`. Drizzle migrations in `lib/db/migrations/`.
 - **Phase 2 (deprecated):** ~~student_parent_links~~, ~~parent_invite_codes~~ — superseded by accounts model
-- **Phase 3:** alerts, notifications, dual_credit_log, plan_share_links, school_requests, contact_messages
+- **Phase 3:** alerts, notifications, dual_credit_log, plan_share_links, school_requests, contact_messages, feedback
 - **Phase 4:** career_paths, career_path_courses, ai_recommendations (if persisted)
 - **Phase 5:** counselor_student_links, goals
 
@@ -1516,13 +1517,15 @@ Phase 5 includes a formal WCAG audit and remediation of any gaps, but the core p
 - ✅ Counselor role: joins with canEdit: false (view-only), can view plans/progress/grades, cannot modify or invite. Future: comments/suggestions on shared plans.
 - ✅ Billing updates: pricing cards show linked accounts per tier and PDF/print for Plus; 4-year subscription shows "Expires" instead of "Renews" (one-time payment)
 - ✅ Consent system (`legal_documents` + `consent_records` tables, `/terms` and `/privacy` pages, `/consent` interstitial, consent gate in app layout, signup checkbox, OAuth redirect to consent, account deletion with full cleanup)
-- ✅ Public homepage (`/`): hero section with gradient text, animated stats bar, animated trial badge, "Why SAPS?" problem section, 5 feature cards with unique color accents, 3-step timeline how-it-works, FAQ accordion, final CTA. Feature-flagged pricing and testimonials sections (dormant for v1 via `config/homepage-features.ts`: `showTestimonials`, `showContactPage`, `showPricing` all false)
-- ✅ Public layout: sticky navbar with glass blur effect, logo, nav links (About, FAQ), Sign in and Get Started Free CTA, mobile hamburger menu. Footer with Product/Legal/Connect columns, social media icons (Instagram, Facebook, Twitter, LinkedIn), feedback mailto, school request link, copyright with disclaimer
+- ✅ Public homepage (`/`): hero section with gradient text, animated stats bar, animated trial badge, "Why SAPS?" problem section, 5 feature cards with unique color accents, 3-step timeline how-it-works, FAQ accordion, final CTA. Feature-flagged pricing section (dormant for v1). Testimonials section enabled (`showTestimonials: true`) with three placeholder testimonials (student/parent/counselor personas with star ratings)
+- ✅ Public layout: sticky navbar with glass blur effect, logo, nav links (About, FAQ), Sign in and Get Started Free CTA, mobile hamburger menu. Footer with Product/Legal/Connect columns, social media icons (Instagram, Facebook, Twitter, LinkedIn), feedback link (points to /contact page), school request link, copyright with disclaimer
 - ✅ About page (`/about`): story, mission, what-we-do (Plan/Track/Connect cards), looking ahead, disclaimer
 - ✅ Contact page (`/contact`): form with name/email/subject/message, stored in `contact_messages` table via `POST /api/v1/contact` (no auth required). Feature-flagged (dormant for v1)
 - ✅ SEO: meta description, keywords, Open Graph tags on root layout
 - ✅ `contact_messages` table for contact form submissions
-- ✅ 266 total tests (17 E2E for homepage/about/contact + 5 API for contact endpoint + existing plan/requirement/progress/planner/consent/settings/legal/linked-accounts tests)
+- ✅ `feedback` table (id, user_id FK users SET NULL on delete, rating 1-5, comment, page, created_at)
+- ✅ In-app feedback widget: floating "Feedback" button on all app pages (bottom-right), 5-star rating + optional comment, captures page path, `POST /api/v1/feedback` (auth required), success animation, auto-closes
+- ✅ 272 total tests (17 E2E for homepage/about/contact + 5 API for contact endpoint + 6 API for feedback endpoint + 5 E2E for feedback widget + 5 E2E for testimonials + footer link + existing plan/requirement/progress/planner/consent/settings/legal/linked-accounts tests)
 - Drag-and-drop planner grid upgrade
 - Plan history / undo (last 20 changes)
 - Prerequisite graph visualization (DAG view)

@@ -200,7 +200,7 @@ User → Next.js frontend → API routes → PostgreSQL (Supabase + RLS)
 ├── config/
 │   ├── gpa-weights.ts          # CONFIGURABLE — get from school before coding
 │   ├── grade-scale.ts          # letter → GPA points mapping + isPassFailCourse() + PASS_FAIL_OPTIONS
-│   ├── homepage-features.ts    # Feature flags: showTestimonials, showContactPage, showPricing (all false for v1)
+│   ├── homepage-features.ts    # Feature flags: showTestimonials (true), showContactPage (false), showPricing (false)
 │   └── subscription-plans.ts   # tier feature flags (mirrors DB seed)
 ├── scripts/
 │   └── seed.ts                 # Drizzle seed runner (npm run db:seed)
@@ -223,7 +223,7 @@ User → Next.js frontend → API routes → PostgreSQL (Supabase + RLS)
 
 All pages under the `(app)/` route group require authentication. The app layout checks the Supabase session on mount and redirects unauthenticated users to `/login?redirect=...`.
 
-**Public pages (Phase 3 — no auth required):** Pages under the `(public)/` route group are accessible without authentication. They share a public layout with a sticky navbar (glass blur effect, logo, nav links for About and FAQ section anchor, Sign in button, Get Started Free CTA) and a footer (Product/Legal/Connect columns, social media icons for Instagram/Facebook/Twitter/LinkedIn, feedback mailto link, school request link, copyright with disclaimer). Mobile uses a hamburger menu. The homepage (`/`) includes a hero section with gradient text, animated stats bar, animated trial badge, "Why SAPS?" problem section, 5 feature cards with unique color accents, 3-step timeline how-it-works, FAQ accordion, and final CTA. Feature-flagged pricing and testimonials sections are dormant for v1 (controlled by `config/homepage-features.ts`: `showTestimonials`, `showContactPage`, `showPricing` all false). The about page (`/about`) has story, mission, what-we-do (Plan/Track/Connect cards), looking ahead, and disclaimer sections. The contact page (`/contact`) has a form with name/email/subject/message fields, submitted to `POST /api/v1/contact` (no auth) and stored in `contact_messages` table; it is feature-flagged and dormant for v1.
+**Public pages (Phase 3 — no auth required):** Pages under the `(public)/` route group are accessible without authentication. They share a public layout with a sticky navbar (glass blur effect, logo, nav links for About and FAQ section anchor, Sign in button, Get Started Free CTA) and a footer (Product/Legal/Connect columns, social media icons for Instagram/Facebook/Twitter/LinkedIn, feedback link pointing to /contact page, school request link, copyright with disclaimer). Mobile uses a hamburger menu. The homepage (`/`) includes a hero section with gradient text, animated stats bar, animated trial badge, "Why SAPS?" problem section, 5 feature cards with unique color accents, 3-step timeline how-it-works, FAQ accordion, and final CTA. Feature-flagged pricing section dormant for v1 (`showPricing: false`). Testimonials section enabled (`showTestimonials: true`) with three placeholder testimonials (student/parent/counselor personas with star ratings). The about page (`/about`) has story, mission, what-we-do (Plan/Track/Connect cards), looking ahead, and disclaimer sections. The contact page (`/contact`) has a form with name/email/subject/message fields, submitted to `POST /api/v1/contact` (no auth) and stored in `contact_messages` table; it is feature-flagged and dormant for v1.
 
 **SEO (Phase 3):** Root layout includes meta description, keywords, and Open Graph tags (og:title, og:description, og:type, og:url). Optimized for search terms: "Stevenson High School course planner", "high school academic planner", "4-year plan tool".
 
@@ -549,7 +549,22 @@ CREATE TABLE contact_messages (
 );
 ```
 
-> **Contact form (Phase 3):** The contact page (`/contact`) submits to `POST /api/v1/contact` (no auth required) and stores messages in the `contact_messages` table. The contact page is feature-flagged via `config/homepage-features.ts` (`showContactPage: false` for v1).
+### Table: `feedback`
+
+```sql
+CREATE TABLE feedback (
+  id          UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id     UUID REFERENCES users(id) ON DELETE SET NULL,
+  rating      INTEGER NOT NULL CHECK (rating >= 1 AND rating <= 5),
+  comment     TEXT,
+  page        TEXT NOT NULL,
+  created_at  TIMESTAMPTZ DEFAULT NOW()
+);
+```
+
+> **Contact form (Phase 3):** The contact page (`/contact`) submits to `POST /api/v1/contact` (no auth required) and stores messages in the `contact_messages` table. The contact page is feature-flagged via `config/homepage-features.ts` (`showContactPage: false` for v1). Footer feedback link now points to `/contact` page instead of mailto.
+
+> **In-app feedback widget (Phase 3):** Floating "Feedback" button on all authenticated app pages (bottom-right). Opens panel with 5-star rating + optional comment. Captures current page path. Stores in `feedback` table via `POST /api/v1/feedback` (auth required). Success animation, auto-closes.
 
 > **School request system (Phase 3):** Signup page includes frozen state/school fields with a "Request yours" link. The school request form submits to `POST /api/v1/school-request` (no auth required) and stores requests in the `school_requests` table for future outreach and multi-school expansion.
 
@@ -1424,6 +1439,7 @@ All routes: `/api/v1/...`. Version from day one.
 | PATCH | `/api/v1/accounts/:id` | member | Update account fields (student_name). | Phase 3 |
 | POST | `/api/v1/school-request` | — (no auth) | Submit a school request (email, school_name, state, message). Stored in `school_requests` table for future outreach. | Phase 3 |
 | POST | `/api/v1/contact` | — (no auth) | Submit a contact form message (name, email, subject, message). Stored in `contact_messages` table. Feature-flagged via `showContactPage`. | Phase 3 |
+| POST | `/api/v1/feedback` | any authenticated | Submit feedback (rating 1-5, optional comment, page path). Stored in `feedback` table. | Phase 3 |
 | PATCH | `/api/v1/accounts/:id/billing` | member | Transfer billing contact to another member. | 2 |
 | POST | `/api/v1/auth/onboarding` | student/parent | Complete onboarding (grade level, template, goals) | 1b |
 | GET | `/api/v1/plans/templates` | any | List all plan templates with courses | 1b |
@@ -2259,9 +2275,12 @@ Mobile (<640px):
   - About page (`/about`): story, mission, Plan/Track/Connect cards, disclaimer rendering
   - Contact page (`/contact`): form submission, validation, feature flag gating
   - Public layout: navbar links, footer columns, social media icons, mobile hamburger menu
+  - Feedback widget: floating button rendering, 5-star rating submission, comment field, page path capture, success animation
+  - Testimonials: three placeholder testimonials visible on home page, star ratings displayed
+  - Footer: feedback link points to /contact page
   - SEO: meta description, Open Graph tags on root layout
 
-**Current test count: 266 total** (17 E2E tests for homepage/about/contact, 5 API tests for contact endpoint, 13 API tests for consent/auth-me/accounts, 20+ E2E tests for consent/settings/legal pages, counselor invite/join tests, linked accounts limit tests, E2E for linked accounts UI, plus existing plan/requirement/progress/planner tests).
+**Current test count: 272 total** (17 E2E tests for homepage/about/contact, 5 API tests for contact endpoint, 6 API tests for feedback endpoint, 5 E2E tests for feedback widget, 5 E2E tests for testimonials + footer link, 13 API tests for consent/auth-me/accounts, 20+ E2E tests for consent/settings/legal pages, counselor invite/join tests, linked accounts limit tests, E2E for linked accounts UI, plus existing plan/requirement/progress/planner tests).
 
 ### Test data
 

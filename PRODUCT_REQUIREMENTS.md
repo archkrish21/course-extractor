@@ -429,7 +429,8 @@ The rigor score is recomputed nightly by the percentile stats job (Elite tier). 
 | US-102 | As a visitor, I want to read about the team and mission on an About page so I can understand who built SAPS. **Implemented (Phase 3):** `/about` page with story, mission, Plan/Track/Connect cards, looking ahead, disclaimer. | Should | 3 |
 | US-103 | As a visitor, I want to submit a contact form with my name, email, subject, and message so I can ask questions or provide feedback. **Implemented (Phase 3):** `/contact` page with form, stored in `contact_messages` table via `POST /api/v1/contact` (no auth). Feature-flagged dormant for v1. | Should | 3 |
 | US-104 | As a visitor, I want the homepage to have proper SEO metadata so it ranks well in search for "Stevenson High School course planner" and similar terms. **Implemented (Phase 3):** Meta description, keywords, Open Graph tags on root layout. | Must | 3 |
-| US-105 | As a visitor, I want to see a footer with product links, legal pages, and social media links so I can find more information about SAPS. **Implemented (Phase 3):** Footer with Product/Legal/Connect columns, social icons (Instagram, Facebook, Twitter, LinkedIn), feedback mailto, school request link. | Should | 3 |
+| US-105 | As a visitor, I want to see a footer with product links, legal pages, and social media links so I can find more information about SAPS. **Implemented (Phase 3):** Footer with Product/Legal/Connect columns, social icons (Instagram, Facebook, Twitter, LinkedIn), feedback link (points to /contact page), school request link. | Should | 3 |
+| US-106 | As a logged-in user, I want to submit feedback from any app page via a floating widget so I can rate my experience and leave comments. **Implemented (Phase 3):** Floating "Feedback" button (bottom-right) on all app pages. Opens panel with 5-star rating + optional comment. Captures current page path. Stores in `feedback` table via `POST /api/v1/feedback` (auth required). Success animation, auto-closes. | Should | 3 |
 
 ---
 
@@ -1187,13 +1188,14 @@ A public-facing homepage and supporting pages are required before user acquisiti
 - 3-step timeline how-it-works section
 - FAQ accordion for common questions
 - Final CTA: "Get Started Free"
-- Feature-flagged sections (dormant for v1): pricing table, testimonials. Controlled via `config/homepage-features.ts` (`showTestimonials: false`, `showContactPage: false`, `showPricing: false`)
+- Feature-flagged pricing section (dormant for v1). Controlled via `config/homepage-features.ts` (`showPricing: false`)
+- Testimonials section enabled (`showTestimonials: true`): three placeholder testimonials (student/parent/counselor personas with star ratings)
 - Mobile-responsive
 
 **Public layout (shared by homepage, about, contact):**
 - Sticky navbar with glass blur effect, logo, nav links (About, FAQ section anchor), Sign in button, Get Started Free CTA button
 - Mobile hamburger menu with the same links
-- Footer with three columns (Product / Legal / Connect), social media icons (Instagram, Facebook, Twitter, LinkedIn), feedback mailto link, school request link, copyright with disclaimer
+- Footer with three columns (Product / Legal / Connect), social media icons (Instagram, Facebook, Twitter, LinkedIn), feedback link (points to /contact page instead of mailto), school request link, copyright with disclaimer
 
 **About page (`/about`) — implemented (Phase 3):**
 - Story section (origin and motivation)
@@ -1206,6 +1208,13 @@ A public-facing homepage and supporting pages are required before user acquisiti
 - Form with name, email, subject, message fields
 - Submissions stored in `contact_messages` table via `POST /api/v1/contact` (no auth required)
 - Hidden from navigation when `showContactPage` is false
+
+**In-app feedback widget — implemented (Phase 3):**
+- Floating "Feedback" button on all authenticated app pages (bottom-right corner)
+- Opens panel with 5-star rating + optional comment text field
+- Captures current page path automatically
+- Stores in `feedback` table via `POST /api/v1/feedback` (auth required)
+- Success animation on submit, panel auto-closes
 
 **SEO — implemented (Phase 3):**
 - Meta description, keywords, and Open Graph tags on root layout

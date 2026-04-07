@@ -136,7 +136,7 @@ export default function PublicLayout({ children }: { children: React.ReactNode }
                 {HOME_FEATURES.showContactPage && (
                   <li><Link href="/contact" className="text-sm text-muted-foreground hover:text-foreground">Contact Us</Link></li>
                 )}
-                <li><a href="mailto:feedback@saps.app" className="text-sm text-muted-foreground hover:text-foreground">Feedback</a></li>
+                <li><Link href="/contact" className="text-sm text-muted-foreground hover:text-foreground">Feedback</Link></li>
               </ul>
             </div>
 

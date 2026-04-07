@@ -2,7 +2,8 @@ import { NextRequest } from "next/server";
 import { z } from "zod";
 import { db } from "@/lib/db";
 import { accountMembers, accountInviteCodes, accounts, users } from "@/lib/db/schema";
-import { eq, and } from "drizzle-orm";
+import { eq, and, count } from "drizzle-orm";
+import { getEffectiveTier } from "@/lib/subscription/middleware";
 import { successResponse, errorResponse } from "@/lib/api/response";
 import { requireAuth, getAccountContext } from "@/lib/auth/get-user";
 import { sendEmail } from "@/lib/email/client";
@@ -18,7 +19,7 @@ function generateInviteCode(): string {
 }
 
 const inviteSchema = z.object({
-  target_role: z.enum(["student", "parent", "guardian"]),
+  target_role: z.enum(["student", "parent", "guardian", "counselor"]),
   email: z.string().email().optional(),
 });
 
@@ -103,6 +104,25 @@ export async function POST(request: NextRequest, context: RouteContext) {
     }
 
     const { target_role } = parsed.data;
+
+    // Check linked accounts limit based on subscription tier
+    const tier = await getEffectiveTier({ accountId, userId: user.id });
+    const [memberCount] = await db
+      .select({ count: count() })
+      .from(accountMembers)
+      .where(eq(accountMembers.accountId, accountId));
+
+    const currentCount = memberCount?.count ?? 0;
+    const maxLinked = tier.maxLinkedAccounts ?? 3;
+
+    if (currentCount >= maxLinked) {
+      return errorResponse(
+        "UPGRADE_REQUIRED",
+        `Linked accounts limit reached (${maxLinked}). Upgrade your subscription to link more accounts.`,
+        402,
+        { current_count: currentCount, max: maxLinked, minimum_tier: currentCount >= 5 ? "elite" : "plus" }
+      );
+    }
 
     // Generate invite code with 7-day expiry
     const inviteCode = generateInviteCode();

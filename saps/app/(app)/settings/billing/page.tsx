@@ -32,7 +32,7 @@ const PLANS = [
     monthly: 0,
     annual: 0,
     fourYear: 0,
-    features: ["1 plan", "Course browser", "Prerequisite validation", "GPA tracking"],
+    features: ["1 plan", "3 linked accounts", "Course browser", "Prerequisite validation", "GPA tracking"],
   },
   {
     name: "plus",
@@ -41,7 +41,7 @@ const PLANS = [
     monthly: 9.99,
     annual: 107.88,
     fourYear: 399,
-    features: ["10 plans", "What-if GPA", "Plan comparison", "PDF export", "Share links", "Goal tracking", "Full alerts", "Parent plan drafts"],
+    features: ["10 plans", "5 linked accounts", "What-if GPA", "Plan comparison", "PDF export/print", "Share links", "Goal tracking", "Full alerts", "Parent plan drafts"],
   },
   {
     name: "elite",
@@ -50,7 +50,7 @@ const PLANS = [
     monthly: 19.99,
     annual: 215.88,
     fourYear: 799,
-    features: ["Unlimited plans", "Everything in Plus", "AI course suggestions", "AI plan review", "AI chat", "Percentile comparison", "Course rigor scoring"],
+    features: ["Unlimited plans", "8 linked accounts", "Everything in Plus", "AI course suggestions", "AI plan review", "AI chat", "Percentile comparison", "Course rigor scoring"],
   },
 ];
 
@@ -210,7 +210,9 @@ export default function BillingPage() {
               {subscription.billingCycle === "four_year" ? "4-year" : subscription.billingCycle} billing
               {subscription.cancelAtPeriodEnd
                 ? ` · Cancels on ${new Date(subscription.currentPeriodEnd).toLocaleDateString()}`
-                : ` · Renews on ${new Date(subscription.currentPeriodEnd).toLocaleDateString()}`}
+                : subscription.billingCycle === "four_year"
+                  ? ` · Expires on ${new Date(subscription.currentPeriodEnd).toLocaleDateString()}`
+                  : ` · Renews on ${new Date(subscription.currentPeriodEnd).toLocaleDateString()}`}
             </p>
           )}
         </CardContent>

@@ -1116,7 +1116,7 @@ export const accountInviteCodes = pgTable(
       .references(() => accounts.id, { onDelete: "cascade" }),
     code: varchar("code", { length: 8 }).notNull().unique(),
     targetRole: text("target_role", {
-      enum: ["student", "parent", "guardian"],
+      enum: ["student", "parent", "guardian", "counselor"],
     }).notNull(),
     expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
     createdBy: uuid("created_by")

@@ -24,6 +24,7 @@ export interface SubscriptionPlanDef {
   priceAnnual: number | null;
   priceFourYear: number | null;
   maxPlans: number | null; // null = unlimited
+  maxLinkedAccounts: number;
   features: SubscriptionFeatures;
 }
 
@@ -35,6 +36,7 @@ export const SUBSCRIPTION_PLANS: SubscriptionPlanDef[] = [
     priceAnnual: null,
     priceFourYear: null,
     maxPlans: 1,
+    maxLinkedAccounts: 3,
     features: {
       can_create_goals: false,
       can_use_ai: false,
@@ -55,6 +57,7 @@ export const SUBSCRIPTION_PLANS: SubscriptionPlanDef[] = [
     priceAnnual: 107.88,
     priceFourYear: 399,
     maxPlans: 10,
+    maxLinkedAccounts: 5,
     features: {
       can_create_goals: true,
       can_use_ai: false,
@@ -75,6 +78,7 @@ export const SUBSCRIPTION_PLANS: SubscriptionPlanDef[] = [
     priceAnnual: 215.88,
     priceFourYear: 799,
     maxPlans: null, // unlimited
+    maxLinkedAccounts: 8,
     features: {
       can_create_goals: true,
       can_use_ai: true,
@@ -98,6 +102,7 @@ export const SUBSCRIPTION_PLANS: SubscriptionPlanDef[] = [
 export const TRIAL_CONFIG = {
   durationDays: 14,
   maxPlans: 2,
+  maxLinkedAccounts: 3,
   canUseAI: false,
   features: {
     can_create_goals: true,

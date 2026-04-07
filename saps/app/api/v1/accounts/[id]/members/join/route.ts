@@ -174,12 +174,12 @@ export async function POST(request: NextRequest, context: RouteContext) {
             .onConflictDoNothing();
         }
       } else {
-        // Parent/guardian joining: add them to the existing account
+        // Parent/guardian/counselor joining: add them to the existing account
         await tx.insert(accountMembers).values({
           accountId,
           userId: user.id,
           role: invite.targetRole,
-          canEdit: true,
+          canEdit: invite.targetRole !== "counselor",
           invitedBy: invite.createdBy,
         });
       }

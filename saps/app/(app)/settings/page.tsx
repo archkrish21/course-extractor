@@ -270,10 +270,10 @@ export default function SettingsPage() {
           </div>
         </section>
 
-        {/* ─── Family Members ───────────────────────────────────── */}
+        {/* ─── Linked Accounts ───────────────────────────────────── */}
         <section>
           <h2 className="mb-4 text-xs font-semibold uppercase tracking-widest text-muted-foreground">
-            Family Members
+            Linked Accounts
             {otherMembers.length > 0 && <span className="ml-1 text-muted-foreground/50">({otherMembers.length})</span>}
           </h2>
 
@@ -312,32 +312,55 @@ export default function SettingsPage() {
               ))}
 
               {otherMembers.length === 0 && (
-                <p className="py-2 text-sm text-muted-foreground">No family members linked yet.</p>
+                <p className="py-2 text-sm text-muted-foreground">No linked accounts yet.</p>
               )}
 
-              {/* Invite */}
-              <div className="flex flex-col gap-2 pt-2 sm:flex-row">
-                <input type="email" value={inviteEmail} onChange={(e) => setInviteEmail(e.target.value)}
-                  placeholder="Invite by email..."
-                  className="h-9 flex-1 rounded-lg border border-border bg-background px-3 text-sm placeholder:text-muted-foreground focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring" />
-                <select value={inviteRole} onChange={(e) => setInviteRole(e.target.value)}
-                  className="h-9 rounded-lg border border-border bg-background px-3 text-sm">
-                  {currentAccount?.role === "parent" && <option value="student">Child</option>}
-                  <option value="parent">Parent</option>
-                  <option value="guardian">Guardian</option>
-                </select>
-                <Button size="sm" onClick={handleSendInvite} disabled={generating || !inviteEmail.trim()}>
-                  {generating ? "Sending..." : "Invite"}
-                </Button>
-              </div>
-              {inviteSent && inviteCode && (
-                <p className="flex items-center gap-1.5 text-xs text-success">
-                  <svg aria-hidden="true" className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="m4.5 12.75 6 6 9-13.5" />
-                  </svg>
-                  Sent! Code: <span className="font-mono font-semibold">{inviteCode}</span>
-                </p>
-              )}
+              {/* Invite — hidden for counselors (view-only role) */}
+              {currentAccount?.role !== "counselor" && (() => {
+                const tier = currentAccount?.subscriptionTier ?? "starter";
+                const maxLinked = tier === "elite" ? 8 : tier === "plus" ? 5 : 3;
+                const totalMembers = members.length; // includes self
+                const atLimit = totalMembers >= maxLinked;
+
+                return (
+                <>
+                  <div className="flex flex-col gap-2 pt-2 sm:flex-row">
+                    <input type="email" value={inviteEmail} onChange={(e) => setInviteEmail(e.target.value)}
+                      placeholder="Invite by email..."
+                      disabled={atLimit}
+                      className={`h-9 flex-1 rounded-lg border border-border bg-background px-3 text-sm placeholder:text-muted-foreground focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring ${atLimit ? "opacity-50" : ""}`} />
+                    <select value={inviteRole} onChange={(e) => setInviteRole(e.target.value)}
+                      disabled={atLimit}
+                      className={`h-9 rounded-lg border border-border bg-background px-3 text-sm ${atLimit ? "opacity-50" : ""}`}>
+                      {currentAccount?.role === "parent" && <option value="student">Child</option>}
+                      <option value="parent">Parent</option>
+                      <option value="guardian">Guardian</option>
+                      <option value="counselor">Counselor</option>
+                    </select>
+                    <Button size="sm" onClick={handleSendInvite} disabled={generating || !inviteEmail.trim() || atLimit}>
+                      {generating ? "Sending..." : "Invite"}
+                    </Button>
+                  </div>
+                  <p className="text-[11px] text-muted-foreground">
+                    {totalMembers}/{maxLinked} linked accounts used
+                    {atLimit && (
+                      <span className="text-warning">
+                        {" "}· Limit reached.{" "}
+                        <Link href="/settings/billing" className="text-primary hover:underline">Upgrade</Link> for more.
+                      </span>
+                    )}
+                  </p>
+                  {inviteSent && inviteCode && (
+                    <p className="flex items-center gap-1.5 text-xs text-success">
+                      <svg aria-hidden="true" className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="m4.5 12.75 6 6 9-13.5" />
+                      </svg>
+                      Sent! Code: <span className="font-mono font-semibold">{inviteCode}</span>
+                    </p>
+                  )}
+                </>
+                );
+              })()}
             </div>
           )}
         </section>
@@ -355,7 +378,7 @@ export default function SettingsPage() {
               )}
               {nextPayment && currentAccount?.subscriptionTier !== "trial" && currentAccount?.subscriptionTier !== "starter" && (
                 <span className="text-xs text-muted-foreground">
-                  · Renews {new Date(nextPayment).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
+                  · {billingCycle === "four_year" ? "Expires" : "Renews"} {new Date(nextPayment).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
                 </span>
               )}
             </div>

@@ -18,6 +18,7 @@ export interface SubscriptionContext {
   freezeReason: string | null;
   canUseAI: boolean;
   maxPlans: number;
+  maxLinkedAccounts: number;
   canWhatIf: boolean;
   canComparePlans: boolean;
   canExportPdf: boolean;
@@ -34,6 +35,7 @@ const STARTER_DEFAULTS: SubscriptionContext = {
   freezeReason: null,
   canUseAI: false,
   maxPlans: 1,
+  maxLinkedAccounts: 3,
   canWhatIf: false,
   canComparePlans: false,
   canExportPdf: false,
@@ -243,6 +245,7 @@ function extractFeatures(features: Record<string, unknown>, maxPlans: number | n
   return {
     canUseAI: !!features.can_use_ai,
     maxPlans: maxPlans ?? Infinity,
+    maxLinkedAccounts: (features.max_linked_accounts as number) ?? 3,
     canWhatIf: !!features.can_what_if,
     canComparePlans: !!features.can_compare_plans,
     canExportPdf: !!features.can_export_pdf,
@@ -271,6 +274,7 @@ function computeEffectiveTier(row: SubscriptionRow): SubscriptionContext {
         freezeReason,
         canUseAI: false,
         maxPlans: 2,
+        maxLinkedAccounts: 3,
         canWhatIf: true,
         canComparePlans: false,
         canExportPdf: false,

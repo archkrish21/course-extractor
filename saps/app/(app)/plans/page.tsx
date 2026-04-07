@@ -121,6 +121,11 @@ export default function PlansPage() {
     );
   }
 
+  const formatDate = (dateStr: string) => {
+    const d = new Date(dateStr);
+    return d.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
+  };
+
   const renderPlanCard = (plan: Plan) => {
     const isOwner = plan.permission === "owner" || !plan.permission;
     const perm = plan.permission ?? "owner";
@@ -128,122 +133,139 @@ export default function PlansPage() {
 
     return (
       <Card key={plan.id} className={`transition-opacity ${isHidden ? "opacity-60" : ""}`}>
-        <CardContent className="flex items-start gap-4 py-4">
-          {/* Plan info */}
-          <div className="min-w-0 flex-1">
-            <div className="flex items-center gap-2 flex-wrap">
-              <Link
-                href={`/planner?planId=${plan.id}`}
-                className="text-base font-semibold text-foreground hover:text-primary transition-colors"
-              >
-                {plan.name}
-              </Link>
-              {plan.isPrimary && (
-                <Badge className="bg-primary/10 text-primary text-[10px]">Primary</Badge>
-              )}
-              <Badge
-                className={`text-[10px] ${
-                  plan.status === "active"
-                    ? "bg-success/10 text-success"
-                    : plan.status === "archived"
-                      ? "bg-muted text-muted-foreground"
-                      : "bg-warning/10 text-warning"
-                }`}
-              >
-                {plan.status}
-              </Badge>
-              <Badge className={`text-[10px] ${PERMISSION_COLORS[perm]}`}>
-                {PERMISSION_LABELS[perm]}
-              </Badge>
-              {isHidden && (
-                <Badge className="bg-muted text-muted-foreground text-[10px]">Hidden</Badge>
-              )}
+        <CardContent className="p-5">
+          <div className="flex items-start justify-between gap-4">
+            {/* Plan info */}
+            <div className="min-w-0 flex-1">
+              <div className="flex items-center gap-2 flex-wrap">
+                <Link
+                  href={`/planner?planId=${plan.id}`}
+                  className="text-base font-semibold text-foreground hover:text-primary transition-colors"
+                >
+                  {plan.name}
+                </Link>
+                {plan.isPrimary && (
+                  <Badge className="bg-primary/10 text-primary">Primary</Badge>
+                )}
+              </div>
+
+              <div className="mt-2 flex items-center gap-2 flex-wrap">
+                <Badge
+                  variant={
+                    plan.status === "active"
+                      ? "success"
+                      : plan.status === "archived"
+                        ? "default"
+                        : "warning"
+                  }
+                >
+                  {plan.status.charAt(0).toUpperCase() + plan.status.slice(1)}
+                </Badge>
+                <Badge className={PERMISSION_COLORS[perm]}>
+                  {PERMISSION_LABELS[perm]}
+                </Badge>
+                {isHidden && (
+                  <Badge variant="default">Hidden</Badge>
+                )}
+              </div>
+
+              <div className="mt-2 flex items-center gap-3 text-xs text-muted-foreground">
+                <span>{plan.courseCount} course{plan.courseCount !== 1 ? "s" : ""}</span>
+                <span className="text-border">|</span>
+                <span>{formatDate(plan.createdAt)}</span>
+                {!isOwner && plan.creatorEmail && (
+                  <>
+                    <span className="text-border">|</span>
+                    <span>by {plan.creatorEmail}</span>
+                  </>
+                )}
+                {isOwner && plan.sharedCount > 0 && (
+                  <>
+                    <span className="text-border">|</span>
+                    <span>Shared with {plan.sharedCount}</span>
+                  </>
+                )}
+                {plan.lockedGradeLevels && plan.lockedGradeLevels.length > 0 && (
+                  <>
+                    <span className="text-border">|</span>
+                    <span className="flex items-center gap-0.5">
+                      <svg aria-hidden="true" className="h-3 w-3" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 1 0-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 0 0 2.25-2.25v-6.75a2.25 2.25 0 0 0-2.25-2.25H6.75a2.25 2.25 0 0 0-2.25 2.25v6.75a2.25 2.25 0 0 0 2.25 2.25Z" />
+                      </svg>
+                      Gr {plan.lockedGradeLevels.join(", ")} locked
+                    </span>
+                  </>
+                )}
+              </div>
             </div>
 
-            <div className="mt-1 flex items-center gap-3 text-xs text-muted-foreground">
-              <span>{plan.courseCount} courses</span>
-              {!isOwner && plan.creatorEmail && (
-                <span>by {plan.creatorEmail}</span>
-              )}
-              {isOwner && plan.sharedCount > 0 && (
-                <span>Shared with {plan.sharedCount}</span>
-              )}
-              {plan.lockedGradeLevels && plan.lockedGradeLevels.length > 0 && (
-                <span className="flex items-center gap-0.5">
-                  <svg aria-hidden="true" className="h-3 w-3" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 1 0-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 0 0 2.25-2.25v-6.75a2.25 2.25 0 0 0-2.25-2.25H6.75a2.25 2.25 0 0 0-2.25 2.25v6.75a2.25 2.25 0 0 0 2.25 2.25Z" />
+            {/* Actions */}
+            <div className="flex shrink-0 items-center gap-1.5">
+              {/* Edit / Open in planner */}
+              <Link href={`/planner?planId=${plan.id}`}>
+                <Button variant="outline" size="sm" className="h-8 px-2.5 text-xs">
+                  <svg aria-hidden="true" className="mr-1 h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0 1 15.75 21H5.25A2.25 2.25 0 0 1 3 18.75V8.25A2.25 2.25 0 0 1 5.25 6H10" />
                   </svg>
-                  Gr {plan.lockedGradeLevels.join(", ")} locked
+                  Edit
+                </Button>
+              </Link>
+
+              {/* Share button (owner only) */}
+              {isOwner && currentAccount && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="h-8 px-2.5 text-xs"
+                  onClick={() => setShareModal({ planId: plan.id, planName: plan.name, createdBy: plan.createdBy ?? "" })}
+                  title="Share plan"
+                >
+                  <svg aria-hidden="true" className="mr-1 h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M7.217 10.907a2.25 2.25 0 1 0 0 2.186m0-2.186c.18.324.283.696.283 1.093s-.103.77-.283 1.093m0-2.186 9.566-5.314m-9.566 7.5 9.566 5.314m0 0a2.25 2.25 0 1 0 3.935 2.186 2.25 2.25 0 0 0-3.935-2.186Zm0-12.814a2.25 2.25 0 1 0 3.933-2.185 2.25 2.25 0 0 0-3.933 2.185Z" />
+                  </svg>
+                  Share
+                </Button>
+              )}
+
+              {/* Show/hide toggle */}
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-8 px-2.5 text-xs text-muted-foreground"
+                onClick={() => handleToggleVisibility(plan.id, isHidden)}
+                title={isHidden ? "Show in planner" : "Hide from planner"}
+              >
+                {isHidden ? (
+                  <svg aria-hidden="true" className="mr-1 h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M3.98 8.223A10.477 10.477 0 0 0 1.934 12C3.226 16.338 7.244 19.5 12 19.5c.993 0 1.953-.138 2.863-.395M6.228 6.228A10.451 10.451 0 0 1 12 4.5c4.756 0 8.773 3.162 10.065 7.498a10.522 10.522 0 0 1-4.293 5.774M6.228 6.228 3 3m3.228 3.228 3.65 3.65m7.894 7.894L21 21m-3.228-3.228-3.65-3.65m0 0a3 3 0 1 0-4.243-4.243m4.242 4.242L9.88 9.88" />
+                  </svg>
+                ) : (
+                  <svg aria-hidden="true" className="mr-1 h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M2.036 12.322a1.012 1.012 0 0 1 0-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178Z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" />
+                  </svg>
+                )}
+                {isHidden ? "Show" : "Hide"}
+              </Button>
+
+              {/* Delete (owner or delete permission) */}
+              {(isOwner || perm === "delete") && (
+                <span title={plan.isPrimary ? "Cannot delete the primary plan. Set another plan as primary first." : "Delete plan"}>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-8 px-2.5 text-xs text-destructive hover:bg-destructive-light hover:text-destructive"
+                    onClick={() => !plan.isPrimary && setDeleteConfirm({ id: plan.id, name: plan.name })}
+                    disabled={plan.isPrimary}
+                  >
+                    <svg aria-hidden="true" className="mr-1 h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 0 0-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 0 0-7.5 0" />
+                    </svg>
+                    Delete
+                  </Button>
                 </span>
               )}
             </div>
-          </div>
-
-          {/* Actions */}
-          <div className="flex shrink-0 items-center gap-1">
-            {/* Show/hide toggle */}
-            <button
-              type="button"
-              onClick={() => handleToggleVisibility(plan.id, isHidden)}
-              className="flex h-8 w-8 items-center justify-center rounded-lg text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
-              title={isHidden ? "Show in planner" : "Hide from planner"}
-            >
-              {isHidden ? (
-                <svg aria-hidden="true" className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M3.98 8.223A10.477 10.477 0 0 0 1.934 12C3.226 16.338 7.244 19.5 12 19.5c.993 0 1.953-.138 2.863-.395M6.228 6.228A10.451 10.451 0 0 1 12 4.5c4.756 0 8.773 3.162 10.065 7.498a10.522 10.522 0 0 1-4.293 5.774M6.228 6.228 3 3m3.228 3.228 3.65 3.65m7.894 7.894L21 21m-3.228-3.228-3.65-3.65m0 0a3 3 0 1 0-4.243-4.243m4.242 4.242L9.88 9.88" />
-                </svg>
-              ) : (
-                <svg aria-hidden="true" className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M2.036 12.322a1.012 1.012 0 0 1 0-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178Z" />
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" />
-                </svg>
-              )}
-            </button>
-
-            {/* Share button (owner only) */}
-            {isOwner && currentAccount && (
-              <button
-                type="button"
-                onClick={() => setShareModal({ planId: plan.id, planName: plan.name, createdBy: plan.createdBy ?? "" })}
-                className="flex h-8 w-8 items-center justify-center rounded-lg text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
-                title="Share plan"
-              >
-                <svg aria-hidden="true" className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M7.217 10.907a2.25 2.25 0 1 0 0 2.186m0-2.186c.18.324.283.696.283 1.093s-.103.77-.283 1.093m0-2.186 9.566-5.314m-9.566 7.5 9.566 5.314m0 0a2.25 2.25 0 1 0 3.935 2.186 2.25 2.25 0 0 0-3.935-2.186Zm0-12.814a2.25 2.25 0 1 0 3.933-2.185 2.25 2.25 0 0 0-3.933 2.185Z" />
-                </svg>
-              </button>
-            )}
-
-            {/* Open in planner */}
-            <Link
-              href={`/planner?planId=${plan.id}`}
-              className="flex h-8 w-8 items-center justify-center rounded-lg text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
-              title="Open in planner"
-            >
-              <svg aria-hidden="true" className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 6H5.25A2.25 2.25 0 0 0 3 8.25v10.5A2.25 2.25 0 0 0 5.25 21h10.5A2.25 2.25 0 0 0 18 18.75V10.5m-10.5 6L21 3m0 0h-5.25M21 3v5.25" />
-              </svg>
-            </Link>
-
-            {/* Delete (owner or delete permission) */}
-            {(isOwner || perm === "delete") && (
-              <span title={plan.isPrimary ? "Cannot delete the primary plan. Set another plan as primary first." : "Delete plan"}>
-              <button
-                type="button"
-                onClick={() => !plan.isPrimary && setDeleteConfirm({ id: plan.id, name: plan.name })}
-                disabled={plan.isPrimary}
-                className={`flex h-8 w-8 items-center justify-center rounded-lg transition-colors ${
-                  plan.isPrimary
-                    ? "text-muted-foreground/30 cursor-not-allowed"
-                    : "text-muted-foreground hover:bg-destructive-light hover:text-destructive"
-                }`}
-              >
-                <svg aria-hidden="true" className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 0 0-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 0 0-7.5 0" />
-                </svg>
-              </button>
-              </span>
-            )}
           </div>
         </CardContent>
       </Card>
@@ -276,13 +298,13 @@ export default function PlansPage() {
       </div>
 
       {/* Tabs */}
-      <div className="mb-4 flex gap-1 rounded-lg bg-muted p-1">
+      <div className="mb-6 flex border-b border-border">
         <button
           type="button"
           onClick={() => setActiveTab("my")}
-          className={`flex-1 rounded-md px-3 py-2 text-sm font-medium transition-colors ${
+          className={`px-4 py-2.5 text-sm font-medium transition-colors relative ${
             activeTab === "my"
-              ? "bg-card text-foreground shadow-sm"
+              ? "text-primary after:absolute after:inset-x-0 after:bottom-0 after:h-0.5 after:bg-primary after:rounded-full"
               : "text-muted-foreground hover:text-foreground"
           }`}
         >
@@ -291,9 +313,9 @@ export default function PlansPage() {
         <button
           type="button"
           onClick={() => setActiveTab("shared")}
-          className={`flex-1 rounded-md px-3 py-2 text-sm font-medium transition-colors ${
+          className={`px-4 py-2.5 text-sm font-medium transition-colors relative ${
             activeTab === "shared"
-              ? "bg-card text-foreground shadow-sm"
+              ? "text-primary after:absolute after:inset-x-0 after:bottom-0 after:h-0.5 after:bg-primary after:rounded-full"
               : "text-muted-foreground hover:text-foreground"
           }`}
         >
@@ -306,10 +328,24 @@ export default function PlansPage() {
         {activeTab === "my" && (
           myPlans.length === 0 ? (
             <Card>
-              <CardContent className="py-8 text-center">
-                <p className="text-sm text-muted-foreground">
-                  No plans yet. Create one from the planner page.
+              <CardContent className="flex flex-col items-center py-12 px-6 text-center">
+                <div className="flex h-12 w-12 items-center justify-center rounded-full bg-muted">
+                  <svg aria-hidden="true" className="h-6 w-6 text-muted-foreground" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 0 0-3.375-3.375h-1.5A1.125 1.125 0 0 1 13.5 7.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H8.25m3.75 9v6m3-3H9m1.5-12H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 0 0-9-9Z" />
+                  </svg>
+                </div>
+                <p className="mt-4 text-base font-semibold text-foreground">No plans yet</p>
+                <p className="mt-1 text-sm text-muted-foreground">
+                  Create your first course plan to start organizing your schedule.
                 </p>
+                <Link href="/planner?newPlan=true" className="mt-4">
+                  <Button size="sm">
+                    <svg aria-hidden="true" className="mr-1.5 h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+                    </svg>
+                    Create First Plan
+                  </Button>
+                </Link>
               </CardContent>
             </Card>
           ) : (
@@ -320,9 +356,15 @@ export default function PlansPage() {
         {activeTab === "shared" && (
           sharedPlans.length === 0 ? (
             <Card>
-              <CardContent className="py-8 text-center">
-                <p className="text-sm text-muted-foreground">
-                  No plans have been shared with you yet.
+              <CardContent className="flex flex-col items-center py-12 px-6 text-center">
+                <div className="flex h-12 w-12 items-center justify-center rounded-full bg-muted">
+                  <svg aria-hidden="true" className="h-6 w-6 text-muted-foreground" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M18 18.72a9.094 9.094 0 0 0 3.741-.479 3 3 0 0 0-4.682-2.72m.94 3.198.001.031c0 .225-.012.447-.037.666A11.944 11.944 0 0 1 12 21c-2.17 0-4.207-.576-5.963-1.584A6.062 6.062 0 0 1 6 18.719m12 0a5.971 5.971 0 0 0-.941-3.197m0 0A5.995 5.995 0 0 0 12 12.75a5.995 5.995 0 0 0-5.058 2.772m0 0a3 3 0 0 0-4.681 2.72 8.986 8.986 0 0 0 3.74.477m.94-3.197a5.971 5.971 0 0 0-.94 3.197M15 6.75a3 3 0 1 1-6 0 3 3 0 0 1 6 0Zm6 3a2.25 2.25 0 1 1-4.5 0 2.25 2.25 0 0 1 4.5 0Zm-13.5 0a2.25 2.25 0 1 1-4.5 0 2.25 2.25 0 0 1 4.5 0Z" />
+                  </svg>
+                </div>
+                <p className="mt-4 text-base font-semibold text-foreground">No shared plans</p>
+                <p className="mt-1 text-sm text-muted-foreground">
+                  No one has shared plans with you yet.
                 </p>
               </CardContent>
             </Card>

@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
 import { US_STATES } from "@/config/us-states";
 import Link from "next/link";
 import { useAccount } from "@/lib/account-context";
@@ -177,251 +178,286 @@ export default function SettingsPage() {
 
   return (
     <div className="mx-auto max-w-3xl">
-      {/* Header with avatar */}
-      <div className="mb-8 flex items-center gap-4">
-        <div className="flex h-16 w-16 items-center justify-center rounded-full bg-primary/10 text-2xl font-bold text-primary">
-          {(userFirstName ?? userEmail ?? "U").charAt(0).toUpperCase()}
-        </div>
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight text-foreground">
-            {[userFirstName, userLastName].filter(Boolean).join(" ") || "Settings"}
-          </h1>
-          <p className="text-sm text-muted-foreground">{userEmail}</p>
+      {/* Page shell header */}
+      <div className="mb-6 flex flex-wrap items-start justify-between gap-4">
+        <div className="flex items-center gap-4">
+          <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-primary/10 text-xl font-bold text-primary">
+            {(userFirstName ?? userEmail ?? "U").charAt(0).toUpperCase()}
+          </div>
+          <div>
+            <h1 className="text-2xl font-bold text-foreground">
+              {[userFirstName, userLastName].filter(Boolean).join(" ") || "Settings"}
+            </h1>
+            <p className="mt-1 text-sm text-muted-foreground">{userEmail}</p>
+          </div>
         </div>
       </div>
 
       <div className="space-y-10">
 
-        {/* ─── Profile & Academic ───────────────────────────────── */}
+        {/* --- Profile & Academic ----------------------------------- */}
         <section>
-          <h2 className="mb-4 text-xs font-semibold uppercase tracking-widest text-muted-foreground">Profile</h2>
+          <h2 className="mb-4 text-xs font-semibold uppercase tracking-wider text-muted-foreground">Profile</h2>
 
           {/* Name edit mode */}
           {editingUserName ? (
-            <div className="mb-4 rounded-lg bg-muted/30 p-4">
-              <div className="flex flex-col gap-2 sm:flex-row sm:items-end">
-                <div className="flex-1">
-                  <label className="mb-1 block text-xs text-muted-foreground">First name</label>
-                  <input type="text" value={editFirstName} onChange={(e) => setEditFirstName(e.target.value)}
-                    className="h-9 w-full rounded-lg border border-border bg-background px-3 text-sm" autoFocus />
+            <Card className="mb-4">
+              <CardContent>
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-end">
+                  <div className="flex-1">
+                    <label className="mb-1 block text-xs font-medium text-muted-foreground">First name</label>
+                    <input type="text" value={editFirstName} onChange={(e) => setEditFirstName(e.target.value)}
+                      className="min-h-[44px] w-full rounded-lg border border-border bg-background px-3 text-sm focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring" autoFocus />
+                  </div>
+                  <div className="flex-1">
+                    <label className="mb-1 block text-xs font-medium text-muted-foreground">Last name</label>
+                    <input type="text" value={editLastName} onChange={(e) => setEditLastName(e.target.value)}
+                      className="min-h-[44px] w-full rounded-lg border border-border bg-background px-3 text-sm focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring" />
+                  </div>
+                  <div className="flex gap-2 shrink-0">
+                    <Button size="sm" variant="ghost" onClick={() => setEditingUserName(false)}>Cancel</Button>
+                    <Button size="sm" onClick={handleSaveUserName} disabled={!editFirstName.trim() || savingUserName}>
+                      {savingUserName ? "Saving..." : "Save"}
+                    </Button>
+                  </div>
                 </div>
-                <div className="flex-1">
-                  <label className="mb-1 block text-xs text-muted-foreground">Last name</label>
-                  <input type="text" value={editLastName} onChange={(e) => setEditLastName(e.target.value)}
-                    className="h-9 w-full rounded-lg border border-border bg-background px-3 text-sm" />
-                </div>
-                <div className="flex gap-2 shrink-0">
-                  <Button size="sm" variant="ghost" onClick={() => setEditingUserName(false)}>Cancel</Button>
-                  <Button size="sm" onClick={handleSaveUserName} disabled={!editFirstName.trim() || savingUserName}>
-                    {savingUserName ? "Saving..." : "Save"}
-                  </Button>
-                </div>
-              </div>
-            </div>
+              </CardContent>
+            </Card>
           ) : null}
 
-          <div className="grid grid-cols-2 gap-x-8 gap-y-5 sm:grid-cols-3">
-            <div>
+          <div className="grid grid-cols-1 gap-x-8 gap-y-5 sm:grid-cols-3">
+            <div className="flex items-start justify-between sm:block">
               <p className="text-xs text-muted-foreground">Name</p>
               {!editingUserName ? (
                 <button type="button" onClick={() => { setEditFirstName(userFirstName ?? ""); setEditLastName(userLastName ?? ""); setEditingUserName(true); }}
-                  className="mt-0.5 flex items-center gap-1 text-sm font-medium text-foreground hover:text-primary transition-colors">
+                  className="mt-0.5 flex items-center gap-1.5 text-sm font-medium text-foreground hover:text-primary transition-colors">
                   {[userFirstName, userLastName].filter(Boolean).join(" ") || "Not set"}
-                  <svg aria-hidden="true" className="h-3 w-3 text-muted-foreground/50" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                  <svg aria-hidden="true" className="h-3.5 w-3.5 text-muted-foreground/50" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Z" />
                   </svg>
                 </button>
               ) : <p className="mt-0.5 text-sm text-muted-foreground/50">Editing...</p>}
             </div>
-            <div>
+            <div className="flex items-start justify-between sm:block">
               <p className="text-xs text-muted-foreground">Email</p>
-              <p className="mt-0.5 text-sm font-medium text-foreground">{userEmail ?? "—"}</p>
+              <p className="mt-0.5 text-sm font-medium text-foreground">{userEmail ?? "---"}</p>
             </div>
-            <div>
+            <div className="flex items-start justify-between sm:block">
               <p className="text-xs text-muted-foreground">Password</p>
               <button type="button" onClick={handleResetPassword}
                 className="mt-0.5 flex items-center gap-1.5 text-sm text-foreground hover:text-primary transition-colors">
-                ••••••••
+                --------
                 <span className="text-[11px] font-medium text-primary">Reset</span>
               </button>
             </div>
-            <div>
+            <div className="flex items-start justify-between sm:block">
               <p className="text-xs text-muted-foreground">Role</p>
               <div className="mt-1"><Badge className={roleColor(currentAccount?.role ?? "student")}>{currentAccount?.role ?? "student"}</Badge></div>
             </div>
-            <div>
+            <div className="flex items-start justify-between sm:block">
               <p className="text-xs text-muted-foreground">Grade</p>
-              <p className="mt-0.5 text-sm font-medium text-foreground">{currentAccount?.gradeLevel ?? "—"}</p>
+              <p className="mt-0.5 text-sm font-medium text-foreground">{currentAccount?.gradeLevel ?? "---"}</p>
             </div>
-            <div>
+            <div className="flex items-start justify-between sm:block">
               <p className="text-xs text-muted-foreground">Graduation</p>
-              <p className="mt-0.5 text-sm font-medium text-foreground">{currentAccount?.graduationYear ?? "—"}</p>
+              <p className="mt-0.5 text-sm font-medium text-foreground">{currentAccount?.graduationYear ?? "---"}</p>
             </div>
-            <div>
+            <div className="flex items-start justify-between sm:block">
               <p className="text-xs text-muted-foreground">State</p>
               <p className="mt-0.5 text-sm font-medium text-foreground">
-                {US_STATES.find((s) => s.code === currentAccount?.state)?.name ?? currentAccount?.state ?? "—"}
+                {US_STATES.find((s) => s.code === currentAccount?.state)?.name ?? currentAccount?.state ?? "---"}
               </p>
             </div>
-            <div>
+            <div className="flex items-start justify-between sm:block">
               <p className="text-xs text-muted-foreground">School</p>
-              <p className="mt-0.5 text-sm font-medium text-foreground">{currentAccount?.schoolName ?? "—"}</p>
+              <p className="mt-0.5 text-sm font-medium text-foreground">{currentAccount?.schoolName ?? "---"}</p>
             </div>
           </div>
         </section>
 
-        {/* ─── Linked Accounts ───────────────────────────────────── */}
+        {/* --- Linked Accounts ------------------------------------- */}
         <section>
-          <h2 className="mb-4 text-xs font-semibold uppercase tracking-widest text-muted-foreground">
-            Linked Accounts
-            {otherMembers.length > 0 && <span className="ml-1 text-muted-foreground/50">({otherMembers.length})</span>}
-          </h2>
+          <div className="mb-4 flex items-center justify-between">
+            <h2 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+              Linked Accounts
+            </h2>
+            {otherMembers.length > 0 && (
+              <Badge className="bg-muted text-muted-foreground">{otherMembers.length}</Badge>
+            )}
+          </div>
 
-          {loading ? (
-            <div className="animate-pulse space-y-3">
-              <div className="h-12 rounded-lg bg-muted" />
-              <div className="h-12 rounded-lg bg-muted" />
-            </div>
-          ) : (
-            <div className="space-y-2">
-              {otherMembers.map((m) => (
-                <div key={m.userId} className="flex items-center justify-between rounded-lg py-2">
-                  <div className="flex items-center gap-3">
-                    <div className="flex h-9 w-9 items-center justify-center rounded-full bg-muted text-sm font-semibold text-muted-foreground">
-                      {(m.firstName ?? m.email).charAt(0).toUpperCase()}
-                    </div>
-                    <div>
-                      <div className="flex items-center gap-2">
-                        <p className="text-sm font-medium text-foreground">
-                          {[m.firstName, m.lastName].filter(Boolean).join(" ") || m.email}
-                        </p>
-                        <Badge className={`${roleColor(m.role)} text-[9px]`}>{m.role}</Badge>
-                      </div>
-                      <p className="text-[11px] text-muted-foreground">{m.email}</p>
-                    </div>
-                  </div>
-                  <button type="button" onClick={() => handleRemoveMember(m.userId, [m.firstName, m.lastName].filter(Boolean).join(" ") || m.email)}
-                    disabled={removingMember === m.userId}
-                    className="flex h-7 w-7 items-center justify-center rounded-full text-muted-foreground/40 hover:text-destructive hover:bg-destructive-light transition-colors"
-                    title="Remove">
-                    <svg aria-hidden="true" className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M6 18 18 6M6 6l12 12" />
-                    </svg>
-                  </button>
+          <Card>
+            <CardContent>
+              {loading ? (
+                <div className="animate-pulse space-y-3">
+                  <div className="h-12 rounded-lg bg-muted" />
+                  <div className="h-12 rounded-lg bg-muted" />
                 </div>
-              ))}
+              ) : (
+                <div className="space-y-1">
+                  {otherMembers.map((m, idx) => (
+                    <div key={m.userId} className={`flex items-center justify-between rounded-lg px-2 py-2.5 hover:bg-muted/40 transition-colors ${idx < otherMembers.length - 1 ? "border-b border-border/50" : ""}`}>
+                      <div className="flex items-center gap-3 min-w-0">
+                        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-muted text-sm font-semibold text-muted-foreground">
+                          {(m.firstName ?? m.email).charAt(0).toUpperCase()}
+                        </div>
+                        <div className="min-w-0">
+                          <div className="flex items-center gap-2">
+                            <p className="truncate text-sm font-medium text-foreground">
+                              {[m.firstName, m.lastName].filter(Boolean).join(" ") || m.email}
+                            </p>
+                            <Badge className={`${roleColor(m.role)} text-[9px]`}>{m.role}</Badge>
+                          </div>
+                          <p className="truncate text-[11px] text-muted-foreground">{m.email}</p>
+                        </div>
+                      </div>
+                      <button type="button" onClick={() => handleRemoveMember(m.userId, [m.firstName, m.lastName].filter(Boolean).join(" ") || m.email)}
+                        disabled={removingMember === m.userId}
+                        className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-muted-foreground/40 hover:text-destructive hover:bg-destructive-light transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
+                        title="Remove">
+                        <svg aria-hidden="true" className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M6 18 18 6M6 6l12 12" />
+                        </svg>
+                      </button>
+                    </div>
+                  ))}
 
-              {otherMembers.length === 0 && (
-                <p className="py-2 text-sm text-muted-foreground">No linked accounts yet.</p>
-              )}
-
-              {/* Invite — hidden for counselors (view-only role) */}
-              {currentAccount?.role !== "counselor" && (() => {
-                const tier = currentAccount?.subscriptionTier ?? "starter";
-                const maxLinked = tier === "elite" ? 8 : tier === "plus" ? 5 : 3;
-                const totalMembers = members.length; // includes self
-                const atLimit = totalMembers >= maxLinked;
-
-                return (
-                <>
-                  <div className="flex flex-col gap-2 pt-2 sm:flex-row">
-                    <input type="email" value={inviteEmail} onChange={(e) => setInviteEmail(e.target.value)}
-                      placeholder="Invite by email..."
-                      disabled={atLimit}
-                      className={`h-9 flex-1 rounded-lg border border-border bg-background px-3 text-sm placeholder:text-muted-foreground focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring ${atLimit ? "opacity-50" : ""}`} />
-                    <select value={inviteRole} onChange={(e) => setInviteRole(e.target.value)}
-                      disabled={atLimit}
-                      className={`h-9 rounded-lg border border-border bg-background px-3 text-sm ${atLimit ? "opacity-50" : ""}`}>
-                      {currentAccount?.role === "parent" && <option value="student">Child</option>}
-                      <option value="parent">Parent</option>
-                      <option value="guardian">Guardian</option>
-                      <option value="counselor">Counselor</option>
-                    </select>
-                    <Button size="sm" onClick={handleSendInvite} disabled={generating || !inviteEmail.trim() || atLimit}>
-                      {generating ? "Sending..." : "Invite"}
-                    </Button>
-                  </div>
-                  <p className="text-[11px] text-muted-foreground">
-                    {totalMembers}/{maxLinked} linked accounts used
-                    {atLimit && (
-                      <span className="text-warning">
-                        {" "}· Limit reached.{" "}
-                        <Link href="/settings/billing" className="text-primary hover:underline">Upgrade</Link> for more.
-                      </span>
-                    )}
-                  </p>
-                  {inviteSent && inviteCode && (
-                    <p className="flex items-center gap-1.5 text-xs text-success">
-                      <svg aria-hidden="true" className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" d="m4.5 12.75 6 6 9-13.5" />
-                      </svg>
-                      Sent! Code: <span className="font-mono font-semibold">{inviteCode}</span>
-                    </p>
+                  {otherMembers.length === 0 && (
+                    <p className="py-4 text-center text-sm text-muted-foreground">No linked accounts yet.</p>
                   )}
-                </>
-                );
-              })()}
-            </div>
-          )}
+
+                  {/* Invite -- hidden for counselors (view-only role) */}
+                  {currentAccount?.role !== "counselor" && (() => {
+                    const tier = currentAccount?.subscriptionTier ?? "starter";
+                    const maxLinked = tier === "elite" ? 8 : tier === "plus" ? 5 : 3;
+                    const totalMembers = members.length; // includes self
+                    const atLimit = totalMembers >= maxLinked;
+
+                    return (
+                    <>
+                      {otherMembers.length > 0 && <div className="my-2 border-t border-border" />}
+                      <div className="flex flex-col gap-2 pt-2 sm:flex-row sm:items-center">
+                        <select value={inviteRole} onChange={(e) => setInviteRole(e.target.value)}
+                          disabled={atLimit}
+                          className={`min-h-[44px] rounded-lg border border-border bg-background px-3 text-sm focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring ${atLimit ? "opacity-50" : ""}`}>
+                          {currentAccount?.role === "parent" && <option value="student">Child</option>}
+                          <option value="parent">Parent</option>
+                          <option value="guardian">Guardian</option>
+                          <option value="counselor">Counselor</option>
+                        </select>
+                        <input type="email" value={inviteEmail} onChange={(e) => setInviteEmail(e.target.value)}
+                          placeholder="Invite by email..."
+                          disabled={atLimit}
+                          className={`min-h-[44px] flex-1 rounded-lg border border-border bg-background px-3 text-sm placeholder:text-muted-foreground focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring ${atLimit ? "opacity-50" : ""}`} />
+                        <Button size="sm" className="min-h-[44px]" onClick={handleSendInvite} disabled={generating || !inviteEmail.trim() || atLimit}>
+                          {generating ? "Sending..." : "Invite"}
+                        </Button>
+                      </div>
+                      <div className="flex items-center gap-2 pt-1">
+                        <Badge className="bg-muted text-muted-foreground text-[11px]">{totalMembers}/{maxLinked} used</Badge>
+                        {atLimit && (
+                          <span className="text-[11px] text-warning">
+                            Limit reached.{" "}
+                            <Link href="/settings/billing" className="text-primary hover:underline">Upgrade</Link> for more.
+                          </span>
+                        )}
+                      </div>
+                      {inviteSent && inviteCode && (
+                        <p className="flex items-center gap-1.5 text-xs text-success">
+                          <svg aria-hidden="true" className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" d="m4.5 12.75 6 6 9-13.5" />
+                          </svg>
+                          Sent! Code: <span className="font-mono font-semibold">{inviteCode}</span>
+                        </p>
+                      )}
+                    </>
+                    );
+                  })()}
+                </div>
+              )}
+            </CardContent>
+          </Card>
         </section>
 
-        {/* ─── Subscription ─────────────────────────────────────── */}
+        {/* --- Subscription ----------------------------------------- */}
         <section>
-          <h2 className="mb-4 text-xs font-semibold uppercase tracking-widest text-muted-foreground">Subscription</h2>
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <Badge className={tierColor}>{tierLabel}</Badge>
-              {billingCycle && currentAccount?.subscriptionTier !== "trial" && currentAccount?.subscriptionTier !== "starter" && (
-                <span className="text-xs text-muted-foreground">
-                  {billingCycle === "four_year" ? "4-Year" : billingCycle === "annual" ? "Annual" : "Monthly"}
-                </span>
-              )}
-              {nextPayment && currentAccount?.subscriptionTier !== "trial" && currentAccount?.subscriptionTier !== "starter" && (
-                <span className="text-xs text-muted-foreground">
-                  · {billingCycle === "four_year" ? "Expires" : "Renews"} {new Date(nextPayment).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
-                </span>
-              )}
-            </div>
-            <Link href="/settings/billing">
-              <Button variant="outline" size="sm">Manage</Button>
-            </Link>
-          </div>
-        </section>
-
-        {/* ─── Legal ────────────────────────────────────────────── */}
-        <section>
-          <h2 className="mb-4 text-xs font-semibold uppercase tracking-widest text-muted-foreground">Legal</h2>
-          <div className="space-y-1">
-            {consentInfo.map((c) => (
-              <div key={c.type} className="flex items-center justify-between py-1">
-                <Link href={c.type === "terms_of_service" ? "/terms" : "/privacy"} target="_blank"
-                  className="text-sm text-primary hover:underline">
-                  {c.type === "terms_of_service" ? "Terms of Service" : "Privacy Policy"}
-                  <span className="ml-1 text-xs text-muted-foreground">v{c.version}</span>
+          <h2 className="mb-4 text-xs font-semibold uppercase tracking-wider text-muted-foreground">Subscription</h2>
+          <Card>
+            <CardContent>
+              <div className="flex items-center justify-between">
+                <div className="flex flex-wrap items-center gap-3">
+                  <Badge className={tierColor}>{tierLabel}</Badge>
+                  {billingCycle && currentAccount?.subscriptionTier !== "trial" && currentAccount?.subscriptionTier !== "starter" && (
+                    <span className="text-xs text-muted-foreground">
+                      {billingCycle === "four_year" ? "4-Year" : billingCycle === "annual" ? "Annual" : "Monthly"}
+                    </span>
+                  )}
+                  {nextPayment && currentAccount?.subscriptionTier !== "trial" && currentAccount?.subscriptionTier !== "starter" && (
+                    <span className="text-xs text-muted-foreground">
+                      {billingCycle === "four_year" ? "Expires" : "Renews"} {new Date(nextPayment).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
+                    </span>
+                  )}
+                </div>
+                <Link href="/settings/billing">
+                  <Button variant="outline" size="sm">Manage</Button>
                 </Link>
-                <span className="text-xs text-muted-foreground">
-                  Accepted {new Date(c.accepted_at).toLocaleDateString()}
-                </span>
               </div>
-            ))}
-          </div>
+            </CardContent>
+          </Card>
         </section>
 
-        {/* ─── Danger Zone ──────────────────────────────────────── */}
-        <section className="border-t border-border pt-8">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-foreground">Delete account</p>
-              <p className="text-xs text-muted-foreground">Permanently remove your account and all data.</p>
+        {/* --- Legal ------------------------------------------------ */}
+        <section>
+          <h2 className="mb-4 text-xs font-semibold uppercase tracking-wider text-muted-foreground">Legal</h2>
+          <Card>
+            <CardContent>
+              <div className="space-y-2">
+                {consentInfo.length > 0 ? consentInfo.map((c) => (
+                  <div key={c.type} className="flex items-center justify-between py-1.5">
+                    <Link href={c.type === "terms_of_service" ? "/terms" : "/privacy"} target="_blank"
+                      className="text-sm text-primary hover:underline">
+                      {c.type === "terms_of_service" ? "Terms of Service" : "Privacy Policy"}
+                      <span className="ml-1 text-xs text-muted-foreground">v{c.version}</span>
+                    </Link>
+                    <Badge className="bg-success/10 text-success text-[11px]">
+                      Accepted {new Date(c.accepted_at).toLocaleDateString()}
+                    </Badge>
+                  </div>
+                )) : (
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between py-1.5">
+                      <Link href="/terms" target="_blank" className="text-sm text-primary hover:underline">Terms of Service</Link>
+                      <span className="text-xs text-muted-foreground">Not yet accepted</span>
+                    </div>
+                    <div className="flex items-center justify-between py-1.5">
+                      <Link href="/privacy" target="_blank" className="text-sm text-primary hover:underline">Privacy Policy</Link>
+                      <span className="text-xs text-muted-foreground">Not yet accepted</span>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+        </section>
+
+        {/* --- Danger Zone ------------------------------------------ */}
+        <section>
+          <h2 className="mb-4 text-xs font-semibold uppercase tracking-wider text-destructive">Danger Zone</h2>
+          <div className="rounded-xl border border-destructive/30 bg-destructive-light/30 p-5">
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+              <div>
+                <p className="text-sm font-medium text-foreground">Delete account</p>
+                <p className="mt-0.5 text-xs text-muted-foreground">Permanently remove your account and all data. This cannot be undone.</p>
+              </div>
+              <Button variant="destructive" size="sm" className="min-h-[44px] shrink-0" onClick={() => setDeleteConfirm(true)}>
+                Delete Account
+              </Button>
             </div>
-            <Button variant="destructive" size="sm" onClick={() => setDeleteConfirm(true)}>
-              Delete
-            </Button>
           </div>
         </section>
       </div>
 
-      {/* ─── Delete Confirmation Modal ──────────────────────────── */}
+      {/* --- Delete Confirmation Modal ------------------------------ */}
       {deleteConfirm && (
         <>
           <div className="fixed inset-0 z-40 bg-black/50" onClick={() => setDeleteConfirm(false)} aria-hidden="true" />
@@ -453,7 +489,7 @@ export default function SettingsPage() {
                       Type <strong>DELETE</strong> to confirm
                     </label>
                     <input id="delete-confirm" type="text" value={deleteText} onChange={(e) => setDeleteText(e.target.value)}
-                      placeholder="DELETE" className="mt-1 h-9 w-full rounded-lg border border-border bg-background px-3 text-sm" />
+                      placeholder="DELETE" className="mt-1 min-h-[44px] w-full rounded-lg border border-border bg-background px-3 text-sm focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring" />
                   </div>
                 </div>
               </div>

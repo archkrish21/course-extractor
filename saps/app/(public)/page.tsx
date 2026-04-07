@@ -111,7 +111,7 @@ export default function HomePage() {
             <h1 className="mt-6 text-4xl font-extrabold tracking-tight text-foreground sm:text-5xl lg:text-6xl">
               Plan Your 4-Year
               <br />
-              <span className="bg-gradient-to-r from-primary via-primary to-primary/70 bg-clip-text text-transparent">
+              <span className="bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent [-webkit-text-fill-color:transparent]">
                 High School Journey
               </span>
             </h1>
@@ -122,21 +122,21 @@ export default function HomePage() {
 
             <div className="mt-8 flex flex-col items-center gap-3 sm:flex-row sm:justify-center">
               <Link href="/signup"
-                className="group flex w-full items-center justify-center gap-2 rounded-xl bg-primary px-8 py-3.5 text-base font-semibold text-primary-foreground shadow-lg shadow-primary/25 hover:bg-primary-hover transition-all sm:w-auto">
+                className="group flex w-full min-h-[44px] items-center justify-center gap-2 rounded-xl bg-primary px-8 py-3.5 text-base font-semibold text-primary-foreground shadow-lg shadow-primary/25 hover:bg-primary-hover focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring transition-all sm:w-auto">
                 Get Started Free
                 <svg aria-hidden="true" className="h-4 w-4 transition-transform group-hover:translate-x-0.5" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5 21 12m0 0-7.5 7.5M21 12H3" />
                 </svg>
               </Link>
               <a href="#how-it-works"
-                className="w-full rounded-xl border border-border px-8 py-3.5 text-base font-semibold text-foreground hover:bg-muted transition-colors sm:w-auto">
+                className="flex w-full min-h-[44px] items-center justify-center rounded-xl border border-border px-8 py-3.5 text-base font-semibold text-foreground hover:bg-muted focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring transition-colors sm:w-auto">
                 See How It Works
               </a>
             </div>
           </div>
 
           {/* Stats bar */}
-          <div className="mx-auto mt-16 grid max-w-2xl grid-cols-4 gap-4 rounded-2xl border border-border bg-card p-4 shadow-sm sm:p-6">
+          <div className="mx-auto mt-16 grid max-w-2xl grid-cols-2 gap-4 rounded-2xl border border-border bg-card p-4 shadow-sm sm:grid-cols-4 sm:p-6">
             {STATS.map((s) => (
               <div key={s.label} className="text-center">
                 <p className="text-2xl font-extrabold text-foreground sm:text-3xl">{s.value}</p>
@@ -163,7 +163,7 @@ export default function HomePage() {
             </h2>
           </div>
 
-          <div className="mt-12 grid gap-6 sm:grid-cols-3">
+          <div className="mt-12 grid grid-cols-1 gap-6 sm:grid-cols-3">
             {[
               {
                 title: "Course maze",
@@ -181,10 +181,10 @@ export default function HomePage() {
                 emoji: "🔦",
               },
             ].map((item, i) => (
-              <div key={i} className="rounded-2xl border border-border bg-card p-6 shadow-sm">
-                <span className="text-3xl">{item.emoji}</span>
+              <div key={i} className="flex flex-col rounded-2xl border border-border bg-card p-6 shadow-sm">
+                <span className="text-3xl leading-none">{item.emoji}</span>
                 <h3 className="mt-3 text-base font-semibold text-foreground">{item.title}</h3>
-                <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{item.desc}</p>
+                <p className="mt-2 flex-1 text-sm leading-relaxed text-muted-foreground">{item.desc}</p>
               </div>
             ))}
           </div>
@@ -204,16 +204,16 @@ export default function HomePage() {
             </p>
           </div>
 
-          <div className="mt-14 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="mt-14 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
             {FEATURES.map((f, i) => (
-              <div key={i} className="group rounded-2xl border border-border bg-card p-6 transition-all hover:border-primary/30 hover:shadow-md">
-                <div className={`flex h-11 w-11 items-center justify-center rounded-xl ${f.color}`}>
+              <div key={i} className="group flex flex-col rounded-2xl border border-border bg-card p-6 shadow-sm transition-all hover:border-primary/30 hover:shadow-md">
+                <div className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-xl ${f.color}`}>
                   <svg aria-hidden="true" className="h-5 w-5" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" d={f.icon} />
                   </svg>
                 </div>
                 <h3 className="mt-4 text-base font-semibold text-foreground">{f.title}</h3>
-                <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{f.desc}</p>
+                <p className="mt-2 flex-1 text-sm leading-relaxed text-muted-foreground">{f.desc}</p>
               </div>
             ))}
           </div>
@@ -253,7 +253,7 @@ export default function HomePage() {
 
           <div className="mt-10 text-center">
             <Link href="/signup"
-              className="inline-flex items-center gap-2 rounded-xl bg-primary px-8 py-3 text-sm font-semibold text-primary-foreground shadow-lg shadow-primary/25 hover:bg-primary-hover transition-all">
+              className="inline-flex min-h-[44px] items-center gap-2 rounded-xl bg-primary px-8 py-3 text-sm font-semibold text-primary-foreground shadow-lg shadow-primary/25 hover:bg-primary-hover focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring transition-all">
               Create Your Free Account
               <svg aria-hidden="true" className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5 21 12m0 0-7.5 7.5M21 12H3" />
@@ -274,9 +274,9 @@ export default function HomePage() {
               </h2>
               <p className="mt-3 text-muted-foreground">Start free. Upgrade when you need more.</p>
             </div>
-            <div className="mt-12 grid gap-6 sm:grid-cols-3">
+            <div className="mt-12 grid grid-cols-1 gap-6 sm:grid-cols-3">
               {PRICING_TIERS.map((tier) => (
-                <div key={tier.name} className={`rounded-2xl border p-6 ${tier.highlight ? "border-primary shadow-lg shadow-primary/10 ring-1 ring-primary/20" : "border-border"}`}>
+                <div key={tier.name} className={`flex flex-col rounded-2xl border p-6 ${tier.highlight ? "border-primary shadow-lg shadow-primary/10 ring-1 ring-primary/20" : "border-border"}`}>
                   {tier.highlight && <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-primary">Most Popular</p>}
                   <h3 className="text-lg font-bold text-foreground">{tier.name}</h3>
                   <div className="mt-2">
@@ -294,7 +294,7 @@ export default function HomePage() {
                     ))}
                   </ul>
                   <Link href="/signup"
-                    className={`mt-6 block rounded-xl py-2.5 text-center text-sm font-semibold transition-colors ${
+                    className={`mt-auto block min-h-[44px] rounded-xl py-2.5 text-center text-sm font-semibold transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring ${
                       tier.highlight
                         ? "bg-primary text-primary-foreground shadow-lg shadow-primary/25 hover:bg-primary-hover"
                         : "border border-border text-foreground hover:bg-muted"
@@ -318,15 +318,15 @@ export default function HomePage() {
                 Loved by students and families
               </h2>
             </div>
-            <div className="mt-12 grid gap-6 sm:grid-cols-3">
+            <div className="mt-12 grid grid-cols-1 gap-6 sm:grid-cols-3">
               {TESTIMONIALS.map((t, i) => (
-                <div key={i} className="rounded-2xl border border-border bg-card p-6 shadow-sm">
+                <div key={i} className="flex flex-col rounded-2xl border border-border bg-card p-6 shadow-sm">
                   <div className="flex gap-1 text-warning">
                     {[...Array(5)].map((_, j) => (
                       <svg key={j} className="h-4 w-4 fill-current" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 0 0 .95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 0 0-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 0 0-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 0 0-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 0 0 .951-.69l1.07-3.292Z" /></svg>
                     ))}
                   </div>
-                  <p className="mt-4 text-sm italic leading-relaxed text-foreground">&ldquo;{t.quote}&rdquo;</p>
+                  <p className="mt-4 flex-1 text-sm italic leading-relaxed text-foreground">&ldquo;{t.quote}&rdquo;</p>
                   <div className="mt-4 flex items-center gap-3 border-t border-border pt-4">
                     <div className="flex h-9 w-9 items-center justify-center rounded-full bg-primary/10 text-sm font-bold text-primary">
                       {t.name.charAt(0)}
@@ -359,15 +359,15 @@ export default function HomePage() {
                 <button
                   type="button"
                   onClick={() => setOpenFaq(openFaq === i ? null : i)}
-                  className="flex w-full items-center justify-between px-6 py-5 text-left transition-colors hover:bg-muted/30"
+                  className="flex w-full min-h-[44px] items-center justify-between px-6 py-5 text-left transition-colors hover:bg-muted/30 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
                 >
                   <span className="text-sm font-medium text-foreground pr-4">{faq.q}</span>
-                  <svg aria-hidden="true" className={`h-5 w-5 shrink-0 text-muted-foreground transition-transform duration-200 ${openFaq === i ? "rotate-45" : ""}`}
+                  <svg aria-hidden="true" className={`h-5 w-5 shrink-0 text-muted-foreground transition-transform duration-300 ease-in-out ${openFaq === i ? "rotate-45" : ""}`}
                     fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
                   </svg>
                 </button>
-                <div className={`overflow-hidden transition-all duration-200 ${openFaq === i ? "max-h-40" : "max-h-0"}`}>
+                <div className={`overflow-hidden transition-[max-height] duration-300 ease-in-out ${openFaq === i ? "max-h-48" : "max-h-0"}`}>
                   <p className="px-6 pb-5 text-sm leading-relaxed text-muted-foreground">{faq.a}</p>
                 </div>
               </div>
@@ -388,16 +388,21 @@ export default function HomePage() {
           </p>
           <div className="mt-8 flex flex-col items-center gap-3 sm:flex-row sm:justify-center">
             <Link href="/signup"
-              className="group flex w-full items-center justify-center gap-2 rounded-xl bg-primary px-8 py-3.5 text-base font-semibold text-primary-foreground shadow-lg shadow-primary/25 hover:bg-primary-hover transition-all sm:w-auto">
+              className="group flex w-full min-h-[44px] items-center justify-center gap-2 rounded-xl bg-primary px-8 py-3.5 text-base font-semibold text-primary-foreground shadow-lg shadow-primary/25 hover:bg-primary-hover focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring transition-all sm:w-auto">
               Get Started Free
               <svg aria-hidden="true" className="h-4 w-4 transition-transform group-hover:translate-x-0.5" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5 21 12m0 0-7.5 7.5M21 12H3" />
               </svg>
             </Link>
+            <a href="#faq"
+              className="flex w-full min-h-[44px] items-center justify-center rounded-xl border border-border px-8 py-3.5 text-base font-semibold text-foreground hover:bg-muted focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring transition-colors sm:w-auto">
+              Read FAQ
+            </a>
           </div>
         </div>
         <div className="absolute inset-0 -z-10">
-          <div className="absolute left-1/2 top-1/2 h-[400px] w-[600px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-primary/5 blur-3xl" />
+          <div className="absolute left-1/4 top-1/2 h-[300px] w-[500px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-primary/5 blur-3xl" />
+          <div className="absolute right-1/4 top-1/2 h-[250px] w-[400px] -translate-y-1/2 translate-x-1/2 rounded-full bg-primary/3 blur-3xl" />
         </div>
       </section>
     </>

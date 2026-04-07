@@ -209,10 +209,10 @@ export function PlanCourseCard({
         }
       }}
       className={`
-        group relative flex min-h-[44px] cursor-pointer items-start gap-2 rounded-lg border p-2
-        transition-colors duration-150
+        group relative flex min-h-[44px] cursor-pointer items-start gap-2 rounded-xl border p-2.5
+        transition-all duration-150 shadow-sm hover:shadow-md
         focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring
-        ${hasViolations ? "border-warning bg-warning-light/50" : "border-border bg-card hover:bg-muted/50"}
+        ${hasViolations ? "border-warning/60 bg-warning-light/50" : "border-border bg-card hover:bg-muted/30"}
         ${isDropped ? "opacity-60" : ""}
       `}
       aria-label={`${course.name} (${course.code}), ${statusConfig.label}${
@@ -278,7 +278,7 @@ export function PlanCourseCard({
                 </svg>
               </button>
               {statusMenuOpen && (
-                <div className="absolute left-0 top-full z-50 mt-1 w-32 rounded-lg border border-border bg-card shadow-lg overflow-hidden">
+                <div className="absolute left-0 top-full z-50 mt-1 w-32 rounded-xl border border-border bg-card shadow-xl overflow-hidden">
                   {(["planned", "enrolled", "completed", "dropped"] as const).map((s) => {
                     const cfg = STATUS_CONFIG[s];
                     const isActive = course.status === s;
@@ -326,13 +326,13 @@ export function PlanCourseCard({
               }}
               onClick={(e) => e.stopPropagation()}
               aria-label={`${isCompleted ? "Actual" : "Projected"} grade for ${course.name}`}
-              className={`h-5 rounded border px-1 text-[10px] font-semibold cursor-pointer
-                focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-ring
+              className={`h-5 rounded-md border px-1.5 text-[10px] font-semibold cursor-pointer transition-colors
+                focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring
                 ${course.plannedGrade
                   ? isCompleted
                     ? "border-success/50 bg-success-light text-success"
                     : "border-primary/50 bg-primary-light text-primary"
-                  : "border-border bg-muted text-muted-foreground"
+                  : "border-border bg-muted text-muted-foreground hover:border-primary/30"
                 }`}
             >
               <option value="">{isCompleted ? "Grade" : "Est."}</option>
@@ -446,7 +446,7 @@ export function PlanCourseCard({
               <div
                 role="dialog"
                 aria-label="Validation warnings"
-                className="absolute right-0 top-full z-50 mt-1 w-72 rounded-lg border border-warning/30 bg-card shadow-lg"
+                className="absolute right-0 top-full z-50 mt-1 w-72 rounded-xl border border-warning/30 bg-card shadow-xl"
               >
                 <div className="border-b border-warning/20 bg-warning-light px-3 py-2">
                   <p className="text-xs font-semibold text-warning flex items-center gap-1.5">

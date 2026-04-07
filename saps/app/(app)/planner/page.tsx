@@ -1070,13 +1070,13 @@ export default function PlannerPage() {
   const renderNewPlanModal = () => (
     <>
       <div
-        className="fixed inset-0 z-40 bg-black/50"
+        className="fixed inset-0 z-40 bg-foreground/30"
         onClick={() => setShowNewPlanModal(false)}
         aria-hidden="true"
       />
       <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto p-4 sm:p-8">
         <div
-          className="w-full max-w-lg rounded-xl bg-card shadow-xl"
+          className="w-full max-w-lg rounded-2xl border border-border bg-card shadow-xl"
           role="dialog"
           aria-modal="true"
           aria-label="Create new plan"
@@ -1116,7 +1116,7 @@ export default function PlannerPage() {
                 <button
                   type="button"
                   onClick={() => setNewPlanTemplateId(null)}
-                  className={`flex min-h-[44px] items-center gap-3 rounded-lg border px-3 py-2.5 text-left transition-colors
+                  className={`flex min-h-[44px] items-center gap-3 rounded-xl border px-3 py-2.5 text-left transition-colors
                     ${newPlanTemplateId === null
                       ? "border-primary bg-primary-light text-primary"
                       : "border-border hover:bg-muted text-foreground"
@@ -1141,7 +1141,7 @@ export default function PlannerPage() {
                       setNewPlanTemplateId(t.id);
                       if (!newPlanName.trim()) setNewPlanName(`My ${t.name}`);
                     }}
-                    className={`flex min-h-[44px] items-center gap-3 rounded-lg border px-3 py-2.5 text-left transition-colors
+                    className={`flex min-h-[44px] items-center gap-3 rounded-xl border px-3 py-2.5 text-left transition-colors
                       ${newPlanTemplateId === t.id
                         ? "border-primary bg-primary-light text-primary"
                         : "border-border hover:bg-muted text-foreground"
@@ -1182,35 +1182,40 @@ export default function PlannerPage() {
   if (hasNoPlans) {
     return (
       <div className="mx-auto max-w-6xl">
-        <h1 className="mb-6 text-2xl font-bold tracking-tight text-foreground sm:text-3xl">
-          Course Planner
-        </h1>
+        <div className="mb-6">
+          <h1 className="text-2xl font-bold text-foreground">
+            Course Planner
+          </h1>
+          <p className="mt-1 text-sm text-muted-foreground">Plan your four-year academic path</p>
+        </div>
         <Card>
-          <CardContent className="flex flex-col items-center py-12 text-center">
-            <svg
-              aria-hidden="true"
-              className="mb-4 h-12 w-12 text-muted-foreground/30"
-              fill="none"
-              viewBox="0 0 24 24"
-              strokeWidth={1.5}
-              stroke="currentColor"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 0 1 2.25-2.25h13.5A2.25 2.25 0 0 1 21 7.5v11.25m-18 0A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75m-18 0v-7.5A2.25 2.25 0 0 1 5.25 9h13.5A2.25 2.25 0 0 1 21 11.25v7.5"
-              />
-            </svg>
-            <h2 className="text-lg font-semibold text-foreground">
-              No plans yet
+          <CardContent className="flex flex-col items-center px-6 py-16 text-center">
+            <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-primary-light">
+              <svg
+                aria-hidden="true"
+                className="h-8 w-8 text-primary"
+                fill="none"
+                viewBox="0 0 24 24"
+                strokeWidth={1.5}
+                stroke="currentColor"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 0 1 2.25-2.25h13.5A2.25 2.25 0 0 1 21 7.5v11.25m-18 0A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75m-18 0v-7.5A2.25 2.25 0 0 1 5.25 9h13.5A2.25 2.25 0 0 1 21 11.25v7.5"
+                />
+              </svg>
+            </div>
+            <h2 className="mt-4 text-xl font-semibold text-foreground">
+              Create Your First Plan
             </h2>
-            <p className="mt-1 max-w-sm text-sm text-muted-foreground">
-              Create your first 4-year course plan to start mapping out your
-              academic path.
+            <p className="mt-2 max-w-md text-sm text-muted-foreground">
+              Build a 4-year course plan to map out your academic path. Choose from
+              templates or start from scratch.
             </p>
-            <div className="mt-6">
-              <Button onClick={openNewPlanModal} data-tour="create-first-plan">
-                Create Your First Plan
+            <div className="mt-8">
+              <Button onClick={openNewPlanModal} data-tour="create-first-plan" className="px-6 py-2.5 text-base">
+                Get Started
               </Button>
             </div>
           </CardContent>
@@ -1234,17 +1239,17 @@ export default function PlannerPage() {
   return (
     <div className="mx-auto max-w-6xl">
       {/* Page header */}
-      <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+      <div className="mb-6 flex flex-wrap items-start justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-foreground sm:text-3xl">
-            Course Planner
+          <h1 className="text-2xl font-bold text-foreground">
+            {selectedPlan?.name ?? "Course Planner"}
           </h1>
           {selectedPlan && (() => {
             const creatorName = selectedPlan.creatorEmail
               ? selectedPlan.creatorEmail.split("@")[0].charAt(0).toUpperCase() + selectedPlan.creatorEmail.split("@")[0].slice(1)
               : null;
             return (
-              <p className="text-xs text-muted-foreground">
+              <p className="mt-1 text-sm text-muted-foreground">
                 {selectedPlan.creatorRole && selectedPlan.creatorRole !== "student"
                   ? `${creatorName ?? selectedPlan.creatorRole}'s plan`
                   : selectedPlan.createdFromTemplateId
@@ -1255,15 +1260,15 @@ export default function PlannerPage() {
             );
           })()}
           {selectedPlan && (
-            <div className="mt-1 flex flex-col gap-1">
+            <div className="mt-2 flex flex-col gap-1.5">
               {/* Line 1: Plan selector + status badges */}
-              <div className="flex items-center gap-2">
+              <div className="flex flex-wrap items-center gap-2">
                 {plans.length > 1 ? (
                   <select
                     value={selectedPlanId ?? ""}
                     onChange={(e) => { setSelectedPlanId(e.target.value); setShowProgressPanel(false); setProgressData(null); }}
                     aria-label="Select a plan"
-                    className="h-8 rounded-lg border border-border bg-background px-2 pr-7 text-sm font-medium text-foreground focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
+                    className="h-9 min-h-[44px] rounded-lg border border-border bg-background px-3 pr-8 text-sm font-medium text-foreground focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
                   >
                     {plans.map((plan) => {
                       const creatorName = plan.creatorEmail
@@ -1274,7 +1279,7 @@ export default function PlannerPage() {
                         : plan.createdFromTemplateId ? " (from template)" : "";
                       return (
                         <option key={plan.id} value={plan.id}>
-                          {plan.name}{plan.isPrimary ? " ★" : ""}{creatorLabel}
+                          {plan.name}{plan.isPrimary ? " \u2605" : ""}{creatorLabel}
                         </option>
                       );
                     })}
@@ -1319,40 +1324,20 @@ export default function PlannerPage() {
                         setError("Failed to set primary plan.");
                       }
                     }}
-                    className="flex items-center gap-1 rounded-md border border-border bg-card px-2 py-1 text-[10px] font-medium text-muted-foreground hover:bg-muted hover:text-foreground transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
+                    className="flex min-h-[44px] items-center gap-1 rounded-lg border border-border bg-card px-2.5 py-1.5 text-[11px] font-medium text-muted-foreground hover:bg-muted hover:text-foreground transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
                     title="Set as primary plan"
                     aria-label={`Set "${selectedPlan.name}" as primary plan`}
                   >
-                    <svg aria-hidden="true" className="h-3 w-3" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                    <svg aria-hidden="true" className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" d="M11.48 3.499a.562.562 0 0 1 1.04 0l2.125 5.111a.563.563 0 0 0 .475.345l5.518.442c.499.04.701.663.321.988l-4.204 3.602a.563.563 0 0 0-.182.557l1.285 5.385a.562.562 0 0 1-.84.61l-4.725-2.885a.562.562 0 0 0-.586 0L6.982 20.54a.562.562 0 0 1-.84-.61l1.285-5.386a.562.562 0 0 0-.182-.557l-4.204-3.602a.562.562 0 0 1 .321-.988l5.518-.442a.563.563 0 0 0 .475-.345L11.48 3.5Z" />
                     </svg>
                     Set Primary
                   </button>
                 )}
-                {/* Delete plan button — if user has delete/owner permission */}
-                {(selectedPlan.permission === "owner" || selectedPlan.permission === "delete" || !selectedPlan.permission) && (
-                  <span title={selectedPlan.isPrimary ? "Cannot delete the primary plan. Set another plan as primary first." : "Delete this plan"}>
-                  <button
-                    type="button"
-                    onClick={() => !selectedPlan.isPrimary && setDeletePlanConfirm(true)}
-                    disabled={selectedPlan.isPrimary}
-                    className={`flex h-6 w-6 items-center justify-center rounded transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring ${
-                      selectedPlan.isPrimary
-                        ? "text-muted-foreground/30 cursor-not-allowed"
-                        : "text-muted-foreground hover:text-destructive hover:bg-destructive-light"
-                    }`}
-                    aria-label={`Delete plan: ${selectedPlan.name}`}
-                  >
-                    <svg aria-hidden="true" className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 0 0-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 0 0-7.5 0" />
-                    </svg>
-                  </button>
-                  </span>
-                )}
               </div>
 
               {/* Line 2: Courses, credits, GPA, warnings */}
-              <div className="flex flex-wrap items-center gap-2">
+              <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
                 <span className="text-xs text-muted-foreground">
                   {totalCourses} course{totalCourses !== 1 ? "s" : ""}
                 </span>
@@ -1403,7 +1388,7 @@ export default function PlannerPage() {
           )}
         </div>
 
-        <div className="flex items-center gap-1.5">
+        <div className="flex items-center gap-2">
           {/* Validate progress */}
           {selectedPlanId && (
             <button
@@ -1488,13 +1473,30 @@ export default function PlannerPage() {
               </svg>
             </Button>
           )}
+
+          {/* Delete plan button — if user has delete/owner permission */}
+          {selectedPlan && (selectedPlan.permission === "owner" || selectedPlan.permission === "delete" || !selectedPlan.permission) && (
+            <span title={selectedPlan.isPrimary ? "Cannot delete the primary plan. Set another plan as primary first." : "Delete this plan"}>
+            <Button
+              variant="outline"
+              onClick={() => !selectedPlan.isPrimary && setDeletePlanConfirm(true)}
+              disabled={selectedPlan.isPrimary}
+              aria-label={`Delete plan: ${selectedPlan.name}`}
+              className={selectedPlan.isPrimary ? "opacity-30 cursor-not-allowed" : "text-muted-foreground hover:text-destructive hover:border-destructive/50 hover:bg-destructive-light"}
+            >
+              <svg aria-hidden="true" className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 0 0-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 0 0-7.5 0" />
+              </svg>
+            </Button>
+            </span>
+          )}
         </div>
       </div>
 
       {/* Error banner */}
       {error && (
         <div
-          className="mb-4 flex items-center gap-2 rounded-lg border border-destructive/30 bg-destructive-light p-3 text-sm text-destructive"
+          className="mb-4 flex items-center gap-2 rounded-xl border border-destructive/30 bg-destructive-light p-3 text-sm text-destructive"
           role="alert"
         >
           <svg
@@ -1656,12 +1658,12 @@ export default function PlannerPage() {
                         <>
                           {/* Sticky header */}
                           {/* Sticky title */}
-                          <div className="shrink-0 bg-card px-5 py-3">
-                            <h3 className="font-semibold text-foreground">Validation Report</h3>
+                          <div className="shrink-0 border-b border-border bg-card px-5 py-3">
+                            <h3 className="text-sm font-semibold text-foreground">Validation Report</h3>
                           </div>
 
                           {/* Scrollable body */}
-                          <div className="flex-1 overflow-y-auto px-5 py-3">
+                          <div className="flex-1 overflow-y-auto px-5 py-4">
 
                           {/* Summary — collapsible */}
                           <div className="mb-3 rounded-lg border border-border">
@@ -1915,13 +1917,13 @@ export default function PlannerPage() {
       {clearConfirm && (
         <>
           <div
-            className="fixed inset-0 z-40 bg-black/50"
+            className="fixed inset-0 z-40 bg-foreground/30"
             onClick={() => setClearConfirm(null)}
             aria-hidden="true"
           />
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
             <div
-              className="w-full max-w-md rounded-xl bg-card shadow-xl"
+              className="w-full max-w-md rounded-2xl border border-border bg-card shadow-xl"
               role="alertdialog"
               aria-modal="true"
               aria-label="Clear courses confirmation"
@@ -1983,13 +1985,13 @@ export default function PlannerPage() {
       {deletePlanConfirm && selectedPlan && (
         <>
           <div
-            className="fixed inset-0 z-40 bg-black/50"
+            className="fixed inset-0 z-40 bg-foreground/30"
             onClick={() => setDeletePlanConfirm(false)}
             aria-hidden="true"
           />
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
             <div
-              className="w-full max-w-md rounded-xl bg-card shadow-xl"
+              className="w-full max-w-md rounded-2xl border border-border bg-card shadow-xl"
               role="alertdialog"
               aria-modal="true"
               aria-label="Delete plan confirmation"
@@ -2031,13 +2033,13 @@ export default function PlannerPage() {
       {coreRemoveConfirm && (
         <>
           <div
-            className="fixed inset-0 z-40 bg-black/50"
+            className="fixed inset-0 z-40 bg-foreground/30"
             onClick={() => setCoreRemoveConfirm(null)}
             aria-hidden="true"
           />
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
             <div
-              className="w-full max-w-md rounded-xl bg-card shadow-xl"
+              className="w-full max-w-md rounded-2xl border border-border bg-card shadow-xl"
               role="alertdialog"
               aria-modal="true"
               aria-label="Remove core course confirmation"
@@ -2135,13 +2137,13 @@ export default function PlannerPage() {
       {unlockConfirm !== null && (
         <>
           <div
-            className="fixed inset-0 z-40 bg-black/50"
+            className="fixed inset-0 z-40 bg-foreground/30"
             onClick={() => setUnlockConfirm(null)}
             aria-hidden="true"
           />
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
             <div
-              className="w-full max-w-md rounded-xl bg-card shadow-xl"
+              className="w-full max-w-md rounded-2xl border border-border bg-card shadow-xl"
               role="alertdialog"
               aria-modal="true"
               aria-label="Unlock grade confirmation"

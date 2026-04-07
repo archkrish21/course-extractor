@@ -168,24 +168,42 @@ export default function BillingPage() {
       {/* Current plan */}
       <Card className="mb-6">
         <CardContent>
-          <div className="flex items-center justify-between py-2">
-            <div>
-              <p className="text-sm text-muted-foreground">Current Plan</p>
-              <p className="text-xl font-bold text-foreground">
-                {subscription?.status === "trialing" ? "Free Trial" : (subscription?.planDisplayName ?? "Starter")}
-                {subscription?.status === "trialing" && (
-                  <Badge className="ml-2 bg-warning/15 text-warning text-[10px]">{trial?.daysRemaining ?? 14} days left</Badge>
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex items-center gap-3">
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary-light">
+                <svg aria-hidden="true" className="h-5 w-5 text-primary" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M9.813 15.904 9 18.75l-.813-2.846a4.5 4.5 0 0 0-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 0 0 3.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 0 0 3.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 0 0-3.09 3.09ZM18.259 8.715 18 9.75l-.259-1.035a3.375 3.375 0 0 0-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 0 0 2.455-2.456L18 2.25l.259 1.035a3.375 3.375 0 0 0 2.455 2.456L21.75 6l-1.036.259a3.375 3.375 0 0 0-2.455 2.456Z" />
+                </svg>
+              </div>
+              <div>
+                <div className="flex items-center gap-2">
+                  <p className="text-lg font-bold text-foreground">
+                    {subscription?.status === "trialing" ? "Free Trial" : (subscription?.planDisplayName ?? "Starter")}
+                  </p>
+                  {subscription?.status === "trialing" && (
+                    <Badge variant="warning">{trial?.daysRemaining ?? 14} days left</Badge>
+                  )}
+                  {subscription?.status === "active" && (
+                    <Badge variant="success">Active</Badge>
+                  )}
+                  {subscription?.status === "past_due" && (
+                    <Badge variant="destructive">Past Due</Badge>
+                  )}
+                  {subscription?.status === "canceled" && (
+                    <Badge>Canceled</Badge>
+                  )}
+                </div>
+                {subscription?.billingCycle && subscription.currentPeriodEnd && (
+                  <p className="mt-0.5 text-xs text-muted-foreground">
+                    {subscription.billingCycle === "four_year" ? "4-Year" : subscription.billingCycle.charAt(0).toUpperCase() + subscription.billingCycle.slice(1)} cycle
+                    {subscription.cancelAtPeriodEnd
+                      ? ` · Cancels ${new Date(subscription.currentPeriodEnd).toLocaleDateString()}`
+                      : subscription.billingCycle === "four_year"
+                        ? ` · Expires ${new Date(subscription.currentPeriodEnd).toLocaleDateString()}`
+                        : ` · Renews ${new Date(subscription.currentPeriodEnd).toLocaleDateString()}`}
+                  </p>
                 )}
-                {subscription?.status === "active" && (
-                  <Badge className="ml-2 bg-success/15 text-success text-[10px]">Active</Badge>
-                )}
-                {subscription?.status === "past_due" && (
-                  <Badge className="ml-2 bg-destructive/15 text-destructive text-[10px]">Past Due</Badge>
-                )}
-                {subscription?.status === "canceled" && (
-                  <Badge className="ml-2 bg-muted text-muted-foreground text-[10px]">Canceled</Badge>
-                )}
-              </p>
+              </div>
             </div>
             {subscription?.hasStripeCustomer && (
               <Button variant="outline" size="sm" onClick={handleManageBilling}>
@@ -196,30 +214,25 @@ export default function BillingPage() {
 
           {/* Trial info */}
           {trial?.active && (
-            <div className="mt-2 rounded-lg border border-warning/30 bg-warning/5 px-3 py-2">
-              <p className="text-sm text-warning">
-                <span className="font-semibold">{trial.daysRemaining} day{trial.daysRemaining !== 1 ? "s" : ""}</span> remaining in your free trial.
-                Upgrade to keep your premium features.
-              </p>
+            <div className="mt-4 flex flex-col gap-3 rounded-xl border border-warning/30 bg-warning-light px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
+              <div className="flex items-center gap-2">
+                <svg aria-hidden="true" className="h-5 w-5 shrink-0 text-warning" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
+                </svg>
+                <p className="text-sm text-foreground">
+                  <span className="font-bold text-warning">{trial.daysRemaining} day{trial.daysRemaining !== 1 ? "s" : ""}</span> remaining in your free trial.
+                </p>
+              </div>
+              <Button size="sm" onClick={() => { const el = document.getElementById("pricing-cards"); el?.scrollIntoView({ behavior: "smooth" }); }}>
+                Upgrade Now
+              </Button>
             </div>
-          )}
-
-          {/* Billing cycle info */}
-          {subscription?.billingCycle && subscription.currentPeriodEnd && (
-            <p className="mt-2 text-xs text-muted-foreground">
-              {subscription.billingCycle === "four_year" ? "4-year" : subscription.billingCycle} billing
-              {subscription.cancelAtPeriodEnd
-                ? ` · Cancels on ${new Date(subscription.currentPeriodEnd).toLocaleDateString()}`
-                : subscription.billingCycle === "four_year"
-                  ? ` · Expires on ${new Date(subscription.currentPeriodEnd).toLocaleDateString()}`
-                  : ` · Renews on ${new Date(subscription.currentPeriodEnd).toLocaleDateString()}`}
-            </p>
           )}
         </CardContent>
       </Card>
 
       {/* Billing interval toggle */}
-      <div className="mb-6 flex items-center justify-center gap-1 rounded-lg bg-muted p-1">
+      <div className="mb-6 flex items-center justify-center gap-1 rounded-full bg-muted p-1">
         {([
           { key: "monthly" as BillingInterval, label: "Monthly" },
           { key: "annual" as BillingInterval, label: "Annual", badge: "Save 10%" },
@@ -229,15 +242,19 @@ export default function BillingPage() {
             key={interval.key}
             type="button"
             onClick={() => setBillingInterval(interval.key)}
-            className={`rounded-md px-4 py-2 text-sm font-medium transition-colors ${
+            className={`flex items-center gap-1.5 rounded-full px-4 py-2 text-sm font-medium transition-colors ${
               billingInterval === interval.key
-                ? "bg-card text-foreground shadow-sm"
+                ? "bg-primary text-white shadow-sm"
                 : "text-muted-foreground hover:text-foreground"
             }`}
           >
             {interval.label}
-            {interval.badge && billingInterval === interval.key && (
-              <span className="ml-1.5 rounded-full bg-success/15 px-1.5 py-0.5 text-[10px] font-semibold text-success">
+            {interval.badge && (
+              <span className={`rounded-full px-1.5 py-0.5 text-[10px] font-semibold ${
+                billingInterval === interval.key
+                  ? "bg-white/20 text-white"
+                  : "bg-success/15 text-success"
+              }`}>
                 {interval.badge}
               </span>
             )}
@@ -246,7 +263,7 @@ export default function BillingPage() {
       </div>
 
       {/* Pricing cards */}
-      <div className="grid gap-4 md:grid-cols-3">
+      <div id="pricing-cards" className="grid gap-5 md:grid-cols-3">
         {PLANS.map((plan) => {
           // Trialing users are not on any paid plan — all paid plans show as upgrade
           const isCurrent = subscription?.status !== "trialing" && subscription?.planName === plan.name;
@@ -255,57 +272,64 @@ export default function BillingPage() {
           return (
             <Card
               key={plan.name}
-              className={`flex flex-col ${
-                plan.name === "elite"
-                  ? "border-purple-500/30 ring-1 ring-purple-500/20"
-                  : plan.name === "plus"
-                    ? "border-primary/30"
-                    : ""
+              className={`flex flex-col transition-shadow ${
+                isCurrent
+                  ? "ring-2 ring-primary border-primary/40"
+                  : plan.name === "elite"
+                    ? "border-purple-500/30 ring-1 ring-purple-500/20"
+                    : plan.name === "plus"
+                      ? "border-primary/30"
+                      : ""
               }`}
             >
               <CardHeader>
                 <div className="flex items-center justify-between">
                   <div>
                     <h3 className="text-lg font-bold text-foreground">{plan.display}</h3>
-                    <p className="text-xs text-muted-foreground">{plan.description}</p>
+                    <p className="mt-0.5 text-xs text-muted-foreground">{plan.description}</p>
                   </div>
-                  {plan.name === "elite" && (
-                    <Badge className="bg-purple-500/15 text-purple-600 text-[10px]">Popular</Badge>
-                  )}
+                  <div className="flex items-center gap-1.5">
+                    {isCurrent && (
+                      <Badge variant="success">Current</Badge>
+                    )}
+                    {plan.name === "elite" && (
+                      <Badge className="bg-ap-light text-ap">Popular</Badge>
+                    )}
+                  </div>
                 </div>
-                <div className="mt-2">
-                  <span className="text-3xl font-bold text-foreground">{getPrice(plan)}</span>
+                <div className="mt-3">
+                  <span className="text-3xl font-bold tracking-tight text-foreground">{getPrice(plan)}</span>
                   {getSubPrice(plan) && (
-                    <span className="ml-1 text-xs text-muted-foreground">{getSubPrice(plan)}</span>
+                    <span className="ml-1.5 text-sm text-muted-foreground">{getSubPrice(plan)}</span>
                   )}
                 </div>
               </CardHeader>
               <CardContent className="flex flex-1 flex-col">
-                <ul className="flex-1 space-y-2">
+                <ul className="flex-1 space-y-2.5">
                   {plan.features.map((f) => (
-                    <li key={f} className="flex items-center gap-2 text-sm text-foreground">
-                      <svg aria-hidden="true" className="h-4 w-4 shrink-0 text-success" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                    <li key={f} className="flex items-start gap-2.5 text-sm leading-5 text-foreground">
+                      <svg aria-hidden="true" className="mt-0.5 h-4 w-4 shrink-0 text-success" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" d="m4.5 12.75 6 6 9-13.5" />
                       </svg>
                       {f}
                     </li>
                   ))}
                 </ul>
-                <div className="mt-4 pt-4 border-t border-border">
+                <div className="mt-5 pt-4 border-t border-border">
                   {isCurrent ? (
-                    <Button variant="outline" className="w-full" disabled>
+                    <Button variant="outline" className="w-full cursor-default opacity-60" disabled>
                       Current Plan
                     </Button>
                   ) : isUpgrade ? (
                     <Button
-                      className={`w-full ${plan.name === "elite" ? "bg-purple-600 hover:bg-purple-700" : ""}`}
+                      className={`w-full ${plan.name === "elite" ? "bg-ap hover:bg-ap/90" : ""}`}
                       onClick={() => handleUpgrade(plan.name)}
                       disabled={!!upgrading}
                     >
                       {upgrading === plan.name ? "Redirecting..." : `Upgrade to ${plan.display}`}
                     </Button>
                   ) : (
-                    <Button variant="ghost" className="w-full text-muted-foreground" disabled>
+                    <Button variant="ghost" className="w-full text-muted-foreground cursor-default" disabled>
                       Free Forever
                     </Button>
                   )}

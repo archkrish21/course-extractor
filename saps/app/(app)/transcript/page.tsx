@@ -326,9 +326,9 @@ export default function GradesPage() {
             >
               <path strokeLinecap="round" strokeLinejoin="round" d="M4.26 10.147a60.438 60.438 0 0 0-.491 6.347A48.62 48.62 0 0 1 12 20.904a48.62 48.62 0 0 1 8.232-4.41 60.46 60.46 0 0 0-.491-6.347m-15.482 0a50.636 50.636 0 0 0-2.658-.813A59.906 59.906 0 0 1 12 3.493a59.903 59.903 0 0 1 10.399 5.84c-.896.248-1.783.52-2.658.814m-15.482 0A50.717 50.717 0 0 1 12 13.489a50.702 50.702 0 0 1 7.74-3.342" />
             </svg>
-            <p className="text-sm font-medium text-foreground">No completed courses yet</p>
+            <p className="text-sm font-medium text-foreground">No transcript data yet</p>
             <p className="mt-1 text-sm text-muted-foreground">
-              Mark courses as &quot;Completed&quot; and assign grades in the Planner to see them here.
+              Complete a year-end review to see your transcript.
             </p>
             <Link href="/planner" className="mt-4">
               <Button size="sm">Go to Planner</Button>
@@ -377,10 +377,12 @@ export default function GradesPage() {
                     </div>
                     {gl === currentGradeLevel && <Badge variant="success">Current</Badge>}
                   </div>
-                  <div className="flex items-center gap-4 text-xs text-muted-foreground">
-                    <span>{glCourses.length} course{glCourses.length !== 1 ? "s" : ""}</span>
-                    <span>{glCredits} credits</span>
-                    <span>GPA: {fmtGpa(glGpa.unweighted)} / {fmtGpa(glGpa.weighted)}</span>
+                  <div className="flex items-center gap-3 text-xs text-muted-foreground">
+                    <span className="hidden sm:inline">{glCourses.length} course{glCourses.length !== 1 ? "s" : ""}</span>
+                    <span className="hidden sm:inline">{glCredits} cr</span>
+                    <span>UW {fmtGpa(glGpa.unweighted)}</span>
+                    <span className="text-muted-foreground/50">|</span>
+                    <span>W {fmtGpa(glGpa.weighted)}</span>
                   </div>
                 </button>
 
@@ -393,14 +395,14 @@ export default function GradesPage() {
 
                       return (
                         <div key={sem} className="border-b border-border last:border-b-0">
-                          <div className="bg-muted/30 px-4 py-2 sm:px-5">
-                            <h3 className="text-sm font-semibold text-foreground">Semester {sem}</h3>
+                          <div className="bg-muted/30 px-4 py-2.5 sm:px-5">
+                            <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Semester {sem}</h3>
                           </div>
 
                           {/* Table header */}
-                          <div className="hidden sm:grid sm:grid-cols-[1fr_120px_80px_60px_72px] gap-2 px-4 py-2 sm:px-5 text-xs font-medium uppercase tracking-wider text-muted-foreground border-b border-border/50">
-                            <span>Course</span>
+                          <div className="hidden sm:grid sm:grid-cols-[100px_1fr_80px_60px_72px] gap-2 px-4 py-2 sm:px-5 text-xs font-semibold uppercase tracking-wider text-muted-foreground border-b border-border/50">
                             <span>Code</span>
+                            <span>Course</span>
                             <span>Type</span>
                             <span className="text-center">Grade</span>
                             <span className="text-center">Credits</span>
@@ -412,38 +414,61 @@ export default function GradesPage() {
                               key={course.id}
                               className={`
                                 flex flex-col gap-1.5 px-4 py-2.5 sm:px-5
-                                sm:grid sm:grid-cols-[1fr_120px_80px_60px_72px] sm:items-center sm:gap-2
+                                sm:grid sm:grid-cols-[100px_1fr_80px_60px_72px] sm:items-center sm:gap-2
                                 ${idx % 2 === 1 ? "bg-muted/20" : ""}
                               `}
                             >
-                              <div className="min-w-0">
+                              {/* Mobile: name first with code + type below */}
+                              <div className="min-w-0 sm:hidden">
                                 <p className="text-sm font-medium text-foreground truncate" title={course.name}>
                                   {course.name}
                                   {course.gpaWaiverApplied && (
-                                    <span className="ml-1 text-[10px] text-warning">(W)</span>
+                                    <Badge variant="warning" className="ml-1.5 text-[10px] align-middle">GPA Waiver</Badge>
                                   )}
                                 </p>
-                                <div className="flex items-center gap-2 mt-0.5 sm:hidden">
+                                <div className="flex items-center gap-2 mt-0.5">
                                   <span className="text-xs text-muted-foreground">{course.code}</span>
                                   <Badge variant={creditTypeBadgeVariant(course.creditType)} className="text-[10px]">
                                     {course.creditType}
                                   </Badge>
                                 </div>
                               </div>
-                              <span className="hidden sm:block text-sm text-muted-foreground truncate">{course.code}</span>
+                              {/* Desktop: Code column */}
+                              <span className="hidden sm:block text-sm text-muted-foreground truncate" title={course.code}>{course.code}</span>
+                              {/* Desktop: Name column */}
+                              <div className="hidden sm:flex sm:items-center sm:gap-1.5 min-w-0">
+                                <p className="text-sm font-medium text-foreground truncate" title={course.name}>
+                                  {course.name}
+                                </p>
+                                {course.gpaWaiverApplied && (
+                                  <Badge variant="warning" className="text-[10px] shrink-0">GPA Waiver</Badge>
+                                )}
+                              </div>
+                              {/* Desktop: Type column */}
                               <div className="hidden sm:block">
                                 <Badge variant={creditTypeBadgeVariant(course.creditType)} className="text-[10px]">
                                   {course.creditType}
                                 </Badge>
                               </div>
-                              <div className="flex items-center gap-2 sm:justify-center">
-                                <span className="text-xs text-muted-foreground sm:hidden w-12 shrink-0">Grade</span>
+                              {/* Mobile: grade + credits inline */}
+                              <div className="flex items-center gap-4 sm:hidden">
+                                <span className="text-xs text-muted-foreground">Grade:</span>
                                 <span className={`text-sm font-bold ${course.plannedGrade ? "text-success" : "text-muted-foreground"}`}>
-                                  {course.plannedGrade ?? "—"}
+                                  {course.plannedGrade ?? "\u2014"}
+                                </span>
+                                <span className="text-xs text-muted-foreground ml-auto">Credits:</span>
+                                <span className="text-sm text-foreground">
+                                  {semesterCredit(course.creditValue, course.duration).toFixed(1)}
                                 </span>
                               </div>
-                              <div className="flex items-center gap-2 sm:justify-center">
-                                <span className="text-xs text-muted-foreground sm:hidden w-12 shrink-0">Credits</span>
+                              {/* Desktop: Grade column */}
+                              <div className="hidden sm:flex sm:justify-center">
+                                <span className={`text-sm font-bold ${course.plannedGrade ? "text-success" : "text-muted-foreground"}`}>
+                                  {course.plannedGrade ?? "\u2014"}
+                                </span>
+                              </div>
+                              {/* Desktop: Credits column */}
+                              <div className="hidden sm:flex sm:justify-center">
                                 <span className="text-sm text-foreground">
                                   {semesterCredit(course.creditValue, course.duration).toFixed(1)}
                                 </span>
@@ -452,9 +477,10 @@ export default function GradesPage() {
                           ))}
 
                           {/* Semester GPA footer */}
-                          <div className="flex items-center justify-end gap-6 bg-muted/30 px-4 py-2 sm:px-5 text-sm">
-                            <span className="text-muted-foreground">Semester {sem} GPA:</span>
-                            <span className="font-medium">{fmtGpa(semGpa.unweighted)} / {fmtGpa(semGpa.weighted)}</span>
+                          <div className="flex items-center justify-end gap-4 bg-muted/30 px-4 py-2 sm:px-5 text-sm">
+                            <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Semester {sem} GPA</span>
+                            <span className="text-muted-foreground">UW <span className="font-semibold text-foreground">{fmtGpa(semGpa.unweighted)}</span></span>
+                            <span className="text-muted-foreground">W <span className="font-semibold text-foreground">{fmtGpa(semGpa.weighted)}</span></span>
                           </div>
                         </div>
                       );

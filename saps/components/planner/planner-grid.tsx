@@ -288,14 +288,14 @@ function DesktopGrid({
           });
 
         return (
-          <div key={grade} role="row" className="mb-3">
+          <div key={grade} role="row" className="mb-3 rounded-xl border border-border overflow-hidden">
             {/* Grade header — full width, clickable toggle */}
             <button
               type="button"
               role="rowheader"
               aria-expanded={!isCollapsed}
               onClick={toggleCollapse}
-              className={`flex w-full items-center gap-2 rounded-lg px-3 py-2.5 text-sm font-semibold text-left
+              className={`flex w-full items-center gap-2 px-4 py-3 text-sm font-semibold text-left
                 min-h-[44px] cursor-pointer transition-colors duration-150
                 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring
                 ${isCurrentGrade ? "bg-primary-light text-primary" : "bg-muted/50 text-foreground hover:bg-muted"}`}
@@ -407,7 +407,7 @@ function DesktopGrid({
             {/* Expanded content */}
             {!isCollapsed && (() => {
               return (
-              <div className="mt-2">
+              <div className="border-t border-border bg-card p-3">
                 <div className="grid grid-cols-2 gap-3">
                 {SEMESTERS.map((sem, colIdx) => {
                   const cellCourses = sortCourses(getSemesterCourses(courses, grade, sem));
@@ -443,7 +443,7 @@ function DesktopGrid({
                       onKeyDown={(e) => handleKeyDown(e, rowIdx, colIdx)}
                       onFocus={() => setFocusedCell({ row: rowIdx, col: colIdx })}
                       className={`
-                        min-h-[100px] rounded-lg border-2 border-dashed p-2
+                        min-h-[100px] rounded-xl border-2 border-dashed p-3
                         transition-all duration-300
                         focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring
                         ${
@@ -451,7 +451,7 @@ function DesktopGrid({
                             ? "border-primary bg-primary/5 ring-2 ring-primary/30"
                             : cellViolationCount > 0
                               ? "border-warning/50 bg-warning-light/30"
-                              : "border-border bg-card hover:border-primary/30"
+                              : "border-border bg-background hover:border-primary/30"
                         }
                       `}
                     >
@@ -736,7 +736,7 @@ function MobileAccordion({
 
             {/* Accordion content */}
             {isExpanded && (
-              <div id={`grade-${grade}-content`} className="px-4 pb-4 pt-2">
+              <div id={`grade-${grade}-content`} className="border-t border-border px-4 pb-4 pt-3">
                 {SEMESTERS.map((sem) => {
                   const cellCourses = getCoursesForCell(courses, grade, sem);
                   const cellViolationCount = cellCourses.reduce(

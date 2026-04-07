@@ -27,13 +27,13 @@ export default function PublicLayout({ children }: { children: React.ReactNode }
       {/* Navigation */}
       <header className="sticky top-0 z-50 border-b border-border/40 bg-background/85 backdrop-blur-xl">
         <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-4 sm:px-6">
-          <Link href="/" className="flex items-center gap-2.5">
-            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary shadow-sm shadow-primary/25">
+          <Link href="/" className="flex items-center gap-2 focus-ring">
+            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary">
               <svg aria-hidden="true" className="h-5 w-5 text-primary-foreground" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M4.26 10.147a60.438 60.438 0 0 0-.491 6.347A48.62 48.62 0 0 1 12 20.904a48.62 48.62 0 0 1 8.232-4.41 60.46 60.46 0 0 0-.491-6.347m-15.482 0a50.636 50.636 0 0 0-2.658-.813A59.906 59.906 0 0 1 12 3.493a59.903 59.903 0 0 1 10.399 5.84c-.896.248-1.783.52-2.658.814m-15.482 0A50.717 50.717 0 0 1 12 13.489a50.702 50.702 0 0 1 7.74-3.342" />
               </svg>
             </div>
-            <span className="text-lg font-bold tracking-tight text-foreground">SAPS</span>
+            <span className="text-lg font-bold text-foreground">SAPS</span>
           </Link>
 
           {/* Desktop nav */}
@@ -42,7 +42,7 @@ export default function PublicLayout({ children }: { children: React.ReactNode }
               const active = pathname === link.href;
               return (
                 <Link key={link.href} href={link.href}
-                  className={`text-sm font-medium transition-colors ${active ? "text-foreground" : "text-muted-foreground hover:text-foreground"}`}>
+                  className={`text-sm font-medium transition-colors focus-ring ${active ? "text-foreground" : "text-muted-foreground hover:text-foreground"}`}>
                   {link.label}
                 </Link>
               );
@@ -50,18 +50,19 @@ export default function PublicLayout({ children }: { children: React.ReactNode }
           </nav>
 
           <div className="flex items-center gap-3">
-            <Link href="/login" className="hidden text-sm font-medium text-muted-foreground hover:text-foreground transition-colors sm:inline">
+            <Link href="/login"
+              className="hidden rounded-lg px-3 py-2 text-sm font-medium text-muted-foreground hover:bg-muted hover:text-foreground transition-colors focus-ring sm:inline-flex items-center min-h-[44px]">
               Sign in
             </Link>
             <Link href="/signup"
-              className="rounded-xl bg-primary px-5 py-2 text-sm font-semibold text-primary-foreground shadow-sm shadow-primary/25 hover:bg-primary-hover transition-all">
+              className="inline-flex items-center rounded-lg bg-primary px-5 min-h-[44px] text-sm font-semibold text-primary-foreground hover:bg-primary-hover transition-colors focus-ring">
               Get Started Free
             </Link>
 
             {/* Mobile menu button */}
             <button
               type="button"
-              className="flex h-9 w-9 items-center justify-center rounded-lg text-muted-foreground hover:bg-muted md:hidden"
+              className="flex h-9 w-9 items-center justify-center rounded-lg text-muted-foreground hover:bg-muted focus-ring md:hidden"
               onClick={() => {
                 const menu = document.getElementById("mobile-nav");
                 menu?.classList.toggle("hidden");
@@ -80,12 +81,12 @@ export default function PublicLayout({ children }: { children: React.ReactNode }
           <div className="flex flex-col gap-1">
             {NAV_LINKS.map((link) => (
               <Link key={link.href} href={link.href}
-                className="rounded-lg px-3 py-2.5 text-sm font-medium text-muted-foreground hover:bg-muted hover:text-foreground transition-colors">
+                className="rounded-lg px-3 py-2.5 text-sm font-medium text-muted-foreground hover:bg-muted hover:text-foreground transition-colors focus-ring">
                 {link.label}
               </Link>
             ))}
             <Link href="/login"
-              className="rounded-lg px-3 py-2.5 text-sm font-medium text-muted-foreground hover:bg-muted hover:text-foreground transition-colors">
+              className="rounded-lg px-3 py-2.5 text-sm font-medium text-muted-foreground hover:bg-muted hover:text-foreground transition-colors focus-ring">
               Sign in
             </Link>
           </div>
@@ -98,9 +99,9 @@ export default function PublicLayout({ children }: { children: React.ReactNode }
       {/* Footer */}
       <footer className="border-t border-border bg-muted/30">
         <div className="mx-auto max-w-6xl px-4 py-12 sm:px-6">
-          <div className="grid grid-cols-2 gap-8 sm:grid-cols-4">
+          <div className="grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-4">
             {/* Brand */}
-            <div className="col-span-2 sm:col-span-1">
+            <div className="sm:col-span-2 lg:col-span-1">
               <div className="flex items-center gap-2">
                 <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-primary">
                   <svg aria-hidden="true" className="h-4 w-4 text-primary-foreground" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
@@ -118,12 +119,12 @@ export default function PublicLayout({ children }: { children: React.ReactNode }
             <div>
               <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">Product</p>
               <ul className="mt-3 space-y-2">
-                <li><Link href="/about" className="text-sm text-muted-foreground hover:text-foreground">About</Link></li>
+                <li><Link href="/about" className="text-sm text-muted-foreground hover:text-foreground transition-colors focus-ring">About</Link></li>
                 {HOME_FEATURES.showPricing && (
-                  <li><Link href="/#pricing" className="text-sm text-muted-foreground hover:text-foreground">Pricing</Link></li>
+                  <li><Link href="/#pricing" className="text-sm text-muted-foreground hover:text-foreground transition-colors focus-ring">Pricing</Link></li>
                 )}
-                <li><Link href="/#faq" className="text-sm text-muted-foreground hover:text-foreground">FAQ</Link></li>
-                <li><Link href="/signup" className="text-sm text-muted-foreground hover:text-foreground">Get Started</Link></li>
+                <li><Link href="/#faq" className="text-sm text-muted-foreground hover:text-foreground transition-colors focus-ring">FAQ</Link></li>
+                <li><Link href="/signup" className="text-sm text-muted-foreground hover:text-foreground transition-colors focus-ring">Get Started</Link></li>
               </ul>
             </div>
 
@@ -131,12 +132,12 @@ export default function PublicLayout({ children }: { children: React.ReactNode }
             <div>
               <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">Legal</p>
               <ul className="mt-3 space-y-2">
-                <li><Link href="/terms" className="text-sm text-muted-foreground hover:text-foreground">Terms of Service</Link></li>
-                <li><Link href="/privacy" className="text-sm text-muted-foreground hover:text-foreground">Privacy Policy</Link></li>
+                <li><Link href="/terms" className="text-sm text-muted-foreground hover:text-foreground transition-colors focus-ring">Terms of Service</Link></li>
+                <li><Link href="/privacy" className="text-sm text-muted-foreground hover:text-foreground transition-colors focus-ring">Privacy Policy</Link></li>
                 {HOME_FEATURES.showContactPage && (
-                  <li><Link href="/contact" className="text-sm text-muted-foreground hover:text-foreground">Contact Us</Link></li>
+                  <li><Link href="/contact" className="text-sm text-muted-foreground hover:text-foreground transition-colors focus-ring">Contact Us</Link></li>
                 )}
-                <li><Link href="/contact" className="text-sm text-muted-foreground hover:text-foreground">Feedback</Link></li>
+                <li><Link href="/contact" className="text-sm text-muted-foreground hover:text-foreground transition-colors focus-ring">Feedback</Link></li>
               </ul>
             </div>
 
@@ -146,7 +147,7 @@ export default function PublicLayout({ children }: { children: React.ReactNode }
               <div className="mt-3 flex gap-3">
                 {SOCIAL_LINKS.map((s) => (
                   <a key={s.label} href={s.href} target="_blank" rel="noopener noreferrer"
-                    className="flex h-8 w-8 items-center justify-center rounded-full bg-muted text-muted-foreground hover:bg-primary hover:text-primary-foreground transition-colors"
+                    className="flex h-8 w-8 items-center justify-center rounded-full bg-muted text-muted-foreground hover:bg-primary hover:text-primary-foreground transition-colors focus-ring"
                     aria-label={s.label}>
                     <svg className="h-4 w-4" fill="currentColor" viewBox="0 0 24 24"><path d={s.icon} /></svg>
                   </a>
@@ -154,7 +155,7 @@ export default function PublicLayout({ children }: { children: React.ReactNode }
               </div>
               <p className="mt-4 text-xs text-muted-foreground">
                 Currently supporting Stevenson High School.{" "}
-                <Link href="/signup" className="text-primary hover:underline">More schools coming soon!</Link>
+                <Link href="/signup" className="text-primary hover:underline transition-colors focus-ring">More schools coming soon!</Link>
               </p>
             </div>
           </div>

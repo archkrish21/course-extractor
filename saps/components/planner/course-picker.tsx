@@ -314,12 +314,12 @@ export function CoursePicker({
         className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto p-4 sm:p-6"
       >
         <div
-          className="relative flex w-full max-w-4xl flex-col rounded-xl bg-card shadow-xl"
+          className="relative flex w-full max-w-4xl flex-col rounded-2xl border border-border bg-card shadow-xl"
           style={{ maxHeight: "calc(100vh - 3rem)" }}
           onClick={(e) => e.stopPropagation()}
         >
         {/* Header with search */}
-        <div className="sticky top-0 z-10 rounded-t-xl border-b border-border bg-card px-4 py-3">
+        <div className="sticky top-0 z-10 rounded-t-2xl border-b border-border bg-card px-4 py-3">
           <div className="flex items-center gap-3">
             <button
               type="button"
@@ -561,7 +561,7 @@ export function CoursePicker({
                         }
                       } : undefined}
                       className={`
-                        rounded-lg border p-3 transition-colors
+                        rounded-xl border p-3 transition-colors
                         ${onViewDetails ? "cursor-pointer" : ""}
                         ${showPreview ? "border-warning bg-warning-light/50" : lastViewedCourseId === course.id ? "border-primary/50 bg-primary/5 ring-1 ring-primary/20" : "border-border hover:bg-muted/50"}
                         focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring
@@ -660,7 +660,7 @@ export function CoursePicker({
 
                       {/* Validation preview */}
                       {showPreview && validationPreview.preview.violations.length > 0 && (
-                        <div className="mt-2 rounded-md border border-warning bg-warning-light p-2">
+                        <div className="mt-2 rounded-lg border border-warning/50 bg-warning-light p-2.5">
                           <div className="flex items-start gap-2">
                             <svg
                               aria-hidden="true"

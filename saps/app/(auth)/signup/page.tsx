@@ -145,7 +145,7 @@ export default function SignupPage() {
           {/* Step 1: Role */}
           <fieldset>
             <legend className="mb-2 text-sm font-medium text-foreground">I am a</legend>
-            <div className="grid grid-cols-3 gap-2">
+            <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
               {ROLES.map((r) => (
                 <button
                   key={r.value}
@@ -154,7 +154,7 @@ export default function SignupPage() {
                   aria-checked={role === r.value}
                   onClick={() => setRole(r.value)}
                   className={`
-                    flex flex-col items-center gap-0.5 rounded-xl border px-3 py-3 text-center
+                    flex h-full flex-col items-center justify-center gap-0.5 rounded-xl border px-3 py-3 text-center
                     min-h-[44px] cursor-pointer transition-all duration-150
                     focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring
                     ${role === r.value
@@ -187,19 +187,19 @@ export default function SignupPage() {
           </div>
 
           {/* Step 3: Personal */}
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <Input label="Date of birth" type="date" required
               value={dob} onChange={(e) => handleDobChange(e.target.value)}
               error={errors.dob} max={new Date().toISOString().split("T")[0]} />
-            <div>
-              <label className="mb-1.5 block text-sm font-medium text-foreground">State</label>
-              <div className="flex h-11 min-h-[44px] items-center rounded-lg border border-border bg-muted/40 px-3 text-sm text-muted-foreground">
+            <div className="flex flex-col gap-1.5">
+              <label className="text-sm font-medium text-foreground">State</label>
+              <div className="flex h-11 min-h-[44px] items-center rounded-lg border border-border bg-muted px-3 text-sm text-muted-foreground cursor-not-allowed">
                 Illinois
               </div>
             </div>
-            <div className="col-span-2">
-              <label className="mb-1.5 block text-sm font-medium text-foreground">School</label>
-              <div className="flex h-11 min-h-[44px] items-center rounded-lg border border-border bg-muted/40 px-3 text-sm text-muted-foreground">
+            <div className="sm:col-span-2 flex flex-col gap-1.5">
+              <label className="text-sm font-medium text-foreground">School</label>
+              <div className="flex h-11 min-h-[44px] items-center rounded-lg border border-border bg-muted px-3 text-sm text-muted-foreground cursor-not-allowed">
                 Adlai E. Stevenson High School
               </div>
             </div>
@@ -213,15 +213,13 @@ export default function SignupPage() {
 
           {/* School request form */}
           {showSchoolRequest && (
-            <div className="rounded-lg bg-muted/30 p-4">
+            <div className="rounded-lg border border-border bg-muted/30 p-4">
               <p className="mb-3 text-xs font-medium text-foreground">Request your school</p>
               <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
-                <input type="text" value={requestSchool} onChange={(e) => setRequestSchool(e.target.value)}
-                  placeholder="School name and state"
-                  className="h-9 w-full rounded-lg border border-border bg-background px-3 text-sm placeholder:text-muted-foreground focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring" />
-                <input type="email" value={requestEmail} onChange={(e) => setRequestEmail(e.target.value)}
-                  placeholder="Your email"
-                  className="h-9 w-full rounded-lg border border-border bg-background px-3 text-sm placeholder:text-muted-foreground focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring" />
+                <Input label="School name" hideLabel type="text" value={requestSchool} onChange={(e) => setRequestSchool(e.target.value)}
+                  placeholder="School name and state" />
+                <Input label="Your email" hideLabel type="email" value={requestEmail} onChange={(e) => setRequestEmail(e.target.value)}
+                  placeholder="Your email" />
               </div>
               <Button type="button" size="sm" className="mt-3 w-full"
                 disabled={!requestSchool.trim() || !requestEmail.trim() || schoolRequestSent}
@@ -232,7 +230,7 @@ export default function SignupPage() {
                 {schoolRequestSent ? "Sent!" : "Notify Me"}
               </Button>
               {schoolRequestSent && (
-                <p className="mt-2 text-xs text-success">Thanks! We'll notify you when your school is supported.</p>
+                <p className="mt-2 text-xs text-success">Thanks! We&apos;ll notify you when your school is supported.</p>
               )}
             </div>
           )}

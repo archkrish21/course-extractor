@@ -268,14 +268,23 @@ export default function DashboardPage() {
 
   return (
     <div className="mx-auto max-w-6xl">
-      <h1 className="mb-2 text-2xl font-bold tracking-tight text-foreground sm:text-3xl">
-        Welcome, {displayName}
-      </h1>
-      <p className="mb-6 text-sm text-muted-foreground">
-        {currentAccount?.gradeLevel
-          ? `Grade ${currentAccount.gradeLevel} \u00b7 Class of ${currentAccount.graduationYear}`
-          : "Dashboard"}
-      </p>
+      <div className="mb-6 flex flex-wrap items-start justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-bold text-foreground">
+            Welcome, {displayName}
+          </h1>
+          <p className="mt-1 text-sm text-muted-foreground">
+            {currentAccount?.gradeLevel
+              ? `Grade ${currentAccount.gradeLevel} \u00b7 Class of ${currentAccount.graduationYear}`
+              : "Your academic dashboard at a glance"}
+          </p>
+        </div>
+        <div className="flex items-center gap-2">
+          <Link href="/planner">
+            <Button size="sm">Open Planner</Button>
+          </Link>
+        </div>
+      </div>
 
       {/* Unclaimed account banner — parent viewing */}
       {currentAccount && !currentAccount.isClaimed && (
@@ -302,7 +311,7 @@ export default function DashboardPage() {
               <p className="font-semibold text-warning">
                 Waiting for {currentAccount?.studentName ?? "the student"} to claim this account
               </p>
-              <p className="mt-1 text-sm text-foreground/70">
+              <p className="mt-1 text-sm text-muted-foreground">
                 Share this claim code with {currentAccount?.studentName ?? "the student"} so they can take ownership of their account.
               </p>
               {claimCode && (
@@ -363,23 +372,25 @@ export default function DashboardPage() {
             </svg>
             <div>
               <p className="font-semibold text-warning">Complete your onboarding</p>
-              <p className="text-sm text-foreground/70">
+              <p className="text-sm text-muted-foreground">
                 Finish setting up your profile and create your first plan to get the most out of SAPS.
               </p>
             </div>
           </div>
-          <div className="flex gap-2 sm:shrink-0">
+          <div className="flex items-center gap-2 sm:shrink-0">
             <Link href="/onboarding">
               <Button size="sm">Finish setup</Button>
             </Link>
-            <Button
-              size="sm"
-              variant="ghost"
+            <button
+              type="button"
               onClick={() => setShowOnboardingBanner(false)}
               aria-label="Dismiss onboarding banner"
+              className="flex h-8 w-8 items-center justify-center rounded-lg text-warning hover:bg-warning/10 transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
             >
-              Dismiss
-            </Button>
+              <svg aria-hidden="true" className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M6 18 18 6M6 6l12 12" />
+              </svg>
+            </button>
           </div>
         </div>
       )}
@@ -407,29 +418,31 @@ export default function DashboardPage() {
             </svg>
             <div>
               <p className="font-semibold text-primary">Complete your profile</p>
-              <p className="text-sm text-primary/80">
+              <p className="text-sm text-muted-foreground">
                 Add your grade history and select a plan template to get personalized recommendations.
               </p>
             </div>
           </div>
-          <div className="flex gap-2 sm:shrink-0">
+          <div className="flex items-center gap-2 sm:shrink-0">
             <Link href="/onboarding">
               <Button size="sm">Complete setup</Button>
             </Link>
-            <Button
-              size="sm"
-              variant="ghost"
+            <button
+              type="button"
               onClick={() => setShowProfileBanner(false)}
               aria-label="Dismiss profile completion banner"
+              className="flex h-8 w-8 items-center justify-center rounded-lg text-primary hover:bg-primary/10 transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
             >
-              Dismiss
-            </Button>
+              <svg aria-hidden="true" className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M6 18 18 6M6 6l12 12" />
+              </svg>
+            </button>
           </div>
         </div>
       )}
 
       {/* Dashboard grid */}
-      <div className="grid gap-4 sm:gap-6 md:grid-cols-2">
+      <div className="grid gap-4 sm:gap-6 md:grid-cols-2 lg:grid-cols-3">
         {/* GPA Summary */}
         <Card className="flex h-full flex-col md:order-2">
           <CardHeader>
@@ -485,14 +498,14 @@ export default function DashboardPage() {
               <>
                 <div className="flex items-baseline gap-4">
                   <div>
-                    <p className="text-3xl font-bold text-foreground">
+                    <p className="text-2xl font-bold text-foreground">
                       {formatGpa(gpaData.cumulative.unweighted)}
                     </p>
                     <p className="text-sm text-muted-foreground">Unweighted</p>
                   </div>
                   <div className="h-8 w-px bg-border" aria-hidden="true" />
                   <div>
-                    <p className="text-3xl font-bold text-foreground">
+                    <p className="text-2xl font-bold text-foreground">
                       {formatGpa(gpaData.cumulative.weighted)}
                     </p>
                     <p className="text-sm text-muted-foreground">Weighted</p>
@@ -528,28 +541,30 @@ export default function DashboardPage() {
               </>
             ) : (
               /* No grades entered */
-              <div className="flex flex-col items-center py-4 text-center">
-                <svg
-                  aria-hidden="true"
-                  className="mb-2 h-8 w-8 text-muted-foreground/40"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  strokeWidth={1.5}
-                  stroke="currentColor"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0 1 15.75 21H5.25A2.25 2.25 0 0 1 3 18.75V8.25A2.25 2.25 0 0 1 5.25 6H10"
-                  />
-                </svg>
-                <p className="text-sm font-medium text-foreground">
+              <div className="flex flex-col items-center py-6 text-center">
+                <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-muted">
+                  <svg
+                    aria-hidden="true"
+                    className="h-6 w-6 text-muted-foreground"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    strokeWidth={1.5}
+                    stroke="currentColor"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0 1 15.75 21H5.25A2.25 2.25 0 0 1 3 18.75V8.25A2.25 2.25 0 0 1 5.25 6H10"
+                    />
+                  </svg>
+                </div>
+                <p className="text-base font-semibold text-foreground">
                   No grades entered
                 </p>
-                <p className="mt-1 text-xs text-muted-foreground">
+                <p className="mt-1 text-sm text-muted-foreground">
                   Enter your grades to see GPA calculations.
                 </p>
-                <Link href="/transcript" className="mt-3">
+                <Link href="/transcript" className="mt-4">
                   <Button size="sm">View Transcript</Button>
                 </Link>
               </div>
@@ -650,7 +665,7 @@ export default function DashboardPage() {
                                 <span className="text-muted-foreground">/ {total}</span>
                               </div>
                             </div>
-                            <div className="mt-1 flex h-1.5 w-full overflow-hidden rounded-full bg-muted">
+                            <div className="mt-1 flex h-2 w-full overflow-hidden rounded-full bg-muted">
                               {ePct > 0 && <div className="h-full bg-success" style={{ width: `${ePct}%` }} />}
                               {pPct > 0 && <div className="h-full bg-primary/50" style={{ width: `${pPct}%` }} />}
                             </div>
@@ -661,9 +676,9 @@ export default function DashboardPage() {
 
                     {/* Legend */}
                     <div className="mt-3 flex items-center gap-3 text-[10px] text-muted-foreground">
-                      <span className="flex items-center gap-1"><span className="inline-block h-1.5 w-1.5 rounded-full bg-success" /> Earned</span>
-                      <span className="flex items-center gap-1"><span className="inline-block h-1.5 w-1.5 rounded-full bg-primary/50" /> Planned</span>
-                      <span className="flex items-center gap-1"><span className="inline-block h-1.5 w-1.5 rounded-full bg-muted-foreground/30" /> Remaining</span>
+                      <span className="flex items-center gap-1"><span className="inline-block h-2 w-2 rounded-full bg-success" /> Earned</span>
+                      <span className="flex items-center gap-1"><span className="inline-block h-2 w-2 rounded-full bg-primary/50" /> Planned</span>
+                      <span className="flex items-center gap-1"><span className="inline-block h-2 w-2 rounded-full bg-muted-foreground/30" /> Remaining</span>
                     </div>
 
                     <div className="mt-3 flex justify-end">
@@ -765,28 +780,30 @@ export default function DashboardPage() {
                 </div>
               </div>
             ) : (
-              <div className="flex flex-col items-center py-4 text-center">
-                <svg
-                  aria-hidden="true"
-                  className="mb-2 h-8 w-8 text-muted-foreground/40"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  strokeWidth={1.5}
-                  stroke="currentColor"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    d="M12 4.5v15m7.5-7.5h-15"
-                  />
-                </svg>
-                <p className="text-sm font-medium text-foreground">
+              <div className="flex flex-col items-center py-6 text-center">
+                <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-muted">
+                  <svg
+                    aria-hidden="true"
+                    className="h-6 w-6 text-muted-foreground"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    strokeWidth={1.5}
+                    stroke="currentColor"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="M12 4.5v15m7.5-7.5h-15"
+                    />
+                  </svg>
+                </div>
+                <p className="text-base font-semibold text-foreground">
                   No active plan
                 </p>
-                <p className="mt-1 text-xs text-muted-foreground">
+                <p className="mt-1 text-sm text-muted-foreground">
                   Create a plan to start tracking your courses.
                 </p>
-                <Link href="/planner" className="mt-3">
+                <Link href="/planner" className="mt-4">
                   <Button size="sm">Create Plan</Button>
                 </Link>
               </div>

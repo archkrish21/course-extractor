@@ -105,8 +105,9 @@ export default function ClaimAccountPage() {
           maxLength={8}
           value={code}
           onChange={(e) => setCode(e.target.value.toUpperCase())}
-          placeholder="e.g. A1B2C3D4"
+          placeholder="A1B2C3D4"
           helperText="Ask your parent for this code."
+          className="text-center text-lg font-mono tracking-[0.3em] uppercase"
         />
 
         <Button type="submit" disabled={loading} className="mt-2 w-full">

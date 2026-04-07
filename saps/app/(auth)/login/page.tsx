@@ -169,7 +169,7 @@ export default function LoginPage() {
       <Button
         type="button"
         variant="outline"
-        className="w-full"
+        className="w-full bg-white hover:bg-gray-50"
         onClick={handleGoogleSignIn}
       >
         <svg aria-hidden="true" className="h-5 w-5" viewBox="0 0 24 24">

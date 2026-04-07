@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { Card, CardHeader, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { apiFetch } from "@/lib/api-client";
 
 export default function JoinPage() {
@@ -61,76 +62,94 @@ export default function JoinPage() {
 
   if (success) {
     return (
-      <div className="mx-auto max-w-md py-12">
-        <Card>
-          <CardContent>
-            <div className="py-8 text-center">
-              <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-success/15">
-                <svg aria-hidden="true" className="h-8 w-8 text-success" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="m4.5 12.75 6 6 9-13.5" />
-                </svg>
+      <div className="flex min-h-[60vh] items-center justify-center px-4">
+        <div className="w-full max-w-md">
+          <Card>
+            <CardContent>
+              <div className="py-8 text-center">
+                <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-success-light">
+                  <svg aria-hidden="true" className="h-8 w-8 text-success" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="m4.5 12.75 6 6 9-13.5" />
+                  </svg>
+                </div>
+                <h2 className="text-xl font-semibold text-foreground">You&apos;re in!</h2>
+                <p className="mt-2 text-sm text-muted-foreground">
+                  You&apos;ve successfully joined the account. You can now view and manage the student&apos;s course plans.
+                </p>
+                <Button className="mt-6 w-full" onClick={() => router.push("/dashboard")}>
+                  Go to Dashboard
+                </Button>
               </div>
-              <h2 className="text-xl font-bold text-foreground">You're in! 🎉</h2>
-              <p className="mt-2 text-sm text-muted-foreground">
-                You've successfully joined the account. You can now view and manage the student's course plans.
-              </p>
-              <Button className="mt-4" onClick={() => router.push("/dashboard")}>
-                Go to Dashboard
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
+            </CardContent>
+          </Card>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="mx-auto max-w-md py-12">
-      <Card>
-        <CardHeader>
-          <h2 className="text-xl font-bold text-foreground">Join Account</h2>
-          <p className="text-sm text-muted-foreground">
-            Enter your invite code to join a student's account.
-          </p>
-        </CardHeader>
-        <CardContent>
-          {error && (
-            <div className="mb-4 rounded-lg border border-destructive/30 bg-destructive/5 px-3 py-2 text-sm text-destructive">
-              {error}
-            </div>
-          )}
+    <div className="flex min-h-[60vh] items-center justify-center px-4">
+      <div className="w-full max-w-md">
+        <Card>
+          <CardHeader>
+            <h2 className="text-xl font-semibold text-foreground">Join Account</h2>
+            <p className="text-sm text-muted-foreground">
+              Enter your invite code to join a student&apos;s account.
+            </p>
+          </CardHeader>
+          <CardContent>
+            {error && (
+              <div
+                className="mb-4 rounded-lg border border-destructive/30 bg-destructive-light p-3 text-sm text-destructive"
+                role="alert"
+              >
+                <span className="flex items-center gap-2">
+                  <svg
+                    aria-hidden="true"
+                    className="h-4 w-4 shrink-0"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    strokeWidth={2}
+                    stroke="currentColor"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126ZM12 15.75h.007v.008H12v-.008Z"
+                    />
+                  </svg>
+                  {error}
+                </span>
+              </div>
+            )}
 
-          <div className="space-y-3">
-            <div>
-              <label className="mb-1 block text-sm font-medium text-foreground">Account ID</label>
-              <input
+            <div className="flex flex-col gap-4">
+              <Input
+                label="Account ID"
                 type="text"
                 value={accId}
                 onChange={(e) => setAccId(e.target.value)}
                 placeholder="Account ID from invite link"
-                className="h-9 w-full rounded-lg border border-border bg-background px-3 text-sm"
               />
-            </div>
-            <div>
-              <label className="mb-1 block text-sm font-medium text-foreground">Invite Code</label>
-              <input
+              <Input
+                label="Invite Code"
                 type="text"
                 value={code}
                 onChange={(e) => setCode(e.target.value)}
                 placeholder="e.g., AB12CD34"
-                className="h-9 w-full rounded-lg border border-border bg-background px-3 text-sm font-mono tracking-widest"
+                className="font-mono tracking-widest"
               />
+              <Button
+                className="mt-2 w-full"
+                onClick={() => handleJoin(accId, code)}
+                disabled={joining || !code || !accId}
+              >
+                {joining ? "Joining..." : "Join Account"}
+              </Button>
             </div>
-            <Button
-              className="w-full"
-              onClick={() => handleJoin(accId, code)}
-              disabled={joining || !code || !accId}
-            >
-              {joining ? "Joining..." : "Join Account"}
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
+          </CardContent>
+        </Card>
+      </div>
     </div>
   );
 }

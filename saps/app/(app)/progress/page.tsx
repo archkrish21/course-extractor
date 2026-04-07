@@ -236,7 +236,8 @@ export default function ProgressPage() {
   if (loading) {
     return (
       <div className="mx-auto max-w-6xl">
-        <h1 className="mb-6 text-2xl font-bold tracking-tight text-foreground sm:text-3xl">Academic Progress</h1>
+        <h1 className="mb-1 text-2xl font-bold tracking-tight text-foreground sm:text-3xl">Academic Progress</h1>
+        <p className="mb-6 text-sm text-muted-foreground">Track your graduation requirements, credits, and GPA over time.</p>
         <div className="animate-pulse space-y-4">
           <div className="h-24 rounded-xl bg-muted" />
           <div className="h-48 rounded-xl bg-muted" />
@@ -251,7 +252,8 @@ export default function ProgressPage() {
   if (error || !data) {
     return (
       <div className="mx-auto max-w-6xl">
-        <h1 className="mb-6 text-2xl font-bold tracking-tight text-foreground sm:text-3xl">Academic Progress</h1>
+        <h1 className="mb-1 text-2xl font-bold tracking-tight text-foreground sm:text-3xl">Academic Progress</h1>
+        <p className="mb-6 text-sm text-muted-foreground">Track your graduation requirements, credits, and GPA over time.</p>
         <Card>
           <CardContent>
             <div className="py-8 text-center">
@@ -269,7 +271,8 @@ export default function ProgressPage() {
   if (hasNoPlan) {
     return (
       <div className="mx-auto max-w-6xl">
-        <h1 className="mb-6 text-2xl font-bold tracking-tight text-foreground sm:text-3xl">Academic Progress</h1>
+        <h1 className="mb-1 text-2xl font-bold tracking-tight text-foreground sm:text-3xl">Academic Progress</h1>
+        <p className="mb-6 text-sm text-muted-foreground">Track your graduation requirements, credits, and GPA over time.</p>
         <Card>
           <CardContent>
             <div className="py-12 text-center">
@@ -277,7 +280,7 @@ export default function ProgressPage() {
                 <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75 11.25 15 15 9.75M21 12c0 1.268-.63 2.39-1.593 3.068a3.745 3.745 0 0 1-1.043 3.296 3.745 3.745 0 0 1-3.296 1.043A3.745 3.745 0 0 1 12 21c-1.268 0-2.39-.63-3.068-1.593a3.746 3.746 0 0 1-3.296-1.043 3.745 3.745 0 0 1-1.043-3.296A3.745 3.745 0 0 1 3 12c0-1.268.63-2.39 1.593-3.068a3.745 3.745 0 0 1 1.043-3.296 3.746 3.746 0 0 1 3.296-1.043A3.746 3.746 0 0 1 12 3c1.268 0 2.39.63 3.068 1.593a3.746 3.746 0 0 1 3.296 1.043 3.745 3.745 0 0 1 1.043 3.296A3.745 3.745 0 0 1 21 12Z" />
               </svg>
               <p className="text-base font-semibold text-foreground">No active plan yet</p>
-              <p className="mt-1 text-sm text-muted-foreground">Create a course plan to start tracking your graduation progress.</p>
+              <p className="mt-1 text-sm text-muted-foreground">Create a plan to see your progress.</p>
               <Link href="/planner">
                 <Button size="sm" className="mt-4">Go to Planner</Button>
               </Link>
@@ -290,19 +293,27 @@ export default function ProgressPage() {
 
   return (
     <div className="mx-auto max-w-6xl">
-      <div className="mb-6 flex items-center justify-between">
-        <h1 className="text-2xl font-bold tracking-tight text-foreground sm:text-3xl">Academic Progress</h1>
+      <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight text-foreground sm:text-3xl">Academic Progress</h1>
+          <p className="mt-1 text-sm text-muted-foreground">Track your graduation requirements, credits, and GPA over time.</p>
+        </div>
         <div className="flex items-center gap-2">
           {(() => {
             const canPrint = currentAccount?.subscriptionTier === "plus" || currentAccount?.subscriptionTier === "elite";
             return (
-              <span title={canPrint ? "Print" : "Upgrade to Plus to print"}>
-                <Button size="sm" variant="outline" className="gap-1.5" onClick={() => canPrint && window.print()} disabled={!canPrint}>
+              <span className="relative group" title={canPrint ? "Print progress report" : "Upgrade to Plus to print"}>
+                <Button size="sm" variant="outline" className="gap-1.5" onClick={() => canPrint && window.print()} disabled={!canPrint} aria-label={canPrint ? "Print progress report" : "Upgrade to Plus to print"}>
                   <svg aria-hidden="true" className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" d="M6.72 13.829c-.24.03-.48.062-.72.096m.72-.096a42.415 42.415 0 0 1 10.56 0m-10.56 0L6.34 18m10.94-4.171c.24.03.48.062.72.096m-.72-.096L17.66 18m0 0 .229 2.523a1.125 1.125 0 0 1-1.12 1.227H7.231c-.662 0-1.18-.568-1.12-1.227L6.34 18m11.318 0h1.091A2.25 2.25 0 0 0 21 15.75V9.456c0-1.081-.768-2.015-1.837-2.175a48.055 48.055 0 0 0-1.913-.247M6.34 18H5.25A2.25 2.25 0 0 1 3 15.75V9.456c0-1.081.768-2.015 1.837-2.175a48.041 48.041 0 0 1 1.913-.247m10.5 0a48.536 48.536 0 0 0-10.5 0m10.5 0V3.375c0-.621-.504-1.125-1.125-1.125h-8.25c-.621 0-1.125.504-1.125 1.125v3.659M9.75 8.25h.008v.008H9.75V8.25Zm.375 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Z" />
                   </svg>
                   Print
                 </Button>
+                {!canPrint && (
+                  <span className="pointer-events-none absolute bottom-full left-1/2 mb-2 -translate-x-1/2 whitespace-nowrap rounded-lg bg-foreground px-3 py-1.5 text-xs text-background opacity-0 shadow-lg transition-opacity group-hover:opacity-100">
+                    Upgrade to Plus to print
+                  </span>
+                )}
               </span>
             );
           })()}
@@ -327,29 +338,30 @@ export default function ProgressPage() {
       {(() => {
         const filters = [
           { key: "all", label: "All" },
-          { key: "gap", label: "Gap / Missing" },
+          { key: "met", label: "Met" },
           { key: "in_progress", label: "In Progress" },
-          { key: "met", label: "OK / Complete" },
+          { key: "gap", label: "Gaps" },
           { key: "not_started", label: "Not Started" },
         ];
         return (
-          <div className="mb-4 flex flex-wrap items-center gap-2" data-tour="progress-filter">
-            <span className="text-xs text-muted-foreground">Filter:</span>
-            {filters.map((f) => (
-              <button
-                key={f.key}
-                type="button"
-                onClick={() => setStatusFilter(f.key)}
-                className={`rounded-full px-3 py-1 text-xs font-medium transition-colors ${
-                  statusFilter === f.key
-                    ? "bg-primary text-primary-foreground"
-                    : "bg-muted text-muted-foreground hover:bg-muted/80"
-                }`}
-              >
-                {f.label}
-              </button>
-            ))}
-            <span className="text-border">|</span>
+          <div className="mb-5 flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none" data-tour="progress-filter">
+            <div className="flex items-center gap-1.5 shrink-0">
+              {filters.map((f) => (
+                <button
+                  key={f.key}
+                  type="button"
+                  onClick={() => setStatusFilter(f.key)}
+                  className={`shrink-0 rounded-full px-3.5 py-1.5 text-xs font-medium transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring ${
+                    statusFilter === f.key
+                      ? "bg-primary text-primary-foreground shadow-sm"
+                      : "border border-border bg-transparent text-muted-foreground hover:bg-muted hover:text-foreground"
+                  }`}
+                >
+                  {f.label}
+                </button>
+              ))}
+            </div>
+            <span className="h-4 w-px shrink-0 bg-border" aria-hidden="true" />
             <button
               type="button"
               onClick={() => {
@@ -360,14 +372,14 @@ export default function ProgressPage() {
                 }
                 setExpandedGroups(allKeys);
               }}
-              className="rounded-full px-3 py-1 text-xs font-medium text-muted-foreground bg-muted hover:bg-muted/80 transition-colors"
+              className="shrink-0 rounded-full border border-border bg-transparent px-3 py-1.5 text-xs font-medium text-muted-foreground hover:bg-muted hover:text-foreground transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
             >
               Expand All
             </button>
             <button
               type="button"
               onClick={() => setExpandedGroups(new Set())}
-              className="rounded-full px-3 py-1 text-xs font-medium text-muted-foreground bg-muted hover:bg-muted/80 transition-colors"
+              className="shrink-0 rounded-full border border-border bg-transparent px-3 py-1.5 text-xs font-medium text-muted-foreground hover:bg-muted hover:text-foreground transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
             >
               Collapse All
             </button>
@@ -380,35 +392,43 @@ export default function ProgressPage() {
         {data.groups.map((group) => (
           <div key={group.group}>
             {/* Group header */}
-            <div className="mb-3 flex items-center justify-between">
+            <div className="mb-3 flex items-center justify-between gap-3">
               <button
                 type="button"
                 onClick={() => toggleGroup(group.group)}
-                className="flex items-center gap-2 text-left"
+                className="flex items-center gap-2 text-left focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring rounded"
+                aria-expanded={expandedGroups.has(group.group)}
               >
                 <svg
                   aria-hidden="true"
-                  className={`h-4 w-4 text-muted-foreground transition-transform ${expandedGroups.has(group.group) ? "rotate-180" : ""}`}
+                  className={`h-3.5 w-3.5 shrink-0 text-muted-foreground transition-transform duration-200 ${expandedGroups.has(group.group) ? "rotate-180" : ""}`}
                   fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor"
                 >
                   <path strokeLinecap="round" strokeLinejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" />
                 </svg>
-                <h2 className="text-lg font-semibold text-foreground">{group.label}</h2>
+                <h2 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">{group.label}</h2>
                 {group.isOptIn && (
-                  <Badge className={group.enabled ? "bg-primary/15 text-primary" : "bg-muted text-muted-foreground"} >
+                  <Badge className={group.enabled ? "bg-primary/15 text-primary" : "bg-muted text-muted-foreground"}>
                     {group.enabled ? "Tracking" : "Not Tracking"}
                   </Badge>
                 )}
               </button>
-              {group.isOptIn && (
-                <Button
-                  size="sm"
-                  variant={group.enabled ? "outline" : "default"}
-                  onClick={() => handleOptInToggle(group.group, group.enabled)}
-                >
-                  {group.enabled ? "Disable Tracking" : "Enable Tracking"}
-                </Button>
-              )}
+              <div className="flex items-center gap-2">
+                {group.isOptIn && (
+                  <span className="relative group/optin">
+                    <Button
+                      size="sm"
+                      variant={group.enabled ? "outline" : "default"}
+                      onClick={() => handleOptInToggle(group.group, group.enabled)}
+                    >
+                      {group.enabled ? "Disable Tracking" : "Enable Tracking"}
+                    </Button>
+                    <span className="pointer-events-none absolute bottom-full left-1/2 mb-2 -translate-x-1/2 whitespace-nowrap rounded-lg bg-foreground px-3 py-1.5 text-xs text-background opacity-0 shadow-lg transition-opacity group-hover/optin:opacity-100">
+                      Opt-in: track this optional requirement group toward your goals
+                    </span>
+                  </span>
+                )}
+              </div>
             </div>
 
             {/* Group content */}
@@ -458,7 +478,8 @@ export default function ProgressPage() {
                               <button
                                 type="button"
                                 onClick={() => toggleGroup("course_load:count")}
-                                className="mb-2 flex w-full items-center gap-1.5 text-left text-sm font-medium text-muted-foreground hover:text-foreground"
+                                className="mb-2 flex w-full items-center gap-1.5 text-left text-xs font-semibold uppercase tracking-wider text-muted-foreground hover:text-foreground focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring rounded"
+                                aria-expanded={expandedGroups.has("course_load:count")}
                               >
                                 <svg
                                   aria-hidden="true"
@@ -477,7 +498,8 @@ export default function ProgressPage() {
                               <button
                                 type="button"
                                 onClick={() => toggleGroup("course_load:pw")}
-                                className="mb-2 flex w-full items-center gap-1.5 text-left text-sm font-medium text-muted-foreground hover:text-foreground"
+                                className="mb-2 flex w-full items-center gap-1.5 text-left text-xs font-semibold uppercase tracking-wider text-muted-foreground hover:text-foreground focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring rounded"
+                                aria-expanded={expandedGroups.has("course_load:pw")}
                               >
                                 <svg
                                   aria-hidden="true"
@@ -689,7 +711,7 @@ export default function ProgressPage() {
 
         </div>{/* end left column */}
 
-        {/* Right column — summary sidebar */}
+        {/* Right column — summary sidebar (moves below main on mobile) */}
         <div className="lg:w-1/3">
           <div className="sticky top-4 space-y-4">
             {/* Honors achievement badge */}
@@ -720,19 +742,29 @@ export default function ProgressPage() {
               return (
                 <Card>
                   <CardContent>
-                    <p className="mb-3 text-sm font-semibold text-foreground">GPA Trend</p>
-                    <ResponsiveContainer width="100%" height={180}>
-                      <LineChart data={chartData} margin={{ top: 5, right: 5, left: -20, bottom: 0 }}>
+                    <p className="mb-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground">GPA Trend</p>
+                    <ResponsiveContainer width="100%" height={200}>
+                      <LineChart data={chartData} margin={{ top: 5, right: 10, left: -10, bottom: 5 }}>
                         <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
-                        <XAxis dataKey="date" tick={{ fontSize: 10 }} className="text-muted-foreground" />
-                        <YAxis domain={[0, 5]} tick={{ fontSize: 10 }} className="text-muted-foreground" />
+                        <XAxis
+                          dataKey="date"
+                          tick={{ fontSize: 10 }}
+                          className="text-muted-foreground"
+                          label={{ value: "Date", position: "insideBottom", offset: -2, fontSize: 10, fill: "var(--color-muted-foreground)" }}
+                        />
+                        <YAxis
+                          domain={[0, 5]}
+                          tick={{ fontSize: 10 }}
+                          className="text-muted-foreground"
+                          label={{ value: "GPA", angle: -90, position: "insideLeft", offset: 15, fontSize: 10, fill: "var(--color-muted-foreground)" }}
+                        />
                         <Tooltip
                           contentStyle={{ fontSize: 12, borderRadius: 8, border: "1px solid var(--color-border)", background: "var(--color-card)" }}
                           formatter={(value: unknown, name: unknown) => [Number(value)?.toFixed(3), String(name) === "unweighted" ? "Unweighted" : "Weighted"]}
                         />
-                        <Legend wrapperStyle={{ fontSize: 10 }} formatter={(value) => value === "unweighted" ? "Unweighted" : "Weighted"} />
-                        <Line type="monotone" dataKey="unweighted" stroke="var(--color-primary)" strokeWidth={2} dot={{ r: 3 }} connectNulls />
-                        <Line type="monotone" dataKey="weighted" stroke="var(--color-success)" strokeWidth={2} dot={{ r: 3 }} connectNulls />
+                        <Legend wrapperStyle={{ fontSize: 10, paddingTop: 4 }} formatter={(value) => value === "unweighted" ? "Unweighted" : "Weighted"} />
+                        <Line type="monotone" dataKey="unweighted" stroke="var(--color-primary)" strokeWidth={2} dot={{ r: 3 }} connectNulls name="unweighted" />
+                        <Line type="monotone" dataKey="weighted" stroke="var(--color-success)" strokeWidth={2} dot={{ r: 3 }} connectNulls name="weighted" />
                       </LineChart>
                     </ResponsiveContainer>
                   </CardContent>
@@ -745,7 +777,7 @@ export default function ProgressPage() {
               <CardContent>
                 {/* Overall stats */}
                 <div className="flex items-center justify-between py-1">
-                  <p className="text-sm text-muted-foreground">Overall</p>
+                  <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Overall</p>
                   <div className="flex items-center gap-2 text-xs">
                     <span className="text-success font-semibold">{totalEarnedAll} earned</span>
                     <span className="text-primary font-semibold">{totalPlannedAll} planned</span>

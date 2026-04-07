@@ -277,3 +277,62 @@ test.describe("Name Display", () => {
     expect(firstTitle).not.toBe("");
   });
 });
+
+// ─── Feedback Widget ──────────────────────────────────────────────────────
+
+test.describe("Feedback Widget", () => {
+  test("feedback button is visible after login", async ({ page }) => {
+    await login(page);
+
+    const feedbackBtn = page.locator('button[aria-label="Send feedback"]');
+    await expect(feedbackBtn).toBeVisible({ timeout: 5_000 });
+  });
+
+  test("clicking feedback button opens panel", async ({ page }) => {
+    await login(page);
+
+    const feedbackBtn = page.locator('button[aria-label="Send feedback"]');
+    await feedbackBtn.click();
+
+    const heading = page.locator("text=Send Feedback").first();
+    await expect(heading).toBeVisible({ timeout: 5_000 });
+  });
+
+  test("star rating shows 5 star buttons", async ({ page }) => {
+    await login(page);
+
+    const feedbackBtn = page.locator('button[aria-label="Send feedback"]');
+    await feedbackBtn.click();
+
+    for (let i = 1; i <= 5; i++) {
+      const star = page.locator(`button[aria-label="Rate ${i} star${i > 1 ? "s" : ""}"]`);
+      await expect(star).toBeVisible({ timeout: 5_000 });
+    }
+  });
+
+  test("submit button is disabled without rating", async ({ page }) => {
+    await login(page);
+
+    const feedbackBtn = page.locator('button[aria-label="Send feedback"]');
+    await feedbackBtn.click();
+
+    const submitBtn = page.locator("button", { hasText: "Submit Feedback" }).first();
+    await expect(submitBtn).toBeVisible({ timeout: 5_000 });
+    await expect(submitBtn).toBeDisabled();
+  });
+
+  test("close button hides feedback panel", async ({ page }) => {
+    await login(page);
+
+    const feedbackBtn = page.locator('button[aria-label="Send feedback"]');
+    await feedbackBtn.click();
+
+    const heading = page.locator("text=Send Feedback").first();
+    await expect(heading).toBeVisible({ timeout: 5_000 });
+
+    const closeBtn = page.locator('button[aria-label="Close"]').first();
+    await closeBtn.click();
+
+    await expect(heading).not.toBeVisible({ timeout: 5_000 });
+  });
+});

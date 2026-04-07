@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { TrialBanner } from "@/components/trial-banner";
+import { FeedbackWidget } from "@/components/feedback-widget";
 import { AccountProvider, useAccount, type Account } from "@/lib/account-context";
 import { ToastProvider } from "@/components/ui/toast";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
@@ -500,6 +501,9 @@ function AppLayoutInner({ children }: { children: React.ReactNode }) {
       <main className="mx-auto max-w-7xl flex-1 p-4 sm:p-6 lg:p-8">
         {children}
       </main>
+
+      {/* Feedback widget */}
+      <FeedbackWidget />
     </div>
   );
 }

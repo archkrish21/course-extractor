@@ -1,11 +1,13 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { Card, CardHeader, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { useAccount } from "@/lib/account-context";
+import { useTour } from "@/lib/hooks/use-tour";
+import { TOUR_IDS, getProgressTourSteps } from "@/config/tours";
 import { apiFetch } from "@/lib/api-client";
 import {
   LineChart,
@@ -112,6 +114,11 @@ export default function ProgressPage() {
   const [expandedGroups, setExpandedGroups] = useState<Set<string>>(new Set(["graduation", "non_course", "course_load", "course_load:count", "course_load:pw"]));
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [snapshots, setSnapshots] = useState<GpaSnapshot[]>([]);
+
+  // Guided tour — adapts based on whether data has content
+  const hasPlanData = !loading && data !== null && (data.totalEarned > 0 || data.totalPlanned > 0);
+  const progressTourSteps = useMemo(() => getProgressTourSteps(hasPlanData), [hasPlanData]);
+  useTour({ tourId: TOUR_IDS.progress, steps: progressTourSteps, autoStart: !loading, delay: 800 });
 
   const matchesFilter = (status: string, evaluationType?: string) => {
     if (statusFilter === "all") return true;
@@ -314,7 +321,7 @@ export default function ProgressPage() {
       <div className="flex flex-col gap-6 lg:flex-row">
 
         {/* Left column — filter + requirement groups */}
-        <div className="min-w-0 lg:w-2/3">
+        <div className="min-w-0 lg:w-2/3" data-tour="progress-requirements">
 
           {/* Status filter */}
       {(() => {
@@ -326,7 +333,7 @@ export default function ProgressPage() {
           { key: "not_started", label: "Not Started" },
         ];
         return (
-          <div className="mb-4 flex flex-wrap items-center gap-2">
+          <div className="mb-4 flex flex-wrap items-center gap-2" data-tour="progress-filter">
             <span className="text-xs text-muted-foreground">Filter:</span>
             {filters.map((f) => (
               <button

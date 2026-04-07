@@ -42,6 +42,47 @@ body {
   background-color: var(--color-background);
 }
 
+/* Driver.js tour overrides */
+.saps-tour-popover {
+  --driver-bg-color: var(--color-card);
+  --driver-border-color: var(--color-border);
+  --driver-text-color: var(--color-foreground);
+  --driver-btn-bg: var(--color-primary);
+  --driver-btn-text: #fff;
+}
+.saps-tour-popover .driver-popover {
+  border-radius: 16px;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.15);
+}
+.saps-tour-popover .driver-popover-title {
+  font-size: 16px;
+  font-weight: 700;
+}
+.saps-tour-popover .driver-popover-description {
+  font-size: 14px;
+  color: var(--color-muted-foreground);
+  line-height: 1.6;
+}
+.saps-tour-popover .driver-popover-footer button {
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 13px;
+  padding: 6px 16px;
+}
+.saps-tour-popover .driver-popover-next-btn,
+.saps-tour-popover .driver-popover-close-btn-text {
+  background: var(--color-primary);
+  color: #fff;
+}
+.saps-tour-popover .driver-popover-prev-btn {
+  background: transparent;
+  color: var(--color-muted-foreground);
+}
+.saps-tour-popover .driver-popover-progress-text {
+  font-size: 11px;
+  color: var(--color-muted-foreground);
+}
+
 /* Focus ring utility */
 .focus-ring {
   outline: none;

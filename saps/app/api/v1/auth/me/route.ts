@@ -9,6 +9,7 @@ import { requireAuth } from "@/lib/auth/get-user";
 const updateNameSchema = z.object({
   first_name: z.string().min(1).max(100).optional(),
   last_name: z.string().max(100).optional(),
+  tour_state: z.record(z.string(), z.boolean()).optional(),
 });
 
 /**
@@ -21,7 +22,7 @@ export async function GET() {
     if (user instanceof Response) return user;
 
     const [userData] = await db
-      .select({ email: users.email, firstName: users.firstName, lastName: users.lastName, role: users.role })
+      .select({ email: users.email, firstName: users.firstName, lastName: users.lastName, role: users.role, tourState: users.tourState })
       .from(users)
       .where(eq(users.id, user.id))
       .limit(1);
@@ -35,6 +36,7 @@ export async function GET() {
       first_name: userData.firstName,
       last_name: userData.lastName,
       role: userData.role,
+      tour_state: userData.tourState ?? {},
     });
   } catch (error) {
     console.error("[auth/me] GET error:", error);
@@ -57,9 +59,10 @@ export async function PATCH(request: NextRequest) {
       return errorResponse("VALIDATION_ERROR", "Invalid request body.", 400);
     }
 
-    const updates: Record<string, string> = {};
+    const updates: Record<string, unknown> = {};
     if (parsed.data.first_name !== undefined) updates.firstName = parsed.data.first_name;
     if (parsed.data.last_name !== undefined) updates.lastName = parsed.data.last_name;
+    if (parsed.data.tour_state !== undefined) updates.tourState = parsed.data.tour_state;
 
     if (Object.keys(updates).length === 0) {
       return errorResponse("VALIDATION_ERROR", "At least one field required.", 400);

@@ -7,6 +7,8 @@ import { Badge } from "@/components/ui/badge";
 import Link from "next/link";
 import { useAccount } from "@/lib/account-context";
 import { apiFetch } from "@/lib/api-client";
+import { useTour } from "@/lib/hooks/use-tour";
+import { TOUR_IDS, welcomeTourSteps } from "@/config/tours";
 
 interface DashboardPlan {
   id: string;
@@ -75,6 +77,12 @@ interface RequirementsData {
 
 export default function DashboardPage() {
   const { currentAccount, loading: accountLoading, userFirstName, userLastName } = useAccount();
+  useTour({
+    tourId: TOUR_IDS.welcome,
+    steps: welcomeTourSteps,
+    autoStart: true,
+    delay: 1000,
+  });
   const [showProfileBanner, setShowProfileBanner] = useState(true);
   const [showOnboardingBanner, setShowOnboardingBanner] = useState(false);
   const [primaryPlan, setPrimaryPlan] = useState<DashboardPlan | null>(null);

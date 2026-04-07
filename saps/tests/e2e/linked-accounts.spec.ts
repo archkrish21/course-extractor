@@ -336,3 +336,57 @@ test.describe("Feedback Widget", () => {
     await expect(heading).not.toBeVisible({ timeout: 5_000 });
   });
 });
+
+// ─── Guided Tours ─────────────────────────────────────────────────────────
+
+test.describe("Guided Tours", () => {
+  test("tour button is visible in nav", async ({ page }) => {
+    await login(page);
+
+    const tourBtn = page.locator('button[title="Take a guided tour of this page"]');
+    await expect(tourBtn).toBeVisible({ timeout: 5_000 });
+  });
+
+  test('tour button contains "Tour" text', async ({ page }) => {
+    await login(page);
+
+    const tourBtn = page.locator('button[title="Take a guided tour of this page"]');
+    await expect(tourBtn).toBeVisible({ timeout: 5_000 });
+    await expect(tourBtn).toContainText("Tour");
+  });
+
+  test("dashboard tour triggers with Welcome to SAPS", async ({ page }) => {
+    await login(page);
+    await page.goto("/dashboard");
+    await page.waitForTimeout(2_000);
+
+    const tourBtn = page.locator('button[title="Take a guided tour of this page"]');
+    await tourBtn.click();
+
+    const popover = page.locator(".driver-popover");
+    await expect(popover).toBeVisible({ timeout: 5_000 });
+    await expect(popover).toContainText("Welcome to SAPS");
+  });
+
+  test("planner tour triggers", async ({ page }) => {
+    await login(page);
+    await page.goto("/planner");
+    await page.waitForTimeout(2_000);
+
+    const tourBtn = page.locator('button[title="Take a guided tour of this page"]');
+    await tourBtn.click();
+
+    const popover = page.locator(".driver-popover");
+    await expect(popover).toBeVisible({ timeout: 5_000 });
+  });
+
+  test("tour button opens driver.js overlay", async ({ page }) => {
+    await login(page);
+
+    const tourBtn = page.locator('button[title="Take a guided tour of this page"]');
+    await tourBtn.click();
+
+    const popover = page.locator(".driver-popover");
+    await expect(popover).toBeVisible({ timeout: 5_000 });
+  });
+});

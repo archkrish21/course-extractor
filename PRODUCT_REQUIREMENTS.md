@@ -431,6 +431,8 @@ The rigor score is recomputed nightly by the percentile stats job (Elite tier). 
 | US-104 | As a visitor, I want the homepage to have proper SEO metadata so it ranks well in search for "Stevenson High School course planner" and similar terms. **Implemented (Phase 3):** Meta description, keywords, Open Graph tags on root layout. | Must | 3 |
 | US-105 | As a visitor, I want to see a footer with product links, legal pages, and social media links so I can find more information about SAPS. **Implemented (Phase 3):** Footer with Product/Legal/Connect columns, social icons (Instagram, Facebook, Twitter, LinkedIn), feedback link (points to /contact page), school request link. | Should | 3 |
 | US-106 | As a logged-in user, I want to submit feedback from any app page via a floating widget so I can rate my experience and leave comments. **Implemented (Phase 3):** Floating "Feedback" button (bottom-right) on all app pages. Opens panel with 5-star rating + optional comment. Captures current page path. Stores in `feedback` table via `POST /api/v1/feedback` (auth required). Success animation, auto-closes. | Should | 3 |
+| US-107 | As a first-time user, I want a guided tour that walks me through the key features of each page so I can understand how to use the platform without reading documentation. **Implemented (Phase 3):** driver.js integration with three adaptive tours: Welcome (dashboard, 6 steps), Planner (2-5 steps based on plan existence), Progress (1-3 steps based on plan data). Auto-starts on first visit per page. Tour state persisted in `tourState` JSONB on users table via `PATCH /api/v1/auth/me`. | Should | 3 |
+| US-108 | As a returning user, I want a "Tour" button in the navigation bar so I can replay the guided tour for the current page at any time. **Implemented (Phase 3):** Global "Tour" button in app header nav bar. Available on every page. Detects current page and triggers appropriate tour with correct steps (checks DOM for plan elements). | Should | 3 |
 
 ---
 
@@ -448,6 +450,7 @@ The rigor score is recomputed nightly by the percentile stats job (Elite tier). 
 | F-ON-06 | Skip-and-complete-later option for grade history and goals. Dashboard shows a "Complete your profile" banner for incomplete onboarding. | Must |
 | F-ON-07 | 14-day Plus trial (trialing status) activated automatically at signup. No credit card required. Accounts API returns "trial" as the plan name when status is trialing. TierBadge shows "Trial" (amber). Billing page shows "Free Trial" with "X days left" badge. Pricing cards do not show "Current Plan" for trialing users. | Must |
 | F-ON-08 | **Consent system (Phase 3 — implemented):** Terms of Service and Privacy Policy acceptance required at signup (checkbox) and enforced via `/consent` interstitial for existing users. `legal_documents` table stores versioned legal documents; `consent_records` table tracks user acceptance with timestamps. `/terms` and `/privacy` pages display legal content. Consent gate in app layout redirects users who haven't accepted current terms. OAuth users redirected to `/consent` after first login. | Must |
+| F-ON-09 | **Guided tour system (Phase 3 — implemented):** driver.js integration for step-by-step feature walkthroughs. Three adaptive tours: Welcome (dashboard, 6 steps), Planner (2-5 steps — 2 when no plans, 5 when plans exist), Progress (1-3 steps — 1 when no plan data, 3 when data exists). Auto-starts on first visit per page. Tour state persisted in `tourState` JSONB on users table via `PATCH /api/v1/auth/me`. Global "Tour" button in app header nav bar on every page — detects current page and triggers appropriate tour with correct steps. Custom driver.js CSS overrides in `globals.css` matching SAPS brand. `useTour` hook, `config/tours.ts`, `data-tour` attributes on key elements. | Should |
 
 **Plan Templates at Launch:**
 Six pre-seeded templates, each containing a recommended 4-year course sequence:
@@ -1215,6 +1218,15 @@ A public-facing homepage and supporting pages are required before user acquisiti
 - Captures current page path automatically
 - Stores in `feedback` table via `POST /api/v1/feedback` (auth required)
 - Success animation on submit, panel auto-closes
+
+**Guided tour system — implemented (Phase 3):**
+- driver.js integration (5KB) for step-by-step feature walkthroughs
+- Three adaptive tours: Welcome (dashboard, 6 steps), Planner (2-5 steps), Progress (1-3 steps)
+- Auto-starts on first visit per page; adaptive step count based on DOM state (e.g., Planner shows 2 steps when no plans, 5 when plans exist)
+- Global "Tour" button in app header nav bar — available on every page, detects current page and triggers appropriate tour
+- Tour state persisted in `tourState` JSONB column on users table via `PATCH /api/v1/auth/me`
+- Custom CSS overrides in `globals.css` matching SAPS brand (rounded popovers, primary color buttons, custom progress text)
+- Infrastructure: `useTour` hook (`lib/hooks/use-tour.ts`), tour config (`config/tours.ts`), `data-tour` attributes on key elements, `TourButton` component
 
 **SEO — implemented (Phase 3):**
 - Meta description, keywords, and Open Graph tags on root layout

@@ -5,6 +5,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { TrialBanner } from "@/components/trial-banner";
 import { FeedbackWidget } from "@/components/feedback-widget";
+import { TourButton } from "@/components/tour-button";
 import { AccountProvider, useAccount, type Account } from "@/lib/account-context";
 import { ToastProvider } from "@/components/ui/toast";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
@@ -421,8 +422,9 @@ function AppLayoutInner({ children }: { children: React.ReactNode }) {
             })}
           </nav>
 
-          {/* Right side — account switcher + user menu */}
+          {/* Right side — tour + account switcher + user menu */}
           <div className="ml-auto flex items-center gap-3">
+            <TourButton />
             <AccountSwitcher />
           </div>
 

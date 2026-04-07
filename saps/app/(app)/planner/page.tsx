@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useCallback, useRef, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { PlannerGrid } from "@/components/planner/planner-grid";
 import { CoursePicker } from "@/components/planner/course-picker";
@@ -11,6 +11,8 @@ import Link from "next/link";
 import type { PlanCourse, Violation } from "@/components/planner/plan-course-card";
 import { CourseDetailModal } from "@/components/course-detail-modal";
 import { useAccount } from "@/lib/account-context";
+import { useTour } from "@/lib/hooks/use-tour";
+import { TOUR_IDS, getPlannerTourSteps } from "@/config/tours";
 import { apiFetch } from "@/lib/api-client";
 import { calculateGPA, formatGPA } from "@/lib/gpa/calc";
 import { useUndoStack } from "@/lib/hooks/use-undo-stack";
@@ -65,6 +67,11 @@ export default function PlannerPage() {
   const [violations, setViolations] = useState<Record<string, Violation[]>>({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  // Guided tour — adapts steps based on whether plans exist (only after loading)
+  const hasPlans = !loading && plans.length > 0;
+  const plannerTourSteps = useMemo(() => getPlannerTourSteps(hasPlans), [hasPlans]);
+  useTour({ tourId: TOUR_IDS.planner, steps: plannerTourSteps, autoStart: !loading, delay: 1000 });
   const [pickerTarget, setPickerTarget] = useState<PickerTarget>(null);
   const [detailCourseId, setDetailCourseId] = useState<string | null>(null);
   const [lastViewedCourseId, setLastViewedCourseId] = useState<string | null>(null);
@@ -1202,7 +1209,7 @@ export default function PlannerPage() {
               academic path.
             </p>
             <div className="mt-6">
-              <Button onClick={openNewPlanModal}>
+              <Button onClick={openNewPlanModal} data-tour="create-first-plan">
                 Create Your First Plan
               </Button>
             </div>

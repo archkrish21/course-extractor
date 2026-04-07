@@ -48,7 +48,7 @@ The platform uses a student-centric account model. Each `account` represents one
 
 - Use an established auth library (Auth.js or Supabase Auth) — do not build auth from scratch.
 - Support email login + Google OAuth. The OAuth callback auto-provisions first-time Google users (creates `users`, `accounts`, `student_profiles`, `subscriptions` with 14-day Plus trial, trialing status) and redirects to `/onboarding`. Student name is extracted from Google profile metadata. Email is marked as pre-verified.
-- `GET /api/v1/auth/me` endpoint returns the logged-in user's email, role, first_name, and last_name. `PATCH /api/v1/auth/me` accepts first_name/last_name updates.
+- `GET /api/v1/auth/me` endpoint returns the logged-in user's email, role, first_name, last_name, and tourState. `PATCH /api/v1/auth/me` accepts first_name/last_name/tourState updates.
 - **User names:** `firstName` and `lastName` columns on users table. Signup sets firstName from email prefix. Layout displays full name instead of email prefix. Settings has inline name editing. Linked account members show full names.
 - **Account editing:** `PATCH /api/v1/accounts/:id` endpoint for updating student_name. Settings profile grid displays account fields.
 - **Linked account member removal:** Any member can remove other members (not just non-students). API updated to allow student removal by non-student members. Remove button shows for all members except self.
@@ -72,6 +72,7 @@ The platform uses a student-centric account model. Each `account` represents one
 - **SEO:** Root layout includes meta description, keywords, and Open Graph tags (og:title, og:description, og:type, og:url).
 - **Database:** New `contact_messages` table (name, email, subject, message, created_at). New `feedback` table (id, user_id FK users SET NULL on delete, rating 1-5, comment, page, created_at).
 - **In-app feedback widget:** Floating "Feedback" button on all authenticated app pages (bottom-right). Opens panel with 5-star rating + optional comment. Captures current page path. Stores in `feedback` table via `POST /api/v1/feedback` (auth required). Success animation, auto-closes.
+- **Guided tour system:** driver.js integration (5KB) for step-by-step feature walkthroughs. Three adaptive tours: Welcome (dashboard, 6 steps), Planner (2-5 steps — 2 when no plans, 5 when plans exist), Progress (1-3 steps — 1 when no plan data, 3 when data exists). Auto-starts on first visit per page. Global "Tour" button in app header nav bar on every page — detects current page and triggers appropriate tour with correct steps (checks DOM for plan elements). Tour state persisted in `tourState` JSONB column on users table via `PATCH /api/v1/auth/me`. Custom driver.js CSS overrides in `globals.css` matching SAPS brand (rounded popovers, primary color buttons, custom progress text). Infrastructure: `useTour` hook (`lib/hooks/use-tour.ts`), tour config (`config/tours.ts`), `data-tour` attributes on key elements, `TourButton` component (`components/tour-button.tsx`).
 
 **Onboarding flow for existing students** (non-freshman) is critical: students must be able to enter grades already completed before using the planner. Without prior grade history, the GPA calculator and requirement progress tracker are meaningless. Make bulk entry fast — a table-style entry form, not one course at a time.
 
@@ -1525,7 +1526,8 @@ Phase 5 includes a formal WCAG audit and remediation of any gaps, but the core p
 - ✅ `contact_messages` table for contact form submissions
 - ✅ `feedback` table (id, user_id FK users SET NULL on delete, rating 1-5, comment, page, created_at)
 - ✅ In-app feedback widget: floating "Feedback" button on all app pages (bottom-right), 5-star rating + optional comment, captures page path, `POST /api/v1/feedback` (auth required), success animation, auto-closes
-- ✅ 272 total tests (17 E2E for homepage/about/contact + 5 API for contact endpoint + 6 API for feedback endpoint + 5 E2E for feedback widget + 5 E2E for testimonials + footer link + existing plan/requirement/progress/planner/consent/settings/legal/linked-accounts tests)
+- ✅ Guided tour system: driver.js integration (5KB) for step-by-step feature walkthroughs. Three adaptive tours: Welcome (dashboard, 6 steps), Planner (2-5 steps adaptive), Progress (1-3 steps adaptive). Auto-starts on first visit per page. Global "Tour" button in app header nav bar. Tour state persisted in `tourState` JSONB on users table via `PATCH /api/v1/auth/me`. Custom CSS overrides in `globals.css`. `useTour` hook, `config/tours.ts`, `data-tour` attributes, `TourButton` component.
+- ✅ 659 total tests
 - Drag-and-drop planner grid upgrade
 - Plan history / undo (last 20 changes)
 - Prerequisite graph visualization (DAG view)
@@ -1588,6 +1590,7 @@ Phase 5 includes a formal WCAG audit and remediation of any gaps, but the core p
 | API documentation | OpenAPI / Swagger via Zod | Zod schemas for request/response validation; `zod-to-openapi` generates the spec |
 | Error tracking | Sentry | Captures frontend, API, and BullMQ worker errors |
 | Analytics | PostHog | Product analytics, event tracking, feature flags; generous free tier; GDPR-friendly |
+| Guided tours | driver.js | Lightweight (5KB) step-by-step feature walkthroughs; adaptive step counts; CSS-customizable popovers |
 | Course data | JSON (source) + PostgreSQL (runtime) | Diffable artifact + queryable store |
 | PDF extractor | Python (pdfplumber) | Standalone CLI batch job; independent of the web stack |
 

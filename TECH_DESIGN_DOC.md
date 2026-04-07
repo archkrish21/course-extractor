@@ -128,6 +128,7 @@ User → Next.js frontend → API routes → PostgreSQL (Supabase + RLS)
 | API validation | Zod + zod-to-openapi | — | Request/response validation; auto-generates OpenAPI spec |
 | Error tracking | Sentry | — | Captures frontend, API, and BullMQ worker errors |
 | Product analytics | PostHog | — | Event tracking, funnel analysis, feature flags; generous free tier (1M events/mo); self-hostable; GDPR-friendly |
+| Guided tours | driver.js | 1.x | Lightweight (5KB) step-by-step feature walkthroughs; adaptive step counts; CSS-customizable popovers |
 | PDF extractor | Python + pdfplumber | 3.12 / 0.11 | Standalone CLI; independent of web stack |
 | Source control | GitHub | — | PR-based workflow; branch protection on `main` |
 | CI/CD | GitHub Actions → AWS | — | Tests on every PR; deploy to Amplify + ECS on merge to `main` |
@@ -167,6 +168,7 @@ User → Next.js frontend → API routes → PostgreSQL (Supabase + RLS)
 │   ├── course-detail/
 │   ├── trial-banner/
 │   ├── planner/  # planner-grid.tsx, course-picker.tsx, plan-course-card.tsx
+│   ├── tour-button.tsx          # Global "Tour" button for app header nav bar
 │   ├── prereq-graph/           # (empty — Phase 1b+)
 │   └── charts/                 # (empty — Phase 1b+)
 ├── lib/
@@ -180,7 +182,7 @@ User → Next.js frontend → API routes → PostgreSQL (Supabase + RLS)
 │   ├── analytics/              # event tracking utilities
 │   ├── gpa/  # calc.ts — GPA calculation engine
 │   ├── prereq/  # validator.ts — prerequisite DAG validation
-│   ├── hooks/  # use-undo-stack.ts
+│   ├── hooks/  # use-undo-stack.ts, use-tour.ts (guided tour state + driver.js orchestration)
 │   ├── account-context.tsx  # React context for account switching
 │   ├── api-client.ts  # apiFetch with X-Account-Id header
 │   ├── alerts/                 # (empty — future phase)
@@ -201,6 +203,7 @@ User → Next.js frontend → API routes → PostgreSQL (Supabase + RLS)
 │   ├── gpa-weights.ts          # CONFIGURABLE — get from school before coding
 │   ├── grade-scale.ts          # letter → GPA points mapping + isPassFailCourse() + PASS_FAIL_OPTIONS
 │   ├── homepage-features.ts    # Feature flags: showTestimonials (true), showContactPage (false), showPricing (false)
+│   ├── tours.ts                # Tour step definitions for Welcome (6 steps), Planner (2-5 adaptive), Progress (1-3 adaptive)
 │   └── subscription-plans.ts   # tier feature flags (mirrors DB seed)
 ├── scripts/
 │   └── seed.ts                 # Drizzle seed runner (npm run db:seed)
@@ -227,7 +230,7 @@ All pages under the `(app)/` route group require authentication. The app layout 
 
 **SEO (Phase 3):** Root layout includes meta description, keywords, and Open Graph tags (og:title, og:description, og:type, og:url). Optimized for search terms: "Stevenson High School course planner", "high school academic planner", "4-year plan tool".
 
-**Sign out:** The user avatar dropdown in the top navigation contains Settings, Billing, and Sign out. Sign out calls `supabase.auth.signOut()`, clears the client session, and redirects to `/login`. The mobile hamburger menu also includes a Sign out option. Settings is no longer in the main navigation bar — it was moved into the avatar dropdown. The avatar and layout display the user's full name (from `firstName` + `lastName` columns) instead of the email prefix. For parent users: the avatar shows the parent's own name/email (not the student's), with a "Managing: StudentName · Gr X" subtitle below. "Add Another Child" removed from the dropdown.
+**App header navigation:** The top navigation bar includes nav links (Dashboard, Courses, Planner, Progress, Transcript), a global "Tour" button (triggers the guided tour for the current page — detects page and adapts step count based on DOM state), and a user avatar dropdown (Settings, Billing, Sign out). Sign out calls `supabase.auth.signOut()`, clears the client session, and redirects to `/login`. The mobile hamburger menu also includes a Sign out option. Settings is no longer in the main navigation bar — it was moved into the avatar dropdown. The avatar and layout display the user's full name (from `firstName` + `lastName` columns) instead of the email prefix. For parent users: the avatar shows the parent's own name/email (not the student's), with a "Managing: StudentName · Gr X" subtitle below. "Add Another Child" removed from the dropdown.
 
 **Signup page redesign (Phase 3):** Wider layout (max-w-lg), 2-column grids for credentials and personal info. Role selector with description cards (Student/Parent/Counselor). Frozen state (IL) and school (Stevenson) fields with "Request yours" link for unsupported schools. School request form submits to `POST /api/v1/school-request` (no auth) and stores in `school_requests` table. "Claim your account" link removed from signup page.
 
@@ -427,6 +430,7 @@ CREATE TABLE users (
   email                    TEXT UNIQUE NOT NULL,
   first_name               TEXT,              -- set from email prefix at signup; editable via PATCH /api/v1/auth/me
   last_name                TEXT,              -- editable via PATCH /api/v1/auth/me
+  tour_state               JSONB DEFAULT '{}',  -- tracks completed tours {"welcome":true,"planner":true}; updated via PATCH /api/v1/auth/me
   role                     TEXT NOT NULL CHECK (role IN ('student','parent','counselor','admin')),
   is_email_verified        BOOLEAN DEFAULT FALSE,
   date_of_birth            DATE,
@@ -565,6 +569,8 @@ CREATE TABLE feedback (
 > **Contact form (Phase 3):** The contact page (`/contact`) submits to `POST /api/v1/contact` (no auth required) and stores messages in the `contact_messages` table. The contact page is feature-flagged via `config/homepage-features.ts` (`showContactPage: false` for v1). Footer feedback link now points to `/contact` page instead of mailto.
 
 > **In-app feedback widget (Phase 3):** Floating "Feedback" button on all authenticated app pages (bottom-right). Opens panel with 5-star rating + optional comment. Captures current page path. Stores in `feedback` table via `POST /api/v1/feedback` (auth required). Success animation, auto-closes.
+
+> **Guided tour system (Phase 3):** driver.js integration (5KB) for step-by-step feature walkthroughs. Three adaptive tours: Welcome (dashboard, 6 steps), Planner (2-5 steps — 2 when no plans, 5 when plans exist), Progress (1-3 steps — 1 when no plan data, 3 when data exists). Auto-starts on first visit per page. Global "Tour" button in app header nav bar on every page — detects current page and triggers appropriate tour with correct steps (checks DOM for plan elements). Tour state persisted in `tourState` JSONB column on `users` table via `PATCH /api/v1/auth/me`. Custom driver.js CSS overrides in `globals.css` matching SAPS brand (rounded popovers, primary color buttons, custom progress text). Key files: `lib/hooks/use-tour.ts` (tour hook), `config/tours.ts` (step definitions), `components/tour-button.tsx` (global nav button). `data-tour` attributes added to key elements on dashboard, planner, and progress pages.
 
 > **School request system (Phase 3):** Signup page includes frozen state/school fields with a "Request yours" link. The school request form submits to `POST /api/v1/school-request` (no auth required) and stores requests in the `school_requests` table for future outreach and multi-school expansion.
 
@@ -1370,8 +1376,8 @@ All routes: `/api/v1/...`. Version from day one.
 |---|---|---|---|
 | POST | `/api/v1/auth/signup` | — | Create user + subscription row (Plus plan, trialing status). Signup page: wider layout (max-w-lg), 2-column grids, role selector with description cards (Student/Parent/Counselor), frozen state (IL) and school (Stevenson) fields. Sets firstName from email prefix. Sets `state` and `schoolName` on accounts. |
 | GET | `/api/v1/auth/callback` | — | OAuth callback. Exchanges code for session. First-time users: provisions app records + redirects to /onboarding. Returning users: redirects to intended page. |
-| GET | `/api/v1/auth/me` | any authenticated | Returns logged-in user's email, role, first_name, and last_name. | Phase 3 |
-| PATCH | `/api/v1/auth/me` | any authenticated | Update first_name and/or last_name on the logged-in user. | Phase 3 |
+| GET | `/api/v1/auth/me` | any authenticated | Returns logged-in user's email, role, first_name, last_name, and tourState. | Phase 3 |
+| PATCH | `/api/v1/auth/me` | any authenticated | Update first_name, last_name, and/or tourState on the logged-in user. tourState is a JSONB object tracking completed tours (e.g., `{"welcome":true,"planner":true}`). | Phase 3 |
 | GET | `/api/v1/plans` | member | List student's plans |
 | POST | `/api/v1/plans` | member (can_edit) | Create plan (check plan limit) |
 | PATCH | `/api/v1/plans/:id/set-primary` | student | Set plan as primary + active. Demotes old primary to draft. Student role only. Archived plans blocked (409). |
@@ -2279,8 +2285,9 @@ Mobile (<640px):
   - Testimonials: three placeholder testimonials visible on home page, star ratings displayed
   - Footer: feedback link points to /contact page
   - SEO: meta description, Open Graph tags on root layout
+  - Guided tours: tour auto-start on first visit, tour button triggers, adaptive step counts, tour state persistence
 
-**Current test count: 272 total** (17 E2E tests for homepage/about/contact, 5 API tests for contact endpoint, 6 API tests for feedback endpoint, 5 E2E tests for feedback widget, 5 E2E tests for testimonials + footer link, 13 API tests for consent/auth-me/accounts, 20+ E2E tests for consent/settings/legal pages, counselor invite/join tests, linked accounts limit tests, E2E for linked accounts UI, plus existing plan/requirement/progress/planner tests).
+**Current test count: 659 total** (E2E tests for homepage/about/contact, feedback widget, testimonials, consent/settings/legal pages, counselor invite/join, linked accounts UI, planner/progress/dashboard/transcript/billing/signup/auth/course-browser/grade-lock/plan-management/print-gating/accessibility, plus API tests for contact, feedback, consent, auth-me, accounts, counselor-join, GPA, grade-lock, health, plan-courses, plan-shares, plans, requirements, school-request, plus unit tests for GPA calc, requirement matching, subscription middleware, undo stack, rate limiting).
 
 ### Test data
 

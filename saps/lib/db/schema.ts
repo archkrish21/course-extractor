@@ -53,6 +53,7 @@ export const users = pgTable(
       .defaultNow()
       .$onUpdate(() => new Date()),
     lastLogin: timestamp("last_login", { withTimezone: true }),
+    tourState: jsonb("tour_state").$type<Record<string, boolean>>().default({}),
     tosAcceptedAt: timestamp("tos_accepted_at", { withTimezone: true }),
     ppAcceptedAt: timestamp("pp_accepted_at", { withTimezone: true }),
     notificationPreferences: jsonb("notification_preferences").default({

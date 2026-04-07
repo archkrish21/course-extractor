@@ -672,4 +672,55 @@ describe("POST /api/v1/accounts/:id/members — linked accounts limit", () => {
     expect(response.status).toBe(400);
     expect(body.error.code).toBe("VALIDATION_ERROR");
   });
+
+  it("successfully invites a counselor", async () => {
+    mockGetEffectiveTier.mockResolvedValue({ maxLinkedAccounts: 5 });
+
+    let queryIndex = 0;
+    dbChain.then = vi.fn().mockImplementation((resolve: (v: unknown) => unknown) => {
+      queryIndex++;
+      if (queryIndex === 1) return Promise.resolve(resolve([{ count: 1 }])); // member count — under limit
+      if (queryIndex === 2) return Promise.resolve(resolve([{ studentName: "Test Student" }])); // account lookup for email
+      if (queryIndex === 3) return Promise.resolve(resolve([{ email: "owner@test.com" }])); // inviter lookup
+      return Promise.resolve(resolve([]));
+    });
+    mockReturning.mockResolvedValue([{
+      code: "COUN1234",
+      expiresAt: new Date().toISOString(),
+    }]);
+
+    const request = makeJsonRequest(
+      `http://localhost:3000/api/v1/accounts/${TEST_ACCOUNT_ID}/members`,
+      { target_role: "counselor", email: "counselor@school.edu" }
+    );
+    const response = await createMember(request, accountContext(TEST_ACCOUNT_ID));
+    const body = await response.json();
+
+    expect(response.status).toBe(201);
+    expect(body.data.invite_code).toBe("COUN1234");
+    expect(body.data.email_sent).toBe(true);
+  });
+
+  it("returns 403 when counselor tries to invite (read-only)", async () => {
+    // Override: counselor has canEdit: false
+    (getAccountContext as ReturnType<typeof vi.fn>).mockResolvedValue({
+      accountId: TEST_ACCOUNT_ID,
+      role: "counselor",
+      canEdit: false,
+    });
+
+    const request = createRequest(
+      `http://localhost:3000/api/v1/accounts/${TEST_ACCOUNT_ID}/members`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ target_role: "parent", email: "someone@test.com" }),
+      }
+    );
+    const response = await createMember(request, accountContext(TEST_ACCOUNT_ID));
+    expect(response.status).toBe(403);
+
+    const body = await response.json();
+    expect(body.error.code).toBe("FORBIDDEN");
+  });
 });

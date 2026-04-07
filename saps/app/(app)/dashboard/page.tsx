@@ -997,7 +997,7 @@ export default function DashboardPage() {
                 )}
 
                 <div className="mt-3 flex justify-end">
-                  <Link href="/planner?validation=open">
+                  <Link href={`/planner?planId=${primaryPlan?.id ?? ""}&validation=open`}>
                     <Button size="sm" variant="outline">
                       View Report
                     </Button>

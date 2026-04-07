@@ -390,15 +390,20 @@ test.describe("Dashboard — Attention Required Compact", () => {
     expect(hasCategory || hasAllClear).toBeTruthy();
   });
 
-  test("View Report button routes to planner with validation open", async ({ page }) => {
+  test("View Report button routes to planner with validation open and planId", async ({ page }) => {
     await navigateToDashboard(page);
     await page.waitForTimeout(5000);
 
     const viewReport = page.locator("text=View Report");
     await expect(viewReport).toBeVisible({ timeout: 5_000 });
 
+    // Verify the link includes planId so the primary plan's report opens
+    const link = page.locator("a", { has: page.locator("text=View Report") });
+    const href = await link.getAttribute("href");
+    expect(href).toMatch(/\/planner\?planId=.+&validation=open/);
+
     await viewReport.click();
-    await page.waitForURL(/\/planner\?validation=open/, { timeout: 10_000 });
+    await page.waitForURL(/\/planner\?planId=.+&validation=open/, { timeout: 10_000 });
 
     // Validation panel should be open
     await expect(page.locator("text=Validation Report")).toBeVisible({ timeout: 10_000 });

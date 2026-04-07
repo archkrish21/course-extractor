@@ -104,6 +104,7 @@ export default function GradesPage() {
   const [courses, setCourses] = useState<PlanCourse[]>([]);
   const [loading, setLoading] = useState(true);
   const [planName, setPlanName] = useState<string>("");
+  const [lockedGradeLevels, setLockedGradeLevels] = useState<number[]>([]);
   const [expandedGrades, setExpandedGrades] = useState<Set<number>>(new Set());
 
   const currentGradeLevel = currentAccount?.gradeLevel ?? 10;
@@ -123,6 +124,7 @@ export default function GradesPage() {
         const primary = planList.find((p) => p.isPrimary ?? p.is_primary) ?? planList[0];
         if (!primary) { setLoading(false); return; }
         setPlanName(primary.name);
+        setLockedGradeLevels(primary.lockedGradeLevels ?? primary.locked_grade_levels ?? []);
 
         // Get plan courses
         const coursesRes = await apiFetch(`/api/v1/plans/${primary.id}/courses`);
@@ -185,8 +187,8 @@ export default function GradesPage() {
     });
   }
 
-  // Only completed courses
-  const completedCourses = courses.filter((c) => c.status === "completed");
+  // Only completed courses in locked grades
+  const completedCourses = courses.filter((c) => c.status === "completed" && lockedGradeLevels.includes(c.gradeLevel));
   const cumGpa = calcGPA(completedCourses);
   const totalCreditsEarned = completedCourses.reduce((sum, c) => sum + semesterCredit(c.creditValue, c.duration), 0);
 
@@ -346,7 +348,7 @@ export default function GradesPage() {
             const glGpa = calcGPA(glCourses);
             const glCredits = glCourses.reduce((sum, c) => sum + semesterCredit(c.creditValue, c.duration), 0);
 
-            if (glCourses.length === 0) return null;
+            if (glCourses.length === 0 || !lockedGradeLevels.includes(gl)) return null;
 
             return (
               <Card key={gl}>

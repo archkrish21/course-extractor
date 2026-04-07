@@ -48,6 +48,18 @@ test.describe("Planner — Navigation & Layout", () => {
     expect(hasPlanSelector || hasPlanName).toBeTruthy();
   });
 
+  test("plan header shows student full name instead of generic label", async ({ page }) => {
+    await navigateToPlanner(page);
+
+    // The subtitle should show the student's actual name (e.g. "Junior John's plan")
+    // and NOT the generic "Student's plan" or "student's plan"
+    const subtitle = page.locator("text=/'s plan/i").first();
+    if ((await subtitle.count()) > 0) {
+      const text = await subtitle.textContent();
+      expect(text).not.toMatch(/^Student's plan$/i);
+    }
+  });
+
   test.fixme("planner grid shows 4 grade levels with 2 semesters each", async ({
     page,
   }) => {

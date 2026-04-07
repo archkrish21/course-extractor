@@ -1252,13 +1252,16 @@ export default function PlannerPage() {
             const creatorName = selectedPlan.creatorEmail
               ? selectedPlan.creatorEmail.split("@")[0].charAt(0).toUpperCase() + selectedPlan.creatorEmail.split("@")[0].slice(1)
               : null;
+            const ownerName = [currentAccount?.studentFirstName, currentAccount?.studentLastName].filter(Boolean).join(" ")
+              || currentAccount?.studentName
+              || "Student";
             return (
               <p className="mt-1 text-sm text-muted-foreground">
                 {selectedPlan.creatorRole && selectedPlan.creatorRole !== "student"
                   ? `${creatorName ?? selectedPlan.creatorRole}'s plan`
                   : selectedPlan.createdFromTemplateId
                     ? "Created from template"
-                    : `${currentAccount?.studentName ?? "Student"}'s plan`
+                    : `${ownerName}'s plan`
                 }
               </p>
             );

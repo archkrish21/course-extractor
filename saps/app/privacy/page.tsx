@@ -1,19 +1,17 @@
+"use client";
+
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 
 /**
  * Privacy Policy page.
  * [LEGAL COUNSEL REQUIRED] Replace placeholder content with attorney-drafted policy.
  */
 export default function PrivacyPage() {
+  const router = useRouter();
+
   return (
     <div className="mx-auto max-w-prose px-4 py-12 sm:px-6">
-      <Link href="/" className="mb-8 inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground">
-        <svg aria-hidden="true" className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
-          <path strokeLinecap="round" strokeLinejoin="round" d="M10.5 19.5 3 12m0 0 7.5-7.5M3 12h18" />
-        </svg>
-        Back
-      </Link>
-
       <h1 className="text-2xl font-bold tracking-tight text-foreground">Privacy Policy</h1>
       <p className="mt-2 text-sm text-muted-foreground">Effective: April 6, 2026 &middot; Version 1.0</p>
 
@@ -115,8 +113,23 @@ export default function PrivacyPage() {
         </section>
       </div>
 
-      <div className="mt-12 border-t border-border pt-6 text-xs text-muted-foreground">
+      <div className="mt-12 flex items-center justify-between border-t border-border pt-6 text-xs text-muted-foreground">
         <Link href="/terms" className="text-primary hover:underline">Terms of Service</Link>
+        <button
+          type="button"
+          onClick={() => {
+            if (window.opener || window.history.length <= 2) {
+              window.close();
+            }
+            router.back();
+          }}
+          className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground"
+        >
+          <svg aria-hidden="true" className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M10.5 19.5 3 12m0 0 7.5-7.5M3 12h18" />
+          </svg>
+          Back
+        </button>
       </div>
     </div>
   );

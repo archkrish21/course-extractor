@@ -134,13 +134,25 @@ export function ShareModal({
           aria-label={`Share ${planName}`}
           onClick={(e) => e.stopPropagation()}
         >
-          <div className="border-b border-border px-6 py-4">
-            <h3 className="text-base font-semibold text-foreground">
-              Share &ldquo;{planName}&rdquo;
-            </h3>
-            <p className="mt-1 text-sm text-muted-foreground">
-              Choose who can access this plan and their permission level.
-            </p>
+          <div className="flex items-start justify-between border-b border-border px-6 py-4">
+            <div>
+              <h3 className="text-base font-semibold text-foreground">
+                Share &ldquo;{planName}&rdquo;
+              </h3>
+              <p className="mt-1 text-sm text-muted-foreground">
+                Choose who can access this plan and their permission level.
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={onClose}
+              className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-muted-foreground hover:bg-muted hover:text-foreground transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
+              aria-label="Close share dialog"
+            >
+              <svg aria-hidden="true" className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M6 18 18 6M6 6l12 12" />
+              </svg>
+            </button>
           </div>
 
           <div className="px-6 py-4">

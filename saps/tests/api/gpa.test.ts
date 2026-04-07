@@ -71,14 +71,19 @@ vi.mock("@/lib/gpa/calc", () => ({
 vi.mock("@/lib/db/schema", () => ({
   courses: { id: "c_id", creditValue: "c_creditValue", creditType: "c_creditType" },
   planCourses: { planId: "pc_planId", courseId: "pc_courseId", gradeLevel: "pc_gradeLevel", semester: "pc_semester", status: "pc_status", plannedGrade: "pc_plannedGrade", gpaWaiverApplied: "pc_gpaWaiverApplied" },
-  fourYearPlans: { id: "fp_id", accountId: "fp_accountId", isPrimary: "fp_isPrimary", isTemplate: "fp_isTemplate" },
+  fourYearPlans: { id: "fp_id", accountId: "fp_accountId", isPrimary: "fp_isPrimary", isTemplate: "fp_isTemplate", createdBy: "fp_createdBy" },
   accounts: { id: "a_id" },
   accountMembers: { accountId: "am_accountId", userId: "am_userId" },
+  planShares: { id: "ps_id", planId: "ps_planId", userId: "ps_userId" },
 }));
 
 vi.mock("drizzle-orm", () => ({
   eq: vi.fn((...args: unknown[]) => ({ type: "eq", args })),
   and: vi.fn((...args: unknown[]) => ({ type: "and", args })),
+  or: vi.fn((...args: unknown[]) => ({ type: "or", args })),
+  sql: Object.assign(vi.fn((...args: unknown[]) => ({ type: "sql", args })), {
+    raw: vi.fn((s: string) => s),
+  }),
 }));
 
 import { requireAuth, getAccountContext } from "@/lib/auth/get-user";
@@ -169,7 +174,8 @@ describe("GET /api/v1/gpa", () => {
       queryIndex++;
       if (queryIndex === 1) return Promise.resolve(resolve([{ accountId: "acc-1" }]));
       if (queryIndex === 2) return Promise.resolve(resolve([{ id: "plan-1" }])); // plan
-      if (queryIndex === 3) return Promise.resolve(resolve(mockCourses)); // courses
+      if (queryIndex === 3) return Promise.resolve(resolve([{ id: "plan-1" }])); // access check
+      if (queryIndex === 4) return Promise.resolve(resolve(mockCourses)); // courses
       return Promise.resolve(resolve([]));
     });
 
@@ -200,7 +206,8 @@ describe("GET /api/v1/gpa", () => {
       queryIndex++;
       if (queryIndex === 1) return Promise.resolve(resolve([{ accountId: "acc-1" }]));
       if (queryIndex === 2) return Promise.resolve(resolve([{ id: "plan-1" }]));
-      if (queryIndex === 3) return Promise.resolve(resolve(mockCourses));
+      if (queryIndex === 3) return Promise.resolve(resolve([{ id: "plan-1" }])); // access check
+      if (queryIndex === 4) return Promise.resolve(resolve(mockCourses));
       return Promise.resolve(resolve([]));
     });
 
@@ -227,7 +234,8 @@ describe("GET /api/v1/gpa", () => {
       queryIndex++;
       if (queryIndex === 1) return Promise.resolve(resolve([{ accountId: "acc-1" }]));
       if (queryIndex === 2) return Promise.resolve(resolve([{ id: "plan-1" }]));
-      if (queryIndex === 3) return Promise.resolve(resolve(mockCourses));
+      if (queryIndex === 3) return Promise.resolve(resolve([{ id: "plan-1" }])); // access check
+      if (queryIndex === 4) return Promise.resolve(resolve(mockCourses));
       return Promise.resolve(resolve([]));
     });
 
@@ -238,5 +246,26 @@ describe("GET /api/v1/gpa", () => {
     // Only 1 non-dropped course
     expect(body.data.plan.totalCredits).toBe(1);
     expect(body.data.plan.totalCourses).toBe(1);
+  });
+
+  it("returns empty GPA when user has no access to the primary plan", async () => {
+    (requireAuth as ReturnType<typeof vi.fn>).mockResolvedValue(TEST_USER);
+    (getAccountContext as ReturnType<typeof vi.fn>).mockResolvedValue(TEST_ACCOUNT_CTX);
+
+    let queryIndex = 0;
+    dbChain.then = vi.fn().mockImplementation((resolve: (v: unknown) => unknown) => {
+      queryIndex++;
+      if (queryIndex === 1) return Promise.resolve(resolve([{ accountId: "acc-1" }]));
+      if (queryIndex === 2) return Promise.resolve(resolve([{ id: "plan-1" }])); // plan exists
+      if (queryIndex === 3) return Promise.resolve(resolve([])); // access check fails — no plan_shares, not creator
+      return Promise.resolve(resolve([]));
+    });
+
+    const response = await GET(createRequest("/api/v1/gpa"));
+    const body = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(body.data.cumulative.unweighted).toBeNull();
+    expect(body.data.hasGrades).toBe(false);
   });
 });

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useCallback, useEffect, type ChangeEvent } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -783,6 +783,17 @@ function StepGoals({
 
 export default function OnboardingPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const isNewUser = searchParams.get("welcome") === "1";
+  const [showWelcome, setShowWelcome] = useState(isNewUser);
+
+  // Auto-dismiss welcome banner after 6 seconds
+  useEffect(() => {
+    if (showWelcome) {
+      const timer = setTimeout(() => setShowWelcome(false), 6000);
+      return () => clearTimeout(timer);
+    }
+  }, [showWelcome]);
 
   // Wizard state
   const [currentStep, setCurrentStep] = useState(1);
@@ -911,7 +922,18 @@ export default function OnboardingPage() {
         return;
       }
 
-      // Success — redirect to planner
+      // Success — check if user has existing plans (from linked accounts)
+      try {
+        const plansRes = await fetch("/api/v1/plans");
+        if (plansRes.ok) {
+          const plansData = await plansRes.json();
+          const plans = plansData?.data ?? plansData?.plans ?? plansData ?? [];
+          if (Array.isArray(plans) && plans.length > 0) {
+            router.push("/dashboard");
+            return;
+          }
+        }
+      } catch { /* fall through to planner */ }
       router.push("/planner");
     } catch {
       setError("Something went wrong. Please try again.");
@@ -922,6 +944,49 @@ export default function OnboardingPage() {
 
   return (
     <div className="mx-auto w-full max-w-2xl px-4 py-8 sm:px-6">
+      {/* Welcome banner */}
+      {showWelcome && (
+        <div className="mb-6 flex items-center gap-3 rounded-lg border border-success/30 bg-success-light p-3">
+          <svg aria-hidden="true" className="h-5 w-5 shrink-0 text-success" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" d="m4.5 12.75 6 6 9-13.5" />
+          </svg>
+          <p className="flex-1 text-sm font-medium text-success">Account created successfully! Let&apos;s set up your profile.</p>
+          <button
+            type="button"
+            onClick={() => setShowWelcome(false)}
+            className="flex h-6 w-6 items-center justify-center rounded text-success/60 hover:text-success transition-colors"
+            aria-label="Dismiss welcome message"
+          >
+            <svg aria-hidden="true" className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M6 18 18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+      )}
+
+      <div className="mb-4 flex justify-end">
+        <button
+          type="button"
+          onClick={async () => {
+            try {
+              const res = await fetch("/api/v1/plans");
+              if (res.ok) {
+                const data = await res.json();
+                const plans = data?.data ?? data?.plans ?? data ?? [];
+                if (Array.isArray(plans) && plans.length > 0) {
+                  router.push("/dashboard");
+                  return;
+                }
+              }
+            } catch { /* fall through */ }
+            router.push("/planner");
+          }}
+          className="text-xs text-muted-foreground hover:text-foreground transition-colors"
+        >
+          Skip setup →
+        </button>
+      </div>
+
       <StepIndicator currentStep={currentStep} />
 
       {/* Error banner */}

@@ -3,7 +3,7 @@ import { z } from "zod";
 import { db } from "@/lib/db";
 import { accountMembers, accountInviteCodes, accounts, users } from "@/lib/db/schema";
 import { eq, and, count } from "drizzle-orm";
-import { getEffectiveTier } from "@/lib/subscription/middleware";
+import { getEffectiveTier, invalidateSubscriptionCache } from "@/lib/subscription/middleware";
 import { successResponse, errorResponse } from "@/lib/api/response";
 import { requireAuth, getAccountContext } from "@/lib/auth/get-user";
 import { sendEmail } from "@/lib/email/client";
@@ -21,6 +21,10 @@ function generateInviteCode(): string {
 const inviteSchema = z.object({
   target_role: z.enum(["student", "parent", "guardian", "counselor"]),
   email: z.string().email().optional(),
+  shared_plans: z.array(z.object({
+    plan_id: z.string().uuid(),
+    permission: z.enum(["view", "edit"]),
+  })).optional(),
 });
 
 interface RouteContext {
@@ -103,9 +107,11 @@ export async function POST(request: NextRequest, context: RouteContext) {
       });
     }
 
-    const { target_role } = parsed.data;
+    const { target_role, shared_plans } = parsed.data;
 
     // Check linked accounts limit based on subscription tier
+    // Invalidate cache first to ensure fresh tier data
+    await invalidateSubscriptionCache({ accountId, userId: user.id });
     const tier = await getEffectiveTier({ accountId, userId: user.id });
     const [memberCount] = await db
       .select({ count: count() })
@@ -114,7 +120,6 @@ export async function POST(request: NextRequest, context: RouteContext) {
 
     const currentCount = memberCount?.count ?? 0;
     const maxLinked = tier.maxLinkedAccounts ?? 3;
-
     if (currentCount >= maxLinked) {
       return errorResponse(
         "UPGRADE_REQUIRED",
@@ -135,6 +140,7 @@ export async function POST(request: NextRequest, context: RouteContext) {
         accountId,
         code: inviteCode,
         targetRole: target_role,
+        sharedPlans: shared_plans?.map((sp) => ({ planId: sp.plan_id, permission: sp.permission })) ?? null,
         expiresAt,
         createdBy: user.id,
       })

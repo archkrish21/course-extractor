@@ -42,6 +42,7 @@ const PERMISSION_COLORS: Record<string, string> = {
 
 export default function PlansPage() {
   const { currentAccount } = useAccount();
+  const isCounselor = currentAccount?.role === "counselor";
   const { showToast } = useToast();
   const [plans, setPlans] = useState<Plan[]>([]);
   const [loading, setLoading] = useState(true);
@@ -205,14 +206,14 @@ export default function PlansPage() {
               <Link href={`/planner?planId=${plan.id}`}>
                 <Button variant="outline" size="sm" className="h-8 px-2.5 text-xs">
                   <svg aria-hidden="true" className="mr-1 h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0 1 15.75 21H5.25A2.25 2.25 0 0 1 3 18.75V8.25A2.25 2.25 0 0 1 5.25 6H10" />
+                    <path strokeLinecap="round" strokeLinejoin="round" d={isCounselor ? "M2.036 12.322a1.012 1.012 0 0 1 0-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178ZM15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" : "m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0 1 15.75 21H5.25A2.25 2.25 0 0 1 3 18.75V8.25A2.25 2.25 0 0 1 5.25 6H10"} />
                   </svg>
-                  Edit
+                  {isCounselor ? "View" : "Edit"}
                 </Button>
               </Link>
 
-              {/* Share button (owner only) */}
-              {isOwner && currentAccount && (
+              {/* Share button (owner only, not for counselors) */}
+              {!isCounselor && isOwner && currentAccount && (
                 <Button
                   variant="outline"
                   size="sm"
@@ -248,8 +249,8 @@ export default function PlansPage() {
                 {isHidden ? "Show" : "Hide"}
               </Button>
 
-              {/* Delete (owner or delete permission) */}
-              {(isOwner || perm === "delete") && (
+              {/* Delete (owner or delete permission, not for counselors) */}
+              {!isCounselor && (isOwner || perm === "delete") && (
                 <span title={plan.isPrimary ? "Cannot delete the primary plan. Set another plan as primary first." : "Delete plan"}>
                   <Button
                     variant="ghost"
@@ -287,14 +288,16 @@ export default function PlansPage() {
           </Link>
           <h1 className="text-2xl font-bold tracking-tight text-foreground">My Plans</h1>
         </div>
-        <Link href="/planner?newPlan=true">
-          <Button size="sm">
-            <svg aria-hidden="true" className="mr-1.5 h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
-            </svg>
-            New Plan
-          </Button>
-        </Link>
+        {!isCounselor && (
+          <Link href="/planner?newPlan=true">
+            <Button size="sm">
+              <svg aria-hidden="true" className="mr-1.5 h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+              </svg>
+              New Plan
+            </Button>
+          </Link>
+        )}
       </div>
 
       {/* Tabs */}
@@ -334,18 +337,24 @@ export default function PlansPage() {
                     <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 0 0-3.375-3.375h-1.5A1.125 1.125 0 0 1 13.5 7.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H8.25m3.75 9v6m3-3H9m1.5-12H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 0 0-9-9Z" />
                   </svg>
                 </div>
-                <p className="mt-4 text-base font-semibold text-foreground">No plans yet</p>
-                <p className="mt-1 text-sm text-muted-foreground">
-                  Create your first course plan to start organizing your schedule.
+                <p className="mt-4 text-base font-semibold text-foreground">
+                  {isCounselor ? "No Plans Shared Yet" : "No plans yet"}
                 </p>
-                <Link href="/planner?newPlan=true" className="mt-4">
-                  <Button size="sm">
-                    <svg aria-hidden="true" className="mr-1.5 h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
-                    </svg>
-                    Create First Plan
-                  </Button>
-                </Link>
+                <p className="mt-1 text-sm text-muted-foreground">
+                  {isCounselor
+                    ? "Plans will appear here once a student shares their plan with you."
+                    : "Create your first course plan to start organizing your schedule."}
+                </p>
+                {!isCounselor && (
+                  <Link href="/planner?newPlan=true" className="mt-4">
+                    <Button size="sm">
+                      <svg aria-hidden="true" className="mr-1.5 h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+                      </svg>
+                      Create First Plan
+                    </Button>
+                  </Link>
+                )}
               </CardContent>
             </Card>
           ) : (

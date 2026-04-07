@@ -10,8 +10,9 @@ import {
   accountMembers,
   studentRequirementStatus,
   studentRequirementOptIns,
+  planShares,
 } from "@/lib/db/schema";
-import { eq, and, desc } from "drizzle-orm";
+import { eq, and, desc, or, sql } from "drizzle-orm";
 import { successResponse, errorResponse } from "@/lib/api/response";
 import { requireAuth, getAccountContext } from "@/lib/auth/get-user";
 import { rateLimit } from "@/lib/api/rate-limit";
@@ -521,6 +522,28 @@ export async function GET(request: NextRequest) {
         )
         .limit(1);
       plan = found;
+    }
+
+    // 3b. Check plan access: user must be creator or have a plan_shares entry
+    if (plan) {
+      const hasAccess = await db
+        .select({ id: fourYearPlans.id })
+        .from(fourYearPlans)
+        .leftJoin(planShares, and(eq(planShares.planId, plan.id), eq(planShares.userId, user.id)))
+        .where(
+          and(
+            eq(fourYearPlans.id, plan.id),
+            or(
+              eq(fourYearPlans.createdBy, user.id),
+              sql`${planShares.id} IS NOT NULL`
+            )
+          )
+        )
+        .limit(1);
+
+      if (hasAccess.length === 0) {
+        plan = undefined; // treat as no plan — user has no access
+      }
     }
 
     // 4. Fetch plan courses

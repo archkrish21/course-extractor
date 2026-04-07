@@ -65,11 +65,12 @@ vi.mock("@/lib/db/schema", () => ({
   courses: { id: "c_id", code: "c_code", name: "c_name", creditValue: "c_creditValue", divisionId: "c_divisionId", creditType: "c_creditType" },
   divisions: { id: "div_id", name: "div_name" },
   planCourses: { planId: "pc_planId", courseId: "pc_courseId", status: "pc_status", gradeLevel: "pc_gradeLevel", semester: "pc_semester", plannedGrade: "pc_plannedGrade", gpaWaiverApplied: "pc_gpaWaiverApplied" },
-  fourYearPlans: { id: "fp_id", accountId: "fp_accountId", isPrimary: "fp_isPrimary", isTemplate: "fp_isTemplate" },
+  fourYearPlans: { id: "fp_id", accountId: "fp_accountId", isPrimary: "fp_isPrimary", isTemplate: "fp_isTemplate", createdBy: "fp_createdBy" },
   accounts: { id: "a_id" },
   accountMembers: { accountId: "am_accountId", userId: "am_userId" },
   studentRequirementStatus: { accountId: "srs_accountId", requirementId: "srs_requirementId", status: "srs_status", completedAt: "srs_completedAt" },
   studentRequirementOptIns: { accountId: "sro_accountId", requirementGroup: "sro_requirementGroup" },
+  planShares: { id: "ps_id", planId: "ps_planId", userId: "ps_userId" },
 }));
 
 vi.mock("@/lib/gpa/calc", () => ({
@@ -84,7 +85,11 @@ vi.mock("@/lib/gpa/calc", () => ({
 vi.mock("drizzle-orm", () => ({
   eq: vi.fn((...args: unknown[]) => ({ type: "eq", args })),
   and: vi.fn((...args: unknown[]) => ({ type: "and", args })),
+  or: vi.fn((...args: unknown[]) => ({ type: "or", args })),
   desc: vi.fn((col: unknown) => ({ type: "desc", col })),
+  sql: Object.assign(vi.fn((...args: unknown[]) => ({ type: "sql", args })), {
+    raw: vi.fn((s: string) => s),
+  }),
 }));
 
 import { requireAuth, getAccountContext } from "@/lib/auth/get-user";
@@ -256,9 +261,10 @@ describe("GET /api/v1/requirements", () => {
       if (queryIndex === 2) return Promise.resolve(resolve([{ id: "cv-1" }])); // catalog
       if (queryIndex === 3) return Promise.resolve(resolve(mockRequirements)); // requirements
       if (queryIndex === 4) return Promise.resolve(resolve([{ id: "plan-1" }])); // plan
-      if (queryIndex === 5) return Promise.resolve(resolve(mockPlanCourses)); // plan courses
-      if (queryIndex === 6) return Promise.resolve(resolve([])); // opt-ins
-      if (queryIndex === 7) return Promise.resolve(resolve([])); // manual statuses
+      if (queryIndex === 5) return Promise.resolve(resolve([{ id: "plan-1" }])); // access check
+      if (queryIndex === 6) return Promise.resolve(resolve(mockPlanCourses)); // plan courses
+      if (queryIndex === 7) return Promise.resolve(resolve([])); // opt-ins
+      if (queryIndex === 8) return Promise.resolve(resolve([])); // manual statuses
       return Promise.resolve(resolve([]));
     });
 
@@ -272,5 +278,47 @@ describe("GET /api/v1/requirements", () => {
     expect(body.data.totalEarned).toBeGreaterThanOrEqual(0);
     // Should also have groups array
     expect(body.data.groups).toBeDefined();
+  });
+
+  it("returns empty plan courses when user has no access to the plan", async () => {
+    (requireAuth as ReturnType<typeof vi.fn>).mockResolvedValue(TEST_USER);
+    (getAccountContext as ReturnType<typeof vi.fn>).mockResolvedValue(TEST_ACCOUNT_CTX);
+
+    const mockRequirements = [
+      {
+        id: "req-1",
+        divisionId: "div-math",
+        name: "Mathematics",
+        requiredCredits: "6.0",
+        matchingRule: { type: "division" },
+        notes: null,
+        requirementGroup: "graduation",
+        evaluationType: "course_match",
+        displayOrder: 1,
+        isOptIn: false,
+      },
+    ];
+
+    let queryIndex = 0;
+    dbChain.then = vi.fn().mockImplementation((resolve: (v: unknown) => unknown) => {
+      queryIndex++;
+      if (queryIndex === 1) return Promise.resolve(resolve([{ accountId: "acc-1" }])); // accountMembers
+      if (queryIndex === 2) return Promise.resolve(resolve([{ id: "cv-1" }])); // catalog
+      if (queryIndex === 3) return Promise.resolve(resolve(mockRequirements)); // requirements
+      if (queryIndex === 4) return Promise.resolve(resolve([{ id: "plan-1" }])); // plan exists
+      if (queryIndex === 5) return Promise.resolve(resolve([])); // access check fails
+      if (queryIndex === 6) return Promise.resolve(resolve([])); // opt-ins (no plan courses fetched)
+      if (queryIndex === 7) return Promise.resolve(resolve([])); // manual statuses
+      return Promise.resolve(resolve([]));
+    });
+
+    const response = await GET(createRequest("/api/v1/requirements"));
+    const body = await response.json();
+
+    expect(response.status).toBe(200);
+    // Requirements are returned but with zero earned/planned credits
+    expect(body.data.requirements).toHaveLength(1);
+    expect(body.data.requirements[0].earnedCredits).toBe(0);
+    expect(body.data.requirements[0].plannedCredits).toBe(0);
   });
 });

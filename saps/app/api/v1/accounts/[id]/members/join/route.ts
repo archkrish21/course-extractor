@@ -1,7 +1,7 @@
 import { NextRequest } from "next/server";
 import { z } from "zod";
 import { db } from "@/lib/db";
-import { accountMembers, accountInviteCodes, accounts, studentProfiles, users, subscriptions, subscriptionPlans } from "@/lib/db/schema";
+import { accountMembers, accountInviteCodes, accounts, studentProfiles, users, subscriptions, subscriptionPlans, planShares } from "@/lib/db/schema";
 import { eq, and, isNull, sql } from "drizzle-orm";
 import { successResponse, errorResponse } from "@/lib/api/response";
 import { requireAuth } from "@/lib/auth/get-user";
@@ -192,6 +192,20 @@ export async function POST(request: NextRequest, context: RouteContext) {
           claimedAt: new Date(),
         })
         .where(eq(accountInviteCodes.id, invite.id));
+
+      // Create plan_shares for any plans shared with the invite
+      const sharedPlans = (invite.sharedPlans as Array<{ planId: string; permission: string }>) ?? [];
+      for (const sp of sharedPlans) {
+        await tx
+          .insert(planShares)
+          .values({
+            planId: sp.planId,
+            userId: user.id,
+            grantedBy: invite.createdBy,
+            permission: sp.permission,
+          })
+          .onConflictDoNothing();
+      }
     });
 
     return successResponse({ success: true, account_id: joinedAccountId });

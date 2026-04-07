@@ -6,8 +6,9 @@ import {
   fourYearPlans,
   accounts,
   accountMembers,
+  planShares,
 } from "@/lib/db/schema";
-import { eq, and } from "drizzle-orm";
+import { eq, and, or, sql } from "drizzle-orm";
 import { successResponse, errorResponse } from "@/lib/api/response";
 import { requireAuth, getAccountContext } from "@/lib/auth/get-user";
 import { rateLimit } from "@/lib/api/rate-limit";
@@ -73,6 +74,31 @@ export async function GET(request: NextRequest) {
 
     if (!plan) {
       // No plan — return empty GPA
+      return successResponse({
+        cumulative: { unweighted: null, weighted: null, credits: 0, courses: 0 },
+        projected: { unweighted: null, weighted: null, credits: 0, courses: 0 },
+        hasGrades: false,
+      });
+    }
+
+    // Check plan access: user must be the creator or have a plan_shares entry
+    const hasAccess = await db
+      .select({ id: fourYearPlans.id })
+      .from(fourYearPlans)
+      .leftJoin(planShares, and(eq(planShares.planId, plan.id), eq(planShares.userId, user.id)))
+      .where(
+        and(
+          eq(fourYearPlans.id, plan.id),
+          or(
+            eq(fourYearPlans.createdBy, user.id),
+            sql`${planShares.id} IS NOT NULL`
+          )
+        )
+      )
+      .limit(1);
+
+    if (hasAccess.length === 0) {
+      // User has no access to this plan — return empty GPA
       return successResponse({
         cumulative: { unweighted: null, weighted: null, credits: 0, courses: 0 },
         projected: { unweighted: null, weighted: null, credits: 0, courses: 0 },

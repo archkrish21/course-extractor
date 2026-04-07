@@ -20,7 +20,7 @@ const signupSchema = z.object({
   email: z.string().email("Invalid email address"),
   password: z.string().min(8, "Password must be at least 8 characters"),
   date_of_birth: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Date must be YYYY-MM-DD format"),
-  role: z.enum(["student", "parent", "counselor"]),
+  role: z.enum(["student", "parent", "guardian", "counselor"]),
   name: z.string().min(1).max(200).optional(),
   state: z.string().length(2).optional(),
   school_name: z.string().min(1).max(200).optional(),
@@ -64,7 +64,10 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const { email, password, date_of_birth, role, name, state, school_name } = parsed.data;
+    const { email, password, date_of_birth, role: rawRole, name, state, school_name } = parsed.data;
+
+    // Map "guardian" to "parent" for storage — they have identical behavior
+    const role = rawRole === "guardian" ? "parent" : rawRole;
 
     // COPPA check: must be 13 or older
     const age = calculateAge(date_of_birth);

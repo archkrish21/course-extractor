@@ -44,6 +44,9 @@ export default function SettingsPage() {
   const [deleteText, setDeleteText] = useState("");
   const [exportOnDelete, setExportOnDelete] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [memberLimit, setMemberLimit] = useState(3);
+  const [accountPlans, setAccountPlans] = useState<Array<{ id: string; name: string }>>([]);
+  const [invitePlanShares, setInvitePlanShares] = useState<Record<string, string>>({}); // planId -> permission
 
   // Fetch data
   useEffect(() => {
@@ -73,6 +76,17 @@ export default function SettingsPage() {
       const sub = json?.data?.subscription ?? json?.subscription;
       setBillingCycle(sub?.billingCycle ?? null);
       setNextPayment(sub?.currentPeriodEnd ?? null);
+      // Derive member limit from plan name (matches middleware logic)
+      const plan = (sub?.planName ?? "").toLowerCase();
+      if (plan.includes("elite")) setMemberLimit(8);
+      else if (plan.includes("plus")) setMemberLimit(5);
+      else setMemberLimit(3);
+    }).catch(() => {});
+    apiFetch("/api/v1/plans").then((r) => (r.ok ? r.json() : null)).then((json) => {
+      const plans = json?.data ?? json?.plans ?? json ?? [];
+      if (Array.isArray(plans)) {
+        setAccountPlans(plans.map((p: Record<string, unknown>) => ({ id: p.id as string, name: (p.name ?? "Untitled") as string })));
+      }
     }).catch(() => {});
     apiFetch("/api/v1/auth/consent").then((r) => (r.ok ? r.json() : null)).then((json) => {
       setConsentInfo(json?.data?.accepted_documents ?? json?.accepted_documents ?? []);
@@ -114,14 +128,25 @@ export default function SettingsPage() {
       const res = await apiFetch(`/api/v1/accounts/${currentAccount.id}/members`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ target_role: inviteRole, email: inviteEmail.trim() }),
+        body: JSON.stringify({
+          target_role: inviteRole,
+          email: inviteEmail.trim(),
+          shared_plans: Object.entries(invitePlanShares)
+            .filter(([, perm]) => perm !== "none")
+            .map(([planId, permission]) => ({ plan_id: planId, permission })),
+        }),
       });
       if (res.ok) {
         const json = await res.json();
         setInviteCode(json.data?.invite_code ?? json.data?.code ?? null);
-        setInviteSent(true); setInviteEmail("");
+        setInviteSent(true); setInviteEmail(""); setInvitePlanShares({});
+        showToast("Invite sent successfully!");
+      } else {
+        const json = await res.json().catch(() => ({}));
+        const msg = json?.error?.message || json?.message || "Failed to send invite.";
+        showToast(msg);
       }
-    } catch { /* silent */ }
+    } catch { showToast("Something went wrong. Please try again."); }
     finally { setGenerating(false); }
   };
 
@@ -254,25 +279,68 @@ export default function SettingsPage() {
               <p className="text-xs text-muted-foreground">Role</p>
               <div className="mt-1"><Badge className={roleColor(currentAccount?.role ?? "student")}>{currentAccount?.role ?? "student"}</Badge></div>
             </div>
-            <div className="flex items-start justify-between sm:block">
-              <p className="text-xs text-muted-foreground">Grade</p>
-              <p className="mt-0.5 text-sm font-medium text-foreground">{currentAccount?.gradeLevel ?? "---"}</p>
-            </div>
-            <div className="flex items-start justify-between sm:block">
-              <p className="text-xs text-muted-foreground">Graduation</p>
-              <p className="mt-0.5 text-sm font-medium text-foreground">{currentAccount?.graduationYear ?? "---"}</p>
-            </div>
-            <div className="flex items-start justify-between sm:block">
-              <p className="text-xs text-muted-foreground">State</p>
-              <p className="mt-0.5 text-sm font-medium text-foreground">
-                {US_STATES.find((s) => s.code === currentAccount?.state)?.name ?? currentAccount?.state ?? "---"}
-              </p>
-            </div>
-            <div className="flex items-start justify-between sm:block">
-              <p className="text-xs text-muted-foreground">School</p>
-              <p className="mt-0.5 text-sm font-medium text-foreground">{currentAccount?.schoolName ?? "---"}</p>
-            </div>
+            {currentAccount?.role === "student" && (
+              <>
+                <div className="flex items-start justify-between sm:block">
+                  <p className="text-xs text-muted-foreground">Grade</p>
+                  <p className="mt-0.5 text-sm font-medium text-foreground">{currentAccount?.gradeLevel ?? "---"}</p>
+                </div>
+                <div className="flex items-start justify-between sm:block">
+                  <p className="text-xs text-muted-foreground">Graduation</p>
+                  <p className="mt-0.5 text-sm font-medium text-foreground">{currentAccount?.graduationYear ?? "---"}</p>
+                </div>
+                <div className="flex items-start justify-between sm:block">
+                  <p className="text-xs text-muted-foreground">State</p>
+                  <p className="mt-0.5 text-sm font-medium text-foreground">
+                    {US_STATES.find((s) => s.code === currentAccount?.state)?.name ?? currentAccount?.state ?? "---"}
+                  </p>
+                </div>
+                <div className="flex items-start justify-between sm:block">
+                  <p className="text-xs text-muted-foreground">School</p>
+                  <p className="mt-0.5 text-sm font-medium text-foreground">{currentAccount?.schoolName ?? "---"}</p>
+                </div>
+              </>
+            )}
           </div>
+
+          {/* Student info — shown for non-student roles */}
+          {currentAccount && currentAccount.role !== "student" && (
+            <>
+              <h2 className="mt-8 mb-4 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                Student Information
+              </h2>
+              <Card>
+                <CardContent>
+                  <div className="grid grid-cols-1 gap-x-8 gap-y-4 sm:grid-cols-3">
+                    <div>
+                      <p className="text-xs text-muted-foreground">Student</p>
+                      <p className="mt-0.5 text-sm font-medium text-foreground">
+                        {[currentAccount.studentFirstName, currentAccount.studentLastName].filter(Boolean).join(" ") || currentAccount.studentName || "---"}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-xs text-muted-foreground">Grade</p>
+                      <p className="mt-0.5 text-sm font-medium text-foreground">{currentAccount.gradeLevel ?? "---"}</p>
+                    </div>
+                    <div>
+                      <p className="text-xs text-muted-foreground">Graduation</p>
+                      <p className="mt-0.5 text-sm font-medium text-foreground">{currentAccount.graduationYear ?? "---"}</p>
+                    </div>
+                    <div>
+                      <p className="text-xs text-muted-foreground">State</p>
+                      <p className="mt-0.5 text-sm font-medium text-foreground">
+                        {US_STATES.find((s) => s.code === currentAccount.state)?.name ?? currentAccount.state ?? "---"}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-xs text-muted-foreground">School</p>
+                      <p className="mt-0.5 text-sm font-medium text-foreground">{currentAccount.schoolName ?? "---"}</p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </>
+          )}
         </section>
 
         {/* --- Linked Accounts ------------------------------------- */}
@@ -328,10 +396,8 @@ export default function SettingsPage() {
 
                   {/* Invite -- hidden for counselors (view-only role) */}
                   {currentAccount?.role !== "counselor" && (() => {
-                    const tier = currentAccount?.subscriptionTier ?? "starter";
-                    const maxLinked = tier === "elite" ? 8 : tier === "plus" ? 5 : 3;
                     const totalMembers = members.length; // includes self
-                    const atLimit = totalMembers >= maxLinked;
+                    const atLimit = totalMembers >= memberLimit;
 
                     return (
                     <>
@@ -349,12 +415,57 @@ export default function SettingsPage() {
                           placeholder="Invite by email..."
                           disabled={atLimit}
                           className={`min-h-[44px] flex-1 rounded-lg border border-border bg-background px-3 text-sm placeholder:text-muted-foreground focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring ${atLimit ? "opacity-50" : ""}`} />
-                        <Button size="sm" className="min-h-[44px]" onClick={handleSendInvite} disabled={generating || !inviteEmail.trim() || atLimit}>
-                          {generating ? "Sending..." : "Invite"}
+                      </div>
+
+                      {/* Plan sharing selector */}
+                      {accountPlans.length > 0 && !atLimit && (
+                        <div className="mt-2 rounded-lg border border-border p-3">
+                          <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">Share plans</p>
+                          <div className="space-y-2">
+                            {accountPlans.map((plan) => (
+                              <div key={plan.id} className="flex items-center justify-between gap-3">
+                                <label className="flex items-center gap-2 text-sm text-foreground min-w-0">
+                                  <input
+                                    type="checkbox"
+                                    checked={!!invitePlanShares[plan.id] && invitePlanShares[plan.id] !== "none"}
+                                    onChange={(e) => {
+                                      setInvitePlanShares((prev) => {
+                                        const next = { ...prev };
+                                        if (e.target.checked) {
+                                          next[plan.id] = "view";
+                                        } else {
+                                          delete next[plan.id];
+                                        }
+                                        return next;
+                                      });
+                                    }}
+                                    className="h-4 w-4 shrink-0 rounded border-border text-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
+                                  />
+                                  <span className="truncate">{plan.name}</span>
+                                </label>
+                                {invitePlanShares[plan.id] && invitePlanShares[plan.id] !== "none" && (
+                                  <select
+                                    value={invitePlanShares[plan.id]}
+                                    onChange={(e) => setInvitePlanShares((prev) => ({ ...prev, [plan.id]: e.target.value }))}
+                                    className="rounded-md border border-border bg-background px-2 py-1 text-xs focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
+                                  >
+                                    <option value="view">View only</option>
+                                    <option value="edit">Can edit</option>
+                                  </select>
+                                )}
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+
+                      <div className="mt-2">
+                        <Button size="sm" className="min-h-[44px] w-full sm:w-auto" onClick={handleSendInvite} disabled={generating || !inviteEmail.trim() || atLimit}>
+                          {generating ? "Sending..." : "Send Invite"}
                         </Button>
                       </div>
                       <div className="flex items-center gap-2 pt-1">
-                        <Badge className="bg-muted text-muted-foreground text-[11px]">{totalMembers}/{maxLinked} used</Badge>
+                        <Badge className="bg-muted text-muted-foreground text-[11px]">{totalMembers}/{memberLimit} used</Badge>
                         {atLimit && (
                           <span className="text-[11px] text-warning">
                             Limit reached.{" "}
@@ -379,8 +490,8 @@ export default function SettingsPage() {
           </Card>
         </section>
 
-        {/* --- Subscription ----------------------------------------- */}
-        <section>
+        {/* --- Subscription (hidden for counselors) -------------------- */}
+        {currentAccount?.role !== "counselor" && <section>
           <h2 className="mb-4 text-xs font-semibold uppercase tracking-wider text-muted-foreground">Subscription</h2>
           <Card>
             <CardContent>
@@ -404,7 +515,7 @@ export default function SettingsPage() {
               </div>
             </CardContent>
           </Card>
-        </section>
+        </section>}
 
         {/* --- Legal ------------------------------------------------ */}
         <section>

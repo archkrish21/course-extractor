@@ -50,6 +50,13 @@
       "when": 1775537650555,
       "tag": "0006_broken_taskmaster",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1775587493203,
+      "tag": "0007_complex_paladin",
+      "breakpoints": true
     }
   ]
 }

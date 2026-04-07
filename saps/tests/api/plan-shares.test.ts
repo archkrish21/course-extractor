@@ -72,6 +72,7 @@ vi.mock("@/lib/auth/get-user", () => ({
 const mockGetEffectiveTier = vi.fn();
 vi.mock("@/lib/subscription/middleware", () => ({
   getEffectiveTier: (...args: unknown[]) => mockGetEffectiveTier(...args),
+  invalidateSubscriptionCache: vi.fn().mockResolvedValue(undefined),
 }));
 
 vi.mock("@/lib/email/client", () => ({
@@ -699,6 +700,53 @@ describe("POST /api/v1/accounts/:id/members — linked accounts limit", () => {
     expect(response.status).toBe(201);
     expect(body.data.invite_code).toBe("COUN1234");
     expect(body.data.email_sent).toBe(true);
+  });
+
+  it("accepts shared_plans parameter in invite", async () => {
+    mockGetEffectiveTier.mockResolvedValue({ maxLinkedAccounts: 5 });
+
+    let queryIndex = 0;
+    dbChain.then = vi.fn().mockImplementation((resolve: (v: unknown) => unknown) => {
+      queryIndex++;
+      if (queryIndex === 1) return Promise.resolve(resolve([{ count: 1 }]));
+      if (queryIndex === 2) return Promise.resolve(resolve([{ studentName: "Test Student" }]));
+      if (queryIndex === 3) return Promise.resolve(resolve([{ email: "owner@test.com" }]));
+      return Promise.resolve(resolve([]));
+    });
+    mockReturning.mockResolvedValue([{
+      code: "PLAN1234",
+      expiresAt: new Date().toISOString(),
+    }]);
+
+    const request = makeJsonRequest(
+      `http://localhost:3000/api/v1/accounts/${TEST_ACCOUNT_ID}/members`,
+      {
+        target_role: "counselor",
+        email: "counselor@school.edu",
+        shared_plans: [
+          { plan_id: "aaaaaaaa-bbbb-4ccc-8ddd-eeeeeeeeeeee", permission: "view" },
+        ],
+      }
+    );
+    const response = await createMember(request, accountContext(TEST_ACCOUNT_ID));
+    const body = await response.json();
+
+    expect(response.status).toBe(201);
+    expect(body.data.invite_code).toBe("PLAN1234");
+  });
+
+  it("rejects invalid permission in shared_plans", async () => {
+    const request = makeJsonRequest(
+      `http://localhost:3000/api/v1/accounts/${TEST_ACCOUNT_ID}/members`,
+      {
+        target_role: "counselor",
+        shared_plans: [
+          { plan_id: "aaaaaaaa-bbbb-4ccc-8ddd-eeeeeeeeeeee", permission: "owner" },
+        ],
+      }
+    );
+    const response = await createMember(request, accountContext(TEST_ACCOUNT_ID));
+    expect(response.status).toBe(400);
   });
 
   it("returns 403 when counselor tries to invite (read-only)", async () => {

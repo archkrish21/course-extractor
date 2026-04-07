@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
 
-type Role = "student" | "parent" | "counselor";
+type Role = "student" | "parent" | "guardian" | "counselor";
 
 interface FieldErrors {
   email?: string;
@@ -22,6 +22,7 @@ interface FieldErrors {
 const ROLES: { value: Role; label: string; desc: string }[] = [
   { value: "student", label: "Student", desc: "Plan your courses" },
   { value: "parent", label: "Parent", desc: "Monitor progress" },
+  { value: "guardian", label: "Guardian", desc: "Support your student" },
   { value: "counselor", label: "Counselor", desc: "Guide students" },
 ];
 
@@ -97,10 +98,12 @@ export default function SignupPage() {
 
       if (inviteCode && inviteAccount) {
         router.push(`/join?code=${inviteCode}&account=${inviteAccount}`);
-      } else if (role === "parent") {
-        router.push("/onboarding?add_child=true");
+      } else if (role === "student") {
+        router.push("/onboarding?welcome=1");
       } else {
-        router.push("/onboarding");
+        // Non-student roles (parent, guardian, counselor) skip onboarding
+        // and go to dashboard if they have plans, or planner otherwise
+        router.push("/dashboard");
       }
     } catch {
       setErrors({ form: "Something went wrong. Please try again." });
@@ -145,7 +148,7 @@ export default function SignupPage() {
           {/* Step 1: Role */}
           <fieldset>
             <legend className="mb-2 text-sm font-medium text-foreground">I am a</legend>
-            <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
+            <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
               {ROLES.map((r) => (
                 <button
                   key={r.value}
@@ -247,7 +250,7 @@ export default function SignupPage() {
                 <Link href="/terms" target="_blank" className="text-primary hover:underline">Terms of Service</Link>
                 {" "}and{" "}
                 <Link href="/privacy" target="_blank" className="text-primary hover:underline">Privacy Policy</Link>.
-                {role === "parent" && (
+                {(role === "parent" || role === "guardian") && (
                   <span className="block mt-0.5 text-muted-foreground">
                     I confirm that I am the parent or legal guardian of the student.
                   </span>

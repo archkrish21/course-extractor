@@ -156,7 +156,6 @@ async function getEffectiveTierByAccount(
     accountStatus: userRow?.accountStatus ?? "active",
     freezeReason: userRow?.freezeReason ?? null,
   });
-
   try {
     if (redis && subRedisAvailable) await redis.setex(cacheKey, CACHE_TTL_SECONDS, JSON.stringify(tier));
   } catch (error) {
@@ -292,11 +291,19 @@ function computeEffectiveTier(row: SubscriptionRow): SubscriptionContext {
   if (row.status === "active" || row.status === "past_due") {
     // Pro backward compatibility: treat as Plus
     const effectivePlanName = row.planName === "pro" ? "plus" : row.planName;
+    const extracted = extractFeatures(features, row.maxPlans);
+    // If max_linked_accounts is not in the DB features, derive from plan name
+    if (!features.max_linked_accounts) {
+      const plan = effectivePlanName.toLowerCase();
+      if (plan === "elite") extracted.maxLinkedAccounts = 8;
+      else if (plan === "plus") extracted.maxLinkedAccounts = 5;
+      else extracted.maxLinkedAccounts = 3;
+    }
     return {
       tier: effectivePlanName,
       accountStatus,
       freezeReason,
-      ...extractFeatures(features, row.maxPlans),
+      ...extracted,
     };
   }
 

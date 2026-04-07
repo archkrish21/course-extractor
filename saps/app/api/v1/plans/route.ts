@@ -119,7 +119,7 @@ export async function GET(request: NextRequest) {
           and(
             eq(fourYearPlans.accountId, accountId),
             eq(fourYearPlans.isTemplate, false),
-            // Only show plans the user has access to (via plan_shares or as account member)
+            // Only show plans the user has access to (via plan_shares or as creator)
             or(
               sql`${planShares.id} IS NOT NULL`,
               eq(fourYearPlans.createdBy, user.id)

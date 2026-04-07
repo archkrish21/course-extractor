@@ -1123,6 +1123,7 @@ export const accountInviteCodes = pgTable(
     createdBy: uuid("created_by")
       .notNull()
       .references(() => users.id, { onDelete: "cascade" }),
+    sharedPlans: jsonb("shared_plans").$type<Array<{ planId: string; permission: string }>>(),
     claimedBy: uuid("claimed_by").references(() => users.id),
     claimedAt: timestamp("claimed_at", { withTimezone: true }),
     createdAt: timestamp("created_at", { withTimezone: true }).defaultNow(),

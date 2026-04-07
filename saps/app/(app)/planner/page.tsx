@@ -52,6 +52,7 @@ type PickerTarget = {
 export default function PlannerPage() {
   const router = useRouter();
   const { currentAccount, refetchAccounts } = useAccount();
+  const isCounselor = currentAccount?.role === "counselor";
   const [plans, setPlans] = useState<Plan[]>([]);
   const [selectedPlanId, setSelectedPlanIdState] = useState<string | null>(null);
 
@@ -105,7 +106,7 @@ export default function PlannerPage() {
     if (params.get("validation") === "open") {
       setShowProgressPanel(true);
     }
-    if (params.get("newPlan") === "true") {
+    if (params.get("newPlan") === "true" && !isCounselor) {
       openNewPlanModal();
     }
   }, []);
@@ -1207,17 +1208,20 @@ export default function PlannerPage() {
               </svg>
             </div>
             <h2 className="mt-4 text-xl font-semibold text-foreground">
-              Create Your First Plan
+              {isCounselor ? "No Plans Shared Yet" : "Create Your First Plan"}
             </h2>
             <p className="mt-2 max-w-md text-sm text-muted-foreground">
-              Build a 4-year course plan to map out your academic path. Choose from
-              templates or start from scratch.
+              {isCounselor
+                ? "No plans have been shared with you yet. Plans will appear here once a student shares their plan with you."
+                : "Build a 4-year course plan to map out your academic path. Choose from templates or start from scratch."}
             </p>
-            <div className="mt-8">
-              <Button onClick={openNewPlanModal} data-tour="create-first-plan" className="px-6 py-2.5 text-base">
-                Get Started
-              </Button>
-            </div>
+            {!isCounselor && (
+              <div className="mt-8">
+                <Button onClick={openNewPlanModal} data-tour="create-first-plan" className="px-6 py-2.5 text-base">
+                  Get Started
+                </Button>
+              </div>
+            )}
           </CardContent>
         </Card>
 
@@ -1438,29 +1442,33 @@ export default function PlannerPage() {
             </button>
           )}
 
-          <Button
-            variant="outline"
-            onClick={openNewPlanModal}
-            aria-label="Create new plan"
-            title="New Plan"
-          >
-            <svg aria-hidden="true" className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
-            </svg>
-          </Button>
+          {!isCounselor && (
+            <Button
+              variant="outline"
+              onClick={openNewPlanModal}
+              aria-label="Create new plan"
+              title="New Plan"
+            >
+              <svg aria-hidden="true" className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+              </svg>
+            </Button>
+          )}
 
-          <Button
-            variant="outline"
-            onClick={() => router.push("/plans")}
-            aria-label="Manage plans"
-            title="Manage Plans"
-          >
-            <svg aria-hidden="true" className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M10.5 6h9.75M10.5 6a1.5 1.5 0 1 1-3 0m3 0a1.5 1.5 0 1 0-3 0M3.75 6H7.5m3 12h9.75m-9.75 0a1.5 1.5 0 0 1-3 0m3 0a1.5 1.5 0 0 0-3 0m-3.75 0H7.5m9-6h3.75m-3.75 0a1.5 1.5 0 0 1-3 0m3 0a1.5 1.5 0 0 0-3 0m-9.75 0h9.75" />
-            </svg>
-          </Button>
+          {!isCounselor && (
+            <Button
+              variant="outline"
+              onClick={() => router.push("/plans")}
+              aria-label="Manage plans"
+              title="Manage Plans"
+            >
+              <svg aria-hidden="true" className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M10.5 6h9.75M10.5 6a1.5 1.5 0 1 1-3 0m3 0a1.5 1.5 0 1 0-3 0M3.75 6H7.5m3 12h9.75m-9.75 0a1.5 1.5 0 0 1-3 0m3 0a1.5 1.5 0 0 0-3 0m-3.75 0H7.5m9-6h3.75m-3.75 0a1.5 1.5 0 0 1-3 0m3 0a1.5 1.5 0 0 0-3 0m-9.75 0h9.75" />
+              </svg>
+            </Button>
+          )}
 
-          {selectedPlan?.createdFromTemplateId && (
+          {!isCounselor && selectedPlan?.createdFromTemplateId && (
             <Button
               variant="outline"
               onClick={handleResetToTemplate}
@@ -1474,8 +1482,8 @@ export default function PlannerPage() {
             </Button>
           )}
 
-          {/* Delete plan button — if user has delete/owner permission */}
-          {selectedPlan && (selectedPlan.permission === "owner" || selectedPlan.permission === "delete" || !selectedPlan.permission) && (
+          {/* Delete plan button — if user has delete/owner permission, not for counselors */}
+          {!isCounselor && selectedPlan && (selectedPlan.permission === "owner" || selectedPlan.permission === "delete" || !selectedPlan.permission) && (
             <span title={selectedPlan.isPrimary ? "Cannot delete the primary plan. Set another plan as primary first." : "Delete this plan"}>
             <Button
               variant="outline"

@@ -401,6 +401,70 @@ In addition to the universal checklist above, apply these page-specific requirem
 - Modals: `rounded-2xl shadow-xl border-border`
 - Preserve ALL `data-tour` attributes (planner tour relies on these)
 
+**Course Picker** (`components/planner/course-picker.tsx` — 778 lines):
+The course picker is a full-screen modal (mobile) / centered dialog (desktop) used to search and add courses to a plan. It is one of the most interaction-heavy components in the app. A dedicated sub-agent should handle it.
+- Header: close button (44px touch target) + title ("Add Course" + "Grade X, Semester Y") + search input + "Done" button — all in one row, stacks cleanly on mobile
+- Filter chips: pill-style toggles for credit type (All/CP/Accelerated/Honors/AP/Dual Credit), duration (Full Year/Sem Only), flags (Early Bird/GPA Waiver). Active = `bg-primary text-primary-foreground`, except GPA Waiver active = `bg-warning text-white`. Verify all chips have `aria-pressed` and `min-h-[36px]`
+- Division/Department dropdowns: `rounded-lg border-border min-h-[44px]` with `aria-label`
+- Course result cards: `rounded-xl border p-3` with name, code, badges (credit type/AP/Dual Credit/GPA Waiver), grade level pips, duration label. "Add to Plan" button right-aligned. Highlight states: last-viewed = `border-primary/50 bg-primary/5`, validation warning = `border-warning bg-warning-light/50`
+- Validation preview: inline warning panel with amber border/bg, violation messages, "Add Anyway" button
+- "Added!" feedback: success checkmark + green text, auto-clears after 2s
+- Loading state: spinner + "Searching courses..." text centered
+- Empty state: search icon + "No courses found" + "Try adjusting your search or filters"
+- Pagination: first/prev/next/last buttons with `aria-label`, count text ("1–4 of 23")
+- Focus trap: Tab cycles within modal (already implemented, verify it still works after changes)
+- Preserve: `role="dialog"`, `aria-modal="true"`, `aria-label`, `aria-pressed` on all filter chips, `role="list"` on results, `aria-label` on pagination buttons
+
+**Course Detail Modal** (`components/course-detail-modal.tsx` — 178 lines):
+A stacked modal that opens over the course picker or courses page to show full course information. Sub-agent must handle it alongside CourseDetail.
+- Overlay: `bg-black/50`, configurable `zIndex` for stacking over other modals
+- Dialog: `max-w-5xl rounded-xl bg-card shadow-xl`, `role="dialog" aria-modal="true"`
+- Sticky header: course name + code + close button (44px), badges below (credit type/AP/Dual Credit/GPA Waiver using Badge component with correct variants)
+- Loading: centered spinner (currently bare spinner — should match design system skeleton or at least be centered with text)
+- Error/empty: "Course not found." centered message — should use standard empty state pattern
+- Content: delegates to `CourseDetail` component
+- Escape to close (already implemented, preserve)
+- Preserve: `aria-label="Close course details"`, `aria-hidden="true"` on overlay
+
+**Course Detail** (`components/course-detail.tsx` — 690 lines):
+The full course information view used inside CourseDetailModal and the Courses browser sidebar. This is a content-heavy component.
+- Description: `text-sm leading-relaxed text-muted-foreground`
+- Detail grid: 2-col → 3-col responsive grid. Labels use section label style (`text-xs font-medium uppercase tracking-wider text-muted-foreground`). Values use `text-sm font-medium text-foreground`. Clickable division/department links use `text-primary hover:text-primary-hover underline`
+- Linked courses: `border-primary/20 bg-primary-light/50` callout box with clickable course code pills (`border-primary/30 hover:bg-primary-light`)
+- Dual credit info: `border-dual-credit/30 bg-dual-credit-light` callout
+- GPA waiver info: `border-warning/30 bg-warning-light` callout
+- Prerequisites: grouped by requirement_group with OR badges between alternatives. Semester pairs merged by name. Course codes as clickable links (`text-primary hover:text-primary-hover underline`)
+- "What This Unlocks": downstream courses with chevron icon, same clickable code link pattern
+- "Add to Plan" form: expandable section with plan selector dropdown + grade level toggle buttons (pill-style, `aria-pressed`) + semester toggle (for semester courses). Full-year note. Success/error result messages use `bg-success-light text-success` / `bg-destructive-light text-destructive` with `role="status"`. Loading spinner for plans fetch. Empty state "No plans found" with link to create plan.
+- Cancel/Add buttons: `Button` component, Cancel = ghost, Add = primary. Direct add mode (from picker) simplifies to two buttons.
+- Preserve: all `role`, `aria-pressed`, `aria-label`, `title` attributes on interactive elements
+
+**Plan Course Card** (`components/planner/plan-course-card.tsx`):
+Individual course card rendered within the planner grid. Small but interaction-dense.
+- Status indicator: colored dot/icon using STATUS_CONFIG — Planned = `bg-muted text-muted-foreground`, Enrolled = `bg-primary-light text-primary`, Completed = `bg-success-light text-success`, Dropped = `bg-destructive-light text-destructive`. Verify these match the status → color mapping table.
+- Course name: `text-sm font-medium truncate`, code in parentheses
+- Badges: credit type badge using correct variant. Additional badges for AP/Dual Credit/GPA Waiver
+- Grade dropdown: clean select or custom dropdown, proper label
+- Status dropdown: color-coded options matching STATUS_CONFIG
+- GPA waiver toggle: checkbox with label, only shown when eligible and not P/F
+- Remove button: icon-only with `aria-label`, destructive hover state
+- Read-only mode: all controls hidden, card is display-only
+- Hover state: subtle shadow or bg change
+- Violations: shown as warning indicators on the card (icon + tooltip or inline text)
+
+**Planner Grid** (`components/planner/planner-grid.tsx`):
+The semester grid layout that organizes all course cards. Controls the overall planner visual structure.
+- Grade rows: one row per grade level (9-12), expandable/collapsible
+- Semester columns: 2 columns within each grade row, even width
+- Course sort order: Early Bird → Language Arts → Math → Science → World Language → Electives → PE
+- Grade header: grade label + GPA display + credit count + lock/unlock icon + clear button
+- Semester header: "Semester 1" / "Semester 2" + bulk status/grade dropdown + clear button + "Add Course" button
+- "Add Course" button: `+` icon, opens course picker for that grade/semester
+- Locked grade visual: muted/disabled appearance, lock icon, all controls except GPA waiver hidden
+- Empty semester: "No courses" message with "Add Course" CTA
+- Mobile: grade rows stack vertically, semester columns may need horizontal scroll or stacking
+- Preserve: `data-grade` attributes on grade rows (used by planner tour)
+
 **Progress:**
 - Filter bar: pill-style buttons, active = `bg-primary text-primary-foreground`
 - Requirement groups: collapsible with `aria-expanded`

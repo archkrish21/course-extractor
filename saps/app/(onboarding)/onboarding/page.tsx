@@ -17,13 +17,6 @@ interface CompletedCourse {
   semester: number;
 }
 
-interface CourseSearchResult {
-  id: string;
-  code: string;
-  name: string;
-  creditType: string;
-}
-
 interface PlanTemplateInfo {
   id: string;
   name: string;
@@ -212,6 +205,17 @@ function StepAboutYou({
 
 // ─── Step 2: Past Courses ──────────────────────────────────────────────────
 
+interface ChecklistCourse {
+  id: string;
+  code: string;
+  name: string;
+  creditType: string;
+  duration: string;
+  divisionName: string;
+  gradeLevels: number[];
+  semestersOffered: number[] | null;
+}
+
 function StepPastCourses({
   gradeLevel,
   graduationYear,
@@ -225,14 +229,11 @@ function StepPastCourses({
   setCompletedCourses: (c: CompletedCourse[]) => void;
   onSkip: () => void;
 }) {
-  const [courseSearch, setCourseSearch] = useState("");
-  const [searchResults, setSearchResults] = useState<CourseSearchResult[]>([]);
-  const [isSearching, setIsSearching] = useState(false);
-  const [activeRowId, setActiveRowId] = useState<string | null>(null);
-  const [creditFilter, setCreditFilter] = useState("All");
-  const [gradeFilter, setGradeFilter] = useState<number | null>(null);
-
-  const CREDIT_TYPES = ["All", "CP", "Accelerated", "Honors", "AP", "Dual Credit"];
+  const [allCourses, setAllCourses] = useState<ChecklistCourse[]>([]);
+  const [loadingCourses, setLoadingCourses] = useState(true);
+  const [searchFilter, setSearchFilter] = useState("");
+  const [divisionFilter, setDivisionFilter] = useState("All");
+  const [activeGrade, setActiveGrade] = useState<number>(gradeLevel > 9 ? gradeLevel - 1 : 9);
 
   // Compute completed grades (grades before current grade)
   const completedGrades: number[] = [];
@@ -240,89 +241,82 @@ function StepPastCourses({
     completedGrades.push(g);
   }
 
-  const searchCourses = useCallback(
-    async (query: string, credit?: string, grade?: number | null) => {
-      if (query.length < 2) {
-        setSearchResults([]);
-        return;
-      }
-      setIsSearching(true);
-      try {
-        const params = new URLSearchParams({ q: query, limit: "10" });
-        if (credit && credit !== "All") {
-          params.set("credit_type", credit);
-        }
-        if (grade) {
-          params.set("grade_level", String(grade));
-        }
-        const res = await fetch(`/api/v1/courses?${params.toString()}`);
-        if (res.ok) {
-          const data = await res.json();
-          setSearchResults(
-            (data.data || []).map((c: Record<string, unknown>) => ({
-              id: c.id,
-              code: c.code,
-              name: c.name,
-              creditType: c.creditType,
-            }))
-          );
-        }
-      } catch {
-        // Silently fail — user can retry
-      } finally {
-        setIsSearching(false);
-      }
-    },
-    []
-  );
-
+  // Fetch all courses for the active grade (paginated)
   useEffect(() => {
-    const timeout = setTimeout(() => {
-      if (courseSearch.trim()) {
-        searchCourses(courseSearch.trim(), creditFilter, gradeFilter);
+    async function fetchAllCourses() {
+      setLoadingCourses(true);
+      const all: ChecklistCourse[] = [];
+      let cursor: string | null = null;
+      try {
+        do {
+          const params = new URLSearchParams({ grade_level: String(activeGrade), limit: "100" });
+          if (cursor) params.set("cursor", cursor);
+          const res = await fetch(`/api/v1/courses?${params.toString()}`);
+          if (!res.ok) break;
+          const json = await res.json();
+          for (const c of json.data ?? []) {
+            all.push({
+              id: c.id, code: c.code, name: c.name,
+              creditType: c.creditType ?? "CP", duration: c.duration ?? "semester",
+              divisionName: c.divisionName ?? "Other", gradeLevels: c.gradeLevels ?? [],
+              semestersOffered: c.semestersOffered ?? null,
+            });
+          }
+          cursor = json.meta?.next_cursor ?? null;
+        } while (cursor);
+      } catch { /* silent */ }
+      setAllCourses(all);
+      setLoadingCourses(false);
+    }
+    fetchAllCourses();
+  }, [activeGrade]);
+
+  // Filter courses by search and division
+  const filteredCourses = allCourses.filter((c) => {
+    if (divisionFilter !== "All" && c.divisionName !== divisionFilter) return false;
+    if (searchFilter) {
+      const q = searchFilter.toLowerCase();
+      return c.name.toLowerCase().includes(q) || c.code.toLowerCase().includes(q);
+    }
+    return true;
+  });
+
+  const divisions = [...new Set(allCourses.map((c) => c.divisionName))].sort();
+  const groupedByDivision: Record<string, ChecklistCourse[]> = {};
+  for (const c of filteredCourses) {
+    if (!groupedByDivision[c.divisionName]) groupedByDivision[c.divisionName] = [];
+    groupedByDivision[c.divisionName].push(c);
+  }
+
+  const curAcademicYear = getAcademicYear(activeGrade, graduationYear);
+  const selectedForGrade = [...new Set(completedCourses.filter((c) => c.academic_year === curAcademicYear).map((c) => c.code))];
+
+  function isCourseSelected(code: string) {
+    return completedCourses.some((c) => c.code === code && c.academic_year === curAcademicYear);
+  }
+
+  function toggleCourse(course: ChecklistCourse) {
+    if (isCourseSelected(course.code)) {
+      setCompletedCourses(completedCourses.filter((c) => !(c.code === course.code && c.academic_year === curAcademicYear)));
+    } else {
+      const newEntries: CompletedCourse[] = [];
+      if (course.duration === "full_year") {
+        newEntries.push({ code: course.code, name: course.name, grade: "A", academic_year: curAcademicYear, semester: 1 });
+        newEntries.push({ code: course.code, name: course.name, grade: "A", academic_year: curAcademicYear, semester: 2 });
+      } else {
+        newEntries.push({ code: course.code, name: course.name, grade: "A", academic_year: curAcademicYear, semester: course.semestersOffered?.[0] ?? 1 });
       }
-    }, 300);
-    return () => clearTimeout(timeout);
-  }, [courseSearch, searchCourses, creditFilter, gradeFilter]);
-
-  function addCourse(
-    course: CourseSearchResult,
-    targetGradeLevel: number,
-    semester: number
-  ) {
-    const academicYear = getAcademicYear(targetGradeLevel, graduationYear);
-    // Avoid duplicates
-    const exists = completedCourses.some(
-      (c) =>
-        c.code === course.code &&
-        c.academic_year === academicYear &&
-        c.semester === semester
-    );
-    if (exists) return;
-
-    setCompletedCourses([
-      ...completedCourses,
-      {
-        code: course.code,
-        name: course.name,
-        grade: "A",
-        academic_year: academicYear,
-        semester,
-      },
-    ]);
-    setCourseSearch("");
-    setSearchResults([]);
-    setActiveRowId(null);
+      setCompletedCourses([...completedCourses, ...newEntries]);
+    }
   }
 
-  function updateGrade(index: number, grade: string) {
-    const updated = [...completedCourses];
-    updated[index] = { ...updated[index], grade };
-    setCompletedCourses(updated);
-  }
-
-  function removeCourse(index: number) {
-    setCompletedCourses(completedCourses.filter((_, i) => i !== index));
+  function getCreditBadgeVariant(ct: string) {
+    const l = ct.toLowerCase();
+    if (l.includes("ap")) return "ap" as const;
+    if (l.includes("honors")) return "honors" as const;
+    if (l.includes("dual")) return "dual-credit" as const;
+    if (l.includes("accelerated")) return "accelerated" as const;
+    return "default" as const;
   }
 
   if (gradeLevel === 9) {
@@ -348,232 +342,109 @@ function StepPastCourses({
   return (
     <Card>
       <CardHeader>
-        <h2 className="text-2xl font-bold text-foreground">Enter Past Courses</h2>
+        <h2 className="text-2xl font-bold text-foreground">Select Past Courses</h2>
         <p className="text-sm text-muted-foreground">
-          Enter the courses you have already completed so we can accurately calculate your GPA
-          and track your progress. You can skip this and come back later.
+          Check the courses you&apos;ve completed. Grades default to A — you can adjust them later in the planner.
         </p>
       </CardHeader>
       <CardContent>
-        {/* Filters */}
-        <div className="mb-5 space-y-3">
-          {/* Credit type chips */}
-          <div>
-            <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">Filter by type</p>
-            <div className="flex flex-wrap gap-1.5">
-              {CREDIT_TYPES.map((ct) => (
-                <button
-                  key={ct}
-                  type="button"
-                  onClick={() => {
-                    setCreditFilter(ct);
-                    if (courseSearch.trim()) searchCourses(courseSearch.trim(), ct, gradeFilter);
-                  }}
-                  className={`rounded-full px-3 py-1 text-xs font-medium transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring ${
-                    creditFilter === ct
-                      ? "bg-primary text-primary-foreground shadow-sm"
-                      : "border border-border bg-background text-muted-foreground hover:bg-muted"
-                  }`}
-                >
-                  {ct}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {/* Grade level filter */}
-          <div>
-            <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">Filter by grade level</p>
-            <div className="flex flex-wrap gap-1.5">
+        {/* Grade tabs */}
+        <div className="mb-4 flex gap-2">
+          {completedGrades.map((g) => {
+            const yr = getAcademicYear(g, graduationYear);
+            const count = [...new Set(completedCourses.filter((c) => c.academic_year === yr).map((c) => c.code))].length;
+            return (
               <button
+                key={g}
                 type="button"
-                onClick={() => {
-                  setGradeFilter(null);
-                  if (courseSearch.trim()) searchCourses(courseSearch.trim(), creditFilter, null);
-                }}
-                className={`rounded-full px-3 py-1 text-xs font-medium transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring ${
-                  gradeFilter === null
+                onClick={() => setActiveGrade(g)}
+                className={`flex items-center gap-1.5 rounded-lg px-3 py-2 text-sm font-medium transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring ${
+                  activeGrade === g
                     ? "bg-primary text-primary-foreground shadow-sm"
-                    : "border border-border bg-background text-muted-foreground hover:bg-muted"
+                    : "border border-border text-muted-foreground hover:bg-muted"
                 }`}
               >
-                All Grades
+                Grade {g}
+                {count > 0 && (
+                  <span className={`rounded-full px-1.5 py-0.5 text-[10px] font-semibold ${
+                    activeGrade === g ? "bg-primary-foreground/20 text-primary-foreground" : "bg-primary/10 text-primary"
+                  }`}>{count}</span>
+                )}
               </button>
-              {completedGrades.map((g) => (
-                <button
-                  key={g}
-                  type="button"
-                  onClick={() => {
-                    setGradeFilter(g);
-                    if (courseSearch.trim()) searchCourses(courseSearch.trim(), creditFilter, g);
-                  }}
-                  className={`rounded-full px-3 py-1 text-xs font-medium transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring ${
-                    gradeFilter === g
-                      ? "bg-primary text-primary-foreground shadow-sm"
-                      : "border border-border bg-background text-muted-foreground hover:bg-muted"
-                  }`}
-                >
-                  Grade {g}
-                </button>
-              ))}
-            </div>
-          </div>
+            );
+          })}
         </div>
 
-        {/* Bulk entry for each completed grade */}
-        {completedGrades.map((g) => {
-          const academicYear = getAcademicYear(g, graduationYear);
-          const coursesForGrade = completedCourses.filter(
-            (c) => c.academic_year === academicYear
-          );
+        {/* Search + division filter */}
+        <div className="mb-4 flex flex-col gap-2 sm:flex-row">
+          <div className="relative flex-1">
+            <svg aria-hidden="true" className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z" />
+            </svg>
+            <input
+              type="text"
+              value={searchFilter}
+              onChange={(e) => setSearchFilter(e.target.value)}
+              placeholder="Filter courses..."
+              className="h-10 w-full rounded-lg border border-border bg-background pl-9 pr-3 text-sm text-foreground placeholder:text-muted-foreground focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
+              aria-label="Filter courses by name or code"
+            />
+          </div>
+          <select
+            value={divisionFilter}
+            onChange={(e) => setDivisionFilter(e.target.value)}
+            className="h-10 rounded-lg border border-border bg-background px-3 text-sm text-foreground focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
+            aria-label="Filter by division"
+          >
+            <option value="All">All Divisions</option>
+            {divisions.map((d) => (<option key={d} value={d}>{d}</option>))}
+          </select>
+        </div>
 
-          return (
-            <div key={g} className="mb-6 last:mb-0">
-              <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-3">
-                Grade {g} ({academicYear})
-              </p>
-
-              {/* Selected courses as removable pills */}
-              {coursesForGrade.length > 0 && (
-                <div className="mb-3 flex flex-wrap gap-2">
-                  {coursesForGrade.map((course) => {
-                    const globalIndex = completedCourses.indexOf(course);
-                    return (
-                      <div
-                        key={`${course.code}-${course.semester}`}
-                        className="inline-flex items-center gap-1.5 rounded-full border border-border bg-muted px-3 py-1.5"
-                      >
-                        <span className="font-mono text-xs text-muted-foreground">{course.code}</span>
-                        <span className="text-sm text-foreground">{course.name}</span>
-                        <span className="text-xs text-muted-foreground">S{course.semester}</span>
-                        <select
-                          value={course.grade}
-                          onChange={(e) => updateGrade(globalIndex, e.target.value)}
-                          className="h-6 rounded border border-border bg-background px-1 text-xs text-foreground focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
-                          aria-label={`Grade for ${course.name}`}
-                        >
-                          {LETTER_GRADES.map((lg) => (
-                            <option key={lg} value={lg}>
-                              {lg}
-                            </option>
-                          ))}
-                        </select>
-                        <button
-                          type="button"
-                          onClick={() => removeCourse(globalIndex)}
-                          className="ml-0.5 inline-flex h-5 w-5 items-center justify-center rounded-full text-muted-foreground hover:bg-destructive-light hover:text-destructive transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
-                          aria-label={`Remove ${course.name}`}
-                        >
-                          <svg
-                            aria-hidden="true"
-                            className="h-3 w-3"
-                            fill="none"
-                            viewBox="0 0 24 24"
-                            strokeWidth={2.5}
-                            stroke="currentColor"
-                          >
-                            <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-                          </svg>
-                        </button>
-                      </div>
-                    );
-                  })}
+        {/* Course checklist */}
+        {loadingCourses ? (
+          <div className="space-y-3">{[...Array(8)].map((_, i) => (<div key={i} className="h-10 animate-pulse rounded-lg bg-muted" />))}</div>
+        ) : filteredCourses.length === 0 ? (
+          <div className="py-8 text-center text-sm text-muted-foreground">
+            {searchFilter || divisionFilter !== "All" ? "No courses match your filters." : "No courses available for this grade level."}
+          </div>
+        ) : (
+          <div className="max-h-[400px] overflow-y-auto rounded-lg border border-border">
+            {Object.entries(groupedByDivision).sort(([a], [b]) => a.localeCompare(b)).map(([division, courses]) => (
+              <div key={division}>
+                <div className="sticky top-0 z-10 bg-muted px-3 py-1.5">
+                  <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">{division}</p>
                 </div>
-              )}
-
-              {/* Add course search */}
-              <div className="relative">
-                <div className="relative">
-                  <svg
-                    aria-hidden="true"
-                    className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    strokeWidth={2}
-                    stroke="currentColor"
-                  >
-                    <path strokeLinecap="round" strokeLinejoin="round" d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z" />
-                  </svg>
-                  <input
-                    type="text"
-                    value={activeRowId === `grade-${g}` ? courseSearch : ""}
-                    onFocus={() => setActiveRowId(`grade-${g}`)}
-                    onChange={(e) => {
-                      setActiveRowId(`grade-${g}`);
-                      setCourseSearch(e.target.value);
-                    }}
-                    placeholder="Search courses by name or code..."
-                    className="h-11 min-h-[44px] w-full rounded-lg border border-border bg-background pl-9 pr-3 text-sm text-foreground placeholder:text-muted-foreground focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
-                    aria-label={`Search courses for grade ${g}`}
-                    role="combobox"
-                    aria-expanded={activeRowId === `grade-${g}` && searchResults.length > 0}
-                    aria-autocomplete="list"
-                  />
-                  {isSearching && activeRowId === `grade-${g}` && (
-                    <div className="absolute right-3 top-1/2 -translate-y-1/2">
-                      <div className="h-4 w-4 animate-spin rounded-full border-2 border-muted-foreground border-t-transparent" />
-                    </div>
-                  )}
-                </div>
-
-                {/* Search dropdown */}
-                {activeRowId === `grade-${g}` && searchResults.length > 0 && (
-                  <ul
-                    className="absolute z-10 mt-1 max-h-48 w-full overflow-y-auto rounded-xl border border-border bg-card shadow-lg"
-                    role="listbox"
-                  >
-                    {searchResults.map((result) => (
-                      <li key={result.id} role="option" aria-selected={false}>
-                        <div className="flex items-center gap-2 border-b border-border/30 px-3 py-2">
-                          <div className="flex-1 min-w-0">
-                            <span className="font-mono text-xs text-muted-foreground">
-                              {result.code}
-                            </span>{" "}
-                            <span className="text-sm text-foreground truncate">
-                              {result.name}
-                            </span>
-                            <Badge variant="default" className="ml-2">
-                              {result.creditType}
-                            </Badge>
-                          </div>
-                          <div className="flex gap-1 shrink-0">
-                            <button
-                              type="button"
-                              onClick={() => addCourse(result, g, 1)}
-                              className="inline-flex min-h-[44px] items-center rounded-lg px-2.5 py-1 text-xs font-medium text-primary hover:bg-primary-light focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring transition-colors"
-                            >
-                              S1
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => addCourse(result, g, 2)}
-                              className="inline-flex min-h-[44px] items-center rounded-lg px-2.5 py-1 text-xs font-medium text-primary hover:bg-primary-light focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring transition-colors"
-                            >
-                              S2
-                            </button>
-                          </div>
-                        </div>
-                      </li>
-                    ))}
-                  </ul>
-                )}
+                {courses.map((course) => {
+                  const selected = isCourseSelected(course.code);
+                  return (
+                    <label key={course.id} className={`flex cursor-pointer items-center gap-3 border-b border-border/50 px-3 py-2.5 transition-colors hover:bg-muted/50 ${selected ? "bg-primary-light/50" : ""}`}>
+                      <input type="checkbox" checked={selected} onChange={() => toggleCourse(course)} className="h-4 w-4 shrink-0 rounded border-border text-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring" />
+                      <span className="font-mono text-xs text-muted-foreground w-20 shrink-0">{course.code}</span>
+                      <span className="flex-1 text-sm text-foreground min-w-0 truncate">{course.name}</span>
+                      <Badge variant={getCreditBadgeVariant(course.creditType)} className="shrink-0">{course.creditType}</Badge>
+                    </label>
+                  );
+                })}
               </div>
-            </div>
-          );
-        })}
-
-        {completedCourses.length > 0 && (
-          <p className="mt-4 text-sm text-muted-foreground">
-            {completedCourses.length} course{completedCourses.length !== 1 ? "s" : ""} entered
-          </p>
+            ))}
+          </div>
         )}
+
+        {/* Selection summary */}
+        <div className="mt-4">
+          <p className="text-sm text-muted-foreground">
+            {selectedForGrade.length} course{selectedForGrade.length !== 1 ? "s" : ""} selected for Grade {activeGrade}
+            {completedCourses.length > 0 && selectedForGrade.length !== [...new Set(completedCourses.map((c) => c.code))].length && (
+              <span className="ml-1 text-foreground font-medium">
+                ({[...new Set(completedCourses.map((c) => c.code))].length} total across all grades)
+              </span>
+            )}
+          </p>
+        </div>
       </CardContent>
       <CardFooter>
-        <button
-          type="button"
-          onClick={onSkip}
-          className="min-h-[44px] text-sm text-muted-foreground underline underline-offset-4 hover:text-foreground focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
-        >
+        <button type="button" onClick={onSkip} className="min-h-[44px] text-sm text-muted-foreground underline underline-offset-4 hover:text-foreground focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring">
           I&apos;m a freshman / skip for now
         </button>
       </CardFooter>
@@ -1023,7 +894,7 @@ export default function OnboardingPage() {
   }
 
   return (
-    <div className="mx-auto w-full max-w-2xl px-4 py-8 sm:px-6">
+    <div>
       {/* Welcome banner */}
       {showWelcome && (
         <div className="mb-6 flex items-center gap-3 rounded-lg border border-success/30 bg-success-light p-3">

@@ -3,7 +3,7 @@
 
 **Audience:** Engineering team
 **Status:** Phase 3 In Progress — Active Development
-**Last updated:** 2026-04-02
+**Last updated:** 2026-04-07
 
 ---
 
@@ -112,7 +112,7 @@ User → Next.js frontend → API routes → PostgreSQL (Supabase + RLS)
 | Layer | Choice | Version | Rationale |
 |---|---|---|---|
 | Frontend framework | Next.js (App Router) | 15.x | SSR + API routes in one; strong ecosystem |
-| UI components | shadcn/ui + Tailwind CSS | latest | Accessible, unstyled-first; critical for planner grid and DAG |
+| UI components | shadcn/ui + Tailwind CSS v4 | latest | Accessible, unstyled-first; Tailwind v4 with `@theme` CSS variables for design tokens; critical for planner grid and DAG |
 | State management | Zustand | 5.x | Lightweight; well-suited for planner/simulator ephemeral state |
 | Auth | Supabase Auth | — | Same instance as app DB; RLS handles multi-tenant isolation; Google OAuth built-in |
 | Database | PostgreSQL via Supabase | 15+ | Managed; RLS; recursive CTEs for DAG traversal |
@@ -230,9 +230,9 @@ All pages under the `(app)/` route group require authentication. The app layout 
 
 **SEO (Phase 3):** Root layout includes meta description, keywords, and Open Graph tags (og:title, og:description, og:type, og:url). Optimized for search terms: "Stevenson High School course planner", "high school academic planner", "4-year plan tool".
 
-**App header navigation:** The top navigation bar includes nav links (Dashboard, Courses, Planner, Progress, Transcript), a global "Tour" button (triggers the guided tour for the current page — detects page and adapts step count based on DOM state), and a user avatar dropdown (Settings, Billing, Sign out). Sign out calls `supabase.auth.signOut()`, clears the client session, and redirects to `/login`. The mobile hamburger menu also includes a Sign out option. Settings is no longer in the main navigation bar — it was moved into the avatar dropdown. The avatar and layout display the user's full name (from `firstName` + `lastName` columns) instead of the email prefix. For parent users: the avatar shows the parent's own name/email (not the student's), with a "Managing: StudentName · Gr X" subtitle below. "Add Another Child" removed from the dropdown.
+**App header navigation:** The top navigation bar includes nav links (Dashboard, Courses, Planner, Progress, Transcript), a global "Tour" button (triggers the guided tour for the current page — detects page and adapts step count based on DOM state), and a user avatar dropdown (Settings, Billing, Sign out). Sign out calls `supabase.auth.signOut()`, clears the client session, and redirects to `/` (home page). The mobile hamburger menu also includes a Sign out option. Settings is no longer in the main navigation bar — it was moved into the avatar dropdown. The avatar and layout display the user's full name (from `firstName` + `lastName` columns) instead of the email prefix. For parent users: the avatar shows the parent's own name/email (not the student's), with a "Managing: StudentName · Gr X" subtitle below. "Add Another Child" removed from the dropdown.
 
-**Signup page redesign (Phase 3):** Wider layout (max-w-lg), 2-column grids for credentials and personal info. Role selector with description cards (Student/Parent/Counselor). Frozen state (IL) and school (Stevenson) fields with "Request yours" link for unsupported schools. School request form submits to `POST /api/v1/school-request` (no auth) and stores in `school_requests` table. "Claim your account" link removed from signup page.
+**Signup page redesign (Phase 3):** Wider layout (max-w-lg), 2-column grids for credentials and personal info. Role selector with description cards (Student/Parent/Guardian/Counselor — 4 roles). Guardian maps to "parent" in DB for identical behavior. Frozen state (IL) and school (Stevenson) fields with "Request yours" link for unsupported schools. School request form submits to `POST /api/v1/school-request` (no auth) and stores in `school_requests` table. "Claim your account" link removed from signup page. Non-student roles skip onboarding and go directly to dashboard. Onboarding shows welcome banner ("Account created successfully!") with auto-dismiss. "Skip setup" link on onboarding page. Smart routing after onboarding: dashboard if plans exist, planner otherwise.
 
 **Google OAuth first-time user provisioning:** The OAuth callback (`/api/v1/auth/callback`) detects first-time Google users (no `users` row for the auth ID) and provisions all app-level records: `users` (role: student, email verified: true), `accounts` (with `state` = 'IL', `schoolName` = 'Stevenson'), `account_members`, `student_profiles`, and `subscriptions` (14-day Plus trial with trialing status). The student name is extracted from Google profile metadata (`full_name`). First-time users are redirected to `/onboarding`; returning users go to their intended destination. If provisioning fails, the user is redirected to `/dashboard?error=setup_incomplete` for graceful recovery.
 
@@ -515,16 +515,21 @@ CREATE INDEX idx_account_members_user ON account_members (user_id);
 
 ```sql
 CREATE TABLE account_invite_codes (
-  id          UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  account_id  UUID NOT NULL REFERENCES accounts(id) ON DELETE CASCADE,
-  created_by  UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-  target_role TEXT NOT NULL CHECK (target_role IN ('parent', 'guardian')),
-  code        VARCHAR(8) NOT NULL UNIQUE,
-  expires_at  TIMESTAMPTZ NOT NULL,
-  claimed_by  UUID REFERENCES users(id),
-  claimed_at  TIMESTAMPTZ,
-  created_at  TIMESTAMPTZ DEFAULT NOW()
+  id            UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  account_id    UUID NOT NULL REFERENCES accounts(id) ON DELETE CASCADE,
+  created_by    UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  target_role   TEXT NOT NULL CHECK (target_role IN ('parent', 'guardian')),
+  code          VARCHAR(8) NOT NULL UNIQUE,
+  expires_at    TIMESTAMPTZ NOT NULL,
+  claimed_by    UUID REFERENCES users(id),
+  claimed_at    TIMESTAMPTZ,
+  shared_plans  JSONB DEFAULT '[]',  -- plans to share on invite claim: [{planId, permission}]
+  created_at    TIMESTAMPTZ DEFAULT NOW()
 );
+
+-- When an invite with shared_plans is claimed, the join endpoint creates
+-- plan_shares rows for each plan in the array, granting the invited user
+-- the specified permission level on each plan.
 ```
 
 ### Table: `school_requests`
@@ -578,11 +583,11 @@ CREATE TABLE feedback (
 
 > **Linked account member removal (Phase 3 update):** Any member can remove other members (except themselves). The previous restriction preventing student removal has been lifted — non-student members can remove the student. Remove button shows for all members except self.
 
-> **Settings redesign (Phase 3):** Flat sections with uppercase headers (no collapsible cards). 3x3 profile grid: Name/Email/Password/Role/Grade/Graduation/State/School (state and school read-only). Clean linked accounts list (renamed from "Family Members") with usage counter ("2/5 linked accounts used"). Compact subscription/legal/danger zone sections. Students can invite Parent/Guardian/Counselor; parents can invite Child/Parent/Guardian/Counselor; counselors cannot invite anyone (view-only, invite form hidden).
+> **Settings redesign (Phase 3):** Flat sections with uppercase headers (no collapsible cards). 3x3 profile grid: Name/Email/Password/Role/Grade/Graduation/State/School (state and school read-only). Clean linked accounts list (renamed from "Family Members") with usage counter ("2/5 linked accounts used"). Compact subscription/legal/danger zone sections. Settings hides subscription/billing for counselors, shows separate "Student Information" section for non-student roles. Students can invite Parent/Guardian/Counselor; parents can invite Child/Parent/Guardian/Counselor; counselors cannot invite anyone (view-only, invite form hidden). Invite form includes plan sharing: students select which plans to share (view/edit permission) when inviting.
 
 > **Linked accounts tier limits (Phase 3):** Starter/Trial: 3, Plus: 5, Elite: 8. Enforced in invite API (402 UPGRADE_REQUIRED with code `UPGRADE_REQUIRED`). `maxLinkedAccounts` added to `SubscriptionContext` and tier config in `subscription_plans.features` JSONB.
 
-> **Counselor role (Phase 3):** Counselors join accounts with `canEdit: false` (view-only). Can view plans, progress, grades but cannot modify. Cannot invite others — invite form hidden for counselor role. Future: will be able to add comments/suggestions on shared plans.
+> **Counselor role (Phase 3):** Counselors join accounts with `canEdit: false` (view-only). Can view plans, progress, grades but cannot modify. Cannot create plans, delete plans, share plans, invite others, or access billing. Sees "View" instead of "Edit" on plans; "No Plans Shared Yet" empty states shown. Account switcher shows "Managing: Student Name · Gr X" like parents. Settings page hides subscription/billing for counselors, shows separate "Student Information" section for non-student roles. Invite form hidden for counselor role. Future: will be able to add comments/suggestions on shared plans.
 
 > **Billing updates (Phase 3):** Pricing cards updated to show linked accounts per tier and PDF/print for Plus. 4-year subscription display shows "Expires" instead of "Renews" since it is a one-time payment (Stripe payment mode).
 
@@ -1374,7 +1379,7 @@ All routes: `/api/v1/...`. Version from day one.
 
 | Method | Route | Auth | Description |
 |---|---|---|---|
-| POST | `/api/v1/auth/signup` | — | Create user + subscription row (Plus plan, trialing status). Signup page: wider layout (max-w-lg), 2-column grids, role selector with description cards (Student/Parent/Counselor), frozen state (IL) and school (Stevenson) fields. Sets firstName from email prefix. Sets `state` and `schoolName` on accounts. |
+| POST | `/api/v1/auth/signup` | — | Create user + subscription row (Plus plan, trialing status). Signup page: wider layout (max-w-lg), 2-column grids, role selector with description cards (Student/Parent/Guardian/Counselor — 4 roles). Guardian maps to "parent" in DB. Frozen state (IL) and school (Stevenson) fields. Sets firstName from email prefix. Sets `state` and `schoolName` on accounts. Non-student roles skip onboarding and go directly to dashboard. |
 | GET | `/api/v1/auth/callback` | — | OAuth callback. Exchanges code for session. First-time users: provisions app records + redirects to /onboarding. Returning users: redirects to intended page. |
 | GET | `/api/v1/auth/me` | any authenticated | Returns logged-in user's email, role, first_name, last_name, and tourState. | Phase 3 |
 | PATCH | `/api/v1/auth/me` | any authenticated | Update first_name, last_name, and/or tourState on the logged-in user. tourState is a JSONB object tracking completed tours (e.g., `{"welcome":true,"planner":true}`). | Phase 3 |
@@ -1440,7 +1445,7 @@ All routes: `/api/v1/...`. Version from day one.
 | POST | `/api/v1/accounts/claim` | student | Student claims account with claim code. Sets student_user_id. Starts trial. | 1b |
 | GET | `/api/v1/accounts` | any | List accounts the user is a member of. Parents see multiple, students see one. | 1b |
 | POST | `/api/v1/accounts/:id/members` | member | Generate invite for new member. | 1b |
-| POST | `/api/v1/accounts/:id/members/join` | any | Join account with invite code. | 1b |
+| POST | `/api/v1/accounts/:id/members/join` | any | Join account with invite code. When the invite has `shared_plans`, creates `plan_shares` rows for each plan. | 1b |
 | DELETE | `/api/v1/accounts/:id/members/:userId` | member | Remove a member. Any member can remove other members (except themselves). Students can be removed by non-student members. | 1b |
 | PATCH | `/api/v1/accounts/:id` | member | Update account fields (student_name). | Phase 3 |
 | POST | `/api/v1/school-request` | — (no auth) | Submit a school request (email, school_name, state, message). Stored in `school_requests` table for future outreach. | Phase 3 |
@@ -1454,6 +1459,8 @@ All routes: `/api/v1/...`. Version from day one.
 | GET | `/planner/print` | student/parent | Print-optimized plan view. Opens in new tab with landscape layout, auto-triggers browser print. Print button gated by `canExportPdf` (Plus+ only). | 1b |
 
 > **Note:** All existing plan, grade, and GPA routes now require account context. For students, this is implicit (their one account). For parents, the account_id is derived from the route's resource or from the `X-Account-Id` request header.
+>
+> **Plan access gating (Phase 3):** GPA and Requirements APIs are gated behind plan access — non-student users without any `plan_shares` rows receive empty data instead of errors. This ensures counselors and parents only see data for plans explicitly shared with them.
 
 > **Note:** `:planCourseId` in DELETE/PATCH `/api/v1/plans/:id/courses/:planCourseId` refers to `plan_courses.id`, not `courses.id`.
 
@@ -2198,6 +2205,36 @@ npx playwright test --project=accessibility
 
 Add `@axe-core/playwright` to the E2E test suite. Every new page/component must pass axe checks before merge. The Phase 5 WCAG audit focuses on AAA improvements and manual testing with assistive technologies — not baseline AA compliance.
 
+### UI Orchestration — Design System Sweep (Phase 3)
+
+A complete visual consistency sweep was performed across all 22 pages:
+
+| Area | Changes |
+|---|---|
+| **Page headers** | Standardized across all pages using consistent heading hierarchy and spacing |
+| **Component usage** | Card, Button, Badge, and Input components from shadcn/ui used consistently everywhere |
+| **Loading states** | Proper loading skeletons added to all data-dependent pages |
+| **Empty states** | Meaningful empty state messages with CTAs on all pages (e.g., "No Plans Shared Yet" for counselors) |
+| **Error states** | Error handling with user-friendly messages on all pages |
+| **Responsive grids** | 1-column on mobile, 2/3-column on desktop grids applied consistently |
+| **Focus rings** | Visible focus indicators on all interactive elements |
+| **Touch targets** | 44px minimum touch targets per WCAG 2.5.5 enforced throughout |
+| **ARIA attributes** | Labels, roles, and live regions added across all interactive components |
+| **Print styles** | `globals.css` includes `@media print` rules for the planner print page |
+| **Design tokens** | Hardcoded colors replaced with Tailwind CSS v4 `@theme` CSS variables |
+
+The sweep is documented in `ui_orchestration_plan.md` as a reusable playbook for future design system audits.
+
+### Navigation & UX Updates (Phase 3)
+
+- **Sign out:** Redirects to home page (`/`) instead of `/login` for better UX flow
+- **Auth layout:** SAPS logo links to home page; "Home" link added to footer
+- **Terms/Privacy pages:** Back button closes tab if opened via `target="_blank"`, falls back to browser history; back button moved to bottom of pages
+- **Share modal:** Close (X) button added to header
+- **Dashboard banners:** Show contextually based on plans + profile completeness + role
+- **Invite form:** Toast notifications for success/error messages
+- **Subscription tier fix:** `maxLinkedAccounts` derived from plan name when DB `features` JSONB is missing the field
+
 ### Mobile responsive design
 
 **Breakpoints (Tailwind defaults):**
@@ -2286,8 +2323,14 @@ Mobile (<640px):
   - Footer: feedback link points to /contact page
   - SEO: meta description, Open Graph tags on root layout
   - Guided tours: tour auto-start on first visit, tour button triggers, adaptive step counts, tour state persistence
+  - UI components: Button, Badge, Card, Input, Checkbox, Toast component tests
+  - Plan permissions: plan access gating for GPA/requirements APIs, invite shared_plans parameter
+  - Signup roles: 4-role selector (Student/Parent/Guardian/Counselor), guardian-to-parent mapping
+  - Counselor restrictions: cannot create/delete/share plans, billing hidden, "View" instead of "Edit"
+  - Share modal: close (X) button, permission selection
+  - Auth layout: logo links to home, footer "Home" link, sign out redirects to `/`
 
-**Current test count: 659 total** (E2E tests for homepage/about/contact, feedback widget, testimonials, consent/settings/legal pages, counselor invite/join, linked accounts UI, planner/progress/dashboard/transcript/billing/signup/auth/course-browser/grade-lock/plan-management/print-gating/accessibility, plus API tests for contact, feedback, consent, auth-me, accounts, counselor-join, GPA, grade-lock, health, plan-courses, plan-shares, plans, requirements, school-request, plus unit tests for GPA calc, requirement matching, subscription middleware, undo stack, rate limiting).
+**Current test count: 433 total** (7 new UI component test files: Button, Badge, Card, Input, Checkbox, Toast, plan-permissions. New test files: signup-roles, counselor-restrictions, share-modal, auth-layout. Tests for plan access gating (GPA/requirements APIs) and invite shared_plans parameter. E2E tests for homepage/about/contact, feedback widget, testimonials, consent/settings/legal pages, counselor invite/join, linked accounts UI, planner/progress/dashboard/transcript/billing/signup/auth/course-browser/grade-lock/plan-management/print-gating/accessibility. API tests for contact, feedback, consent, auth-me, accounts, counselor-join, GPA, grade-lock, health, plan-courses, plan-shares, plans, requirements, school-request. Unit tests for GPA calc, requirement matching, subscription middleware, undo stack, rate limiting).
 
 ### Test data
 
@@ -2638,4 +2681,4 @@ FERPA applies immediately. Before storing any school-transmitted data:
 
 ---
 
-*References: FEATURE_ANALYSIS.md (rev 12, 2026-04-02)*
+*References: FEATURE_ANALYSIS.md (rev 13, 2026-04-07)*

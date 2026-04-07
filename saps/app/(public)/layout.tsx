@@ -137,7 +137,7 @@ export default function PublicLayout({ children }: { children: React.ReactNode }
                 {HOME_FEATURES.showContactPage && (
                   <li><Link href="/contact" className="text-sm text-muted-foreground hover:text-foreground transition-colors focus-ring">Contact Us</Link></li>
                 )}
-                <li><Link href="/contact" className="text-sm text-muted-foreground hover:text-foreground transition-colors focus-ring">Feedback</Link></li>
+                <li><Link href="/contact" className="text-sm text-muted-foreground hover:text-foreground transition-colors focus-ring">Contact Us</Link></li>
               </ul>
             </div>
 

@@ -36,13 +36,14 @@ Three distinct pillars, all powered by a foundational data engine:
 
 ### User Login & Profiles
 
-Three user roles — design the auth/roles model to accommodate all from day one:
+Four user roles — design the auth/roles model to accommodate all from day one:
 
 | Role | Needs |
 |---|---|
 | Student | Own account, plans, grades, goals, notifications. Only student can set Primary plan and enter grades. |
 | Parent | Member of one or more student accounts. Can create plans, browse courses, view grades/GPA (read-only). Cannot set Primary or enter grades. Account switcher for multi-child parents. |
-| Counselor | Read-only access to linked student accounts. Bulk alerts (future phase). |
+| Guardian | Identical to Parent in behavior (maps to "parent" in DB). Separate signup card for clarity. |
+| Counselor | View-only access to linked student accounts. Cannot create plans, delete plans, share plans, invite others, or access billing. Sees "View" instead of "Edit" on plans. Account switcher shows "Managing: Student Name · Gr X". Settings hides subscription/billing, shows "Student Information" section. Bulk alerts (future phase). |
 
 The platform uses a student-centric account model. Each `account` represents one student's academic data. Users (students, parents, counselors) are `account_members` with role-based permissions. Either a student or parent can create an account. When a parent creates an account, the student claims it later via an invite code.
 
@@ -53,11 +54,11 @@ The platform uses a student-centric account model. Each `account` represents one
 - **Account editing:** `PATCH /api/v1/accounts/:id` endpoint for updating student_name. Settings profile grid displays account fields.
 - **Linked account member removal:** Any member can remove other members (not just non-students). API updated to allow student removal by non-student members. Remove button shows for all members except self.
 - **State and school on accounts:** `state` and `schoolName` columns on accounts table. Signup captures state (frozen to IL) and school (frozen to Stevenson). Displayed read-only in Settings profile grid. Stored for future multi-school expansion.
-- **Signup page redesign:** Wider layout (max-w-lg), 2-column grids for credentials and personal info. Role selector with description cards (Student/Parent/Counselor). Frozen state/school fields with "Request yours" link. Removed "Claim your account" link.
+- **Signup page redesign:** Wider layout (max-w-lg), 2-column grids for credentials and personal info. Role selector with description cards (Student/Parent/Guardian/Counselor — 4 roles). Guardian maps to "parent" in DB for identical behavior. Frozen state/school fields with "Request yours" link. Removed "Claim your account" link.
 - **School request system:** `POST /api/v1/school-request` endpoint (no auth required), `school_requests` table for future outreach.
-- **Settings redesign:** Flat sections with uppercase headers (no collapsible cards), 3x3 profile grid (Name/Email/Password/Role/Grade/Graduation/State/School), clean linked accounts list (renamed from "Family Members") with usage counter ("2/5 linked accounts used"), compact subscription/legal/danger zone sections.
+- **Settings redesign:** Flat sections with uppercase headers (no collapsible cards), 3x3 profile grid (Name/Email/Password/Role/Grade/Graduation/State/School), clean linked accounts list (renamed from "Family Members") with usage counter ("2/5 linked accounts used"), compact subscription/legal/danger zone sections. Settings page hides subscription/billing for counselors and shows a separate "Student Information" section for non-student roles.
 - **Linked Accounts** (renamed from Family Members): Students can invite Parent/Guardian/Counselor; parents can invite Child/Parent/Guardian/Counselor; counselors cannot invite anyone (view-only, canEdit: false, invite form hidden). Tier limits: Starter/Trial 3, Plus 5, Elite 8 — enforced in invite API (402 UPGRADE_REQUIRED). `maxLinkedAccounts` added to SubscriptionContext and tier config.
-- **Counselor role (Phase 3):** Joins with canEdit: false (view-only). Can view plans, progress, grades but cannot modify. Cannot invite others. Future: will be able to add comments/suggestions on shared plans.
+- **Counselor role (Phase 3):** Joins with canEdit: false (view-only). Can view plans, progress, grades but cannot modify. Cannot create plans, delete plans, share plans, invite others, or access billing. Sees "View" instead of "Edit" on plans, with "No Plans Shared Yet" empty states. Account switcher shows "Managing: Student Name · Gr X" like parents. Settings page hides subscription/billing for counselors, shows separate "Student Information" section for non-student roles. Future: will be able to add comments/suggestions on shared plans.
 - **Billing updates:** Pricing cards show linked accounts per tier and PDF/print for Plus. 4-year subscription display shows "Expires" instead of "Renews" (one-time payment).
 - **Consent system:** `legal_documents` + `consent_records` tables, `/terms` and `/privacy` pages, `/consent` interstitial, consent gate in app layout, signup checkbox, OAuth redirect to consent, account deletion with full cleanup (Stripe, Supabase, Redis, PostHog).
 - **Parent user menu:** Parent sees their own name/email in the avatar (not the student's name). A "Managing: StudentName · Gr X" subtitle is shown below the parent's name. "Add Another Child" removed from the dropdown.
@@ -75,6 +76,31 @@ The platform uses a student-centric account model. Each `account` represents one
 - **Guided tour system:** driver.js integration (5KB) for step-by-step feature walkthroughs. Three adaptive tours: Welcome (dashboard, 6 steps), Planner (2-5 steps — 2 when no plans, 5 when plans exist), Progress (1-3 steps — 1 when no plan data, 3 when data exists). Auto-starts on first visit per page. Global "Tour" button in app header nav bar on every page — detects current page and triggers appropriate tour with correct steps (checks DOM for plan elements). Tour state persisted in `tourState` JSONB column on users table via `PATCH /api/v1/auth/me`. Custom driver.js CSS overrides in `globals.css` matching SAPS brand (rounded popovers, primary color buttons, custom progress text). Infrastructure: `useTour` hook (`lib/hooks/use-tour.ts`), tour config (`config/tours.ts`), `data-tour` attributes on key elements, `TourButton` component (`components/tour-button.tsx`).
 
 **Onboarding flow for existing students** (non-freshman) is critical: students must be able to enter grades already completed before using the planner. Without prior grade history, the GPA calculator and requirement progress tracker are meaningless. Make bulk entry fast — a table-style entry form, not one course at a time.
+
+**Onboarding flow updates (Phase 3):**
+- Non-student roles (Parent, Guardian, Counselor) skip onboarding and go directly to dashboard.
+- Onboarding shows welcome banner ("Account created successfully!") with auto-dismiss.
+- "Skip setup" link added to onboarding page for students who want to bypass initial setup.
+- Smart routing after onboarding: redirects to dashboard if plans exist, planner otherwise.
+
+**Navigation & UX updates (Phase 3):**
+- Sign out redirects to home page (`/`) instead of `/login`.
+- Auth layout: SAPS logo links to home, "Home" link added to footer.
+- Terms/Privacy back button: closes tab if opened via `target="_blank"`, falls back to browser history. Back button moved to bottom of Terms/Privacy pages.
+- Share modal: close (X) button added to header.
+- Dashboard banner logic: shows contextually based on plans + profile completeness + role.
+- Invite form shows toast for success/error messages.
+- Subscription tier fix: `maxLinkedAccounts` derived from plan name when DB `features` JSONB is missing the field.
+
+**UI Orchestration — Design System Sweep (Phase 3):**
+- Complete visual consistency sweep across all 22 pages.
+- Standardized page headers, Card/Button/Badge/Input component usage everywhere.
+- Added proper loading skeletons, empty states, and error states on all pages.
+- Responsive grids (1-col mobile, 2/3-col desktop) on all pages.
+- Focus rings, 44px touch targets, and ARIA attributes throughout.
+- Print styles added in `globals.css` for planner print page.
+- Replaced hardcoded colors with design tokens (Tailwind CSS v4 @theme CSS variables).
+- UI orchestration plan (`ui_orchestration_plan.md`) created as a reusable playbook for future design sweeps.
 
 ### Grade Tracking & GPA Calculator
 
@@ -198,6 +224,7 @@ CREATE TABLE career_path_courses (
 - **Plan delete permissions (Phase 3 update)** — `DELETE /api/v1/plans/:id` updated to use `getPlanAccess()` permissions. Strictly permission-based: requires owner or delete permission only; no student role override.
 - **Create Plan modal fix** — extracted into a reusable `renderNewPlanModal()` function so it renders in both empty state and normal planner views. Single "Create Your First Plan" button replaces duplicate buttons in the empty state.
 - **Plan visibility (Phase 3 — implemented)** — students can hide plans from the planner plan dropdown without deleting them, via the `isHidden` flag on `plan_shares`. Hidden plans remain accessible on the `/plans` page.
+- **Plan sharing on invite (Phase 3 — implemented)** — students can select which plans to share (with view/edit permission) when inviting linked accounts. DB migration added `shared_plans` JSONB column to `account_invite_codes`. Join endpoint creates `plan_shares` rows when invite is claimed. GPA and Requirements APIs gated behind plan access (return empty data if user has no `plan_shares`).
 - **Plan print/export** — browser-native print dialog via `/planner/print?id=planId`. Landscape layout with grade tables, semester columns, status, grades, credits, GPA. Print button (printer icon) in planner header bar. **Subscription gated:** all print buttons (planner, progress, transcript, dashboard "Print Plan" quick action) require `canExportPdf` (Plus+ only). Trial and Starter users see disabled buttons with "Upgrade to Plus to print" tooltip.
 - **Year-end transition workflow** — at the end of each school year, the app prompts the student to: (1) confirm final grades for completed courses, (2) lock the entire completed grade level, (3) advance their current grade level, and (4) review the active plan for the upcoming year. Completed grades are locked at the grade level (not per-course) via `lockedGradeLevels` on the plan. Locked grades block all course modifications (add/remove/status/grade changes) except GPA waiver toggles. Lock/unlock icons appear on grade bars for current and previous grades; unlocking requires a confirmation dialog. The "current grade" in the planner is defined as the first unlocked grade level, not just the account's grade level. The year-end API accepts a `grade` query param to complete a specific grade (not just current). This is a critical operational workflow — without it, the plan becomes stale.
 - **Enrollment rule enforcement** — the planner enforces scheduling rules automatically:
@@ -1123,7 +1150,7 @@ CREATE INDEX idx_requirement_progress_student ON requirement_progress (student_i
 - **Phase 1b:** four_year_plans, plan_courses, plan_history, subscription_plans (seed only)
 - **Phase 2:** accounts, account_members, account_invite_codes, grade_entries, gpa_snapshots, subscriptions, account_events, requirement_progress, graduation_requirements, student_requirement_status, student_requirement_opt_ins, stripe_events. Schema changes: `priceFourYear` column on `subscription_plans`; `four_year` added to `billing_cycle` check constraint on `subscriptions`. Drizzle migrations in `lib/db/migrations/`.
 - **Phase 2 (deprecated):** ~~student_parent_links~~, ~~parent_invite_codes~~ — superseded by accounts model
-- **Phase 3:** alerts, notifications, dual_credit_log, plan_share_links, school_requests, contact_messages, feedback
+- **Phase 3:** alerts, notifications, dual_credit_log, plan_share_links, school_requests, contact_messages, feedback. Schema changes: `shared_plans` JSONB column added to `account_invite_codes` (plan sharing on invite). GPA and Requirements APIs gated behind plan access.
 - **Phase 4:** career_paths, career_path_courses, ai_recommendations (if persisted)
 - **Phase 5:** counselor_student_links, goals
 
@@ -1483,7 +1510,7 @@ Phase 5 includes a formal WCAG audit and remediation of any gaps, but the core p
 - **Progress page** (`/progress`) renamed to **"Academic Progress"** (page title; nav label unchanged): Two-column layout — left (2/3) has status filter bar (All/Gap-Missing/In Progress/OK-Complete/Not Started) + Expand All/Collapse All buttons + grouped sections (Graduation, Semester Requirements, IL Public University, Additional Requirements); right (1/3) sticky sidebar with honors badge + summary card showing three-state segmented progress bars per category (earned green, planned blue, remaining grey) with earned/planned/gap counts and status labels: "Complete" (all earned), "On track" (earned+planned covers all), or "N gaps" (uncovered). Course Load group has 2 sub-categories: "Course Count Per Semester" and "Physical Welfare / Dance / Driver Ed". Course-match cards show earned/planned/needed breakdown below progress bar. Print button in header. **Empty state:** when no primary plan exists, shows "No active plan yet" message with a link to create a plan.
 - **Dashboard restructured**: 3-row, 2-column grid — Row 1 (Active Plan, GPA), Row 2 (Attention Required, Achievements), Row 3 (Academic Progress, Quick Actions). "Validation Report" card renamed to **"Attention Required"** — simplified: no category summary line or "Issues found" badge in header; shows only category titles with counts (Graduation Gaps, Semester Gaps, Prerequisite Violations) + "View Report" button routing to `/planner?validation=open`. Honors badge removed from this card. **Empty state:** when no primary plan exists, Attention Required and Academic Progress cards show "Create a plan" messages instead of false gap counts. **Academic Progress** card now shows all requirement groups (not just graduation) with per-group segmented progress bars showing earned/planned/remaining, replacing old graduation-only credit progress and individual requirement list. New **"Achievements"** card with all badges (earned + unearned) in a single 2-column grid: Honor Graduate tier, Graduation Ready, Credit milestones (15/30/45), GPA milestones (3.0+/3.5+/4.0+), Credits Earned.
 - **Validation categories** across planner and dashboard: Graduation Requirement Gaps (red, missing credits for diploma), Semester Requirement Gaps (amber, course load/PW-Dance/GPA waiver eligibility), Prerequisite Violations (amber, course ordering conflicts). Non-course requirements (ACT, FAFSA) are excluded from plan bar "Issues found" count.
-- **Navigation**: "Progress" nav item between Planner and Transcript. Menu order: Dashboard, Courses, Planner, Progress, Transcript. Settings was moved from the main nav bar into the user avatar dropdown, which contains Settings, Billing, and Sign out. Sign out calls Supabase `signOut()` and redirects to `/login`. Mobile hamburger menu also includes Sign out.
+- **Navigation**: "Progress" nav item between Planner and Transcript. Menu order: Dashboard, Courses, Planner, Progress, Transcript. Settings was moved from the main nav bar into the user avatar dropdown, which contains Settings, Billing, and Sign out. Sign out calls Supabase `signOut()` and redirects to `/` (home page). Mobile hamburger menu also includes Sign out.
 - **Planner validation report** is now a **side panel** (380px, right side, sticky, scrollable): Frozen title "Validation Report". Collapsible summary: collapsed shows "Credits 48/45 | Reqs 11/12 | 1 gap | 15 warnings". Expanded summary has 3 groups: Credits (Total/Earned/Planned), Graduation Requirements (Met/In Progress/Gaps), Warnings (Semester/Prerequisite). 3 collapsible detail sections: Graduation Gaps (with credit progress bar inside), Semester Requirement Gaps, Prerequisite Violations. Warning messages use consistent "Gr X Sem Y:" prefix format as clickable links that navigate to the grade/semester in the planner grid. Clicking a link expands only that grade and highlights the target semester cell (blue ring, fades after 3s). Plan bar "Issues found" count includes graduation gaps, semester issues, and prerequisite violations only — non-course requirements (ACT, FAFSA) excluded. Planner auto-opens validation panel when navigated with `?validation=open` URL parameter (used by Dashboard "View Report" button). Works with any selected plan. Progress data auto-fetched on plan load. Auto-refreshes when the side panel is open and the plan is updated (course added/removed, grade/status changed) by automatically calling the requirements API.
 - **Plan selection persistence**: selected plan in planner persisted via `sessionStorage`.
 - **Plan templates fixed**: All 6 templates now pass validation with zero violations. Fixes: Driver Education added to Grade 10, correct grade-level placements (U.S. History Gr 11, Government Gr 12, Health Gr 10 only), Applied Health moved after Health prerequisite (Pre-Med), Economics added to STEM/CS, electives for Grade 10 underloads, PW coverage via Choice PE for Gr 11/12.
@@ -1527,7 +1554,13 @@ Phase 5 includes a formal WCAG audit and remediation of any gaps, but the core p
 - ✅ `feedback` table (id, user_id FK users SET NULL on delete, rating 1-5, comment, page, created_at)
 - ✅ In-app feedback widget: floating "Feedback" button on all app pages (bottom-right), 5-star rating + optional comment, captures page path, `POST /api/v1/feedback` (auth required), success animation, auto-closes
 - ✅ Guided tour system: driver.js integration (5KB) for step-by-step feature walkthroughs. Three adaptive tours: Welcome (dashboard, 6 steps), Planner (2-5 steps adaptive), Progress (1-3 steps adaptive). Auto-starts on first visit per page. Global "Tour" button in app header nav bar. Tour state persisted in `tourState` JSONB on users table via `PATCH /api/v1/auth/me`. Custom CSS overrides in `globals.css`. `useTour` hook, `config/tours.ts`, `data-tour` attributes, `TourButton` component.
-- ✅ 659 total tests
+- ✅ Plan sharing on invite: students select plans to share (view/edit) when inviting. `shared_plans` JSONB on `account_invite_codes`. Join endpoint creates `plan_shares`. GPA and Requirements APIs gated behind plan access.
+- ✅ Guardian role on signup (maps to "parent" in DB). 4 signup roles: Student/Parent/Guardian/Counselor.
+- ✅ Non-student roles skip onboarding, go directly to dashboard. Onboarding welcome banner with auto-dismiss. "Skip setup" link. Smart routing: dashboard if plans exist, planner otherwise.
+- ✅ Counselor restrictions: cannot create/delete/share plans, invite others, or access billing. "View" instead of "Edit" on plans. "No Plans Shared Yet" empty states. Settings hides subscription/billing for counselors.
+- ✅ Navigation/UX: sign out redirects to `/` not `/login`. Auth layout logo links home, footer "Home" link. Terms/Privacy back button closes tab or falls back. Share modal close (X) button. Dashboard banners contextual by role. Invite form toast messages. `maxLinkedAccounts` fallback fix.
+- ✅ UI orchestration (design system sweep): visual consistency across all 22 pages. Standardized components. Loading skeletons, empty states, error states. Responsive grids. Focus rings, touch targets, ARIA. Print styles. Design tokens replace hardcoded colors. `ui_orchestration_plan.md` playbook.
+- ✅ 433 total tests (7 new UI component test files: Button, Badge, Card, Input, Checkbox, Toast, plan-permissions. New test files: signup-roles, counselor-restrictions, share-modal, auth-layout. Tests for plan access gating and invite shared_plans.)
 - Drag-and-drop planner grid upgrade
 - Plan history / undo (last 20 changes)
 - Prerequisite graph visualization (DAG view)

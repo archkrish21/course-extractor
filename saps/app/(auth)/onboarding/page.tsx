@@ -229,6 +229,10 @@ function StepPastCourses({
   const [searchResults, setSearchResults] = useState<CourseSearchResult[]>([]);
   const [isSearching, setIsSearching] = useState(false);
   const [activeRowId, setActiveRowId] = useState<string | null>(null);
+  const [creditFilter, setCreditFilter] = useState("All");
+  const [gradeFilter, setGradeFilter] = useState<number | null>(null);
+
+  const CREDIT_TYPES = ["All", "CP", "Accelerated", "Honors", "AP", "Dual Credit"];
 
   // Compute completed grades (grades before current grade)
   const completedGrades: number[] = [];
@@ -237,16 +241,21 @@ function StepPastCourses({
   }
 
   const searchCourses = useCallback(
-    async (query: string) => {
+    async (query: string, credit?: string, grade?: number | null) => {
       if (query.length < 2) {
         setSearchResults([]);
         return;
       }
       setIsSearching(true);
       try {
-        const res = await fetch(
-          `/api/v1/courses?q=${encodeURIComponent(query)}&limit=10`
-        );
+        const params = new URLSearchParams({ q: query, limit: "10" });
+        if (credit && credit !== "All") {
+          params.set("credit_type", credit);
+        }
+        if (grade) {
+          params.set("grade_level", String(grade));
+        }
+        const res = await fetch(`/api/v1/courses?${params.toString()}`);
         if (res.ok) {
           const data = await res.json();
           setSearchResults(
@@ -270,11 +279,11 @@ function StepPastCourses({
   useEffect(() => {
     const timeout = setTimeout(() => {
       if (courseSearch.trim()) {
-        searchCourses(courseSearch.trim());
+        searchCourses(courseSearch.trim(), creditFilter, gradeFilter);
       }
     }, 300);
     return () => clearTimeout(timeout);
-  }, [courseSearch, searchCourses]);
+  }, [courseSearch, searchCourses, creditFilter, gradeFilter]);
 
   function addCourse(
     course: CourseSearchResult,
@@ -346,6 +355,71 @@ function StepPastCourses({
         </p>
       </CardHeader>
       <CardContent>
+        {/* Filters */}
+        <div className="mb-5 space-y-3">
+          {/* Credit type chips */}
+          <div>
+            <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">Filter by type</p>
+            <div className="flex flex-wrap gap-1.5">
+              {CREDIT_TYPES.map((ct) => (
+                <button
+                  key={ct}
+                  type="button"
+                  onClick={() => {
+                    setCreditFilter(ct);
+                    if (courseSearch.trim()) searchCourses(courseSearch.trim(), ct, gradeFilter);
+                  }}
+                  className={`rounded-full px-3 py-1 text-xs font-medium transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring ${
+                    creditFilter === ct
+                      ? "bg-primary text-primary-foreground shadow-sm"
+                      : "border border-border bg-background text-muted-foreground hover:bg-muted"
+                  }`}
+                >
+                  {ct}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Grade level filter */}
+          <div>
+            <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">Filter by grade level</p>
+            <div className="flex flex-wrap gap-1.5">
+              <button
+                type="button"
+                onClick={() => {
+                  setGradeFilter(null);
+                  if (courseSearch.trim()) searchCourses(courseSearch.trim(), creditFilter, null);
+                }}
+                className={`rounded-full px-3 py-1 text-xs font-medium transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring ${
+                  gradeFilter === null
+                    ? "bg-primary text-primary-foreground shadow-sm"
+                    : "border border-border bg-background text-muted-foreground hover:bg-muted"
+                }`}
+              >
+                All Grades
+              </button>
+              {completedGrades.map((g) => (
+                <button
+                  key={g}
+                  type="button"
+                  onClick={() => {
+                    setGradeFilter(g);
+                    if (courseSearch.trim()) searchCourses(courseSearch.trim(), creditFilter, g);
+                  }}
+                  className={`rounded-full px-3 py-1 text-xs font-medium transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring ${
+                    gradeFilter === g
+                      ? "bg-primary text-primary-foreground shadow-sm"
+                      : "border border-border bg-background text-muted-foreground hover:bg-muted"
+                  }`}
+                >
+                  Grade {g}
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+
         {/* Bulk entry for each completed grade */}
         {completedGrades.map((g) => {
           const academicYear = getAcademicYear(g, graduationYear);
@@ -851,9 +925,12 @@ export default function OnboardingPage() {
   }
 
   function goNext() {
-    // On step 1 for freshmen, skip step 2
     if (currentStep === 1 && gradeLevel === 9) {
+      // Freshmen skip step 2 (no past courses)
       setCurrentStep(3);
+    } else if (currentStep === 2 && completedCourses.length > 0) {
+      // If user entered past courses, skip step 3 (Starting Plan) — go straight to Goals
+      setCurrentStep(4);
     } else {
       setCurrentStep(Math.min(currentStep + 1, STEPS.length));
     }
@@ -861,9 +938,12 @@ export default function OnboardingPage() {
   }
 
   function goPrevious() {
-    // If on step 3 and was a freshman, go back to step 1
     if (currentStep === 3 && gradeLevel === 9) {
+      // If on step 3 and was a freshman, go back to step 1
       setCurrentStep(1);
+    } else if (currentStep === 4 && completedCourses.length > 0) {
+      // If user entered past courses and is on Goals, go back to Past Courses (skip step 3)
+      setCurrentStep(2);
     } else {
       setCurrentStep(Math.max(currentStep - 1, 1));
     }

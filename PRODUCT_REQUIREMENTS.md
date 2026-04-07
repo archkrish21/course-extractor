@@ -221,7 +221,7 @@ It replaces guesswork with:
 | ID | Story | Priority | Phase |
 |---|---|---|---|
 | US-01 | As a new student, I want to sign up with my email or Google account so I can get started quickly without creating a separate password. | Must | 1 |
-| US-01a | As a logged-in user, I want to sign out from the user avatar dropdown in the top navigation (or from the mobile hamburger menu) so I can securely end my session. Sign out calls Supabase `signOut()` and redirects to `/login`. | Must | 1 |
+| US-01a | As a logged-in user, I want to sign out from the user avatar dropdown in the top navigation (or from the mobile hamburger menu) so I can securely end my session. Sign out calls Supabase `signOut()` and redirects to `/` (home page). **Updated (Phase 3):** Previously redirected to `/login`; now redirects to the public home page for better UX. | Must | 1 |
 | US-02 | As a new student, I want to enter my current grade level and completed course history in bulk (table view, not one at a time) so that my GPA and progress tracker are accurate from day one. | Must | 1 |
 | US-03 | As a new student, I want to select a starting plan template (e.g., "STEM Track", "Pre-Med", "Dual Credit Maximizer") so I don't start from a blank canvas. | Must | 1 |
 | US-04 | As a new user, I want to see a 14-day free trial of the Plus tier (with trialing status) automatically activated so I can explore features before deciding whether to pay. | Must | 1 |
@@ -307,6 +307,7 @@ Account Switcher (parent with multiple children):
 | US-17b | As a student, I want to see all my plans and plans shared with me in one place so I can manage them easily. **Implemented:** `/plans` page with "My Plans" and "Shared with Me" tabs. Plan cards show status badges and permission level. | Must | 3 |
 | US-17c | As a student, I want to hide a plan from my planner without deleting it so I can reduce clutter while preserving the plan. **Implemented:** `isHidden` toggle on `plan_shares`; hidden plans excluded from planner dropdown. | Should | 3 |
 | US-17d | As a parent, I want per-plan permission enforcement so I can only edit plans I have been granted edit access to. **Implemented:** All mutation endpoints use `getPlanAccess()` instead of `accountCtx.canEdit`. Backward-compatible: plans without `plan_shares` rows fall back to `account_members.canEdit`. | Must | 3 |
+| US-17e | As a student, I want to select which plans to share (with view/edit permission) when inviting a linked account member, so they have immediate access to the right plans when they join. **Implemented:** `shared_plans` JSONB column on `account_invite_codes`. Join endpoint creates `plan_shares` rows when invite is claimed. GPA and Requirements APIs gated behind plan access (return empty data if user has no `plan_shares`). | Must | 3 |
 | US-18 | As a student, I want to complete a year-end transition wizard each summer that locks my final grades, advances my grade level, and prompts me to review my upcoming year plan so my plan never becomes stale. | Must | 2 |
 
 ### Grade Tracking & GPA
@@ -399,8 +400,8 @@ Account Switcher (parent with multiple children):
 | ID | Story | Priority | Phase |
 |---|---|---|---|
 | US-90 | As a counselor, I want a dashboard that shows all of my linked students with their active alert count and graduation status so I can triage who needs attention before meetings. | Must | 5 |
-| US-91 | As a counselor, I want to view any linked student's full plan, grades, GPA, and alerts in read-only mode so I can prepare for meetings without asking students to send documents. **Implemented (Phase 3):** Counselors join accounts with canEdit: false (view-only). Can view plans, progress, grades but cannot modify. Cannot invite others. | Must | 3 |
-| US-92 | As a counselor, I want confirmation that I cannot edit any student data so I trust that my access is always read-only and non-intrusive. **Implemented (Phase 3):** Counselors always have canEdit: false; all edit controls hidden. | Must | 3 |
+| US-91 | As a counselor, I want to view any linked student's full plan, grades, GPA, and alerts in read-only mode so I can prepare for meetings without asking students to send documents. **Implemented (Phase 3):** Counselors join accounts with canEdit: false (view-only). Can view plans, progress, grades but cannot modify. Cannot create plans, delete plans, share plans, invite others, or access billing. Sees "View" instead of "Edit" on plans. Account switcher shows "Managing: Student Name · Gr X". | Must | 3 |
+| US-92 | As a counselor, I want confirmation that I cannot edit any student data so I trust that my access is always read-only and non-intrusive. **Implemented (Phase 3):** Counselors always have canEdit: false; all edit controls hidden. Settings page hides subscription/billing for counselors, shows separate "Student Information" section for non-student roles. "No Plans Shared Yet" empty states shown when no plans are shared with the counselor. | Must | 3 |
 | US-93 | As a counselor, I want to add comments/suggestions on shared plans so I can provide guidance without modifying student data directly. | Should | Future |
 
 ### Elite Features
@@ -442,12 +443,15 @@ The rigor score is recomputed nightly by the percentile stats job (Elite tier). 
 
 | Req | Description | Priority |
 |---|---|---|
-| F-ON-01 | Email/password signup + Google OAuth. Email verification required before plan creation. Signup page: wider layout (max-w-lg), 2-column grids for credentials and personal info. Role selector with description cards (Student/Parent/Counselor). State (frozen to IL) and school (frozen to Stevenson) fields with "Request yours" link for unsupported schools. School request form stores to `school_requests` table via `POST /api/v1/school-request` (no auth). "Claim your account" link removed from signup. | Must |
+| F-ON-01 | Email/password signup + Google OAuth. Email verification required before plan creation. Signup page: wider layout (max-w-lg), 2-column grids for credentials and personal info. Role selector with description cards (Student/Parent/Guardian/Counselor — 4 roles). Guardian maps to "parent" in DB for identical behavior. State (frozen to IL) and school (frozen to Stevenson) fields with "Request yours" link for unsupported schools. School request form stores to `school_requests` table via `POST /api/v1/school-request` (no auth). "Claim your account" link removed from signup. | Must |
 | F-ON-02 | Date of birth captured at signup. Block registration for users under 13 (COPPA). | Must |
 | F-ON-03 | **Bulk grade entry table** during onboarding: student selects courses from a dropdown and enters letter grades in a spreadsheet-style table. Not one course at a time. | Must |
 | F-ON-04 | Plan template selection during onboarding (Pre-Med, STEM/Engineering, Arts, Dual Credit Maximizer, 4-Year College Prep, General). Templates are pre-seeded — no admin UI required. | Must |
 | F-ON-05 | Goal setting: GPA target, college targets (reach/match/safety), career interest field. | Should |
-| F-ON-06 | Skip-and-complete-later option for grade history and goals. Dashboard shows a "Complete your profile" banner for incomplete onboarding. | Must |
+| F-ON-06 | Skip-and-complete-later option for grade history and goals. Dashboard shows a "Complete your profile" banner for incomplete onboarding. "Skip setup" link on onboarding page. | Must |
+| F-ON-06a | **Non-student role routing (Phase 3 — implemented):** Non-student roles (Parent, Guardian, Counselor) skip onboarding and go directly to dashboard. | Must |
+| F-ON-06b | **Welcome banner (Phase 3 — implemented):** Onboarding shows "Account created successfully!" banner with auto-dismiss. | Should |
+| F-ON-06c | **Smart routing after onboarding (Phase 3 — implemented):** After onboarding completion, redirect to dashboard if plans exist, planner otherwise. | Must |
 | F-ON-07 | 14-day Plus trial (trialing status) activated automatically at signup. No credit card required. Accounts API returns "trial" as the plan name when status is trialing. TierBadge shows "Trial" (amber). Billing page shows "Free Trial" with "X days left" badge. Pricing cards do not show "Current Plan" for trialing users. | Must |
 | F-ON-08 | **Consent system (Phase 3 — implemented):** Terms of Service and Privacy Policy acceptance required at signup (checkbox) and enforced via `/consent` interstitial for existing users. `legal_documents` table stores versioned legal documents; `consent_records` table tracks user acceptance with timestamps. `/terms` and `/privacy` pages display legal content. Consent gate in app layout redirects users who haven't accepted current terms. OAuth users redirected to `/consent` after first login. | Must |
 | F-ON-09 | **Guided tour system (Phase 3 — implemented):** driver.js integration for step-by-step feature walkthroughs. Three adaptive tours: Welcome (dashboard, 6 steps), Planner (2-5 steps — 2 when no plans, 5 when plans exist), Progress (1-3 steps — 1 when no plan data, 3 when data exists). Auto-starts on first visit per page. Tour state persisted in `tourState` JSONB on users table via `PATCH /api/v1/auth/me`. Global "Tour" button in app header nav bar on every page — detects current page and triggers appropriate tour with correct steps. Custom driver.js CSS overrides in `globals.css` matching SAPS brand. `useTour` hook, `config/tours.ts`, `data-tour` attributes on key elements. | Should |
@@ -665,7 +669,7 @@ The dashboard uses a 3-row, 2-column grid layout:
 | F-CB-18 | Course detail: "What This Unlocks" section also merges semester pairs. | Must |
 | F-CB-19 | Course detail: Division and Department names are clickable (sets the corresponding filter and closes the modal). | Should |
 | F-CB-20 | Course detail: Prerequisite and unlock course codes are clickable (navigates to that course's detail). | Should |
-| F-CB-21 | Navigation uses a horizontal top bar instead of a sidebar. Nav order: Dashboard, Courses, Planner, Progress, Transcript. User avatar dropdown contains Settings, Billing, and Sign out. For parent users: avatar shows the parent's own name/email (not the student's), with a "Managing: StudentName · Gr X" subtitle below the parent's name. "Add Another Child" removed from the dropdown. Settings page uses flat sections with uppercase headers (no collapsible cards): 3x3 profile grid (Name/Email/Password/Role/Grade/Graduation/State/School — state and school are read-only), clean linked accounts list (renamed from "Family Members") with usage counter ("2/5 linked accounts used"), compact subscription/legal/danger zone sections. Students can invite Parent/Guardian/Counselor; parents can invite Child/Parent/Guardian/Counselor; counselors cannot invite anyone (view-only, invite form hidden). | Must |
+| F-CB-21 | Navigation uses a horizontal top bar instead of a sidebar. Nav order: Dashboard, Courses, Planner, Progress, Transcript. User avatar dropdown contains Settings, Billing, and Sign out. Sign out redirects to home page (`/`) instead of `/login`. For parent users: avatar shows the parent's own name/email (not the student's), with a "Managing: StudentName · Gr X" subtitle below the parent's name. For counselors: same "Managing: Student Name · Gr X" subtitle; billing hidden from dropdown. "Add Another Child" removed from the dropdown. Auth layout: SAPS logo links to home, "Home" link in footer. Settings page uses flat sections with uppercase headers (no collapsible cards): 3x3 profile grid (Name/Email/Password/Role/Grade/Graduation/State/School — state and school are read-only), clean linked accounts list (renamed from "Family Members") with usage counter ("2/5 linked accounts used"), compact subscription/legal/danger zone sections. Settings hides subscription/billing for counselors, shows "Student Information" section for non-student roles. Students can invite Parent/Guardian/Counselor; parents can invite Child/Parent/Guardian/Counselor; counselors cannot invite anyone (view-only, invite form hidden). Invite form includes plan sharing: students select which plans to share (view/edit permission) when inviting. | Must |
 
 ### 5.7 Prerequisite Visualization
 
@@ -802,7 +806,7 @@ The dashboard uses a 3-row, 2-column grid layout:
 
 ### 5.15 Account Permissions Matrix
 
-| Operation | Student | Parent (can_edit) | Parent (read-only) | Counselor (always view-only) |
+| Operation | Student | Parent/Guardian (can_edit) | Parent/Guardian (read-only) | Counselor (always view-only) |
 |---|---|---|---|---|
 | Create plans | ✓ | ✓ | — | — |
 | Edit own plans | ✓ | ✓ | — | — |
@@ -818,6 +822,10 @@ The dashboard uses a 3-row, 2-column grid layout:
 | Manage subscription | ✓ | ✓ (billing contact) | — | — |
 | Invite linked accounts | ✓ | ✓ | ✓ | — |
 | Invite members | ✓ | ✓ | — | — |
+| Share plans | ✓ | ✓ | — | — |
+| Access billing | ✓ | ✓ (billing contact) | — | — |
+
+> **Guardian role:** Guardians have identical permissions to parents. The "Guardian" option exists on signup for users who are not the student's legal parent but have a caregiving role. In the DB, guardian maps to "parent" with identical behavior.
 
 ---
 
@@ -836,15 +844,19 @@ The dashboard uses a 3-row, 2-column grid layout:
        └── First-time: auto-provisions app records (user, account, profile, 14-day Plus trial with trialing status) using Google profile name. Email marked as verified. Redirects to /onboarding.
        └── Returning: resumes session, redirects to intended page.
    ├── Personal info: first name, last name, date of birth (2-column grid)
-   └── Role selector: Student / Parent / Counselor cards with descriptions
+   └── Role selector: Student / Parent / Guardian / Counselor cards with descriptions
    └── State (frozen to IL) + School (frozen to Stevenson) with "Request yours" link
        └── School request form → POST /api/v1/school-request (no auth) → school_requests table
 
 3. Date of birth check
    └── If under 13 → blocked; show COPPA notice
 
-4. Onboarding wizard — Step 1: Who are you?
-   └── Select role: Student / Parent / Counselor
+4. Role-based routing:
+   └── If Student: proceed to onboarding wizard
+   └── If Parent/Guardian/Counselor: skip onboarding, go directly to dashboard with welcome banner ("Account created successfully!" with auto-dismiss)
+
+4a. Onboarding wizard — Step 1: Who are you? (students only)
+   └── Select role: Student
 
 5. Onboarding wizard — Step 2: About you (student)
    ├── Enter current grade level (9/10/11/12)
@@ -1074,7 +1086,7 @@ Trigger: Stripe fires invoice.payment_failed
 3. Admin verifies the counselor's identity (manual review in Phase 5; automated verification is out of scope).
 4. Once verified, the counselor receives a unique counselor code.
 5. Students enter the counselor code in Settings → Linked Accounts to create a link.
-6. The counselor joins with canEdit: false (view-only). Can view plans, progress, grades but cannot modify.
+6. The counselor joins with canEdit: false (view-only). Can view plans, progress, grades but cannot modify. Cannot create plans, delete plans, share plans, or access billing. Sees "View" instead of "Edit" on plans; "No Plans Shared Yet" empty states shown. Account switcher shows "Managing: Student Name · Gr X" like parents. Settings page hides subscription/billing for counselors, shows "Student Information" section.
 7. Counselors cannot invite anyone — invite form is hidden for counselor role.
 8. The counselor's dashboard shows all linked students (read-only). Full counselor dashboard in Phase 5.
 
@@ -1227,6 +1239,20 @@ A public-facing homepage and supporting pages are required before user acquisiti
 - Tour state persisted in `tourState` JSONB column on users table via `PATCH /api/v1/auth/me`
 - Custom CSS overrides in `globals.css` matching SAPS brand (rounded popovers, primary color buttons, custom progress text)
 - Infrastructure: `useTour` hook (`lib/hooks/use-tour.ts`), tour config (`config/tours.ts`), `data-tour` attributes on key elements, `TourButton` component
+
+**Auth layout updates (Phase 3):**
+- SAPS logo links to home page (`/`) for easy navigation back to public site
+- "Home" link added to footer of auth pages (login/signup)
+- Terms/Privacy back button: closes tab if opened via `target="_blank"`, falls back to browser history. Back button moved to bottom of Terms/Privacy pages.
+
+**UI Orchestration — Design System Sweep (Phase 3):**
+- Complete visual consistency across all 22 pages: standardized page headers, Card/Button/Badge/Input component usage
+- Loading skeletons, empty states, and error states added to all pages
+- Responsive grids (1-col mobile, 2/3-col desktop) on all pages
+- Focus rings, 44px touch targets, and ARIA attributes throughout
+- Print styles in `globals.css` for planner print page
+- Hardcoded colors replaced with design tokens (Tailwind CSS v4 `@theme` CSS variables)
+- `ui_orchestration_plan.md` created as a reusable playbook for future sweeps
 
 **SEO — implemented (Phase 3):**
 - Meta description, keywords, and Open Graph tags on root layout

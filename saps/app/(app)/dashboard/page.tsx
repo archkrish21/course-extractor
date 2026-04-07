@@ -83,8 +83,8 @@ export default function DashboardPage() {
     autoStart: true,
     delay: 1000,
   });
-  const [showProfileBanner, setShowProfileBanner] = useState(true);
-  const [showOnboardingBanner, setShowOnboardingBanner] = useState(false);
+  const [showProfileBanner, setShowProfileBanner] = useState(false);
+  const [profileBannerTarget, setProfileBannerTarget] = useState<"settings" | "planner">("settings");
   const [primaryPlan, setPrimaryPlan] = useState<DashboardPlan | null>(null);
   const [planLoading, setPlanLoading] = useState(true);
   const [claimCode, setClaimCode] = useState<string | null>(null);
@@ -115,9 +115,14 @@ export default function DashboardPage() {
           const primary = plans.find((p) => p.isPrimary) ?? plans[0] ?? null;
           setPrimaryPlan(primary);
           if (plans.length === 0) {
-            setShowOnboardingBanner(true);
+            // No plans — show banner pointing to planner
+            setShowProfileBanner(true);
+            setProfileBannerTarget("planner");
+          } else if (currentAccount?.role === "student" && !userFirstName) {
+            // Has plans but no name — show banner pointing to settings
+            setShowProfileBanner(true);
+            setProfileBannerTarget("settings");
           }
-
           // Fetch warnings for the primary plan
           if (primary) {
             try {
@@ -149,6 +154,10 @@ export default function DashboardPage() {
               // Silent — warnings not critical for dashboard
             }
           }
+        } else {
+          // API error (404/403) — user likely has no account or no access
+          setShowProfileBanner(true);
+          setProfileBannerTarget("planner");
         }
       } catch {
         // Silently fail — dashboard still shows placeholder data
@@ -209,22 +218,6 @@ export default function DashboardPage() {
       }
     }
 
-    // Also check onboarding state
-    async function checkOnboarding() {
-      try {
-        const res = await apiFetch("/api/v1/profile");
-        if (res.ok) {
-          const data = await res.json();
-          const profile = data.profile ?? data;
-          if (profile?.yearEndTransitionState === "pending") {
-            setShowOnboardingBanner(true);
-          }
-        }
-      } catch {
-        // Ignore
-      }
-    }
-
     // Fetch claim code if account is unclaimed (parent viewing)
     async function fetchClaimCode() {
       if (!currentAccount || currentAccount.isClaimed) return;
@@ -243,7 +236,6 @@ export default function DashboardPage() {
       fetchDashboardData();
       fetchGpa();
       fetchRequirements();
-      checkOnboarding();
       fetchClaimCode();
     }
   }, [accountLoading, currentAccount]);
@@ -349,54 +341,8 @@ export default function DashboardPage() {
         </div>
       )}
 
-      {/* Complete your onboarding banner */}
-      {showOnboardingBanner && (
-        <div
-          className="mb-6 flex flex-col gap-3 rounded-xl border border-warning/30 bg-warning-light p-4 sm:flex-row sm:items-center sm:justify-between"
-          role="status"
-        >
-          <div className="flex items-start gap-3">
-            <svg
-              aria-hidden="true"
-              className="mt-0.5 h-5 w-5 shrink-0 text-warning"
-              fill="none"
-              viewBox="0 0 24 24"
-              strokeWidth={2}
-              stroke="currentColor"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126ZM12 15.75h.007v.008H12v-.008Z"
-              />
-            </svg>
-            <div>
-              <p className="font-semibold text-warning">Complete your onboarding</p>
-              <p className="text-sm text-muted-foreground">
-                Finish setting up your profile and create your first plan to get the most out of SAPS.
-              </p>
-            </div>
-          </div>
-          <div className="flex items-center gap-2 sm:shrink-0">
-            <Link href="/onboarding">
-              <Button size="sm">Finish setup</Button>
-            </Link>
-            <button
-              type="button"
-              onClick={() => setShowOnboardingBanner(false)}
-              aria-label="Dismiss onboarding banner"
-              className="flex h-8 w-8 items-center justify-center rounded-lg text-warning hover:bg-warning/10 transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
-            >
-              <svg aria-hidden="true" className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M6 18 18 6M6 6l12 12" />
-              </svg>
-            </button>
-          </div>
-        </div>
-      )}
-
-      {/* Complete your profile banner */}
-      {showProfileBanner && !showOnboardingBanner && currentAccount?.isClaimed !== false && (
+      {/* Complete your profile / setup banner */}
+      {showProfileBanner && currentAccount?.isClaimed !== false && (
         <div
           className="mb-6 flex flex-col gap-3 rounded-xl border border-primary/30 bg-primary-light p-4 sm:flex-row sm:items-center sm:justify-between"
           role="status"
@@ -417,20 +363,32 @@ export default function DashboardPage() {
               />
             </svg>
             <div>
-              <p className="font-semibold text-primary">Complete your profile</p>
+              <p className="font-semibold text-primary">
+                {profileBannerTarget === "planner"
+                  ? (currentAccount?.role === "counselor" ? "No plans shared yet" : "Get started")
+                  : "Complete your profile"}
+              </p>
               <p className="text-sm text-muted-foreground">
-                Add your grade history and select a plan template to get personalized recommendations.
+                {profileBannerTarget === "planner"
+                  ? (currentAccount?.role === "counselor"
+                    ? "Plans will appear here once a student shares their plan with you."
+                    : "Create your first plan to start organizing your academic path.")
+                  : "Add your name and details to personalize your experience."}
               </p>
             </div>
           </div>
           <div className="flex items-center gap-2 sm:shrink-0">
-            <Link href="/onboarding">
-              <Button size="sm">Complete setup</Button>
-            </Link>
+            {profileBannerTarget === "planner" && currentAccount?.role === "counselor" ? null : (
+              <Link href={profileBannerTarget === "planner" ? "/planner" : "/settings"}>
+                <Button size="sm">
+                  {profileBannerTarget === "planner" ? "Create a plan" : "Complete profile"}
+                </Button>
+              </Link>
+            )}
             <button
               type="button"
               onClick={() => setShowProfileBanner(false)}
-              aria-label="Dismiss profile completion banner"
+              aria-label="Dismiss banner"
               className="flex h-8 w-8 items-center justify-center rounded-lg text-primary hover:bg-primary/10 transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
             >
               <svg aria-hidden="true" className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">

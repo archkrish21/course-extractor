@@ -7,6 +7,8 @@ const TEST_USER = { id: "a1a1a1a1-b2b2-4c3c-8d4d-e5e5e5e5e5e5", email: "owner@te
 const TARGET_USER_ID = "f6f6f6f6-a7a7-4b8b-9c9c-d0d0d0d0d0d0";
 const TEST_PLAN_ID = "plan-aaaa-bbbb-cccc-dddd-eeeeeeeeeeee";
 
+const TEST_ACCOUNT_ID = "acc-aaaa-bbbb-cccc-dddd-eeeeeeeeeeee";
+
 const TEST_SHARE = {
   id: "share-1",
   planId: TEST_PLAN_ID,
@@ -67,6 +69,19 @@ vi.mock("@/lib/auth/get-user", () => ({
   getAccountContext: vi.fn(),
 }));
 
+const mockGetEffectiveTier = vi.fn();
+vi.mock("@/lib/subscription/middleware", () => ({
+  getEffectiveTier: (...args: unknown[]) => mockGetEffectiveTier(...args),
+}));
+
+vi.mock("@/lib/email/client", () => ({
+  sendEmail: vi.fn().mockResolvedValue(true),
+}));
+
+vi.mock("@/lib/email/templates", () => ({
+  inviteEmail: vi.fn().mockReturnValue({ subject: "Invite", html: "<p>Invite</p>" }),
+}));
+
 const mockGetPlanAccess = vi.fn();
 vi.mock("@/lib/auth/plan-permissions", () => ({
   getPlanAccess: (...args: unknown[]) => mockGetPlanAccess(...args),
@@ -86,8 +101,9 @@ vi.mock("@/lib/db/schema", () => ({
   counselorStudentLinks: { studentId: "csl_studentId", counselorId: "csl_counselorId" },
   planShares: { id: "ps_id", planId: "ps_planId", userId: "ps_userId", permission: "ps_permission", isHidden: "ps_isHidden", grantedBy: "ps_grantedBy", createdAt: "ps_createdAt" },
   accountMembers: { accountId: "am_accountId", userId: "am_userId", role: "am_role", canEdit: "am_canEdit" },
-  accounts: { id: "a_id", gradeLevel: "a_gradeLevel", studentUserId: "a_studentUserId" },
-  users: { id: "u_id", email: "u_email" },
+  accounts: { id: "a_id", gradeLevel: "a_gradeLevel", studentUserId: "a_studentUserId", studentName: "a_studentName" },
+  users: { id: "u_id", email: "u_email", firstName: "u_firstName", lastName: "u_lastName" },
+  accountInviteCodes: { id: "aic_id", accountId: "aic_accountId", code: "aic_code", targetRole: "aic_targetRole", expiresAt: "aic_expiresAt", createdBy: "aic_createdBy" },
 }));
 
 vi.mock("drizzle-orm", () => ({
@@ -104,8 +120,9 @@ vi.mock("drizzle-orm", () => ({
   ),
 }));
 
-import { requireAuth } from "@/lib/auth/get-user";
+import { requireAuth, getAccountContext } from "@/lib/auth/get-user";
 import { GET as getShares, POST as createShare } from "@/app/api/v1/plans/[id]/shares/route";
+import { POST as createMember } from "@/app/api/v1/accounts/[id]/members/route";
 import { PATCH as patchShare, DELETE as deleteShare } from "@/app/api/v1/plans/[id]/shares/[userId]/route";
 import { PATCH as patchVisibility } from "@/app/api/v1/plans/[id]/visibility/route";
 import { DELETE as deletePlan } from "@/app/api/v1/plans/[id]/route";
@@ -573,5 +590,86 @@ describe("DELETE /api/v1/plans/:id", () => {
 
     expect(response.status).toBe(404);
     expect(body.error.code).toBe("NOT_FOUND");
+  });
+});
+
+// ── Linked Accounts Limit Tests ────────────────────────────────────────────
+
+function accountContext(id: string) {
+  return { params: Promise.resolve({ id }) };
+}
+
+describe("POST /api/v1/accounts/:id/members — linked accounts limit", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    dbChain = createQueryChain();
+    (requireAuth as ReturnType<typeof vi.fn>).mockResolvedValue(TEST_USER);
+    (getAccountContext as ReturnType<typeof vi.fn>).mockResolvedValue({
+      accountId: TEST_ACCOUNT_ID,
+      role: "student",
+      canEdit: true,
+    });
+  });
+
+  it("returns 402 when at linked accounts limit", async () => {
+    mockGetEffectiveTier.mockResolvedValue({ maxLinkedAccounts: 3 });
+
+    // Query 1: member count returns 3 (at limit)
+    dbChain.then = vi.fn().mockImplementation((resolve: (v: unknown) => unknown) =>
+      Promise.resolve(resolve([{ count: 3 }]))
+    );
+
+    const request = makeJsonRequest(
+      `http://localhost:3000/api/v1/accounts/${TEST_ACCOUNT_ID}/members`,
+      { target_role: "parent" }
+    );
+    const response = await createMember(request, accountContext(TEST_ACCOUNT_ID));
+    const body = await response.json();
+
+    expect(response.status).toBe(402);
+    expect(body.error.code).toBe("UPGRADE_REQUIRED");
+    expect(body.error.message).toContain("Linked accounts limit reached");
+    expect(body.error.current_count).toBe(3);
+    expect(body.error.max).toBe(3);
+  });
+
+  it("allows invite when under linked accounts limit", async () => {
+    mockGetEffectiveTier.mockResolvedValue({ maxLinkedAccounts: 3 });
+
+    let queryIndex = 0;
+    dbChain.then = vi.fn().mockImplementation((resolve: (v: unknown) => unknown) => {
+      queryIndex++;
+      if (queryIndex === 1) return Promise.resolve(resolve([{ count: 2 }])); // member count — under limit
+      if (queryIndex === 2) return Promise.resolve(resolve([{ studentName: "Test Student" }])); // account lookup for email
+      if (queryIndex === 3) return Promise.resolve(resolve([{ email: "owner@test.com" }])); // inviter lookup
+      return Promise.resolve(resolve([]));
+    });
+    mockReturning.mockResolvedValue([{
+      code: "ABCD1234",
+      expiresAt: new Date().toISOString(),
+    }]);
+
+    const request = makeJsonRequest(
+      `http://localhost:3000/api/v1/accounts/${TEST_ACCOUNT_ID}/members`,
+      { target_role: "parent", email: "parent@test.com" }
+    );
+    const response = await createMember(request, accountContext(TEST_ACCOUNT_ID));
+    const body = await response.json();
+
+    expect(response.status).toBe(201);
+    expect(body.data.invite_code).toBe("ABCD1234");
+    expect(body.data.email_sent).toBe(true);
+  });
+
+  it("returns 400 for invalid target_role", async () => {
+    const request = makeJsonRequest(
+      `http://localhost:3000/api/v1/accounts/${TEST_ACCOUNT_ID}/members`,
+      { target_role: "admin" }
+    );
+    const response = await createMember(request, accountContext(TEST_ACCOUNT_ID));
+    const body = await response.json();
+
+    expect(response.status).toBe(400);
+    expect(body.error.code).toBe("VALIDATION_ERROR");
   });
 });

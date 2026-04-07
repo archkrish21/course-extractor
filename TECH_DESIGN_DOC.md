@@ -347,7 +347,7 @@ export async function getAccountContext(userId: string, accountId?: string): Pro
   // If accountId provided (from header/route), verify membership
   // If not provided and user is a student, find their account
   // If not provided and user is a parent, return error (must specify account)
-  // Returns: { accountId, role, canEdit, tier }
+  // Returns: { accountId, role, canEdit, tier, maxLinkedAccounts }
 }
 ```
 
@@ -529,9 +529,15 @@ CREATE TABLE school_requests (
 
 > **Child invite flow (Phase 3):** Parents can invite a child (student) via email from Settings. When the student joins via the invite: (1) if the student already has an account, the parent is added as a member of the student's existing account; (2) if no account exists, a new account is created with both student and parent added as members. The active account auto-switches to the joined account.
 
-> **Family member removal (Phase 3 update):** Any member can remove other members (except themselves). The previous restriction preventing student removal has been lifted — non-student members can remove the student. Remove button shows for all members except self.
+> **Linked account member removal (Phase 3 update):** Any member can remove other members (except themselves). The previous restriction preventing student removal has been lifted — non-student members can remove the student. Remove button shows for all members except self.
 
-> **Settings redesign (Phase 3):** Flat sections with uppercase headers (no collapsible cards). 3x3 profile grid: Name/Email/Password/Role/Grade/Graduation/State/School (state and school read-only). Clean family member list. Compact subscription/legal/danger zone sections.
+> **Settings redesign (Phase 3):** Flat sections with uppercase headers (no collapsible cards). 3x3 profile grid: Name/Email/Password/Role/Grade/Graduation/State/School (state and school read-only). Clean linked accounts list (renamed from "Family Members") with usage counter ("2/5 linked accounts used"). Compact subscription/legal/danger zone sections. Students can invite Parent/Guardian/Counselor; parents can invite Child/Parent/Guardian/Counselor; counselors cannot invite anyone (view-only, invite form hidden).
+
+> **Linked accounts tier limits (Phase 3):** Starter/Trial: 3, Plus: 5, Elite: 8. Enforced in invite API (402 UPGRADE_REQUIRED with code `UPGRADE_REQUIRED`). `maxLinkedAccounts` added to `SubscriptionContext` and tier config in `subscription_plans.features` JSONB.
+
+> **Counselor role (Phase 3):** Counselors join accounts with `canEdit: false` (view-only). Can view plans, progress, grades but cannot modify. Cannot invite others — invite form hidden for counselor role. Future: will be able to add comments/suggestions on shared plans.
+
+> **Billing updates (Phase 3):** Pricing cards updated to show linked accounts per tier and PDF/print for Plus. 4-year subscription display shows "Expires" instead of "Renews" since it is a one-time payment (Stripe payment mode).
 
 > **Migration note (Phase 2):** All data tables (`four_year_plans`, `subscriptions`, `grade_entries`, `gpa_snapshots`, `goals`, `alerts`, `notifications`, `requirement_progress`, `dual_credit_log`) gain an `account_id UUID REFERENCES accounts(id)` column. The `four_year_plans` table gains `created_by UUID REFERENCES users(id)` and `visibility TEXT DEFAULT 'shared' CHECK (visibility IN ('shared', 'private'))`. The `student_parent_links` and `parent_invite_codes` tables are deprecated in favor of `account_members` and `accounts.claim_code`. subscriptions gains an account_id column alongside the existing user_id (both retained for backward compatibility during migration). Existing data is migrated by creating an account row per existing student user and updating all foreign keys.
 
@@ -592,9 +598,10 @@ CREATE TABLE subscription_plans (
   price_annual   DECIMAL(7,2),             -- Plus: 107.88, Elite: 215.88 (save 10%)
   price_four_year DECIMAL(7,2),            -- Plus: 399.00, Elite: 799.00 (save 17%)
   max_plans      SMALLINT,                 -- 1 for Starter, 10 for Plus, NULL = unlimited (Elite)
+  max_linked_accounts SMALLINT,           -- 3 for Starter/Trial, 5 for Plus, 8 for Elite
   features       JSONB NOT NULL
                  -- e.g., {"can_create_goals": true, "can_use_ai": false, "can_view_percentile": false,
-                 --        "can_parent_draft": true, "can_what_if": true, ...}
+                 --        "can_parent_draft": true, "can_what_if": true, "maxLinkedAccounts": 5, ...}
 );
 -- Trial: 14-day, Plus-level features except can_compare_plans/can_export_pdf/can_share_plans,
 -- max 2 plans, no AI. Auto-downgrades to Starter at expiry.
@@ -1490,7 +1497,7 @@ This supports typo-tolerant search (e.g., "Calclus" matches "Calculus"). For exa
 - **Webhook handler:** `app/api/v1/stripe/webhook/route.ts` — receives and processes Stripe events with signature verification.
 - **Billing Portal:** `app/api/v1/stripe/portal/route.ts` — creates Stripe Billing Portal sessions for subscription management.
 - **Subscriptions API:** `app/api/v1/subscriptions/route.ts` — returns current subscription state with tier and feature flags.
-- **Billing page:** `app/(app)/settings/billing/page.tsx` — pricing cards with 3-interval toggle (monthly/annual/4-year), current plan indicator, upgrade/manage subscription CTAs. Pricing card buttons aligned at same level using flex layout. For trialing users: shows "Free Trial" with "X days left" badge; pricing cards suppress "Current Plan" indicator.
+- **Billing page:** `app/(app)/settings/billing/page.tsx` — pricing cards with 3-interval toggle (monthly/annual/4-year), current plan indicator, upgrade/manage subscription CTAs. Pricing card buttons aligned at same level using flex layout. For trialing users: shows "Free Trial" with "X days left" badge; pricing cards suppress "Current Plan" indicator. Pricing cards show linked accounts per tier (3/5/8) and PDF/print for Plus. 4-year subscriptions display "Expires" instead of "Renews" (one-time payment).
 
 **Webhook events handled** (all logged to `stripe_events` before processing):
 
@@ -2217,11 +2224,12 @@ Mobile (<640px):
   - Grade-level locking: 409 on POST/DELETE/PATCH (non-waiver) for locked grades; GPA waiver toggle succeeds; lock/unlock via `POST /api/v1/plans/:id/lock-grade`
   - Upgrade flow (402 → checkout → plan unlocked)
   - Consent flow (signup checkbox, `/consent` interstitial, consent gate redirect)
-  - Settings page (flat sections with 3x3 profile grid including state/school, family member list, compact sections)
+  - Settings page (flat sections with 3x3 profile grid including state/school, linked accounts list, compact sections)
+  - Linked accounts: counselor invite/join (canEdit: false), linked accounts tier limits (402 UPGRADE_REQUIRED), linked accounts UI with usage counter
   - Signup page (2-column grids, role selector cards, frozen state/school fields, school request form)
   - Legal pages (`/terms`, `/privacy` rendering)
 
-**Current test count: 250 total** (13 API tests for consent/auth-me/accounts, 20+ E2E tests for consent/settings/legal pages, plus existing plan/requirement/progress/planner tests).
+**Current test count: 261 total** (13 API tests for consent/auth-me/accounts, 20+ E2E tests for consent/settings/legal pages, counselor invite/join tests, linked accounts limit tests, E2E for linked accounts UI, plus existing plan/requirement/progress/planner tests).
 
 ### Test data
 

@@ -229,12 +229,12 @@ It replaces guesswork with:
 | US-06 | As a parent, I want to create an account for my child by entering their name, date of birth, grade level, and graduation year, so I can start building course plans before my child signs up. | Must | 1b |
 | US-06a | As a parent who created an account, I want to generate an invite code so my child can claim their account and set their own email/password. | Must | 1b |
 | US-06b | As a student, I want to claim an account created by my parent using an invite code, so I take ownership of my academic data. | Must | 1b |
-| US-07 | As a student, I want to invite my parent to join my account so they can view my plans and create plan suggestions for me. | Must | 1b |
+| US-07 | As a student, I want to invite my parent/guardian/counselor to join my account so they can view my plans and (for parents/guardians) create plan suggestions for me. Counselors join with view-only access (canEdit: false). | Must | 1b |
 | US-07c | As a parent, I want to invite my child (student) via email from Settings so they can join the account. If the student already has an account, the parent is added to the student's existing account; if not, a new account is created with both members. The active account auto-switches to the joined account. | Must | 3 |
 | US-07a | As a parent with multiple children, I want to switch between my children's accounts using an account switcher, with each child's subscription tier governing available features. | Must | 1b |
 | US-07b | As a student, I want to mark any of my plans as "private" so my parents cannot see them. | Should | 1b |
 
-> **Implementation note:** Account management APIs, claim flow, and account switcher were built ahead of schedule in Phase 1b. The Settings page UI for managing family members remains for Phase 2.
+> **Implementation note:** Account management APIs, claim flow, and account switcher were built ahead of schedule in Phase 1b. The Settings page UI for managing linked accounts (renamed from "Family Members") is complete in Phase 3. Linked account limits per tier: Starter/Trial 3, Plus 5, Elite 8 — enforced in invite API (402 UPGRADE_REQUIRED). Usage counter shown in Settings ("2/5 linked accounts used"). `maxLinkedAccounts` added to SubscriptionContext and tier config.
 
 ### Account Creation & Membership Flow
 
@@ -242,7 +242,7 @@ It replaces guesswork with:
 Account Creation — Student Initiates:
 1. Student signs up → account created automatically
    └── student is the account subject and first member
-2. Student goes to Settings → "Invite Family"
+2. Student goes to Settings → "Linked Accounts"
    └── Generates invite code (target_role: parent)
 3. Parent signs up or logs in → enters invite code
    └── account_members row created (role: parent, can_edit: true)
@@ -303,7 +303,7 @@ Account Switcher (parent with multiple children):
 | US-15 | As a student, I want to undo the last 20 changes to my plan so I can experiment without fear of losing my work. | Should | 3 |
 | US-16 | As a student, I want to export my primary plan as a PDF so I can share it with my counselor or parents. | Should | 3 |
 | US-17 | As a student, I want to generate a read-only shareable link to my plan so others can view it without needing an account. | Should | 3 |
-| US-17a | As a student, I want to share a plan with a family member and set their permission level (view only / can edit / full access) so I control who can modify my plans. **Implemented:** Share modal on `/plans` page sets per-family-member permissions. `plan_shares` table stores per-plan, per-user permissions (owner/view/edit/delete) with permission hierarchy: owner > delete > edit > view. | Must | 3 |
+| US-17a | As a student, I want to share a plan with a linked account member and set their permission level (view only / can edit / full access) so I control who can modify my plans. **Implemented:** Share modal on `/plans` page sets per-member permissions. `plan_shares` table stores per-plan, per-user permissions (owner/view/edit/delete) with permission hierarchy: owner > delete > edit > view. Counselors always receive view-only permission. | Must | 3 |
 | US-17b | As a student, I want to see all my plans and plans shared with me in one place so I can manage them easily. **Implemented:** `/plans` page with "My Plans" and "Shared with Me" tabs. Plan cards show status badges and permission level. | Must | 3 |
 | US-17c | As a student, I want to hide a plan from my planner without deleting it so I can reduce clutter while preserving the plan. **Implemented:** `isHidden` toggle on `plan_shares`; hidden plans excluded from planner dropdown. | Should | 3 |
 | US-17d | As a parent, I want per-plan permission enforcement so I can only edit plans I have been granted edit access to. **Implemented:** All mutation endpoints use `getPlanAccess()` instead of `accountCtx.canEdit`. Backward-compatible: plans without `plan_shares` rows fall back to `account_members.canEdit`. | Must | 3 |
@@ -399,8 +399,9 @@ Account Switcher (parent with multiple children):
 | ID | Story | Priority | Phase |
 |---|---|---|---|
 | US-90 | As a counselor, I want a dashboard that shows all of my linked students with their active alert count and graduation status so I can triage who needs attention before meetings. | Must | 5 |
-| US-91 | As a counselor, I want to view any linked student's full plan, grades, GPA, and alerts in read-only mode so I can prepare for meetings without asking students to send documents. | Must | 5 |
-| US-92 | As a counselor, I want confirmation that I cannot edit any student data so I trust that my access is always read-only and non-intrusive. | Must | 5 |
+| US-91 | As a counselor, I want to view any linked student's full plan, grades, GPA, and alerts in read-only mode so I can prepare for meetings without asking students to send documents. **Implemented (Phase 3):** Counselors join accounts with canEdit: false (view-only). Can view plans, progress, grades but cannot modify. Cannot invite others. | Must | 3 |
+| US-92 | As a counselor, I want confirmation that I cannot edit any student data so I trust that my access is always read-only and non-intrusive. **Implemented (Phase 3):** Counselors always have canEdit: false; all edit controls hidden. | Must | 3 |
+| US-93 | As a counselor, I want to add comments/suggestions on shared plans so I can provide guidance without modifying student data directly. | Should | Future |
 
 ### Elite Features
 
@@ -475,7 +476,7 @@ Templates are tied to a specific `catalog_version_id`. During annual catalog upd
 | F-PL-22 | Clear semester and clear grade with confirmation dialogs. | Should |
 | F-PL-23 | Core course removal warning for template-based plans with Reset to Template option. Reset uses `pc.semester` and `pc.gradeLevel` from actual course data (not group key), adds `skip_validation: true` for template reset, and logs failures. | Should |
 | F-PL-24 | Credits display: planned and earned credits per grade and total. Stevenson uses 1 credit per semester course, 2 credits per full-year course, 45 credits required for graduation. Credits displayed as: 'X credits planned, Y earned' (earned in green). Per-row credit = creditValue/2 for full-year courses to avoid double-counting. 1.5 period courses show 1.5 credits per semester row. | Must |
-| F-PL-25 | **Plan sharing with permissions (Phase 3):** Per-plan, per-user permissions via `plan_shares` table. Permission levels: owner, view, edit, delete. Hierarchy: owner > delete > edit > view. Share modal on `/plans` page lets plan owner set permission per family member (No access / View only / Can edit / Full access). Owner share auto-created on plan creation. | Must |
+| F-PL-25 | **Plan sharing with permissions (Phase 3):** Per-plan, per-user permissions via `plan_shares` table. Permission levels: owner, view, edit, delete. Hierarchy: owner > delete > edit > view. Share modal on `/plans` page lets plan owner set permission per linked account member (No access / View only / Can edit / Full access). Counselors always receive view-only permission. Owner share auto-created on plan creation. | Must |
 | F-PL-26 | **Per-plan permission enforcement (Phase 3):** All plan mutation endpoints (PATCH/DELETE/POST courses, lock-grade) use `getPlanAccess()` helper instead of `accountCtx.canEdit`. Backward compatibility: plans without `plan_shares` rows fall back to `account_members.canEdit`. | Must |
 | F-PL-27 | **Plan management page (Phase 3):** `/plans` page with "My Plans" and "Shared with Me" tabs. Plan cards display status badge, permission level badge, hide/show toggle, share button, open-in-planner link, delete action. "Plans" removed from nav bar; accessible via "Manage" button in planner header. New Plan button links to `/planner?newPlan=true`. | Must |
 | F-PL-28 | **Plan visibility (Phase 3):** `isHidden` toggle on `plan_shares`. Hidden plans are excluded from the planner plan dropdown but remain accessible on the `/plans` page. Hiding a plan does not delete it. | Should |
@@ -649,7 +650,7 @@ The dashboard uses a 3-row, 2-column grid layout:
 | F-CB-18 | Course detail: "What This Unlocks" section also merges semester pairs. | Must |
 | F-CB-19 | Course detail: Division and Department names are clickable (sets the corresponding filter and closes the modal). | Should |
 | F-CB-20 | Course detail: Prerequisite and unlock course codes are clickable (navigates to that course's detail). | Should |
-| F-CB-21 | Navigation uses a horizontal top bar instead of a sidebar. Nav order: Dashboard, Courses, Planner, Progress, Transcript. User avatar dropdown contains Settings, Billing, and Sign out. For parent users: avatar shows the parent's own name/email (not the student's), with a "Managing: StudentName · Gr X" subtitle below the parent's name. "Add Another Child" removed from the dropdown. Settings page uses flat sections with uppercase headers (no collapsible cards): 3x3 profile grid (Name/Email/Password/Role/Grade/Graduation/State/School — state and school are read-only), clean family member list, compact subscription/legal/danger zone sections. | Must |
+| F-CB-21 | Navigation uses a horizontal top bar instead of a sidebar. Nav order: Dashboard, Courses, Planner, Progress, Transcript. User avatar dropdown contains Settings, Billing, and Sign out. For parent users: avatar shows the parent's own name/email (not the student's), with a "Managing: StudentName · Gr X" subtitle below the parent's name. "Add Another Child" removed from the dropdown. Settings page uses flat sections with uppercase headers (no collapsible cards): 3x3 profile grid (Name/Email/Password/Role/Grade/Graduation/State/School — state and school are read-only), clean linked accounts list (renamed from "Family Members") with usage counter ("2/5 linked accounts used"), compact subscription/legal/danger zone sections. Students can invite Parent/Guardian/Counselor; parents can invite Child/Parent/Guardian/Counselor; counselors cannot invite anyone (view-only, invite form hidden). | Must |
 
 ### 5.7 Prerequisite Visualization
 
@@ -734,6 +735,8 @@ The dashboard uses a 3-row, 2-column grid layout:
 | F-SB-09 | Stripe webhook signature verification on every incoming event. | Must |
 | F-SB-10 | Subscription is per account (one student), not per person. Parent accounts are free. Any account member can be the billing contact. | Must |
 | F-SB-11 | Billing contact can be transferred between account members (e.g., student turns 18 and takes over billing). | Should |
+| F-SB-12 | **Linked accounts tier limits (Phase 3):** Starter/Trial: 3, Plus: 5, Elite: 8. Enforced in invite API (402 UPGRADE_REQUIRED). Usage counter shown in Settings ("2/5 linked accounts used"). `maxLinkedAccounts` added to SubscriptionContext and tier config. Billing pricing cards display linked accounts per tier and PDF/print for Plus. | Must |
+| F-SB-13 | **4-year subscription display:** Shows "Expires" instead of "Renews" since it is a one-time payment (Stripe payment mode, not subscription mode). | Must |
 
 ### 5.13 Tier Feature Matrix
 
@@ -744,6 +747,7 @@ The dashboard uses a 3-row, 2-column grid layout:
 | Graduation requirement tracking | ✓ | ✓ | ✓ | ✓ |
 | GPA tracking (cumulative) | ✓ | ✓ | ✓ | ✓ |
 | Max active plans | 2 | 1 | 10 | Unlimited |
+| Max linked accounts | 3 | 3 | 5 | 8 |
 | What-if GPA simulator | ✓ | — | ✓ | ✓ |
 | Goal tracking | ✓ | — | ✓ | ✓ |
 | Full alert system | ✓ | — | ✓ | ✓ |
@@ -783,7 +787,7 @@ The dashboard uses a 3-row, 2-column grid layout:
 
 ### 5.15 Account Permissions Matrix
 
-| Operation | Student | Parent (can_edit) | Parent (read-only) | Counselor |
+| Operation | Student | Parent (can_edit) | Parent (read-only) | Counselor (always view-only) |
 |---|---|---|---|---|
 | Create plans | ✓ | ✓ | — | — |
 | Edit own plans | ✓ | ✓ | — | — |
@@ -797,6 +801,7 @@ The dashboard uses a 3-row, 2-column grid layout:
 | Dismiss alerts | ✓ | — | — | — |
 | View alerts | ✓ | ✓ | ✓ | ✓ |
 | Manage subscription | ✓ | ✓ (billing contact) | — | — |
+| Invite linked accounts | ✓ | ✓ | ✓ | — |
 | Invite members | ✓ | ✓ | — | — |
 
 ---
@@ -1047,16 +1052,18 @@ Trigger: Stripe fires invoice.payment_failed
 
 ---
 
-### Flow 8: Counselor Account Setup (Phase 5)
+### Flow 8: Counselor Account Setup (Phase 3 — partial, Phase 5 — full)
 
 1. Counselor signs up and selects "School Counselor" role during onboarding.
 2. Counselor enters their school name and professional email for verification.
 3. Admin verifies the counselor's identity (manual review in Phase 5; automated verification is out of scope).
 4. Once verified, the counselor receives a unique counselor code.
-5. Students enter the counselor code in Settings → Counselor Access to create a link.
-6. The counselor's dashboard shows all linked students (read-only).
+5. Students enter the counselor code in Settings → Linked Accounts to create a link.
+6. The counselor joins with canEdit: false (view-only). Can view plans, progress, grades but cannot modify.
+7. Counselors cannot invite anyone — invite form is hidden for counselor role.
+8. The counselor's dashboard shows all linked students (read-only). Full counselor dashboard in Phase 5.
 
-**Counselor pricing:** Counselor accounts are free. Counselors see only the data that linked students have shared — no access to AI features, GPA details, or grades unless the student explicitly grants visibility (future: granular permission toggles).
+**Counselor pricing:** Counselor accounts are free. Counselors see only the data that linked students have shared — no access to AI features, GPA details, or grades unless the student explicitly grants visibility (future: granular permission toggles). Future: counselors will be able to add comments/suggestions on shared plans.
 
 ---
 

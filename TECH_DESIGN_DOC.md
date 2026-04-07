@@ -67,7 +67,7 @@ User → Next.js frontend → API routes → PostgreSQL (Supabase + RLS)
 │  Auth / Onboarding  │  Dashboard   │  4-yr Planner  │  Progress     │
 │  Transcript         │  Req Checker │  AI Advisor    │ Notif Center  │
 │  GPA Calc / What-If │ Course Search│  Prereq Graph  │ Plan Export   │
-│  Plan Comparison    │              │                │               │
+│  Plan Comparison    │  Homepage    │  About / Contact│              │
 └──────────────────────────────────┬──────────────────────────────────┘
                                    │ REST /api/v1/...
 ┌──────────────────────────────────▼──────────────────────────────────┐
@@ -143,6 +143,11 @@ User → Next.js frontend → API routes → PostgreSQL (Supabase + RLS)
 ```
 /
 ├── app/                        # Next.js App Router
+│   ├── (public)/               # public pages group (no auth required)
+│   │   ├── page.tsx            # Homepage — hero, stats, features, how-it-works, FAQ, CTA
+│   │   ├── layout.tsx          # Public layout — sticky glass navbar, footer with social/legal columns
+│   │   ├── about/              # About page — story, mission, Plan/Track/Connect cards, disclaimer
+│   │   └── contact/            # Contact page (feature-flagged, dormant for v1)
 │   ├── (auth)/                 # auth group
 │   │   ├── login/
 │   │   └── signup/
@@ -153,6 +158,7 @@ User → Next.js frontend → API routes → PostgreSQL (Supabase + RLS)
 │   │   └── transcript/         # read-only transcript page (print button in header, Plus+ gated)
 │   └── api/v1/                 # API routes
 │       ├── auth/
+│       ├── contact/            # POST — contact form submission (no auth)
 │       ├── courses/
 │       ├── health/
 │       └── users/
@@ -194,6 +200,7 @@ User → Next.js frontend → API routes → PostgreSQL (Supabase + RLS)
 ├── config/
 │   ├── gpa-weights.ts          # CONFIGURABLE — get from school before coding
 │   ├── grade-scale.ts          # letter → GPA points mapping + isPassFailCourse() + PASS_FAIL_OPTIONS
+│   ├── homepage-features.ts    # Feature flags: showTestimonials, showContactPage, showPricing (all false for v1)
 │   └── subscription-plans.ts   # tier feature flags (mirrors DB seed)
 ├── scripts/
 │   └── seed.ts                 # Drizzle seed runner (npm run db:seed)
@@ -215,6 +222,10 @@ User → Next.js frontend → API routes → PostgreSQL (Supabase + RLS)
 - Session refresh handled by Supabase client SDK
 
 All pages under the `(app)/` route group require authentication. The app layout checks the Supabase session on mount and redirects unauthenticated users to `/login?redirect=...`.
+
+**Public pages (Phase 3 — no auth required):** Pages under the `(public)/` route group are accessible without authentication. They share a public layout with a sticky navbar (glass blur effect, logo, nav links for About and FAQ section anchor, Sign in button, Get Started Free CTA) and a footer (Product/Legal/Connect columns, social media icons for Instagram/Facebook/Twitter/LinkedIn, feedback mailto link, school request link, copyright with disclaimer). Mobile uses a hamburger menu. The homepage (`/`) includes a hero section with gradient text, animated stats bar, animated trial badge, "Why SAPS?" problem section, 5 feature cards with unique color accents, 3-step timeline how-it-works, FAQ accordion, and final CTA. Feature-flagged pricing and testimonials sections are dormant for v1 (controlled by `config/homepage-features.ts`: `showTestimonials`, `showContactPage`, `showPricing` all false). The about page (`/about`) has story, mission, what-we-do (Plan/Track/Connect cards), looking ahead, and disclaimer sections. The contact page (`/contact`) has a form with name/email/subject/message fields, submitted to `POST /api/v1/contact` (no auth) and stored in `contact_messages` table; it is feature-flagged and dormant for v1.
+
+**SEO (Phase 3):** Root layout includes meta description, keywords, and Open Graph tags (og:title, og:description, og:type, og:url). Optimized for search terms: "Stevenson High School course planner", "high school academic planner", "4-year plan tool".
 
 **Sign out:** The user avatar dropdown in the top navigation contains Settings, Billing, and Sign out. Sign out calls `supabase.auth.signOut()`, clears the client session, and redirects to `/login`. The mobile hamburger menu also includes a Sign out option. Settings is no longer in the main navigation bar — it was moved into the avatar dropdown. The avatar and layout display the user's full name (from `firstName` + `lastName` columns) instead of the email prefix. For parent users: the avatar shows the parent's own name/email (not the student's), with a "Managing: StudentName · Gr X" subtitle below. "Add Another Child" removed from the dropdown.
 
@@ -524,6 +535,21 @@ CREATE TABLE school_requests (
   created_at  TIMESTAMPTZ DEFAULT NOW()
 );
 ```
+
+### Table: `contact_messages`
+
+```sql
+CREATE TABLE contact_messages (
+  id          UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  name        TEXT NOT NULL,
+  email       TEXT NOT NULL,
+  subject     TEXT NOT NULL,
+  message     TEXT NOT NULL,
+  created_at  TIMESTAMPTZ DEFAULT NOW()
+);
+```
+
+> **Contact form (Phase 3):** The contact page (`/contact`) submits to `POST /api/v1/contact` (no auth required) and stores messages in the `contact_messages` table. The contact page is feature-flagged via `config/homepage-features.ts` (`showContactPage: false` for v1).
 
 > **School request system (Phase 3):** Signup page includes frozen state/school fields with a "Request yours" link. The school request form submits to `POST /api/v1/school-request` (no auth required) and stores requests in the `school_requests` table for future outreach and multi-school expansion.
 
@@ -1397,6 +1423,7 @@ All routes: `/api/v1/...`. Version from day one.
 | DELETE | `/api/v1/accounts/:id/members/:userId` | member | Remove a member. Any member can remove other members (except themselves). Students can be removed by non-student members. | 1b |
 | PATCH | `/api/v1/accounts/:id` | member | Update account fields (student_name). | Phase 3 |
 | POST | `/api/v1/school-request` | — (no auth) | Submit a school request (email, school_name, state, message). Stored in `school_requests` table for future outreach. | Phase 3 |
+| POST | `/api/v1/contact` | — (no auth) | Submit a contact form message (name, email, subject, message). Stored in `contact_messages` table. Feature-flagged via `showContactPage`. | Phase 3 |
 | PATCH | `/api/v1/accounts/:id/billing` | member | Transfer billing contact to another member. | 2 |
 | POST | `/api/v1/auth/onboarding` | student/parent | Complete onboarding (grade level, template, goals) | 1b |
 | GET | `/api/v1/plans/templates` | any | List all plan templates with courses | 1b |
@@ -2228,8 +2255,13 @@ Mobile (<640px):
   - Linked accounts: counselor invite/join (canEdit: false), linked accounts tier limits (402 UPGRADE_REQUIRED), linked accounts UI with usage counter
   - Signup page (2-column grids, role selector cards, frozen state/school fields, school request form)
   - Legal pages (`/terms`, `/privacy` rendering)
+  - Public homepage (`/`): hero rendering, stats bar, feature cards, FAQ accordion, CTA links, responsive layout
+  - About page (`/about`): story, mission, Plan/Track/Connect cards, disclaimer rendering
+  - Contact page (`/contact`): form submission, validation, feature flag gating
+  - Public layout: navbar links, footer columns, social media icons, mobile hamburger menu
+  - SEO: meta description, Open Graph tags on root layout
 
-**Current test count: 261 total** (13 API tests for consent/auth-me/accounts, 20+ E2E tests for consent/settings/legal pages, counselor invite/join tests, linked accounts limit tests, E2E for linked accounts UI, plus existing plan/requirement/progress/planner tests).
+**Current test count: 266 total** (17 E2E tests for homepage/about/contact, 5 API tests for contact endpoint, 13 API tests for consent/auth-me/accounts, 20+ E2E tests for consent/settings/legal pages, counselor invite/join tests, linked accounts limit tests, E2E for linked accounts UI, plus existing plan/requirement/progress/planner tests).
 
 ### Test data
 

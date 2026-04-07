@@ -420,6 +420,17 @@ Rigor score = (Σ course_weight × credit_hours) / total_credit_hours, where:
 
 The rigor score is recomputed nightly by the percentile stats job (Elite tier). It is displayed as both a raw score and a percentile rank among same-grade-level students on the platform.
 
+### Public Pages & Acquisition
+
+| ID | Story | Priority | Phase |
+|---|---|---|---|
+| US-100 | As a prospective student or parent, I want to see a clear, compelling homepage that explains what SAPS does, how it works, and how to get started, so I can decide whether to sign up. **Implemented (Phase 3):** Hero with gradient text, animated stats bar, animated trial badge, "Why SAPS?" section, 5 feature cards, 3-step timeline, FAQ accordion, final CTA. | Must | 3 |
+| US-101 | As a visitor, I want a sticky navigation bar with Sign in and Get Started Free buttons on every public page so I can easily navigate to signup or login. **Implemented (Phase 3):** Glass blur sticky navbar with logo, About link, FAQ anchor, Sign in, Get Started Free CTA. Mobile hamburger menu. | Must | 3 |
+| US-102 | As a visitor, I want to read about the team and mission on an About page so I can understand who built SAPS. **Implemented (Phase 3):** `/about` page with story, mission, Plan/Track/Connect cards, looking ahead, disclaimer. | Should | 3 |
+| US-103 | As a visitor, I want to submit a contact form with my name, email, subject, and message so I can ask questions or provide feedback. **Implemented (Phase 3):** `/contact` page with form, stored in `contact_messages` table via `POST /api/v1/contact` (no auth). Feature-flagged dormant for v1. | Should | 3 |
+| US-104 | As a visitor, I want the homepage to have proper SEO metadata so it ranks well in search for "Stevenson High School course planner" and similar terms. **Implemented (Phase 3):** Meta description, keywords, Open Graph tags on root layout. | Must | 3 |
+| US-105 | As a visitor, I want to see a footer with product links, legal pages, and social media links so I can find more information about SAPS. **Implemented (Phase 3):** Footer with Product/Legal/Connect columns, social icons (Instagram, Facebook, Twitter, LinkedIn), feedback mailto, school request link. | Should | 3 |
+
 ---
 
 ## 5. Feature Requirements
@@ -811,8 +822,8 @@ The dashboard uses a 3-row, 2-column grid layout:
 ### Flow 1 — New Student Signup & Onboarding
 
 ```
-1. Student arrives at landing page
-   └── Clicks "Get Started Free"
+1. Student arrives at public homepage (/)
+   └── Clicks "Get Started Free" CTA
 
 2. Signup screen (max-w-lg, 2-column grids)
    ├── Option A: Email + password (2-column credential grid)
@@ -1167,22 +1178,45 @@ Trigger: Stripe fires invoice.payment_failed
 
 ## 8. Acquisition & Landing Page
 
-A landing page is required before user acquisition begins. This is not a separate project — it should be a Next.js page within the main app, deployed alongside the product.
+A public-facing homepage and supporting pages are required before user acquisition begins. These are Next.js pages within the main app, deployed alongside the product.
 
-**Landing page requirements (Phase 1b, before user testing):**
-- Clear value proposition: "Plan your 4-year course path. Track your GPA. Graduate on track."
-- Feature highlights for the three pillars (Planning, Tracking, Advisory)
-- Tier comparison table (Starter → Elite) with pricing
-- "Get Started Free — 14-day free trial" CTA → signup flow
+**Public homepage (`/`) — implemented (Phase 3):**
+- Hero section with gradient text, animated stats bar (courses, prerequisites, requirements tracked), animated trial badge ("14-day free trial")
+- "Why SAPS?" problem section highlighting the planning challenge
+- 5 feature cards with unique color accents (one per key capability)
+- 3-step timeline how-it-works section
+- FAQ accordion for common questions
+- Final CTA: "Get Started Free"
+- Feature-flagged sections (dormant for v1): pricing table, testimonials. Controlled via `config/homepage-features.ts` (`showTestimonials: false`, `showContactPage: false`, `showPricing: false`)
 - Mobile-responsive
-- SEO-optimized for: "Stevenson High School course planner", "high school academic planner", "4-year plan tool"
+
+**Public layout (shared by homepage, about, contact):**
+- Sticky navbar with glass blur effect, logo, nav links (About, FAQ section anchor), Sign in button, Get Started Free CTA button
+- Mobile hamburger menu with the same links
+- Footer with three columns (Product / Legal / Connect), social media icons (Instagram, Facebook, Twitter, LinkedIn), feedback mailto link, school request link, copyright with disclaimer
+
+**About page (`/about`) — implemented (Phase 3):**
+- Story section (origin and motivation)
+- Mission statement
+- What we do: Plan / Track / Connect cards
+- Looking ahead section
+- Disclaimer (personal planning tool, not affiliated with the school)
+
+**Contact page (`/contact`) — implemented (Phase 3, feature-flagged dormant for v1):**
+- Form with name, email, subject, message fields
+- Submissions stored in `contact_messages` table via `POST /api/v1/contact` (no auth required)
+- Hidden from navigation when `showContactPage` is false
+
+**SEO — implemented (Phase 3):**
+- Meta description, keywords, and Open Graph tags on root layout
+- Optimized for: "Stevenson High School course planner", "high school academic planner", "4-year plan tool"
 
 **Acquisition strategy (pre-launch):**
 - Seed 3-5 real students during Phase 1b user testing; leverage word-of-mouth
 - Consider a referral mechanism: "Invite a friend, both get 1 week of Plus free" (defer to post-launch)
 - The success metric targets >50% word-of-mouth signups — landing page SEO provides the other half
 
-> The landing page is the first thing a parent or student sees. It must clearly communicate that SAPS is not a school tool (no sign-in with school credentials) — it's a personal planning tool that works alongside the school's process.
+> The homepage is the first thing a parent or student sees. It must clearly communicate that SAPS is not a school tool (no sign-in with school credentials) — it's a personal planning tool that works alongside the school's process.
 
 ---
 

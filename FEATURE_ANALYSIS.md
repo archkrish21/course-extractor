@@ -63,6 +63,15 @@ The platform uses a student-centric account model. Each `account` represents one
 - **Parent user menu:** Parent sees their own name/email in the avatar (not the student's name). A "Managing: StudentName · Gr X" subtitle is shown below the parent's name. "Add Another Child" removed from the dropdown.
 - **Child invite flow:** Parents can invite a child (student) via email from Settings. When the student joins via the invite: (1) if the student already has an account, the parent is added to the student's existing account; (2) if no account exists, a new account is created with both student and parent as members. The active account auto-switches to the joined account.
 
+### Public Pages & Acquisition (Phase 3 — implemented)
+
+- **Public homepage (`/`):** Hero section with gradient text, animated stats bar (courses, prerequisites, requirements tracked), animated trial badge ("14-day free trial"). "Why SAPS?" problem section. 5 feature cards with unique color accents. 3-step timeline how-it-works. FAQ accordion. Final CTA ("Get Started Free"). Feature-flagged pricing and testimonials sections (dormant for v1 via `config/homepage-features.ts`: `showTestimonials: false`, `showContactPage: false`, `showPricing: false`).
+- **Public layout:** Shared by homepage, about, and contact pages. Sticky navbar with glass blur effect, logo, nav links (About, FAQ section anchor), Sign in button, Get Started Free CTA button. Mobile hamburger menu. Footer with Product/Legal/Connect columns, social media icons (Instagram, Facebook, Twitter, LinkedIn), feedback mailto link, school request link, copyright with disclaimer.
+- **About page (`/about`):** Story (origin and motivation), mission statement, what-we-do section (Plan/Track/Connect cards), looking-ahead section, disclaimer (personal planning tool, not affiliated with the school).
+- **Contact page (`/contact`):** Form with name, email, subject, message fields. Submissions stored in `contact_messages` table via `POST /api/v1/contact` (no auth required). Feature-flagged and dormant for v1 (`showContactPage: false`).
+- **SEO:** Root layout includes meta description, keywords, and Open Graph tags (og:title, og:description, og:type, og:url).
+- **Database:** New `contact_messages` table (name, email, subject, message, created_at).
+
 **Onboarding flow for existing students** (non-freshman) is critical: students must be able to enter grades already completed before using the planner. Without prior grade history, the GPA calculator and requirement progress tracker are meaningless. Make bulk entry fast — a table-style entry form, not one course at a time.
 
 ### Grade Tracking & GPA Calculator
@@ -1112,7 +1121,7 @@ CREATE INDEX idx_requirement_progress_student ON requirement_progress (student_i
 - **Phase 1b:** four_year_plans, plan_courses, plan_history, subscription_plans (seed only)
 - **Phase 2:** accounts, account_members, account_invite_codes, grade_entries, gpa_snapshots, subscriptions, account_events, requirement_progress, graduation_requirements, student_requirement_status, student_requirement_opt_ins, stripe_events. Schema changes: `priceFourYear` column on `subscription_plans`; `four_year` added to `billing_cycle` check constraint on `subscriptions`. Drizzle migrations in `lib/db/migrations/`.
 - **Phase 2 (deprecated):** ~~student_parent_links~~, ~~parent_invite_codes~~ — superseded by accounts model
-- **Phase 3:** alerts, notifications, dual_credit_log, plan_share_links, school_requests
+- **Phase 3:** alerts, notifications, dual_credit_log, plan_share_links, school_requests, contact_messages
 - **Phase 4:** career_paths, career_path_courses, ai_recommendations (if persisted)
 - **Phase 5:** counselor_student_links, goals
 
@@ -1507,7 +1516,13 @@ Phase 5 includes a formal WCAG audit and remediation of any gaps, but the core p
 - ✅ Counselor role: joins with canEdit: false (view-only), can view plans/progress/grades, cannot modify or invite. Future: comments/suggestions on shared plans.
 - ✅ Billing updates: pricing cards show linked accounts per tier and PDF/print for Plus; 4-year subscription shows "Expires" instead of "Renews" (one-time payment)
 - ✅ Consent system (`legal_documents` + `consent_records` tables, `/terms` and `/privacy` pages, `/consent` interstitial, consent gate in app layout, signup checkbox, OAuth redirect to consent, account deletion with full cleanup)
-- ✅ 261 total tests (13 API tests for consent/auth-me/accounts + 20+ E2E tests for consent/settings/legal pages + counselor invite/join tests + linked accounts limit tests + E2E for linked accounts UI)
+- ✅ Public homepage (`/`): hero section with gradient text, animated stats bar, animated trial badge, "Why SAPS?" problem section, 5 feature cards with unique color accents, 3-step timeline how-it-works, FAQ accordion, final CTA. Feature-flagged pricing and testimonials sections (dormant for v1 via `config/homepage-features.ts`: `showTestimonials`, `showContactPage`, `showPricing` all false)
+- ✅ Public layout: sticky navbar with glass blur effect, logo, nav links (About, FAQ), Sign in and Get Started Free CTA, mobile hamburger menu. Footer with Product/Legal/Connect columns, social media icons (Instagram, Facebook, Twitter, LinkedIn), feedback mailto, school request link, copyright with disclaimer
+- ✅ About page (`/about`): story, mission, what-we-do (Plan/Track/Connect cards), looking ahead, disclaimer
+- ✅ Contact page (`/contact`): form with name/email/subject/message, stored in `contact_messages` table via `POST /api/v1/contact` (no auth required). Feature-flagged (dormant for v1)
+- ✅ SEO: meta description, keywords, Open Graph tags on root layout
+- ✅ `contact_messages` table for contact form submissions
+- ✅ 266 total tests (17 E2E for homepage/about/contact + 5 API for contact endpoint + existing plan/requirement/progress/planner/consent/settings/legal/linked-accounts tests)
 - Drag-and-drop planner grid upgrade
 - Plan history / undo (last 20 changes)
 - Prerequisite graph visualization (DAG view)

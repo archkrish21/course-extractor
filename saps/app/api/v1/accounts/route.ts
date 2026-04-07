@@ -138,6 +138,12 @@ export async function GET() {
         role: accountMembers.role,
         isClaimed: accounts.claimedAt,
         studentUserId: accounts.studentUserId,
+        studentFirstName: sql<string | null>`(
+          SELECT first_name FROM users WHERE id = ${accounts.studentUserId} LIMIT 1
+        )`,
+        studentLastName: sql<string | null>`(
+          SELECT last_name FROM users WHERE id = ${accounts.studentUserId} LIMIT 1
+        )`,
         state: accounts.state,
         schoolName: accounts.schoolName,
         subscriptionTier: sql<string | null>`(
@@ -161,6 +167,8 @@ export async function GET() {
       graduation_year: r.graduationYear,
       role: r.role,
       is_claimed: r.isClaimed !== null,
+      student_first_name: r.studentFirstName,
+      student_last_name: r.studentLastName,
       state: r.state,
       school_name: r.schoolName,
       subscription_tier: r.subscriptionTier ?? "free",

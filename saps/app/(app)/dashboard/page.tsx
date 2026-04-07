@@ -74,7 +74,7 @@ interface RequirementsData {
 }
 
 export default function DashboardPage() {
-  const { currentAccount, loading: accountLoading } = useAccount();
+  const { currentAccount, loading: accountLoading, userFirstName, userLastName } = useAccount();
   const [showProfileBanner, setShowProfileBanner] = useState(true);
   const [showOnboardingBanner, setShowOnboardingBanner] = useState(false);
   const [primaryPlan, setPrimaryPlan] = useState<DashboardPlan | null>(null);
@@ -240,7 +240,7 @@ export default function DashboardPage() {
     }
   }, [accountLoading, currentAccount]);
 
-  const studentName = currentAccount?.studentName ?? "Student";
+  const displayName = [userFirstName, userLastName].filter(Boolean).join(" ") || currentAccount?.studentName || "Student";
 
   // Helpers
   const formatGpa = (val: number | null | undefined) =>
@@ -261,7 +261,7 @@ export default function DashboardPage() {
   return (
     <div className="mx-auto max-w-6xl">
       <h1 className="mb-2 text-2xl font-bold tracking-tight text-foreground sm:text-3xl">
-        Welcome to {studentName}&apos;s account
+        Welcome, {displayName}
       </h1>
       <p className="mb-6 text-sm text-muted-foreground">
         {currentAccount?.gradeLevel
@@ -292,10 +292,10 @@ export default function DashboardPage() {
             </svg>
             <div>
               <p className="font-semibold text-warning">
-                Waiting for {studentName} to claim this account
+                Waiting for {currentAccount?.studentName ?? "the student"} to claim this account
               </p>
               <p className="mt-1 text-sm text-foreground/70">
-                Share this claim code with {studentName} so they can take ownership of their account.
+                Share this claim code with {currentAccount?.studentName ?? "the student"} so they can take ownership of their account.
               </p>
               {claimCode && (
                 <div className="mt-2 flex items-center gap-2">

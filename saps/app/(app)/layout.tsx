@@ -188,7 +188,7 @@ function AccountSwitcher() {
         <span className="hidden sm:flex sm:flex-col sm:items-start">
           <span className="text-sm font-medium text-foreground">{displayName}</span>
           <span className="text-[10px] text-muted-foreground leading-tight">
-            Managing: {currentAccount.studentName} · Gr {currentAccount.gradeLevel}
+            Managing: {[currentAccount.studentFirstName, currentAccount.studentLastName].filter(Boolean).join(" ") || currentAccount.studentName} · Gr {currentAccount.gradeLevel}
           </span>
         </span>
       </button>
@@ -232,12 +232,13 @@ function AccountSwitcher() {
                           : "bg-muted text-muted-foreground"
                       }`}
                     >
-                      {account.studentName.charAt(0).toUpperCase()}
+                      {([account.studentFirstName, account.studentLastName].filter(Boolean).join(" ") || account.studentName).charAt(0).toUpperCase()}
                     </span>
                     <span className="flex min-w-0 flex-1 flex-col">
                       <span className="flex items-center gap-1.5">
-                        <span className="truncate text-sm font-medium text-foreground">
-                          {account.studentName}
+                        <span className="truncate text-sm font-medium text-foreground"
+                          title={[account.studentFirstName, account.studentLastName].filter(Boolean).join(" ") || account.studentName}>
+                          {[account.studentFirstName, account.studentLastName].filter(Boolean).join(" ") || account.studentName}
                         </span>
                         <span className="shrink-0 text-xs text-muted-foreground">
                           Gr {account.gradeLevel}

@@ -17,6 +17,8 @@ export interface Account {
   role: string;
   isClaimed: boolean;
   subscriptionTier: string;
+  studentFirstName: string | null;
+  studentLastName: string | null;
   state: string | null;
   schoolName: string | null;
 }
@@ -76,6 +78,8 @@ export function AccountProvider({ children }: { children: ReactNode }) {
           role: a.role ?? "",
           isClaimed: a.is_claimed ?? a.isClaimed ?? false,
           subscriptionTier: a.subscription_tier ?? a.subscriptionTier ?? "free",
+          studentFirstName: a.student_first_name ?? a.studentFirstName ?? null,
+          studentLastName: a.student_last_name ?? a.studentLastName ?? null,
           state: a.state ?? null,
           schoolName: a.school_name ?? a.schoolName ?? null,
         })

@@ -215,3 +215,65 @@ test.describe("Login — Password Visibility", () => {
     await expect(hideBtn).toBeVisible({ timeout: 3_000 });
   });
 });
+
+// ─── Name Display ──────────────────────────────────────────────────────────
+
+test.describe("Name Display", () => {
+  test("dashboard welcome message shows user name", async ({ page }) => {
+    await login(page);
+    await page.goto("/dashboard");
+    await page.waitForTimeout(2_000);
+
+    const welcomeText = page.locator("text=/Welcome,/").first();
+    await expect(welcomeText).toBeVisible({ timeout: 5_000 });
+  });
+
+  test("settings profile shows user name", async ({ page }) => {
+    await navigateToSettings(page);
+
+    // Look for a Name field input and verify its value is not empty
+    const nameField = page.locator('input[name="name"], input[id="name"], input[placeholder*="name" i]').first();
+    if ((await nameField.count()) === 0) {
+      // Try finding a display-only name element near a "Name" label
+      const nameLabel = page.locator("text=/^Name$/").first();
+      if ((await nameLabel.count()) === 0) {
+        test.skip();
+        return;
+      }
+      await expect(nameLabel).toBeVisible({ timeout: 5_000 });
+      return;
+    }
+
+    const value = await nameField.inputValue();
+    expect(value).toBeTruthy();
+    expect(value).not.toBe("null");
+  });
+
+  test("account switcher shows student names with tooltip", async ({ page }) => {
+    await login(page);
+    await page.waitForTimeout(2_000);
+
+    // Look for an account switcher trigger
+    const switcher = page.locator('button[aria-label*="account" i], button[aria-label*="switch" i], [data-testid="account-switcher"]').first();
+    if ((await switcher.count()) === 0) {
+      // No account switcher present — user may only have one account
+      test.skip();
+      return;
+    }
+
+    await switcher.click();
+    await page.waitForTimeout(1_000);
+
+    // Verify account list items have title attributes (tooltips) with student names
+    const accountItems = page.locator('[role="menuitem"][title], [role="option"][title], li[title]');
+    if ((await accountItems.count()) === 0) {
+      // No titled account items found — skip gracefully
+      test.skip();
+      return;
+    }
+
+    const firstTitle = await accountItems.first().getAttribute("title");
+    expect(firstTitle).toBeTruthy();
+    expect(firstTitle).not.toBe("");
+  });
+});

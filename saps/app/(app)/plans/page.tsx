@@ -143,11 +143,8 @@ export default function PlansPage() {
                   href={`/planner?planId=${plan.id}`}
                   className="text-base font-semibold text-foreground hover:text-primary transition-colors"
                 >
-                  {plan.name}
+                  {plan.name}{plan.isPrimary ? " \u2605" : ""}
                 </Link>
-                {plan.isPrimary && (
-                  <Badge className="bg-primary/10 text-primary">Primary</Badge>
-                )}
               </div>
 
               <div className="mt-2 flex items-center gap-2 flex-wrap">

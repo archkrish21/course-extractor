@@ -45,7 +45,7 @@ export default function SettingsPage() {
   const [exportOnDelete, setExportOnDelete] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [memberLimit, setMemberLimit] = useState(3);
-  const [accountPlans, setAccountPlans] = useState<Array<{ id: string; name: string }>>([]);
+  const [accountPlans, setAccountPlans] = useState<Array<{ id: string; name: string; isPrimary: boolean }>>([]);
   const [invitePlanShares, setInvitePlanShares] = useState<Record<string, string>>({}); // planId -> permission
 
   // Fetch data
@@ -85,7 +85,7 @@ export default function SettingsPage() {
     apiFetch("/api/v1/plans").then((r) => (r.ok ? r.json() : null)).then((json) => {
       const plans = json?.data ?? json?.plans ?? json ?? [];
       if (Array.isArray(plans)) {
-        setAccountPlans(plans.map((p: Record<string, unknown>) => ({ id: p.id as string, name: (p.name ?? "Untitled") as string })));
+        setAccountPlans(plans.map((p: Record<string, unknown>) => ({ id: p.id as string, name: (p.name ?? "Untitled") as string, isPrimary: !!(p.isPrimary ?? p.is_primary) })));
       }
     }).catch(() => {});
     apiFetch("/api/v1/auth/consent").then((r) => (r.ok ? r.json() : null)).then((json) => {
@@ -441,7 +441,7 @@ export default function SettingsPage() {
                                     }}
                                     className="h-4 w-4 shrink-0 rounded border-border text-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
                                   />
-                                  <span className="truncate">{plan.name}</span>
+                                  <span className="truncate">{plan.name}{plan.isPrimary ? " \u2605" : ""}</span>
                                 </label>
                                 {invitePlanShares[plan.id] && invitePlanShares[plan.id] !== "none" && (
                                   <select

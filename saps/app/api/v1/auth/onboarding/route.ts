@@ -6,9 +6,11 @@ import {
   studentProfiles,
   fourYearPlans,
   planCourses,
+  planShares,
   gradeEntries,
   courses,
   courseCatalogVersions,
+  accountMembers,
 } from "@/lib/db/schema";
 import { eq, and, desc } from "drizzle-orm";
 import { successResponse, errorResponse } from "@/lib/api/response";
@@ -144,7 +146,6 @@ export async function POST(request: NextRequest) {
             courseId: courseInfo.id,
             academicYear: entry.academic_year,
             semester: entry.semester,
-            gradeType: "letter",
             finalGrade: entry.grade,
             creditEarned: courseInfo.creditValue,
           })
@@ -154,9 +155,19 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // Create plan from template
+    // Resolve user's account ID
+    const [membership] = await db
+      .select({ accountId: accountMembers.accountId })
+      .from(accountMembers)
+      .where(eq(accountMembers.userId, user.id))
+      .limit(1);
+    const accountId = membership?.accountId ?? null;
+
+    // Create plan — either from template or blank if courses were entered
     let planId: string | null = null;
-    if (template_id && latestVersion) {
+    const shouldCreatePlan = (template_id || (courses_completed && courses_completed.length > 0)) && latestVersion;
+
+    if (shouldCreatePlan && template_id && latestVersion) {
       // Verify template exists
       const template = await db
         .select({
@@ -185,6 +196,8 @@ export async function POST(request: NextRequest) {
         .insert(fourYearPlans)
         .values({
           studentId: user.id,
+          accountId: accountId ?? undefined,
+          createdBy: user.id,
           name: `My ${template.name} Plan`,
           schoolYear: template.schoolYear,
           catalogVersionId: template.catalogVersionId,
@@ -197,6 +210,14 @@ export async function POST(request: NextRequest) {
         .returning({ id: fourYearPlans.id });
 
       planId = newPlan.id;
+
+      // Create owner share for the plan
+      await db.insert(planShares).values({
+        planId: newPlan.id,
+        userId: user.id,
+        grantedBy: user.id,
+        permission: "owner",
+      });
 
       // Copy template courses into the new plan
       const templateCourses = await db
@@ -221,6 +242,71 @@ export async function POST(request: NextRequest) {
             displayOrder: tc.displayOrder,
           })
           .onConflictDoNothing();
+      }
+    } else if (shouldCreatePlan && !template_id && latestVersion) {
+      // No template selected but courses were entered — create a blank plan with completed courses
+      const now = new Date();
+      const [newPlan] = await db
+        .insert(fourYearPlans)
+        .values({
+          studentId: user.id,
+          accountId: accountId ?? undefined,
+          createdBy: user.id,
+          name: "My Academic Plan",
+          schoolYear: latestVersion.schoolYear,
+          catalogVersionId: latestVersion.id,
+          isTemplate: false,
+          status: "active",
+          isPrimary: true,
+          activatedAt: now,
+        })
+        .returning({ id: fourYearPlans.id });
+
+      planId = newPlan.id;
+
+      // Create owner share
+      await db.insert(planShares).values({
+        planId: newPlan.id,
+        userId: user.id,
+        grantedBy: user.id,
+        permission: "owner",
+      });
+
+      // Add completed courses to the plan as "completed" status
+      if (courses_completed) {
+        const allCourses = await db
+          .select({ id: courses.id, code: courses.code })
+          .from(courses)
+          .where(
+            and(
+              eq(courses.catalogVersionId, latestVersion.id),
+              eq(courses.isActive, true)
+            )
+          );
+        const codeToId = new Map<string, string>();
+        for (const c of allCourses) codeToId.set(c.code, c.id);
+
+        let order = 0;
+        for (const entry of courses_completed) {
+          const courseId = codeToId.get(entry.code);
+          if (!courseId) continue;
+          // Derive grade level from academic year
+          const startYear = parseInt(entry.academic_year.split("-")[0], 10);
+          const entryGradeLevel = 9 + (startYear - (graduation_year - 4));
+
+          await db
+            .insert(planCourses)
+            .values({
+              planId: newPlan.id,
+              courseId,
+              gradeLevel: Math.max(9, Math.min(12, entryGradeLevel)),
+              semester: entry.semester,
+              status: "completed",
+              plannedGrade: entry.grade,
+              displayOrder: order++,
+            })
+            .onConflictDoNothing();
+        }
       }
     }
 

@@ -9,7 +9,8 @@ import {
 } from "@/lib/db/schema";
 import { eq, and } from "drizzle-orm";
 import { successResponse, errorResponse } from "@/lib/api/response";
-import { requireAuth, getAccountContext } from "@/lib/auth/get-user";
+import { requireAuth } from "@/lib/auth/get-user";
+import { getPlanAccess, hasPermission } from "@/lib/auth/plan-permissions";
 import {
   validatePlanIntegrity,
   getTransitiveDownstream,
@@ -77,24 +78,10 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
       return errorResponse("NOT_FOUND", "Plan not found.", 404);
     }
 
-    // Account-based authorization
-    if (plan.accountId) {
-      const accountCtx = await getAccountContext(user.id, plan.accountId);
-      if (!accountCtx) {
-        return errorResponse("FORBIDDEN", "Not a member of this account.", 403);
-      }
-      if (!accountCtx.canEdit) {
-        return errorResponse("FORBIDDEN", "Read-only access.", 403);
-      }
-    } else {
-      // Backward compatibility
-      if (plan.studentId !== user.id) {
-        return errorResponse(
-          "FORBIDDEN",
-          "You do not have access to modify this plan.",
-          403
-        );
-      }
+    // Per-plan permissions check
+    const access = await getPlanAccess(user.id, planId, plan.accountId);
+    if (!access || !hasPermission(access.permission, "edit")) {
+      return errorResponse("FORBIDDEN", "You do not have permission to edit this plan.", 403);
     }
 
     // Fetch the plan course
@@ -121,21 +108,18 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
       return errorResponse("NOT_FOUND", "Plan course not found.", 404);
     }
 
-    // Cannot modify completed courses (unless the student is doing it via account)
-    if (planCourse.status === "completed") {
-      if (plan.accountId) {
-        const accountCtx = await getAccountContext(user.id, plan.accountId);
-        if (!accountCtx || accountCtx.role !== "student") {
-          return errorResponse(
-            "CONFLICT",
-            "Only the student can modify a completed course.",
-            409
-          );
-        }
-      } else {
+    // F-PL-10: Grade-level lock — only GPA waiver toggle allowed
+    const lockedGrades = (plan.lockedGradeLevels as number[]) ?? [];
+    if (lockedGrades.includes(planCourse.gradeLevel)) {
+      const isOnlyGpaWaiver =
+        updates.semester === undefined &&
+        updates.status === undefined &&
+        updates.planned_grade === undefined &&
+        updates.gpa_waiver_applied !== undefined;
+      if (!isOnlyGpaWaiver) {
         return errorResponse(
           "CONFLICT",
-          "Cannot modify a completed course.",
+          `Grade ${planCourse.gradeLevel} is locked. Unlock it first to make changes.`,
           409
         );
       }
@@ -222,24 +206,10 @@ export async function DELETE(request: NextRequest, context: RouteContext) {
       return errorResponse("NOT_FOUND", "Plan not found.", 404);
     }
 
-    // Account-based authorization
-    if (plan.accountId) {
-      const accountCtx = await getAccountContext(user.id, plan.accountId);
-      if (!accountCtx) {
-        return errorResponse("FORBIDDEN", "Not a member of this account.", 403);
-      }
-      if (!accountCtx.canEdit) {
-        return errorResponse("FORBIDDEN", "Read-only access.", 403);
-      }
-    } else {
-      // Backward compatibility
-      if (plan.studentId !== user.id) {
-        return errorResponse(
-          "FORBIDDEN",
-          "You do not have access to modify this plan.",
-          403
-        );
-      }
+    // Per-plan permissions check
+    const access = await getPlanAccess(user.id, planId, plan.accountId);
+    if (!access || !hasPermission(access.permission, "edit")) {
+      return errorResponse("FORBIDDEN", "You do not have permission to edit this plan.", 403);
     }
 
     // Fetch the plan course with course details
@@ -269,24 +239,14 @@ export async function DELETE(request: NextRequest, context: RouteContext) {
       return errorResponse("NOT_FOUND", "Plan course not found.", 404);
     }
 
-    // Cannot remove completed courses (unless student via account)
-    if (planCourse.status === "completed") {
-      if (plan.accountId) {
-        const accountCtx = await getAccountContext(user.id, plan.accountId);
-        if (!accountCtx || accountCtx.role !== "student") {
-          return errorResponse(
-            "CONFLICT",
-            "Only the student can remove a completed course.",
-            409
-          );
-        }
-      } else {
-        return errorResponse(
-          "CONFLICT",
-          "Cannot remove a completed course.",
-          409
-        );
-      }
+    // F-PL-10: Grade-level lock — cannot remove courses from locked grades
+    const lockedGrades = (plan.lockedGradeLevels as number[]) ?? [];
+    if (lockedGrades.includes(planCourse.gradeLevel)) {
+      return errorResponse(
+        "CONFLICT",
+        `Grade ${planCourse.gradeLevel} is locked. Unlock it first to remove courses.`,
+        409
+      );
     }
 
     // Get transitive downstream courses (blast radius) before deletion

@@ -12,6 +12,7 @@ import {
 import { eq, and, sql, count } from "drizzle-orm";
 import { successResponse, errorResponse } from "@/lib/api/response";
 import { requireAuth, getAccountContext } from "@/lib/auth/get-user";
+import { getPlanAccess, hasPermission } from "@/lib/auth/plan-permissions";
 import { validatePlanIntegrity } from "@/lib/prereq/validator";
 
 const patchSchema = z.object({
@@ -306,27 +307,10 @@ export async function DELETE(request: NextRequest, context: RouteContext) {
       return errorResponse("NOT_FOUND", "Plan not found.", 404);
     }
 
-    // Account-based authorization
-    if (plan.accountId) {
-      const accountCtx = await getAccountContext(user.id, plan.accountId);
-      if (!accountCtx) {
-        return errorResponse("FORBIDDEN", "Not a member of this account.", 403);
-      }
-      // Only the plan creator or the student can delete
-      const isCreator = plan.createdBy === user.id;
-      const isStudent = accountCtx.role === "student";
-      if (!isCreator && !isStudent) {
-        return errorResponse(
-          "FORBIDDEN",
-          "Only the plan creator or the student can delete this plan.",
-          403
-        );
-      }
-    } else {
-      // Backward compatibility
-      if (plan.studentId !== user.id) {
-        return errorResponse("FORBIDDEN", "You do not have access to delete this plan.", 403);
-      }
+    // Per-plan permissions check
+    const access = await getPlanAccess(user.id, planId, plan.accountId);
+    if (!access || !hasPermission(access.permission, "delete")) {
+      return errorResponse("FORBIDDEN", "You do not have permission to delete this plan.", 403);
     }
 
     // Cannot delete if it's the only plan

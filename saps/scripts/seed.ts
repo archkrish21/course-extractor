@@ -40,6 +40,7 @@ async function seed() {
         displayName: plan.displayName,
         priceMonthly: plan.priceMonthly?.toString() ?? null,
         priceAnnual: plan.priceAnnual?.toString() ?? null,
+        priceFourYear: plan.priceFourYear?.toString() ?? null,
         maxPlans: plan.maxPlans,
         features: plan.features,
       })
@@ -49,6 +50,7 @@ async function seed() {
           displayName: plan.displayName,
           priceMonthly: plan.priceMonthly?.toString() ?? null,
           priceAnnual: plan.priceAnnual?.toString() ?? null,
+          priceFourYear: plan.priceFourYear?.toString() ?? null,
           maxPlans: plan.maxPlans,
           features: plan.features,
         },
@@ -226,32 +228,84 @@ async function seed() {
       divisionNameToId.set(d.name, d.id);
     }
 
-    const gradRequirements: {
+    interface SeedRequirement {
       requirementName: string;
       category: string;
       requiredCredits: string;
-      divisionName: string;
+      divisionName: string | null;
       notes: string | null;
-    }[] = [
-      { requirementName: "English", category: "English", requiredCredits: "8.0", divisionName: "English", notes: null },
-      { requirementName: "Mathematics", category: "Mathematics", requiredCredits: "6.0", divisionName: "Mathematics", notes: null },
-      { requirementName: "Biology", category: "Science", requiredCredits: "2.0", divisionName: "Science", notes: null },
-      { requirementName: "Physical Science", category: "Science", requiredCredits: "2.0", divisionName: "Science", notes: null },
-      { requirementName: "U.S. History", category: "Social Studies", requiredCredits: "2.0", divisionName: "Social Studies", notes: null },
-      { requirementName: "World History and Geography", category: "Social Studies", requiredCredits: "2.0", divisionName: "Social Studies", notes: null },
-      { requirementName: "Government", category: "Social Studies", requiredCredits: "1.0", divisionName: "Social Studies", notes: null },
-      { requirementName: "Economics or Personal Finance", category: "Social Studies", requiredCredits: "1.0", divisionName: "Business Education", notes: "May be fulfilled through Social Studies or Business Education" },
-      { requirementName: "Health", category: "Physical Welfare", requiredCredits: "1.0", divisionName: "Physical Education", notes: null },
-      { requirementName: "Driver Education", category: "Physical Welfare", requiredCredits: "1.0", divisionName: "Physical Education", notes: null },
-      { requirementName: "Required Electives", category: "Electives", requiredCredits: "2.0", divisionName: "English", notes: "May be fulfilled from any division" },
-      { requirementName: "Additional Credits and P.E.", category: "Physical Welfare", requiredCredits: "17.0", divisionName: "Physical Education", notes: "Includes P.E. and additional elective credits" },
+      matchingRule?: Record<string, unknown>;
+      requirementGroup?: string;
+      evaluationType?: string;
+      displayOrder?: number;
+      isOptIn?: boolean;
+    }
+
+    const allRequirements: SeedRequirement[] = [
+      // ─── Graduation Requirements (Tier 1) ──────────────────────────
+      { requirementName: "English", category: "English", requiredCredits: "8.0", divisionName: "Communication Arts", notes: null, matchingRule: { type: "code_prefix", prefix: "ENG" }, displayOrder: 1 },
+      { requirementName: "Mathematics", category: "Mathematics", requiredCredits: "6.0", divisionName: "Mathematics", notes: null, matchingRule: { type: "division" }, displayOrder: 2 },
+      { requirementName: "Biology", category: "Science", requiredCredits: "2.0", divisionName: "Science", notes: null, matchingRule: { type: "codes", codes: ["SCI111/SCI112", "SCI631/SCI632", "SCI63E1/SCI63E2", "SCI351/SCI352", "SCI521/SCI522", "SCI531/SCI532"] }, displayOrder: 3 },
+      { requirementName: "Physical Science", category: "Science", requiredCredits: "2.0", divisionName: "Science", notes: null, matchingRule: { type: "codes", codes: ["SCI211/SCI212", "SCI271/SCI272", "SCI401/SCI402", "SCI611/SCI612", "SCI61E1/SCI61E2", "SCI641/SCI642", "SCI651/SCI652", "SCI65E1/SCI65E2", "SCI661/SCI662", "SCI66E1/SCI66E2", "SCI671/SCI672", "SCI681/SCI682"] }, displayOrder: 4 },
+      { requirementName: "U.S. History", category: "Social Studies", requiredCredits: "2.0", divisionName: "Social Studies", notes: null, matchingRule: { type: "codes", codes: ["SOC321/SOC322", "SOC621/SOC622", "SOC691/SOC692", "ENG341/ENG342"] }, displayOrder: 5 },
+      { requirementName: "World History and Geography", category: "Social Studies", requiredCredits: "2.0", divisionName: "Social Studies", notes: null, matchingRule: { type: "codes", codes: ["SOC101/SOC102"] }, displayOrder: 6 },
+      { requirementName: "Government", category: "Social Studies", requiredCredits: "1.0", divisionName: "Social Studies", notes: null, matchingRule: { type: "codes", codes: ["SOC401", "SOC402", "SOC631", "SOC632", "SOC681", "SOC682"] }, displayOrder: 7 },
+      { requirementName: "Economics or Personal Finance", category: "Social Studies", requiredCredits: "1.0", divisionName: "Social Studies", notes: "Economics, AP Macro/Micro, or Personal Finance", matchingRule: { type: "codes", codes: ["SOC411/SOC412", "SOC641", "SOC642", "SOC651", "SOC652", "BUS301", "BUS302"] }, displayOrder: 8 },
+      { requirementName: "Health", category: "Physical Welfare", requiredCredits: "1.0", divisionName: "Physical Welfare", notes: null, matchingRule: { type: "codes", codes: ["PED201", "PED202"] }, displayOrder: 9 },
+      { requirementName: "Driver Education", category: "Physical Welfare", requiredCredits: "1.0", divisionName: "Applied Arts", notes: null, matchingRule: { type: "codes", codes: ["D/E231", "D/E232"] }, displayOrder: 10 },
+      { requirementName: "Required Electives", category: "Electives", requiredCredits: "2.0", divisionName: "Fine Arts", notes: "From: Applied Arts, Fine Arts, Multilingual Learning, or CSET", matchingRule: { type: "multi_division", divisionNames: ["Applied Arts", "Fine Arts", "Multilingual Learning", "Computer Science, Engineering and Technology"] }, displayOrder: 11 },
+      { requirementName: "Additional Credits and P.E.", category: "Physical Welfare", requiredCredits: "17.0", divisionName: "Physical Welfare", notes: "All remaining credits including P.E.", matchingRule: { type: "remainder" }, displayOrder: 12 },
+
+      // ─── IL Public University Admission (Tier 2) — opt-in ─────────
+      { requirementName: "English (University)", category: "English", requiredCredits: "8.0", divisionName: "Communication Arts", notes: "Emphasis on written/oral communication and literature", matchingRule: { type: "code_prefix", prefix: "ENG" }, requirementGroup: "il_public_university", isOptIn: true, displayOrder: 1 },
+      { requirementName: "Mathematics (University)", category: "Mathematics", requiredCredits: "6.0", divisionName: "Mathematics", notes: "Including algebra, advanced algebra, geometry and/or trigonometry", matchingRule: { type: "division" }, requirementGroup: "il_public_university", isOptIn: true, displayOrder: 2 },
+      { requirementName: "Science (University)", category: "Science", requiredCredits: "6.0", divisionName: "Science", notes: "Lab sciences with foundation in biology, chemistry and physics", matchingRule: { type: "division" }, requirementGroup: "il_public_university", isOptIn: true, displayOrder: 3 },
+      { requirementName: "Social Studies (University)", category: "Social Studies", requiredCredits: "6.0", divisionName: "Social Studies", notes: "Emphasis on history and government", matchingRule: { type: "division" }, requirementGroup: "il_public_university", isOptIn: true, displayOrder: 4 },
+      { requirementName: "Electives (University)", category: "Electives", requiredCredits: "4.0", divisionName: "Fine Arts", notes: "From: Multilingual Learning, Applied Arts, or Fine Arts", matchingRule: { type: "multi_division", divisionNames: ["Multilingual Learning", "Applied Arts", "Fine Arts"] }, requirementGroup: "il_public_university", isOptIn: true, displayOrder: 5 },
+
+      // ─── Non-Course Requirements (Tier 3) ─────────────────────────
+      { requirementName: "ACT Graduation Requirement", category: "Non-Course", requiredCredits: "0.0", divisionName: null, notes: "Must take the ACT exam", requirementGroup: "non_course", evaluationType: "manual_checkbox", displayOrder: 1 },
+      { requirementName: "FAFSA Requirement", category: "Non-Course", requiredCredits: "0.0", divisionName: null, notes: "File FAFSA, IL alternative application, or non-participation form (senior year)", requirementGroup: "non_course", evaluationType: "manual_checkbox", displayOrder: 2 },
+      { requirementName: "46th Credit (Drug Education)", category: "Non-Course", requiredCredits: "0.0", divisionName: null, notes: "Automatic upon completing Health Education", matchingRule: { type: "codes", codes: ["PED201", "PED202"] }, requirementGroup: "non_course", evaluationType: "auto_from_course", displayOrder: 3 },
+      { requirementName: "Civics and Patriotism Assessments", category: "Non-Course", requiredCredits: "0.0", divisionName: null, notes: "Automatic upon passing Government course assessments", matchingRule: { type: "codes", codes: ["SOC401", "SOC402", "SOC631", "SOC632", "SOC681", "SOC682"] }, requirementGroup: "non_course", evaluationType: "auto_from_course", displayOrder: 4 },
+
+      // ─── Course Load Per-Semester (Tier 5) ────────────────────────
+      ...([9, 10, 11, 12] as const).flatMap((grade) =>
+        ([1, 2] as const).map((sem) => ({
+          requirementName: `Course Load — Grade ${grade} Sem ${sem}`,
+          category: "Course Load",
+          requiredCredits: "0.0",
+          divisionName: null as string | null,
+          notes: `Min 5, max 7 courses (8 with Early Bird)`,
+          matchingRule: { type: "course_load", gradeLevel: grade, semester: sem, minCourses: 5, maxCourses: 7, maxWithEarlyBird: 8 },
+          requirementGroup: "course_load",
+          evaluationType: "course_load_check",
+          displayOrder: (grade - 9) * 2 + sem,
+        }))
+      ),
+
+      // ─── Physical Welfare Per-Semester (Tier 5b) ──────────────────
+      // Each semester must include a Physical Welfare, Dance, or Driver Ed course (or waiver — waivers deferred)
+      ...([9, 10, 11, 12] as const).flatMap((grade) =>
+        ([1, 2] as const).map((sem) => ({
+          requirementName: `PW/Dance/DriverEd — Grade ${grade} Sem ${sem}`,
+          category: "Course Load",
+          requiredCredits: "0.0",
+          divisionName: null as string | null,
+          notes: "Must include a Physical Welfare, Dance, or Driver Education course each semester",
+          matchingRule: { type: "pw_dance_check", gradeLevel: grade, semester: sem, divisionNames: ["Physical Welfare"], codePrefixes: ["DNC", "D/E"] },
+          requirementGroup: "course_load",
+          evaluationType: "pw_dance_check",
+          displayOrder: 10 + (grade - 9) * 2 + sem,
+        }))
+      ),
     ];
 
-    let gradReqsSeeded = 0;
+    let reqsSeeded = 0;
 
-    for (const req of gradRequirements) {
-      const divisionId = divisionNameToId.get(req.divisionName);
-      if (!divisionId) {
+    for (const req of allRequirements) {
+      const divisionId = req.divisionName ? divisionNameToId.get(req.divisionName) : null;
+      if (req.divisionName && !divisionId) {
         logger.warn(`Division "${req.divisionName}" not found — skipping requirement "${req.requirementName}"`);
         continue;
       }
@@ -259,27 +313,37 @@ async function seed() {
       await db
         .insert(graduationRequirements)
         .values({
-          divisionId,
+          divisionId: divisionId ?? null,
           requirementName: req.requirementName,
           requiredCredits: req.requiredCredits,
           eligibleCreditTypes: [req.category],
+          matchingRule: req.matchingRule ?? null,
           notes: req.notes,
           catalogVersionId: gradCatalogVersion.id,
+          requirementGroup: req.requirementGroup ?? "graduation",
+          evaluationType: req.evaluationType ?? "course_match",
+          displayOrder: req.displayOrder ?? 0,
+          isOptIn: req.isOptIn ?? false,
         })
         .onConflictDoUpdate({
           target: [graduationRequirements.catalogVersionId, graduationRequirements.requirementName],
           set: {
-            divisionId,
+            divisionId: divisionId ?? null,
             requiredCredits: req.requiredCredits,
             eligibleCreditTypes: [req.category],
+            matchingRule: req.matchingRule ?? null,
             notes: req.notes,
+            requirementGroup: req.requirementGroup ?? "graduation",
+            evaluationType: req.evaluationType ?? "course_match",
+            displayOrder: req.displayOrder ?? 0,
+            isOptIn: req.isOptIn ?? false,
           },
         });
 
-      gradReqsSeeded++;
+      reqsSeeded++;
     }
 
-    logger.info(`Seeded ${gradReqsSeeded} graduation requirements`);
+    logger.info(`Seeded ${reqsSeeded} requirements (graduation + university + non-course + honors + course load)`);
   }
 
   // ─── Seed plan templates ───────────────────────────────────────────────

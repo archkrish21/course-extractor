@@ -243,6 +243,17 @@ export default function CourseBrowserPage() {
     gpaWaiverOnly ||
     semesterFilter !== "all";
 
+  const activeFilterCount =
+    (division !== "All Divisions" ? 1 : 0) +
+    (department !== "All Departments" ? 1 : 0) +
+    creditTypes.size +
+    gradeLevels.size +
+    (dualCreditOnly ? 1 : 0) +
+    (gpaWaiverOnly ? 1 : 0) +
+    (semesterFilter !== "all" ? 1 : 0);
+
+  const totalPages = total > 0 ? Math.ceil(total / PAGE_SIZE) : 1;
+
   // Close mobile filters on Escape
   useEffect(() => {
     function handleKeyDown(e: KeyboardEvent) {
@@ -257,7 +268,7 @@ export default function CourseBrowserPage() {
     <div className="flex flex-col gap-5">
       {/* Division */}
       <div>
-        <label htmlFor="division-select" className="mb-1.5 block text-sm font-medium text-foreground">
+        <label htmlFor="division-select" className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-muted-foreground">
           Division
         </label>
         <select
@@ -280,7 +291,7 @@ export default function CourseBrowserPage() {
       {/* Department — only shown when a division is selected and has multiple departments */}
       {availableDepartments.length > 1 && (
         <div>
-          <label htmlFor="department-select" className="mb-1.5 block text-sm font-medium text-foreground">
+          <label htmlFor="department-select" className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-muted-foreground">
             Department
           </label>
           <select
@@ -301,7 +312,7 @@ export default function CourseBrowserPage() {
 
       {/* Credit Type */}
       <fieldset>
-        <legend className="mb-1.5 text-sm font-medium text-foreground">Credit Type</legend>
+        <legend className="mb-1.5 text-xs font-semibold uppercase tracking-wider text-muted-foreground">Credit Type</legend>
         <div className="flex flex-wrap gap-2">
           {CREDIT_TYPES.map((type) => (
             <button
@@ -329,7 +340,7 @@ export default function CourseBrowserPage() {
 
       {/* Grade Level */}
       <fieldset>
-        <legend className="mb-1.5 text-sm font-medium text-foreground">Grade Level</legend>
+        <legend className="mb-1.5 text-xs font-semibold uppercase tracking-wider text-muted-foreground">Grade Level</legend>
         <div className="flex flex-wrap gap-2">
           {GRADE_LEVELS.map((level) => (
             <button
@@ -357,7 +368,7 @@ export default function CourseBrowserPage() {
 
       {/* Semester Offered */}
       <fieldset>
-        <legend className="mb-1.5 text-sm font-medium text-foreground">Semester Offered</legend>
+        <legend className="mb-1.5 text-xs font-semibold uppercase tracking-wider text-muted-foreground">Semester Offered</legend>
         <div className="flex flex-wrap gap-2">
           {([
             { value: "all", label: "All" },
@@ -434,7 +445,7 @@ export default function CourseBrowserPage() {
         {/* Main content */}
         <div className="flex-1 min-w-0">
           {/* Search bar + mobile filter toggle */}
-          <div className="mb-4 flex gap-2">
+          <div className="mb-5 flex gap-2">
             <div className="relative flex-1">
               <label htmlFor="course-search" className="sr-only">
                 Search courses
@@ -457,11 +468,23 @@ export default function CourseBrowserPage() {
                 ref={searchInputRef}
                 id="course-search"
                 type="search"
-                placeholder="Search by name, code, or keyword..."
+                placeholder="Search 300+ courses..."
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                className="h-11 min-h-[44px] w-full rounded-lg border border-border bg-background pl-10 pr-3 text-sm text-foreground placeholder:text-muted-foreground focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
+                className="h-12 min-h-[44px] w-full rounded-lg border border-border bg-background pl-10 pr-9 text-sm text-foreground shadow-sm placeholder:text-muted-foreground focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring focus-visible:border-primary"
               />
+              {search && (
+                <button
+                  type="button"
+                  onClick={() => { setSearch(""); searchInputRef.current?.focus(); }}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 flex h-5 w-5 items-center justify-center rounded-full bg-muted text-muted-foreground hover:bg-border hover:text-foreground transition-colors"
+                  aria-label="Clear search"
+                >
+                  <svg aria-hidden="true" className="h-3 w-3" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M6 18 18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              )}
             </div>
 
             {/* Mobile filter button */}
@@ -475,10 +498,10 @@ export default function CourseBrowserPage() {
                 <path strokeLinecap="round" strokeLinejoin="round" d="M10.5 6h9.75M10.5 6a1.5 1.5 0 1 1-3 0m3 0a1.5 1.5 0 1 0-3 0M3.75 6H7.5m3 12h9.75m-9.75 0a1.5 1.5 0 0 1-3 0m3 0a1.5 1.5 0 0 0-3 0m-3.75 0H7.5m9-6h3.75m-3.75 0a1.5 1.5 0 0 1-3 0m3 0a1.5 1.5 0 0 0-3 0m-9.75 0h9.75" />
               </svg>
               Filters
-              {hasActiveFilters && (
-                <span className="flex h-5 w-5 items-center justify-center rounded-full bg-primary text-xs text-primary-foreground">
-                  !
-                </span>
+              {activeFilterCount > 0 && (
+                <Badge variant="default" className="bg-primary text-primary-foreground">
+                  {activeFilterCount}
+                </Badge>
               )}
             </button>
           </div>
@@ -501,8 +524,8 @@ export default function CourseBrowserPage() {
                   onClick={() => setSelectedCourse(course)}
                   aria-label={`View details for ${course.name}`}
                 >
-                  <Card className="transition-colors duration-150 hover:border-primary/40 cursor-pointer h-[140px]">
-                    <CardContent className="flex h-full flex-col justify-between p-4">
+                  <Card className="transition-colors duration-150 hover:border-primary/40 hover:shadow-md cursor-pointer h-full">
+                    <CardContent className="flex h-full flex-col justify-between p-5">
                       {/* Top: name + code */}
                       <div className="min-w-0">
                         <h3 className="text-sm font-semibold text-foreground truncate" title={course.name}>
@@ -552,13 +575,27 @@ export default function CourseBrowserPage() {
             ))}
           </ul>
 
-          {/* Loading state */}
+          {/* Loading state — skeleton cards */}
           {loading && (
-            <div className="flex justify-center py-8" role="status" aria-label="Loading courses">
-              <svg className="h-6 w-6 animate-spin text-primary" fill="none" viewBox="0 0 24 24">
-                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-              </svg>
+            <div role="status" aria-label="Loading courses">
+              <ul className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                {Array.from({ length: 6 }).map((_, i) => (
+                  <li key={i}>
+                    <Card className="animate-pulse">
+                      <CardContent className="flex flex-col gap-3 p-5">
+                        <div className="h-4 w-3/4 rounded bg-muted" />
+                        <div className="h-3 w-1/3 rounded bg-muted" />
+                        <div className="h-3 w-full rounded bg-muted" />
+                        <div className="flex items-center gap-2 pt-2">
+                          <div className="h-5 w-12 rounded-full bg-muted" />
+                          <div className="h-5 w-16 rounded-full bg-muted" />
+                          <div className="ml-auto h-4 w-20 rounded bg-muted" />
+                        </div>
+                      </CardContent>
+                    </Card>
+                  </li>
+                ))}
+              </ul>
               <span className="sr-only">Loading courses...</span>
             </div>
           )}
@@ -598,7 +635,7 @@ export default function CourseBrowserPage() {
               </p>
 
               {/* Page controls */}
-              <nav className="flex items-center gap-1" aria-label="Pagination">
+              <nav className="flex items-center gap-1" role="navigation" aria-label="Pagination">
                 <Button
                   variant="outline"
                   size="sm"
@@ -609,12 +646,52 @@ export default function CourseBrowserPage() {
                   <svg aria-hidden="true" className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 19.5 8.25 12l7.5-7.5" />
                   </svg>
-                  Previous
+                  <span className="hidden sm:inline">Previous</span>
                 </Button>
 
-                <span className="px-3 text-sm font-medium text-foreground">
-                  Page {currentPage}
-                </span>
+                {/* Page number buttons */}
+                {(() => {
+                  const pages: (number | "ellipsis")[] = [];
+                  const maxVisible = totalPages;
+                  if (maxVisible <= 7) {
+                    for (let i = 1; i <= maxVisible; i++) pages.push(i);
+                  } else {
+                    pages.push(1);
+                    if (currentPage > 3) pages.push("ellipsis");
+                    const start = Math.max(2, currentPage - 1);
+                    const end = Math.min(maxVisible - 1, currentPage + 1);
+                    for (let i = start; i <= end; i++) pages.push(i);
+                    if (currentPage < maxVisible - 2) pages.push("ellipsis");
+                    pages.push(maxVisible);
+                  }
+                  return pages.map((p, idx) =>
+                    p === "ellipsis" ? (
+                      <span key={`ellipsis-${idx}`} className="px-1 text-sm text-muted-foreground select-none">
+                        ...
+                      </span>
+                    ) : (
+                      <button
+                        key={p}
+                        type="button"
+                        onClick={() => goToPage(p)}
+                        disabled={!cursorHistory[p - 1] && p !== 1 && p > currentPage}
+                        aria-label={`Page ${p}`}
+                        aria-current={currentPage === p ? "page" : undefined}
+                        className={`
+                          flex h-9 min-w-[36px] items-center justify-center rounded-lg text-sm font-medium transition-colors
+                          focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring
+                          ${currentPage === p
+                            ? "bg-primary text-primary-foreground"
+                            : "text-foreground hover:bg-muted"
+                          }
+                          disabled:pointer-events-none disabled:opacity-50
+                        `}
+                      >
+                        {p}
+                      </button>
+                    )
+                  );
+                })()}
 
                 <Button
                   variant="outline"
@@ -623,7 +700,7 @@ export default function CourseBrowserPage() {
                   onClick={() => goToPage(currentPage + 1)}
                   aria-label="Next page"
                 >
-                  Next
+                  <span className="hidden sm:inline">Next</span>
                   <svg aria-hidden="true" className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" d="m8.25 4.5 7.5 7.5-7.5 7.5" />
                   </svg>

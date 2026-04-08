@@ -1,8 +1,8 @@
 import { NextRequest } from "next/server";
 import { z } from "zod";
 import { db } from "@/lib/db";
-import { accountMembers, accountInviteCodes } from "@/lib/db/schema";
-import { eq, and, isNull } from "drizzle-orm";
+import { accountMembers, accountInviteCodes, accounts, studentProfiles, users, subscriptions, subscriptionPlans, planShares } from "@/lib/db/schema";
+import { eq, and, isNull, sql } from "drizzle-orm";
 import { successResponse, errorResponse } from "@/lib/api/response";
 import { requireAuth } from "@/lib/auth/get-user";
 
@@ -73,15 +73,116 @@ export async function POST(request: NextRequest, context: RouteContext) {
       return errorResponse("CONFLICT", "You are already a member of this account.", 409);
     }
 
+    let joinedAccountId = accountId;
+
     await db.transaction(async (tx) => {
-      // Create account member
-      await tx.insert(accountMembers).values({
-        accountId,
-        userId: user.id,
-        role: invite.targetRole,
-        canEdit: true,
-        invitedBy: invite.createdBy,
-      });
+      if (invite.targetRole === "student") {
+        // Student joining: check if they already have an account (from signup)
+        const [existingAcct] = await tx
+          .select({ id: accounts.id })
+          .from(accounts)
+          .where(eq(accounts.studentUserId, user.id))
+          .limit(1);
+
+        if (existingAcct) {
+          // Student already has an account — add the parent to it
+          joinedAccountId = existingAcct.id;
+
+          // Check parent isn't already a member
+          if (invite.createdBy) {
+            const [parentMember] = await tx
+              .select({ userId: accountMembers.userId })
+              .from(accountMembers)
+              .where(
+                and(
+                  eq(accountMembers.accountId, existingAcct.id),
+                  eq(accountMembers.userId, invite.createdBy)
+                )
+              )
+              .limit(1);
+
+            if (!parentMember) {
+              await tx.insert(accountMembers).values({
+                accountId: existingAcct.id,
+                userId: invite.createdBy,
+                role: "parent",
+                canEdit: true,
+              });
+            }
+          }
+        } else {
+          // No existing account — create a new one
+          const [userData] = await tx
+            .select({ email: users.email })
+            .from(users)
+            .where(eq(users.id, user.id))
+            .limit(1);
+
+          const studentName = userData?.email?.split("@")[0] ?? "Student";
+
+          const [parentAcct] = await tx
+            .select({ gradeLevel: accounts.gradeLevel, graduationYear: accounts.graduationYear })
+            .from(accounts)
+            .where(eq(accounts.id, accountId))
+            .limit(1);
+
+          const gradeLevel = parentAcct?.gradeLevel ?? 9;
+          const graduationYear = parentAcct?.graduationYear ?? (new Date().getFullYear() + (12 - gradeLevel) + 1);
+
+          const [newAccount] = await tx
+            .insert(accounts)
+            .values({
+              studentName,
+              studentUserId: user.id,
+              gradeLevel,
+              graduationYear,
+              createdBy: invite.createdBy ?? user.id,
+              billingContactId: invite.createdBy ?? user.id,
+              claimedAt: new Date(),
+            })
+            .returning();
+
+          joinedAccountId = newAccount.id;
+
+          // Add student as member
+          await tx.insert(accountMembers).values({
+            accountId: newAccount.id,
+            userId: user.id,
+            role: "student",
+            canEdit: true,
+            invitedBy: invite.createdBy,
+          });
+
+          // Add parent as member
+          if (invite.createdBy) {
+            await tx.insert(accountMembers).values({
+              accountId: newAccount.id,
+              userId: invite.createdBy,
+              role: "parent",
+              canEdit: true,
+            });
+          }
+
+          // Create student profile
+          await tx
+            .insert(studentProfiles)
+            .values({
+              userId: user.id,
+              currentGradeLevel: gradeLevel,
+              graduationYear,
+            })
+            .onConflictDoNothing();
+        }
+      } else {
+        // Parent/guardian/counselor joining: add them to the existing account
+        await tx.insert(accountMembers).values({
+          accountId,
+          userId: user.id,
+          role: invite.targetRole,
+          canEdit: invite.targetRole !== "counselor",
+          invitedBy: invite.createdBy,
+        });
+      }
 
       // Mark invite as claimed
       await tx
@@ -91,9 +192,23 @@ export async function POST(request: NextRequest, context: RouteContext) {
           claimedAt: new Date(),
         })
         .where(eq(accountInviteCodes.id, invite.id));
+
+      // Create plan_shares for any plans shared with the invite
+      const sharedPlans = (invite.sharedPlans as Array<{ planId: string; permission: string }>) ?? [];
+      for (const sp of sharedPlans) {
+        await tx
+          .insert(planShares)
+          .values({
+            planId: sp.planId,
+            userId: user.id,
+            grantedBy: invite.createdBy,
+            permission: sp.permission,
+          })
+          .onConflictDoNothing();
+      }
     });
 
-    return successResponse({ success: true });
+    return successResponse({ success: true, account_id: joinedAccountId });
   } catch (error) {
     console.error("[accounts/:id/members/join] POST error:", error);
     return errorResponse("INTERNAL_ERROR", "An unexpected error occurred.", 500);

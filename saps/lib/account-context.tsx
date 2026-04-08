@@ -17,6 +17,10 @@ export interface Account {
   role: string;
   isClaimed: boolean;
   subscriptionTier: string;
+  studentFirstName: string | null;
+  studentLastName: string | null;
+  state: string | null;
+  schoolName: string | null;
 }
 
 export interface AccountContextType {
@@ -25,6 +29,11 @@ export interface AccountContextType {
   switchAccount: (accountId: string) => void;
   loading: boolean;
   refetchAccounts: () => Promise<void>;
+  userEmail: string | null;
+  userRole: string | null;
+  userFirstName: string | null;
+  userLastName: string | null;
+  refetchUser: () => Promise<void>;
 }
 
 const STORAGE_KEY = "saps_current_account_id";
@@ -35,11 +44,20 @@ const AccountContext = createContext<AccountContextType>({
   switchAccount: () => {},
   loading: true,
   refetchAccounts: async () => {},
+  userEmail: null,
+  userRole: null,
+  userFirstName: null,
+  userLastName: null,
+  refetchUser: async () => {},
 });
 
 export function AccountProvider({ children }: { children: ReactNode }) {
   const [accounts, setAccounts] = useState<Account[]>([]);
   const [currentAccountId, setCurrentAccountId] = useState<string | null>(null);
+  const [userEmail, setUserEmail] = useState<string | null>(null);
+  const [userRole, setUserRole] = useState<string | null>(null);
+  const [userFirstName, setUserFirstName] = useState<string | null>(null);
+  const [userLastName, setUserLastName] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
   const fetchAccounts = useCallback(async () => {
@@ -60,6 +78,10 @@ export function AccountProvider({ children }: { children: ReactNode }) {
           role: a.role ?? "",
           isClaimed: a.is_claimed ?? a.isClaimed ?? false,
           subscriptionTier: a.subscription_tier ?? a.subscriptionTier ?? "free",
+          studentFirstName: a.student_first_name ?? a.studentFirstName ?? null,
+          studentLastName: a.student_last_name ?? a.studentLastName ?? null,
+          state: a.state ?? null,
+          schoolName: a.school_name ?? a.schoolName ?? null,
         })
       );
       setAccounts(list);
@@ -85,9 +107,26 @@ export function AccountProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
+  const fetchUser = useCallback(async () => {
+    try {
+      const r = await fetch("/api/v1/auth/me");
+      if (r.ok) {
+        const data = await r.json();
+        const u = data?.data ?? data;
+        if (u) {
+          setUserEmail(u.email ?? null);
+          setUserRole(u.role ?? null);
+          setUserFirstName(u.first_name ?? null);
+          setUserLastName(u.last_name ?? null);
+        }
+      }
+    } catch { /* silent */ }
+  }, []);
+
   useEffect(() => {
     fetchAccounts();
-  }, [fetchAccounts]);
+    fetchUser();
+  }, [fetchAccounts, fetchUser]);
 
   const switchAccount = useCallback(
     (accountId: string) => {
@@ -115,6 +154,11 @@ export function AccountProvider({ children }: { children: ReactNode }) {
         switchAccount,
         loading,
         refetchAccounts: fetchAccounts,
+        userEmail,
+        userRole,
+        userFirstName,
+        userLastName,
+        refetchUser: fetchUser,
       }}
     >
       {children}

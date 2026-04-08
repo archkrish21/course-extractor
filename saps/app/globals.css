@@ -42,6 +42,99 @@ body {
   background-color: var(--color-background);
 }
 
+/* Driver.js tour overrides */
+.saps-tour-popover {
+  --driver-bg-color: var(--color-card);
+  --driver-border-color: var(--color-border);
+  --driver-text-color: var(--color-foreground);
+  --driver-btn-bg: var(--color-primary);
+  --driver-btn-text: #fff;
+}
+.saps-tour-popover .driver-popover {
+  border-radius: 16px;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.15);
+}
+.saps-tour-popover .driver-popover-title {
+  font-size: 16px;
+  font-weight: 700;
+}
+.saps-tour-popover .driver-popover-description {
+  font-size: 14px;
+  color: var(--color-muted-foreground);
+  line-height: 1.6;
+}
+.saps-tour-popover .driver-popover-footer button {
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 13px;
+  padding: 6px 16px;
+}
+.saps-tour-popover .driver-popover-next-btn,
+.saps-tour-popover .driver-popover-close-btn-text {
+  background: var(--color-primary);
+  color: #fff;
+}
+.saps-tour-popover .driver-popover-prev-btn {
+  background: transparent;
+  color: var(--color-muted-foreground);
+}
+.saps-tour-popover .driver-popover-progress-text {
+  font-size: 11px;
+  color: var(--color-muted-foreground);
+}
+
+/* ─── Print styles ─────────────────────────────────────────────────────────── */
+@media print {
+  /* Force color printing for backgrounds and borders */
+  body {
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  /* Landscape with tight margins */
+  @page {
+    size: landscape;
+    margin: 0.4in;
+  }
+
+  /* Hide layout chrome: header, trial banner, feedback widget, mobile nav */
+  header,
+  .no-print {
+    display: none !important;
+  }
+
+  /* Hide fixed-position floating widgets (feedback, tour, etc.) */
+  .fixed {
+    display: none !important;
+  }
+
+  /* Remove main content constraints so print fills the page */
+  main {
+    max-width: none !important;
+    padding: 0 !important;
+    margin: 0 !important;
+  }
+
+  /* Ensure print tables have visible borders */
+  .print-container table {
+    border-collapse: collapse;
+  }
+  .print-container th,
+  .print-container td {
+    border: 1px solid #d1d5db;
+    padding: 2px 4px;
+  }
+  .print-container thead tr {
+    background-color: #f3f4f6;
+  }
+
+  /* Prevent page breaks inside grade blocks */
+  .print-grade-block {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+}
+
 /* Focus ring utility */
 .focus-ring {
   outline: none;

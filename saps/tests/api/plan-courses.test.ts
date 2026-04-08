@@ -88,6 +88,15 @@ vi.mock("@/lib/auth/get-user", () => ({
   getAccountContext: vi.fn(),
 }));
 
+const mockGetPlanAccess = vi.fn();
+vi.mock("@/lib/auth/plan-permissions", () => ({
+  getPlanAccess: (...args: unknown[]) => mockGetPlanAccess(...args),
+  hasPermission: (userPerm: string, requiredPerm: string) => {
+    const levels: Record<string, number> = { view: 1, edit: 2, delete: 3, owner: 4 };
+    return (levels[userPerm] ?? 0) >= (levels[requiredPerm] ?? 0);
+  },
+}));
+
 vi.mock("@/lib/prereq/validator", () => ({
   validateCourseAddition: vi.fn().mockResolvedValue({
     valid: true,
@@ -108,6 +117,8 @@ vi.mock("@/lib/db/schema", () => ({
   planHistory: { planId: "ph_planId", changedBy: "ph_changedBy", action: "ph_action", beforeState: "ph_beforeState", afterState: "ph_afterState" },
   studentParentLinks: { studentId: "spl_studentId", parentId: "spl_parentId" },
   counselorStudentLinks: { studentId: "csl_studentId", counselorId: "csl_counselorId" },
+  planShares: { id: "ps_id", planId: "ps_planId", userId: "ps_userId", permission: "ps_permission", isHidden: "ps_isHidden", grantedBy: "ps_grantedBy" },
+  accountMembers: { accountId: "am_accountId", userId: "am_userId", role: "am_role", canEdit: "am_canEdit" },
 }));
 
 vi.mock("drizzle-orm", () => ({
@@ -162,6 +173,7 @@ describe("POST /api/v1/plans/:id/courses", () => {
     dbChain = createQueryChain();
     (requireAuth as ReturnType<typeof vi.fn>).mockResolvedValue(TEST_USER);
     (getAccountContext as ReturnType<typeof vi.fn>).mockResolvedValue(TEST_ACCOUNT_CTX);
+    mockGetPlanAccess.mockResolvedValue({ permission: "owner", isHidden: false });
     (validateCourseAddition as ReturnType<typeof vi.fn>).mockResolvedValue({
       valid: true,
       violations: [],
@@ -380,6 +392,7 @@ describe("PATCH /api/v1/plans/:id/courses/:courseId", () => {
     dbChain = createQueryChain();
     (requireAuth as ReturnType<typeof vi.fn>).mockResolvedValue(TEST_USER);
     (getAccountContext as ReturnType<typeof vi.fn>).mockResolvedValue(TEST_ACCOUNT_CTX);
+    mockGetPlanAccess.mockResolvedValue({ permission: "owner", isHidden: false });
   });
 
   it("updates status", async () => {
@@ -479,6 +492,7 @@ describe("DELETE /api/v1/plans/:id/courses/:courseId", () => {
     dbChain = createQueryChain();
     (requireAuth as ReturnType<typeof vi.fn>).mockResolvedValue(TEST_USER);
     (getAccountContext as ReturnType<typeof vi.fn>).mockResolvedValue(TEST_ACCOUNT_CTX);
+    mockGetPlanAccess.mockResolvedValue({ permission: "owner", isHidden: false });
     (validatePlanIntegrity as ReturnType<typeof vi.fn>).mockResolvedValue({
       valid: true,
       violations: [],
@@ -544,6 +558,7 @@ describe("GET /api/v1/plans/:id/validate", () => {
     dbChain = createQueryChain();
     (requireAuth as ReturnType<typeof vi.fn>).mockResolvedValue(TEST_USER);
     (getAccountContext as ReturnType<typeof vi.fn>).mockResolvedValue(TEST_ACCOUNT_CTX);
+    mockGetPlanAccess.mockResolvedValue({ permission: "owner", isHidden: false });
   });
 
   it("returns all violations", async () => {

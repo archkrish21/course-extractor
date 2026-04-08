@@ -2,8 +2,8 @@
 ## Technical Design Document
 
 **Audience:** Engineering team
-**Status:** Phase 1b Complete — Phase 2 development next.
-**Last updated:** 2026-03-15
+**Status:** Phase 3 In Progress — Active Development
+**Last updated:** 2026-04-07
 
 ---
 
@@ -64,14 +64,15 @@ User → Next.js frontend → API routes → PostgreSQL (Supabase + RLS)
 ```
 ┌─────────────────────────────────────────────────────────────────────┐
 │                         Frontend (Next.js)                          │
-│  Auth / Onboarding  │  Dashboard   │  4-yr Planner  │ Grade Tracker │
-│  GPA Calc / What-If │  Req Checker │  AI Advisor    │ Notif Center  │
-│  Plan Comparison    │ Course Search│  Prereq Graph  │ Plan Export   │
+│  Auth / Onboarding  │  Dashboard   │  4-yr Planner  │  Progress     │
+│  Transcript         │  Req Checker │  AI Advisor    │ Notif Center  │
+│  GPA Calc / What-If │ Course Search│  Prereq Graph  │ Plan Export   │
+│  Plan Comparison    │  Homepage    │  About / Contact│              │
 └──────────────────────────────────┬──────────────────────────────────┘
                                    │ REST /api/v1/...
 ┌──────────────────────────────────▼──────────────────────────────────┐
 │                  API Layer (Next.js API routes)                      │
-│  /auth          /courses        /plans          /grades              │
+│  /auth          /courses        /plans          /transcript          │
 │  /requirements  /gpa            /suggestions    /alerts              │
 │  /notifications /ai             /users          /catalog-versions    │
 │  /export        /dual-credit    /subscriptions  /stripe              │
@@ -111,7 +112,7 @@ User → Next.js frontend → API routes → PostgreSQL (Supabase + RLS)
 | Layer | Choice | Version | Rationale |
 |---|---|---|---|
 | Frontend framework | Next.js (App Router) | 15.x | SSR + API routes in one; strong ecosystem |
-| UI components | shadcn/ui + Tailwind CSS | latest | Accessible, unstyled-first; critical for planner grid and DAG |
+| UI components | shadcn/ui + Tailwind CSS v4 | latest | Accessible, unstyled-first; Tailwind v4 with `@theme` CSS variables for design tokens; critical for planner grid and DAG |
 | State management | Zustand | 5.x | Lightweight; well-suited for planner/simulator ephemeral state |
 | Auth | Supabase Auth | — | Same instance as app DB; RLS handles multi-tenant isolation; Google OAuth built-in |
 | Database | PostgreSQL via Supabase | 15+ | Managed; RLS; recursive CTEs for DAG traversal |
@@ -127,6 +128,7 @@ User → Next.js frontend → API routes → PostgreSQL (Supabase + RLS)
 | API validation | Zod + zod-to-openapi | — | Request/response validation; auto-generates OpenAPI spec |
 | Error tracking | Sentry | — | Captures frontend, API, and BullMQ worker errors |
 | Product analytics | PostHog | — | Event tracking, funnel analysis, feature flags; generous free tier (1M events/mo); self-hostable; GDPR-friendly |
+| Guided tours | driver.js | 1.x | Lightweight (5KB) step-by-step feature walkthroughs; adaptive step counts; CSS-customizable popovers |
 | PDF extractor | Python + pdfplumber | 3.12 / 0.11 | Standalone CLI; independent of web stack |
 | Source control | GitHub | — | PR-based workflow; branch protection on `main` |
 | CI/CD | GitHub Actions → AWS | — | Tests on every PR; deploy to Amplify + ECS on merge to `main` |
@@ -142,14 +144,22 @@ User → Next.js frontend → API routes → PostgreSQL (Supabase + RLS)
 ```
 /
 ├── app/                        # Next.js App Router
+│   ├── (public)/               # public pages group (no auth required)
+│   │   ├── page.tsx            # Homepage — hero, stats, features, how-it-works, FAQ, CTA
+│   │   ├── layout.tsx          # Public layout — sticky glass navbar, footer with social/legal columns
+│   │   ├── about/              # About page — story, mission, Plan/Track/Connect cards, disclaimer
+│   │   └── contact/            # Contact page (feature-flagged, dormant for v1)
 │   ├── (auth)/                 # auth group
 │   │   ├── login/
 │   │   └── signup/
 │   ├── (app)/                  # authenticated group
 │   │   ├── dashboard/
-│   │   └── courses/
+│   │   ├── courses/
+│   │   ├── progress/           # Academic Progress page — two-column layout with filter bar, grouped sections, sticky sidebar (print button in header, Plus+ gated)
+│   │   └── transcript/         # read-only transcript page (print button in header, Plus+ gated)
 │   └── api/v1/                 # API routes
 │       ├── auth/
+│       ├── contact/            # POST — contact form submission (no auth)
 │       ├── courses/
 │       ├── health/
 │       └── users/
@@ -158,6 +168,7 @@ User → Next.js frontend → API routes → PostgreSQL (Supabase + RLS)
 │   ├── course-detail/
 │   ├── trial-banner/
 │   ├── planner/  # planner-grid.tsx, course-picker.tsx, plan-course-card.tsx
+│   ├── tour-button.tsx          # Global "Tour" button for app header nav bar
 │   ├── prereq-graph/           # (empty — Phase 1b+)
 │   └── charts/                 # (empty — Phase 1b+)
 ├── lib/
@@ -171,14 +182,16 @@ User → Next.js frontend → API routes → PostgreSQL (Supabase + RLS)
 │   ├── analytics/              # event tracking utilities
 │   ├── gpa/  # calc.ts — GPA calculation engine
 │   ├── prereq/  # validator.ts — prerequisite DAG validation
-│   ├── hooks/  # use-undo-stack.ts
+│   ├── hooks/  # use-undo-stack.ts, use-tour.ts (guided tour state + driver.js orchestration)
 │   ├── account-context.tsx  # React context for account switching
 │   ├── api-client.ts  # apiFetch with X-Account-Id header
 │   ├── alerts/                 # (empty — future phase)
 │   ├── ai/                     # (empty — future phase)
-│   └── stripe/                 # (empty — future phase)
+│   └── stripe/                 # Stripe SDK singleton + price mapping
+│       ├── client.ts           # Stripe SDK singleton (initialized from STRIPE_SECRET_KEY)
+│       └── prices.ts           # Price ID mapping for all tier × interval combinations
 ├── worker/                     # BullMQ worker process (deployed separately)
-│   └── jobs/                   # (empty — Phase 2+)
+│   └── jobs/                   # BullMQ job definitions (Phase 2+)
 ├── extractor/                  # Python PDF extractor (independent)
 │   ├── extract.py
 │   ├── loader.py
@@ -188,7 +201,9 @@ User → Next.js frontend → API routes → PostgreSQL (Supabase + RLS)
 │       └── 2026-courses.json   # git-tracked yearly artifacts
 ├── config/
 │   ├── gpa-weights.ts          # CONFIGURABLE — get from school before coding
-│   ├── grade-scale.ts          # letter → GPA points mapping
+│   ├── grade-scale.ts          # letter → GPA points mapping + isPassFailCourse() + PASS_FAIL_OPTIONS
+│   ├── homepage-features.ts    # Feature flags: showTestimonials (true), showContactPage (false), showPricing (false)
+│   ├── tours.ts                # Tour step definitions for Welcome (6 steps), Planner (2-5 adaptive), Progress (1-3 adaptive)
 │   └── subscription-plans.ts   # tier feature flags (mirrors DB seed)
 ├── scripts/
 │   └── seed.ts                 # Drizzle seed runner (npm run db:seed)
@@ -211,7 +226,15 @@ User → Next.js frontend → API routes → PostgreSQL (Supabase + RLS)
 
 All pages under the `(app)/` route group require authentication. The app layout checks the Supabase session on mount and redirects unauthenticated users to `/login?redirect=...`.
 
-**Google OAuth first-time user provisioning:** The OAuth callback (`/api/v1/auth/callback`) detects first-time Google users (no `users` row for the auth ID) and provisions all app-level records: `users` (role: student, email verified: true), `accounts`, `account_members`, `student_profiles`, and `subscriptions` (14-day Elite trial). The student name is extracted from Google profile metadata (`full_name`). First-time users are redirected to `/onboarding`; returning users go to their intended destination. If provisioning fails, the user is redirected to `/dashboard?error=setup_incomplete` for graceful recovery.
+**Public pages (Phase 3 — no auth required):** Pages under the `(public)/` route group are accessible without authentication. They share a public layout with a sticky navbar (glass blur effect, logo, nav links for About and FAQ section anchor, Sign in button, Get Started Free CTA) and a footer (Product/Legal/Connect columns, social media icons for Instagram/Facebook/Twitter/LinkedIn, feedback link pointing to /contact page, school request link, copyright with disclaimer). Mobile uses a hamburger menu. The homepage (`/`) includes a hero section with gradient text, animated stats bar, animated trial badge, "Why SAPS?" problem section, 5 feature cards with unique color accents, 3-step timeline how-it-works, FAQ accordion, and final CTA. Feature-flagged pricing section dormant for v1 (`showPricing: false`). Testimonials section enabled (`showTestimonials: true`) with three placeholder testimonials (student/parent/counselor personas with star ratings). The about page (`/about`) has story, mission, what-we-do (Plan/Track/Connect cards), looking ahead, and disclaimer sections. The contact page (`/contact`) has a form with name/email/subject/message fields, submitted to `POST /api/v1/contact` (no auth) and stored in `contact_messages` table; it is feature-flagged and dormant for v1.
+
+**SEO (Phase 3):** Root layout includes meta description, keywords, and Open Graph tags (og:title, og:description, og:type, og:url). Optimized for search terms: "Stevenson High School course planner", "high school academic planner", "4-year plan tool".
+
+**App header navigation:** The top navigation bar includes nav links (Dashboard, Courses, Planner, Progress, Transcript), a global "Tour" button (triggers the guided tour for the current page — detects page and adapts step count based on DOM state), and a user avatar dropdown (Settings, Billing, Sign out). Sign out calls `supabase.auth.signOut()`, clears the client session, and redirects to `/` (home page). The mobile hamburger menu also includes a Sign out option. Settings is no longer in the main navigation bar — it was moved into the avatar dropdown. The avatar and layout display the user's full name (from `firstName` + `lastName` columns) instead of the email prefix. For parent users: the avatar shows the parent's own name/email (not the student's), with a "Managing: StudentName · Gr X" subtitle below. "Add Another Child" removed from the dropdown.
+
+**Signup page redesign (Phase 3):** Wider layout (max-w-lg), 2-column grids for credentials and personal info. Role selector with description cards (Student/Parent/Guardian/Counselor — 4 roles). Guardian maps to "parent" in DB for identical behavior. Frozen state (IL) and school (Stevenson) fields with "Request yours" link for unsupported schools. School request form submits to `POST /api/v1/school-request` (no auth) and stores in `school_requests` table. "Claim your account" link removed from signup page. Non-student roles skip onboarding and go directly to dashboard. Onboarding shows welcome banner ("Account created successfully!") with auto-dismiss. "Skip setup" link on onboarding page. Smart routing after onboarding: dashboard if plans exist, planner otherwise.
+
+**Google OAuth first-time user provisioning:** The OAuth callback (`/api/v1/auth/callback`) detects first-time Google users (no `users` row for the auth ID) and provisions all app-level records: `users` (role: student, email verified: true), `accounts` (with `state` = 'IL', `schoolName` = 'Stevenson'), `account_members`, `student_profiles`, and `subscriptions` (14-day Plus trial with trialing status). The student name is extracted from Google profile metadata (`full_name`). First-time users are redirected to `/onboarding`; returning users go to their intended destination. If provisioning fails, the user is redirected to `/dashboard?error=setup_incomplete` for graceful recovery.
 
 ### User roles
 
@@ -338,16 +361,37 @@ export async function getAccountContext(userId: string, accountId?: string): Pro
   // If accountId provided (from header/route), verify membership
   // If not provided and user is a student, find their account
   // If not provided and user is a parent, return error (must specify account)
-  // Returns: { accountId, role, canEdit, tier }
+  // Returns: { accountId, role, canEdit, tier, maxLinkedAccounts }
 }
 ```
+
+**Per-plan permission enforcement (Phase 3):**
+
+```typescript
+// lib/plans/access.ts
+export async function getPlanAccess(planId: string, userId: string): Promise<PlanAccess> {
+  // 1. Check plan_shares for a row matching (planId, userId)
+  // 2. If found, return { permission, isHidden } from the share row
+  // 3. If not found (no plan_shares rows for this plan), fall back to accountCtx.canEdit
+  //    - canEdit=true → 'edit' permission; canEdit=false → 'view' permission
+  // 4. Permission hierarchy: owner > delete > edit > view
+  //    - 'delete' implies edit + view; 'edit' implies view
+  // Returns: { permission: 'owner'|'delete'|'edit'|'view', isHidden: boolean }
+}
+```
+
+All plan mutation endpoints (POST/PATCH/DELETE on `/plans/:id/courses`, `lock-grade`) call `getPlanAccess()` and check the returned permission level instead of using `accountCtx.canEdit`. This enables per-plan permission control for shared plans. Owner shares are auto-created when a plan is created via `POST /api/v1/plans`.
+
+> **Migration:** `lib/db/migrations/` contains a migration script that creates owner share rows in `plan_shares` for all existing plans, ensuring backward compatibility.
 
 **API responses for gated access:**
 
 | Condition | HTTP Status | Body |
 |---|---|---|
-| Feature requires higher tier | `402` | `{ "upgrade_required": true, "feature": "ai_suggestions", "minimum_tier": "pro" }` |
+| Feature requires higher tier | `402` | `{ "upgrade_required": true, "feature": "ai_suggestions", "minimum_tier": "elite" }` |
 | Account frozen (any write) | `403` | `{ "account_frozen": true, "reason": "payment_lapsed", "reactivate_url": "..." }` |
+
+> **Feature flag-based gating (Phase 2 update):** Subscription middleware exposes 8 feature flags: `canWhatIf`, `canExportPdf`, `canComparePlans`, `canSharePlans`, `canUseAi`, `canViewPercentile`, `canParentDraft`, `canCreateGoals`. API routes and server components check these flags rather than tier name strings. This decouples feature access from tier naming. Pro tier backward compatibility: middleware maps `pro` to `plus` so any legacy references still resolve correctly. **Print button gating (implemented):** The `canExportPdf` flag gates all print buttons across the app (planner, progress, transcript, dashboard "Print Plan" quick action). Client-side check: `subscriptionTier === "plus" || "elite"`. Disabled buttons wrapped in `<span>` with `title="Upgrade to Plus to print"` tooltip for accessibility.
 
 ---
 
@@ -384,6 +428,9 @@ CREATE TABLE users (
   -- Authentication handled by Supabase Auth (auth.users); no credentials stored in public schema
   id                       UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   email                    TEXT UNIQUE NOT NULL,
+  first_name               TEXT,              -- set from email prefix at signup; editable via PATCH /api/v1/auth/me
+  last_name                TEXT,              -- editable via PATCH /api/v1/auth/me
+  tour_state               JSONB DEFAULT '{}',  -- tracks completed tours {"welcome":true,"planner":true}; updated via PATCH /api/v1/auth/me
   role                     TEXT NOT NULL CHECK (role IN ('student','parent','counselor','admin')),
   is_email_verified        BOOLEAN DEFAULT FALSE,
   date_of_birth            DATE,
@@ -432,6 +479,8 @@ CREATE TABLE accounts (
   grade_level           SMALLINT CHECK (grade_level BETWEEN 9 AND 12),
   graduation_year       SMALLINT,
   school_id             UUID,
+  state                 TEXT,              -- frozen to 'IL' at signup; for future multi-state expansion
+  school_name           TEXT,              -- frozen to 'Stevenson' at signup; for future multi-school expansion
   student_user_id       UUID UNIQUE REFERENCES users(id) ON DELETE SET NULL,
   created_by            UUID NOT NULL REFERENCES users(id) ON DELETE RESTRICT,
   billing_contact_id    UUID REFERENCES users(id) ON DELETE SET NULL,
@@ -466,17 +515,81 @@ CREATE INDEX idx_account_members_user ON account_members (user_id);
 
 ```sql
 CREATE TABLE account_invite_codes (
+  id            UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  account_id    UUID NOT NULL REFERENCES accounts(id) ON DELETE CASCADE,
+  created_by    UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  target_role   TEXT NOT NULL CHECK (target_role IN ('parent', 'guardian')),
+  code          VARCHAR(8) NOT NULL UNIQUE,
+  expires_at    TIMESTAMPTZ NOT NULL,
+  claimed_by    UUID REFERENCES users(id),
+  claimed_at    TIMESTAMPTZ,
+  shared_plans  JSONB DEFAULT '[]',  -- plans to share on invite claim: [{planId, permission}]
+  created_at    TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- When an invite with shared_plans is claimed, the join endpoint creates
+-- plan_shares rows for each plan in the array, granting the invited user
+-- the specified permission level on each plan.
+```
+
+### Table: `school_requests`
+
+```sql
+CREATE TABLE school_requests (
   id          UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  account_id  UUID NOT NULL REFERENCES accounts(id) ON DELETE CASCADE,
-  created_by  UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-  target_role TEXT NOT NULL CHECK (target_role IN ('parent', 'guardian')),
-  code        VARCHAR(8) NOT NULL UNIQUE,
-  expires_at  TIMESTAMPTZ NOT NULL,
-  claimed_by  UUID REFERENCES users(id),
-  claimed_at  TIMESTAMPTZ,
+  email       TEXT NOT NULL,
+  school_name TEXT NOT NULL,
+  state       TEXT NOT NULL,
+  message     TEXT,
   created_at  TIMESTAMPTZ DEFAULT NOW()
 );
 ```
+
+### Table: `contact_messages`
+
+```sql
+CREATE TABLE contact_messages (
+  id          UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  name        TEXT NOT NULL,
+  email       TEXT NOT NULL,
+  subject     TEXT NOT NULL,
+  message     TEXT NOT NULL,
+  created_at  TIMESTAMPTZ DEFAULT NOW()
+);
+```
+
+### Table: `feedback`
+
+```sql
+CREATE TABLE feedback (
+  id          UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id     UUID REFERENCES users(id) ON DELETE SET NULL,
+  rating      INTEGER NOT NULL CHECK (rating >= 1 AND rating <= 5),
+  comment     TEXT,
+  page        TEXT NOT NULL,
+  created_at  TIMESTAMPTZ DEFAULT NOW()
+);
+```
+
+> **Contact form (Phase 3):** The contact page (`/contact`) submits to `POST /api/v1/contact` (no auth required) and stores messages in the `contact_messages` table. The contact page is feature-flagged via `config/homepage-features.ts` (`showContactPage: false` for v1). Footer feedback link now points to `/contact` page instead of mailto.
+
+> **In-app feedback widget (Phase 3):** Floating "Feedback" button on all authenticated app pages (bottom-right). Opens panel with 5-star rating + optional comment. Captures current page path. Stores in `feedback` table via `POST /api/v1/feedback` (auth required). Success animation, auto-closes.
+
+> **Guided tour system (Phase 3):** driver.js integration (5KB) for step-by-step feature walkthroughs. Three adaptive tours: Welcome (dashboard, 6 steps), Planner (2-5 steps — 2 when no plans, 5 when plans exist), Progress (1-3 steps — 1 when no plan data, 3 when data exists). Auto-starts on first visit per page. Global "Tour" button in app header nav bar on every page — detects current page and triggers appropriate tour with correct steps (checks DOM for plan elements). Tour state persisted in `tourState` JSONB column on `users` table via `PATCH /api/v1/auth/me`. Custom driver.js CSS overrides in `globals.css` matching SAPS brand (rounded popovers, primary color buttons, custom progress text). Key files: `lib/hooks/use-tour.ts` (tour hook), `config/tours.ts` (step definitions), `components/tour-button.tsx` (global nav button). `data-tour` attributes added to key elements on dashboard, planner, and progress pages.
+
+> **School request system (Phase 3):** Signup page includes frozen state/school fields with a "Request yours" link. The school request form submits to `POST /api/v1/school-request` (no auth required) and stores requests in the `school_requests` table for future outreach and multi-school expansion.
+
+> **Child invite flow (Phase 3):** Parents can invite a child (student) via email from Settings. When the student joins via the invite: (1) if the student already has an account, the parent is added as a member of the student's existing account; (2) if no account exists, a new account is created with both student and parent added as members. The active account auto-switches to the joined account.
+
+> **Linked account member removal (Phase 3 update):** Any member can remove other members (except themselves). The previous restriction preventing student removal has been lifted — non-student members can remove the student. Remove button shows for all members except self.
+
+> **Settings redesign (Phase 3):** Flat sections with uppercase headers (no collapsible cards). 3x3 profile grid: Name/Email/Password/Role/Grade/Graduation/State/School (state and school read-only). Clean linked accounts list (renamed from "Family Members") with usage counter ("2/5 linked accounts used"). Compact subscription/legal/danger zone sections. Settings hides subscription/billing for counselors, shows separate "Student Information" section for non-student roles. Students can invite Parent/Guardian/Counselor; parents can invite Child/Parent/Guardian/Counselor; counselors cannot invite anyone (view-only, invite form hidden). Invite form includes plan sharing: students select which plans to share (view/edit permission) when inviting.
+
+> **Linked accounts tier limits (Phase 3):** Starter/Trial: 3, Plus: 5, Elite: 8. Enforced in invite API (402 UPGRADE_REQUIRED with code `UPGRADE_REQUIRED`). `maxLinkedAccounts` added to `SubscriptionContext` and tier config in `subscription_plans.features` JSONB.
+
+> **Counselor role (Phase 3):** Counselors join accounts with `canEdit: false` (view-only). Can view plans, progress, grades but cannot modify. Cannot create plans, delete plans, share plans, invite others, or access billing. Sees "View" instead of "Edit" on plans; "No Plans Shared Yet" empty states shown. Account switcher shows "Managing: Student Name · Gr X" like parents. Settings page hides subscription/billing for counselors, shows separate "Student Information" section for non-student roles. Invite form hidden for counselor role. Future: will be able to add comments/suggestions on shared plans.
+
+> **Billing updates (Phase 3):** Pricing cards updated to show linked accounts per tier and PDF/print for Plus. 4-year subscription display shows "Expires" instead of "Renews" since it is a one-time payment (Stripe payment mode).
 
 > **Migration note (Phase 2):** All data tables (`four_year_plans`, `subscriptions`, `grade_entries`, `gpa_snapshots`, `goals`, `alerts`, `notifications`, `requirement_progress`, `dual_credit_log`) gain an `account_id UUID REFERENCES accounts(id)` column. The `four_year_plans` table gains `created_by UUID REFERENCES users(id)` and `visibility TEXT DEFAULT 'shared' CHECK (visibility IN ('shared', 'private'))`. The `student_parent_links` and `parent_invite_codes` tables are deprecated in favor of `account_members` and `accounts.claim_code`. subscriptions gains an account_id column alongside the existing user_id (both retained for backward compatibility during migration). Existing data is migrated by creating an account row per existing student user and updating all foreign keys.
 
@@ -530,15 +643,20 @@ CREATE TABLE counselor_student_links (
 
 ```sql
 CREATE TABLE subscription_plans (
-  id            UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  name          TEXT NOT NULL UNIQUE,     -- 'starter','plus','pro','elite'
-  display_name  TEXT NOT NULL,
-  price_monthly DECIMAL(6,2),             -- NULL = free
-  price_annual  DECIMAL(7,2),
-  max_plans     SMALLINT,                 -- 1 for Starter, 5 for Plus, NULL = unlimited
-  features      JSONB NOT NULL
-                -- e.g., {"can_create_goals": true, "can_use_ai": false, "can_view_percentile": false}
+  id             UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  name           TEXT NOT NULL UNIQUE,     -- 'starter','plus','elite' (Pro removed)
+  display_name   TEXT NOT NULL,
+  price_monthly  DECIMAL(6,2),             -- NULL = free. Plus: 9.99, Elite: 19.99
+  price_annual   DECIMAL(7,2),             -- Plus: 107.88, Elite: 215.88 (save 10%)
+  price_four_year DECIMAL(7,2),            -- Plus: 399.00, Elite: 799.00 (save 17%)
+  max_plans      SMALLINT,                 -- 1 for Starter, 10 for Plus, NULL = unlimited (Elite)
+  max_linked_accounts SMALLINT,           -- 3 for Starter/Trial, 5 for Plus, 8 for Elite
+  features       JSONB NOT NULL
+                 -- e.g., {"can_create_goals": true, "can_use_ai": false, "can_view_percentile": false,
+                 --        "can_parent_draft": true, "can_what_if": true, "maxLinkedAccounts": 5, ...}
 );
+-- Trial: 14-day, Plus-level features except can_compare_plans/can_export_pdf/can_share_plans,
+-- max 2 plans, no AI. Auto-downgrades to Starter at expiry.
 ```
 
 ### Table: `subscriptions`
@@ -551,7 +669,8 @@ CREATE TABLE subscriptions (
   subscription_plan_id   UUID NOT NULL REFERENCES subscription_plans(id) ON DELETE RESTRICT,
   status                 TEXT NOT NULL CHECK (status IN ('trialing','active','past_due','canceled','paused')),
   trial_ends_at          TIMESTAMPTZ NOT NULL,
-  billing_cycle          TEXT CHECK (billing_cycle IN ('monthly','annual') OR billing_cycle IS NULL),
+  billing_cycle          TEXT CHECK (billing_cycle IN ('monthly','annual','four_year') OR billing_cycle IS NULL),
+                                                -- four_year uses Stripe payment mode (not subscription)
   current_period_start   TIMESTAMPTZ,
   current_period_end     TIMESTAMPTZ,
   cancel_at_period_end   BOOLEAN DEFAULT FALSE,
@@ -563,7 +682,7 @@ CREATE TABLE subscriptions (
 );
 ```
 
-> On signup: `INSERT INTO subscriptions (user_id, subscription_plan_id, status, trial_ends_at) VALUES (:userId, :elitePlanId, 'trialing', NOW() + INTERVAL '14 days')`.
+> On signup: `INSERT INTO subscriptions (user_id, subscription_plan_id, status, trial_ends_at) VALUES (:userId, :plusPlanId, 'trialing', NOW() + INTERVAL '14 days')`. The Accounts API returns "trial" as the tier name when `status = 'trialing'`, regardless of `subscription_plan_id`.
 
 ### Table: `stripe_events`
 
@@ -582,6 +701,38 @@ CREATE TABLE stripe_events (
 
 CREATE INDEX idx_stripe_events_unprocessed ON stripe_events (received_at) WHERE processed = FALSE;
 ```
+
+### Table: `legal_documents`
+
+```sql
+CREATE TABLE legal_documents (
+  id            UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  type          TEXT NOT NULL CHECK (type IN ('terms_of_service', 'privacy_policy')),
+  version       TEXT NOT NULL,
+  content_url   TEXT NOT NULL,             -- path to rendered page (e.g., /terms, /privacy)
+  effective_at  TIMESTAMPTZ NOT NULL,
+  created_at    TIMESTAMPTZ DEFAULT NOW(),
+  UNIQUE (type, version)
+);
+```
+
+### Table: `consent_records`
+
+```sql
+CREATE TABLE consent_records (
+  id                  UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id             UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  legal_document_id   UUID NOT NULL REFERENCES legal_documents(id) ON DELETE RESTRICT,
+  consented_at        TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  ip_address          TEXT,
+  user_agent          TEXT,
+  UNIQUE (user_id, legal_document_id)
+);
+
+CREATE INDEX idx_consent_records_user ON consent_records (user_id);
+```
+
+> **Consent system (Phase 3):** `/terms` and `/privacy` pages render legal document content. `/consent` interstitial page shown to users who haven't accepted the current legal document versions — the app layout consent gate redirects unauthenticated-consent users before they can access any app page. Signup includes a consent checkbox. OAuth users are redirected to `/consent` after first login. Account deletion performs full cleanup: Stripe customer deleted, Supabase auth user deleted, Redis cache cleared, PostHog user data removed.
 
 ### Table: `account_events`
 
@@ -622,6 +773,10 @@ CREATE TABLE four_year_plans (
   created_at               TIMESTAMPTZ DEFAULT NOW(),
   updated_at               TIMESTAMPTZ DEFAULT NOW(),
   CHECK (is_template = TRUE OR student_id IS NOT NULL),
+  locked_grade_levels      JSONB DEFAULT '[]'::jsonb,
+                             -- Array of integer grade levels (9-12) that are locked after year-end completion.
+                             -- Locked grades block all course modifications except GPA waiver toggles.
+                             -- Example: [9, 10] means grades 9 and 10 are locked.
   CHECK (is_primary = FALSE OR is_template = FALSE),
   CHECK (is_primary = FALSE OR activated_at IS NOT NULL)
 );
@@ -649,6 +804,31 @@ COMMIT;
 ```
 
 The partial unique index makes this race-safe: two concurrent requests to set different plans as primary will result in one succeeding and one hitting a unique constraint error (to be retried).
+
+### Table: `plan_shares`
+
+```sql
+CREATE TABLE plan_shares (
+  id          UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  plan_id     UUID NOT NULL REFERENCES four_year_plans(id) ON DELETE CASCADE,
+  user_id     UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  permission  TEXT NOT NULL DEFAULT 'view'
+                CHECK (permission IN ('owner', 'view', 'edit', 'delete')),
+  is_hidden   BOOLEAN NOT NULL DEFAULT FALSE,
+  created_at  TIMESTAMPTZ DEFAULT NOW(),
+  updated_at  TIMESTAMPTZ DEFAULT NOW(),
+  UNIQUE (plan_id, user_id)
+);
+
+CREATE INDEX idx_plan_shares_plan_id ON plan_shares (plan_id);
+CREATE INDEX idx_plan_shares_user_id ON plan_shares (user_id);
+```
+
+> **Permission hierarchy:** owner > delete > edit > view. A user with `delete` permission can also edit and view. A user with `edit` permission can also view. The `owner` permission is auto-created when a plan is created and cannot be changed or removed.
+>
+> **Backward compatibility:** Plans without any `plan_shares` rows fall back to `account_members.canEdit` for permission checks. This ensures existing plans work without migration, though a migration script (`lib/db/migrations/`) creates owner share rows for all existing plans.
+>
+> **`isHidden` toggle:** When `is_hidden = true`, the plan is excluded from the planner plan dropdown but remains accessible on the `/plans` page. Hiding does not affect permissions.
 
 ### Table: `plan_share_links`
 
@@ -689,9 +869,9 @@ CREATE TABLE plan_courses (
 CREATE INDEX idx_plan_courses_plan_id ON plan_courses (plan_id);
 ```
 
-> **GPA waiver toggle:** Students can apply a GPA waiver per plan-course by toggling a checkbox on waiver-eligible course cards. The GPA calculation checks `gpa_waiver_applied` (student's choice on plan_courses) rather than `gpa_waiver` (catalog-level flag on courses). Only courses where the student explicitly applies the waiver are excluded from GPA.
+> **GPA waiver toggle:** Students can apply a GPA waiver per plan-course by toggling a checkbox on waiver-eligible course cards. The GPA calculation checks `gpa_waiver_applied` (student's choice on plan_courses) rather than `gpa_waiver` (catalog-level flag on courses). Only courses where the student explicitly applies the waiver are excluded from GPA. The GPA waiver checkbox is hidden for P/F-only courses (identified by `isPassFailCourse()`) since they are already excluded from GPA calculation.
 
-> **Completed-course locking:** Once `status = 'completed'`, the API must reject DELETE, and changes to `course_id`, `grade_level`, or `semester` with `HTTP 409 Conflict`. Only `planned_grade` and `notes` remain editable. Enforced at API layer with an integration test asserting 409 on DELETE of a completed row.
+> **Grade-level locking (replaces per-course completed-status locking):** After completing a grade via the year-end wizard, the grade level is added to `four_year_plans.locked_grade_levels`. When a grade is locked, the API enforces: `POST /api/v1/plans/:id/courses` returns 409 for that grade, `DELETE /api/v1/plans/:id/courses/:planCourseId` returns 409, `PATCH /api/v1/plans/:id/courses/:planCourseId` returns 409 for any change except `gpa_waiver_applied`. GPA waiver toggles are the only permitted modification on locked grades. The "current grade" in the planner is the first unlocked grade level. Lock/unlock is managed via `POST /api/v1/plans/:id/lock-grade` with body `{ grade_level, locked }`. Locking redirects to `/year-end?grade=X`; unlocking requires a confirmation dialog.
 
 > **Full-year course storage (Phase 1b update):** Full-year courses are now stored as two rows (`semester=1` and `semester=2`) instead of one row with `semester=null`. This change was made to enable independent per-semester status and grade tracking. The `UNIQUE (plan_id, course_id, grade_level, semester)` constraint accommodates this pattern — each semester gets its own row. Adding a full-year course creates both rows; removing either semester removes both.
 
@@ -717,6 +897,8 @@ CREATE INDEX idx_plan_history_plan_id_at ON plan_history (plan_id, changed_at DE
 
 ### Table: `grade_entries`
 
+> **Phase 2 update:** The `midterm_grade` and `grade_type` columns have been removed. Stevenson uses a single final grade per semester (proficiency-based grading model) — there is no midterm grade. The primary grade source is now `plan_courses.planned_grade`, set via the planner page. The `grade_entries` table is retained for future use (e.g., onboarding bulk import, historical records) but is **not** the authoritative source for GPA calculation or transcript display. The Transcript page includes a Print button (printer icon) next to "Edit in Planner" that triggers `window.print()`; the Progress page includes a Print button next to "Edit Plan" with the same behavior. All print buttons are gated by `canExportPdf` (Plus+ only); Trial and Starter users see disabled buttons with "Upgrade to Plus to print" tooltip.
+
 ```sql
 CREATE TABLE grade_entries (
   id            UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -725,13 +907,7 @@ CREATE TABLE grade_entries (
   course_id     UUID NOT NULL REFERENCES courses(id) ON DELETE RESTRICT,
   academic_year TEXT NOT NULL,
   semester      SMALLINT NOT NULL CHECK (semester IN (1, 2)),
-  grade_type    TEXT DEFAULT 'letter' CHECK (grade_type IN ('letter','pass_fail','numeric')),
-  midterm_grade TEXT CHECK (midterm_grade IN ('A', 'B', 'C', 'D', 'F', 'P', 'I')
-                  OR grade_type != 'letter'
-                ),
-  final_grade   TEXT CHECK (final_grade IN ('A', 'B', 'C', 'D', 'F', 'P', 'I')
-                  OR grade_type != 'letter'
-                ),
+  final_grade   TEXT CHECK (final_grade IN ('A', 'B', 'C', 'D', 'F', 'P', 'I')),
   credit_earned DECIMAL(3,1),
   -- Note: is_weighted is NOT stored here — weight is derived from the course's credit_type
   -- at GPA calculation time via the courses table join. Storing it here would create
@@ -981,15 +1157,67 @@ CREATE TABLE course_prerequisites (
 );
 
 CREATE TABLE graduation_requirements (
-  id                   UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  division_id          UUID NOT NULL REFERENCES divisions(id) ON DELETE RESTRICT,
-  requirement_name     TEXT NOT NULL,
-  required_credits     DECIMAL(3,1) NOT NULL,
+  id                    UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  division_id           UUID REFERENCES divisions(id) ON DELETE RESTRICT,  -- nullable for non-course and course_load requirements
+  requirement_name      TEXT NOT NULL,
+  required_credits      DECIMAL(3,1) NOT NULL,
   eligible_credit_types TEXT[],
-  notes                TEXT,
-  catalog_version_id   UUID NOT NULL REFERENCES course_catalog_versions(id) ON DELETE RESTRICT,
+  matching_rule         JSONB,  -- see Phase 2 matching rule types below
+  requirement_group     TEXT NOT NULL DEFAULT 'graduation',   -- 'graduation', 'il_public_university', 'non_course', 'course_load'
+  evaluation_type       TEXT NOT NULL DEFAULT 'course_match', -- 'course_match', 'manual_checkbox', 'auto_from_course', 'course_load_check'
+  display_order         SMALLINT DEFAULT 0,
+  is_opt_in             BOOLEAN NOT NULL DEFAULT FALSE, -- TRUE for il_public_university group
+  notes                 TEXT,
+  catalog_version_id    UUID NOT NULL REFERENCES course_catalog_versions(id) ON DELETE RESTRICT,
   UNIQUE (catalog_version_id, requirement_name)
 );
+
+-- student_requirement_status: tracks manual checkbox state (for non_course requirements)
+CREATE TABLE student_requirement_status (
+  id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  student_id      UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  account_id      UUID REFERENCES accounts(id),
+  requirement_id  UUID NOT NULL REFERENCES graduation_requirements(id) ON DELETE CASCADE,
+  is_checked      BOOLEAN NOT NULL DEFAULT FALSE,
+  checked_at      TIMESTAMPTZ,
+  checked_by      UUID REFERENCES users(id),
+  UNIQUE (student_id, requirement_id)
+);
+
+-- student_requirement_opt_ins: tracks which opt-in groups are enabled per student
+CREATE TABLE student_requirement_opt_ins (
+  id                UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  student_id        UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  account_id        UUID REFERENCES accounts(id),
+  requirement_group TEXT NOT NULL,    -- e.g., 'il_public_university'
+  enabled           BOOLEAN NOT NULL DEFAULT FALSE,
+  updated_at        TIMESTAMPTZ DEFAULT NOW(),
+  UNIQUE (student_id, requirement_group)
+);
+
+-- Phase 2 matching_rule types (for course_match evaluation):
+--   { "type": "code_prefix", "prefix": "ENG" }           — matches courses whose code starts with prefix (e.g., all ENG courses)
+--   { "type": "codes", "codes": ["ART101", "ART102"] }   — matches specific course codes
+--   { "type": "division", "division_id": "uuid" }        — matches all courses in a division
+--   { "type": "multi_division", "division_ids": ["uuid1", "uuid2"] } — matches courses in any of the listed divisions
+--   { "type": "remainder" }                               — catch-all: matches any course not claimed by another requirement (used for "Additional Credits and P.E.")
+--
+-- Phase 2 requirement groups (4 groups, 37 total requirements):
+--   graduation (12): course_match — Stevenson graduation credit requirements (unchanged)
+--   course_load (16): course_load_check — 8 course count checks (Grades 9-12 x Sem 1-2, min 5 / max 7-8,
+--                                          counting academic courses only — PW division, DNC-prefix, D/E-prefix excluded)
+--                                        + 8 PW/Dance/DriverEd checks (each semester must have at least one
+--                                          Physical Welfare, Dance [DNC prefix], or Driver Education [D/E prefix] course)
+--                     Display name: "Semester Requirements"
+--   il_public_university (5): course_match, opt-in — IL public university admission (Science 6cr, Social Studies 6cr, Electives 4cr, English 8cr, Math 6cr)
+--   non_course (4): manual_checkbox (ACT, FAFSA) + auto_from_course (46th Credit, Civics & Patriotism)
+--
+-- Note: honors_status was REMOVED from requirements — it is now an achievement badge computed from GPA
+--
+-- Evaluation types: course_match, manual_checkbox, auto_from_course, course_load_check
+-- The requirements API uses matching rules for course_match types and specialized logic for other evaluation types.
+-- API also returns gpaWaiverWarnings[] (P/F-only courses excluded from count) and honorsStatus (achievement, not requirement).
+-- Group order: graduation, course_load, il_public_university, non_course.
 
 CREATE TABLE career_paths (
   id               UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -1144,46 +1372,61 @@ All routes: `/api/v1/...`. Version from day one.
 }
 
 // Error
-{ "error": { "code": "UPGRADE_REQUIRED", "message": "...", "minimum_tier": "pro" } }
+{ "error": { "code": "UPGRADE_REQUIRED", "message": "...", "minimum_tier": "elite" } }
 ```
 
 ### Key routes
 
 | Method | Route | Auth | Description |
 |---|---|---|---|
-| POST | `/api/v1/auth/signup` | — | Create user + subscription row |
+| POST | `/api/v1/auth/signup` | — | Create user + subscription row (Plus plan, trialing status). Signup page: wider layout (max-w-lg), 2-column grids, role selector with description cards (Student/Parent/Guardian/Counselor — 4 roles). Guardian maps to "parent" in DB. Frozen state (IL) and school (Stevenson) fields. Sets firstName from email prefix. Sets `state` and `schoolName` on accounts. Non-student roles skip onboarding and go directly to dashboard. |
 | GET | `/api/v1/auth/callback` | — | OAuth callback. Exchanges code for session. First-time users: provisions app records + redirects to /onboarding. Returning users: redirects to intended page. |
+| GET | `/api/v1/auth/me` | any authenticated | Returns logged-in user's email, role, first_name, last_name, and tourState. | Phase 3 |
+| PATCH | `/api/v1/auth/me` | any authenticated | Update first_name, last_name, and/or tourState on the logged-in user. tourState is a JSONB object tracking completed tours (e.g., `{"welcome":true,"planner":true}`). | Phase 3 |
 | GET | `/api/v1/plans` | member | List student's plans |
 | POST | `/api/v1/plans` | member (can_edit) | Create plan (check plan limit) |
 | PATCH | `/api/v1/plans/:id/set-primary` | student | Set plan as primary + active. Demotes old primary to draft. Student role only. Archived plans blocked (409). |
 | GET | `/api/v1/plans/:id/courses` | student/parent/counselor | Plan courses |
-| POST | `/api/v1/plans/:id/courses` | member (can_edit) | Add course to plan |
-| DELETE | `/api/v1/plans/:id/courses/:planCourseId` | student | Remove course (reject if completed) |
+| POST | `/api/v1/plans/:id/courses` | member (can_edit) | Add course to plan (returns 409 if grade is locked) |
+| DELETE | `/api/v1/plans/:id/courses/:planCourseId` | student | Remove course (reject if grade is locked — 409) |
 | GET | `/api/v1/gpa` | student | Compute live GPA |
 | POST | `/api/v1/gpa/snapshot` | student | Take manual GPA snapshot |
 | POST | `/api/v1/gpa/what-if` | student (Plus+) | What-if GPA simulation (read-only); body: `{ "swaps": [{ "remove_course_id": "...", "add_course_id": "...", "planned_grade": "B+" }] }` |
-| GET | `/api/v1/grades` | student | Grade entries |
-| POST | `/api/v1/grades` | student | Enter/update grade |
-| GET | `/api/v1/requirements` | student | Graduation requirement progress |
+| GET | `/api/v1/transcript` | student | Read-only transcript: completed courses from primary plan with grades, semester GPA, grade-level GPA, cumulative GPA, credits earned. Frontend has Print button (printer icon) next to "Edit in Planner" that triggers `window.print()`. Print gated by `canExportPdf` (Plus+ only). | Phase 2 |
+| POST | `/api/v1/transcript` | student | Bulk upsert grade entries (for onboarding import) | Phase 2 |
+| GET | `/api/v1/gpa` | student | Live GPA from `plan_courses` on primary plan: cumulative (completed only), projected (all graded), plan totals (`totalCredits`, `earnedCredits`, `totalCourses`), `hasGrades` flag | Phase 2 |
+| GET | `/api/v1/gpa/snapshots` | student | List GPA snapshot history (used by trend chart on Progress page; returns array of snapshots with unweighted + weighted GPA, ordered by date) | Phase 2 |
+| POST | `/api/v1/gpa/snapshots` | student | Take manual GPA snapshot; also auto-triggered by year-end wizard with `semester_end` trigger | Phase 2 |
+| POST | `/api/v1/gpa/what-if` | student (Plus+) | What-if GPA simulation (read-only) | Phase 2 |
+| GET | `/api/v1/requirements` | student | Graduation progress with matching rules (code_prefix, codes, division, multi_division, remainder). Returns both flat `requirements[]` (backwards compatible) and `groups[]` array with group key, label, isOptIn, enabled, requirements[], and totals. Also returns `gpaWaiverWarnings[]` (validates 4+ GPA-counted courses per semester when waiver applied; P/F-only courses excluded from GPA-counted course count) and `honorsStatus` (achievement badge, not requirement). Optional `?planId=` query parameter to validate any plan (defaults to primary plan). 4 evaluation types: course_match, manual_checkbox, auto_from_course, course_load_check. Course load checks count only academic courses (PW division, DNC-prefix, D/E-prefix excluded). Group order: graduation, course_load, il_public_university, non_course. | Phase 2 |
+| PUT | `/api/v1/requirements/status` | student | Toggle manual checkbox requirements (for non_course group). Body: `{ requirementId, isChecked }`. Updates `student_requirement_status`. | Phase 2 |
+| PUT | `/api/v1/requirements/opt-in` | student | Enable/disable tracking for opt-in requirement groups. Body: `{ requirementGroup, enabled }`. Updates `student_requirement_opt_ins`. | Phase 2 |
 | GET | `/api/v1/alerts` | student | Active alerts (unresolved) |
 | PATCH | `/api/v1/alerts/:id/dismiss` | student | Dismiss alert |
-| GET | `/api/v1/suggestions` | student (Pro+) | Rule-based + AI course suggestions |
-| POST | `/api/v1/ai/chat` | student (Pro+) | AI advisor chat |
-| POST | `/api/v1/ai/plan-review` | student (Pro+) | AI review of active plan |
+| GET | `/api/v1/suggestions` | student (Elite) | Rule-based + AI course suggestions |
+| POST | `/api/v1/ai/chat` | student (Elite) | AI advisor chat |
+| POST | `/api/v1/ai/plan-review` | student (Elite) | AI review of active plan |
 | GET | `/api/v1/courses` | any | Course browser (search + filter). Params: `department` (UUID or name), `gpa_waiver` (true/false), `semester_offered` (1 or 2 — exclusive to that semester, excludes same-name partners), `semester_both` (true — courses with a same-name partner in the other semester), `duration` (semester or full_year). Returns `gpaWaiver`, `departmentId`, `departmentName`, `semestersOffered` per course; `total` count in pagination meta. Results sorted by name ascending, then code ascending. Cursor encoding: base64(JSON {name, code, id}) for composite sort. Accepts comma-separated values for `credit_type` and `grade_level` query parameters (e.g., `credit_type=AP,CP&grade_level=9,10`). Builds SQL IN(...) clause for multiple values. |
 | GET | `/api/v1/courses/:id` | any | Course detail. Returns full course data plus `linkedCourses` array: other courses with the same name (semester partners), each with id, code, name, semesters_offered. |
 | GET | `/api/v1/courses/:id/prereqs` | any | Full prerequisite chain (recursive CTE) |
 | POST | `/api/v1/plans/:id/share` | student | Generate share link |
 | GET | `/api/v1/share/:token` | unauthenticated | View shared plan (read-only) |
-| POST | `/api/v1/stripe/webhook` | Stripe signature | Handle Stripe events |
-| GET | `/api/v1/subscriptions/me` | student | Current subscription state |
-| POST | `/api/v1/subscriptions/checkout` | student | Create Stripe checkout session |
+| POST | `/api/v1/stripe/webhook` | Stripe signature | Handle Stripe events (5 event types: `customer.subscription.created`, `customer.subscription.updated`, `customer.subscription.deleted`, `invoice.payment_failed`, `invoice.paid`). Idempotent via `stripe_events` table UNIQUE on `stripe_event_id`. | Phase 2 |
+| POST | `/api/v1/stripe/checkout` | student | Create Stripe Checkout session. Subscription mode for monthly/annual; payment mode for 4-year. | Phase 2 |
+| POST | `/api/v1/stripe/portal` | student | Create Stripe Billing Portal session for subscription management. | Phase 2 |
+| GET | `/api/v1/subscriptions` | student | Current subscription state, tier, billing cycle, feature flags. | Phase 2 |
 | GET | `/api/v1/export/plan/:id` | student | Generate plan PDF |
 | GET | `/api/v1/percentile` | student (Elite) | Percentile stats |
 | GET | `/api/v1/plans/:id` | student/parent/counselor | Get single plan detail | Phase 1b |
 | PATCH | `/api/v1/plans/:id` | student | Rename plan, set active/archived | Phase 1b |
-| DELETE | `/api/v1/plans/:id` | student | Delete a plan | Phase 1b |
-| PATCH | `/api/v1/plans/:id/courses/:planCourseId` | student | Update course semester/status/grade | Phase 1b |
+| DELETE | `/api/v1/plans/:id` | owner/delete permission | Delete a plan. Uses `getPlanAccess()` permissions — requires owner or delete permission; no student role override. Delete button shown on planner and manage plans pages, disabled for primary plans with tooltip. | Phase 1b |
+| PATCH | `/api/v1/plans/:id/courses/:planCourseId` | student | Update course semester/status/grade. Returns 409 for non-waiver changes on locked grades. | Phase 1b |
+| POST | `/api/v1/plans/:id/lock-grade` | student | Lock or unlock a grade level. Body: `{ grade_level: number, locked: boolean }`. Adds/removes grade from `locked_grade_levels` array. Locking triggers year-end wizard redirect. Unlocking requires confirmation. | Phase 2 |
+| GET | `/api/v1/plans/:id/shares` | member | List all shares for a plan. Returns array of share rows with user info and permission level. | Phase 3 |
+| POST | `/api/v1/plans/:id/shares` | owner | Create or update a share for a user on a plan. Body: `{ userId, permission }`. Cannot modify owner shares. | Phase 3 |
+| PATCH | `/api/v1/plans/:id/shares/:userId` | owner | Update permission level for an existing share. Body: `{ permission }`. | Phase 3 |
+| DELETE | `/api/v1/plans/:id/shares/:userId` | owner | Remove a share (revoke access). Cannot remove owner share. | Phase 3 |
+| PATCH | `/api/v1/plans/:id/visibility` | member | Toggle plan visibility (hide/show). Body: `{ isHidden }`. Updates `plan_shares.is_hidden`. | Phase 3 |
 | GET | `/api/v1/plans/:id/history` | student | Get plan change history (paginated) | Phase 3 |
 | PATCH | `/api/v1/users/me` | student | Update notification preferences | Phase 1a |
 | PATCH | `/api/v1/users/me/profile` | student | Update student profile (goals in Phase 2; test scores in Phase 4) | Phase 2 |
@@ -1202,16 +1445,22 @@ All routes: `/api/v1/...`. Version from day one.
 | POST | `/api/v1/accounts/claim` | student | Student claims account with claim code. Sets student_user_id. Starts trial. | 1b |
 | GET | `/api/v1/accounts` | any | List accounts the user is a member of. Parents see multiple, students see one. | 1b |
 | POST | `/api/v1/accounts/:id/members` | member | Generate invite for new member. | 1b |
-| POST | `/api/v1/accounts/:id/members/join` | any | Join account with invite code. | 1b |
-| DELETE | `/api/v1/accounts/:id/members/:userId` | member | Remove a member (cannot remove the student). | 1b |
+| POST | `/api/v1/accounts/:id/members/join` | any | Join account with invite code. When the invite has `shared_plans`, creates `plan_shares` rows for each plan. | 1b |
+| DELETE | `/api/v1/accounts/:id/members/:userId` | member | Remove a member. Any member can remove other members (except themselves). Students can be removed by non-student members. | 1b |
+| PATCH | `/api/v1/accounts/:id` | member | Update account fields (student_name). | Phase 3 |
+| POST | `/api/v1/school-request` | — (no auth) | Submit a school request (email, school_name, state, message). Stored in `school_requests` table for future outreach. | Phase 3 |
+| POST | `/api/v1/contact` | — (no auth) | Submit a contact form message (name, email, subject, message). Stored in `contact_messages` table. Feature-flagged via `showContactPage`. | Phase 3 |
+| POST | `/api/v1/feedback` | any authenticated | Submit feedback (rating 1-5, optional comment, page path). Stored in `feedback` table. | Phase 3 |
 | PATCH | `/api/v1/accounts/:id/billing` | member | Transfer billing contact to another member. | 2 |
 | POST | `/api/v1/auth/onboarding` | student/parent | Complete onboarding (grade level, template, goals) | 1b |
 | GET | `/api/v1/plans/templates` | any | List all plan templates with courses | 1b |
 | GET | `/api/v1/plans/:id/validate` | member | Full plan validation | 1b |
 | GET | `/api/v1/accounts/:id/members` | member | List account members | 1b |
-| GET | `/planner/print` | student/parent | Print-optimized plan view. Opens in new tab with landscape layout, auto-triggers browser print. | 1b |
+| GET | `/planner/print` | student/parent | Print-optimized plan view. Opens in new tab with landscape layout, auto-triggers browser print. Print button gated by `canExportPdf` (Plus+ only). | 1b |
 
 > **Note:** All existing plan, grade, and GPA routes now require account context. For students, this is implicit (their one account). For parents, the account_id is derived from the route's resource or from the `X-Account-Id` request header.
+>
+> **Plan access gating (Phase 3):** GPA and Requirements APIs are gated behind plan access — non-student users without any `plan_shares` rows receive empty data instead of errors. This ensures counselors and parents only see data for plans explicitly shared with them.
 
 > **Note:** `:planCourseId` in DELETE/PATCH `/api/v1/plans/:id/courses/:planCourseId` refers to `plan_courses.id`, not `courses.id`.
 
@@ -1246,7 +1495,7 @@ Headers included on every response: `X-RateLimit-Limit`, `X-RateLimit-Remaining`
 
 ### Pagination
 
-All list endpoints (`/api/v1/plans`, `/api/v1/grades`, `/api/v1/alerts`, `/api/v1/notifications`, `/api/v1/courses`, `/api/v1/plans/:id/courses`) use **cursor-based pagination**.
+All list endpoints (`/api/v1/plans`, `/api/v1/transcript`, `/api/v1/alerts`, `/api/v1/notifications`, `/api/v1/courses`, `/api/v1/plans/:id/courses`) use **cursor-based pagination**.
 
 ```typescript
 // Request
@@ -1297,6 +1546,15 @@ This supports typo-tolerant search (e.g., "Calclus" matches "Calculus"). For exa
 
 ### Stripe integration
 
+**Implementation (Phase 2 complete):**
+- **Stripe SDK singleton:** `lib/stripe/client.ts` — initializes Stripe from `STRIPE_SECRET_KEY` env var.
+- **Price ID mapping:** `lib/stripe/prices.ts` — maps tier + billing interval to Stripe Price IDs.
+- **Checkout:** `app/api/v1/stripe/checkout/route.ts` — creates Stripe Checkout sessions. Uses subscription mode for monthly/annual billing; payment mode for 4-year plans (one-time charge).
+- **Webhook handler:** `app/api/v1/stripe/webhook/route.ts` — receives and processes Stripe events with signature verification.
+- **Billing Portal:** `app/api/v1/stripe/portal/route.ts` — creates Stripe Billing Portal sessions for subscription management.
+- **Subscriptions API:** `app/api/v1/subscriptions/route.ts` — returns current subscription state with tier and feature flags.
+- **Billing page:** `app/(app)/settings/billing/page.tsx` — pricing cards with 3-interval toggle (monthly/annual/4-year), current plan indicator, upgrade/manage subscription CTAs. Pricing card buttons aligned at same level using flex layout. For trialing users: shows "Free Trial" with "X days left" badge; pricing cards suppress "Current Plan" indicator. Pricing cards show linked accounts per tier (3/5/8) and PDF/print for Plus. 4-year subscriptions display "Expires" instead of "Renews" (one-time payment).
+
 **Webhook events handled** (all logged to `stripe_events` before processing):
 
 | Event | Action |
@@ -1310,7 +1568,7 @@ This supports typo-tolerant search (e.g., "Calclus" matches "Calculus"). For exa
 **Idempotency pattern:**
 
 ```typescript
-// lib/stripe/webhook-handler.ts
+// app/api/v1/stripe/webhook/route.ts
 async function handleWebhook(rawBody: Buffer, signature: string) {
   const event = stripe.webhooks.constructEvent(rawBody, signature, WEBHOOK_SECRET);
 
@@ -1392,6 +1650,10 @@ BullMQ runs on a **dedicated AWS ECS Fargate task** (not serverless). The task c
 // worker/jobs/year-end-reset.ts
 // Schedule: annually (cron: '0 6 1 8 *')  -- Aug 1 at 06:00
 // Action: UPDATE student_profiles SET year_end_transition_state = 'pending' WHERE account_status = 'active'
+// Note: The year-end API accepts a `grade` query param to complete a specific grade (not just current).
+// On completion, the wizard adds the grade to four_year_plans.locked_grade_levels.
+// Phase 2 update (US-24): On completion, also auto-creates a GPA snapshot with trigger 'semester_end'
+// from completed plan_courses. Snapshot creation is non-fatal (try/catch, logged on failure).
 
 // worker/jobs/weekly-digest.ts
 // Schedule: weekly (cron: '0 9 * * 0')  -- Sunday 09:00
@@ -1442,7 +1704,7 @@ The BullMQ worker must use Supabase's PgBouncer pooled connection string (`DATAB
 |---|---|---|
 | `user:{userId}:subscription` | 5 min | Stripe webhook updates `subscriptions.status` |
 | `user:{userId}:gpa` | 5 min | Any grade entry or plan save for this student |
-| `plan:{planId}:requirements` | 10 min | Any plan save for this student |
+| `plan:{planId}:requirements` | 10 min | Any plan save for this student, manual checkbox toggle, or opt-in group change. Requirements API accepts optional `?planId=` to cache per non-primary plan. |
 | `course:{courseId}:prereqs` | 24 hr | Catalog reload (course_catalog_versions insert) |
 
 All cache values are JSON-serialized. On cache miss, fall back to live DB query and re-populate. Never trust a cached value for write operations — always read from DB before mutating.
@@ -1565,28 +1827,47 @@ export const GRADE_TO_POINTS: Record<string, number | null> = {
   'P':  null,  // Pass — excluded from GPA
   'I':  null,  // Incomplete — excluded until resolved
 };
+
+// P/F-only course identification
+export function isPassFailCourse(code: string): boolean { ... }
+// Returns true for regular PE (PED121, PED122, PED451, PED452, PED111, PED112)
+// and Driver Ed (D/E231, D/E232).
+// Health (PED201/202), Applied Health (PED231/232), Adventure Ed (PED331/332),
+// Lifeguard (PED501), and Leadership courses still get letter grades.
+
+export const PASS_FAIL_OPTIONS = [
+  { value: 'P', label: 'P' },
+  { value: 'F', label: 'F' },
+];
 ```
 
 ### Calculation logic
 
 ```
 Unweighted GPA = SUM(gradePoints × creditValue) / SUM(creditValue)
-                 for all courses WHERE gradePoints IS NOT NULL AND gpa_waiver_applied = FALSE
+                 for all courses WHERE gradePoints IS NOT NULL
+                 AND gpa_waiver_applied = FALSE
+                 AND isPassFailCourse(code) = FALSE
+                 AND status != 'dropped'
 
 Weighted GPA   = SUM((gradePoints + weightBonus) × creditValue) / SUM(creditValue)
                  for same set of courses
 ```
 
-GPA is **always recomputed from `grade_entries` at read time**. Snapshots in `gpa_snapshots` are historical markers for the trend chart only — never used for the live GPA display.
+GPA is **always recomputed from `plan_courses` on the primary plan at read time**. Snapshots in `gpa_snapshots` are historical markers for the trend chart only — never used for the live GPA display. **Phase 2 update (US-23/US-24):** Snapshots are auto-created when the year-end wizard completes (trigger: `semester_end`). The GPA trend chart on the Progress page right sidebar uses a Recharts `LineChart` showing unweighted (primary color) and weighted (success color) GPA lines; renders only when 2+ snapshots exist; data from `GET /api/v1/gpa/snapshots`.
+
+> **Phase 2 update:** The GPA API (`GET /api/v1/gpa`) reads exclusively from `plan_courses` on the primary plan — not from `grade_entries`. Grades are set via the planner page (status dropdown + grade dropdown on each course card) and stored in `plan_courses.planned_grade`. The API returns cumulative GPA (completed courses only), projected GPA (all courses with grades), plan totals (`totalCredits`, `earnedCredits`, `totalCourses` with per-row adjusted credits), and a `hasGrades` boolean flag.
 
 > **Implementation status (Phase 1b):** GPA calculation is implemented in `lib/gpa/calc.ts`. Full-year courses are stored as two `plan_courses` rows; the calculation uses `creditValue / 2` per row to avoid double-counting. GPA is displayed in the planner UI at both the grade header level (per-grade projected + actual weighted GPA) and the plan header level (total projected + actual).
+>
+> **P/F-only course exclusion (Phase 2 update):** `calculateGPA()` now skips courses where `isPassFailCourse(code)` returns true, in addition to existing exclusions (dropped, GPA waiver applied, P/I grades). The `CourseForGPA` interface includes an optional `code` field to support this. P/F-only courses (regular PE: PED121/122/451/452/111/112; Driver Ed: D/E231/232) show only P/F in the grade dropdown via `PASS_FAIL_OPTIONS`. The GPA waiver checkbox is hidden for these courses. They display a grey "P/F" badge with tooltip "Pass/Fail course — excluded from GPA and academic course count".
 
 ### Three GPA views
 
 | View | Source |
 |---|---|
-| Cumulative GPA | All `grade_entries` with `status = 'completed'` |
-| Projected GPA | Cumulative + `plan_courses` WHERE status IN ('enrolled','planned') using `planned_grade` |
+| Cumulative GPA | All `plan_courses` on primary plan with `status = 'completed'` and a grade set |
+| Projected GPA | All `plan_courses` on primary plan with any grade set (completed + enrolled + planned) |
 | What-If GPA | Same as Projected but computed in-memory from a temporary course swap — never persisted |
 
 ---
@@ -1679,11 +1960,44 @@ Before inserting a new alert, the engine checks if a matching unresolved alert a
 
 ### Underload warnings
 
-Underload warnings trigger for any semester with fewer than 5 courses, including empty semesters (0 courses). This ensures all four grade levels have adequate course loads.
+Underload warnings trigger for any semester with fewer than 5 academic courses, including empty semesters (0 courses). This ensures all four grade levels have adequate course loads. The course load count excludes non-academic courses: Physical Welfare division, DNC-prefix (Dance), and D/E-prefix (Driver Ed) courses are not counted — they represent the "sixth supervised period", not part of the 5 academic credits.
 
-### Plan header bar warning count
+### Dashboard layout
 
-The plan header bar warning count combines API-returned violations (prerequisite, duplicate, grade-level eligibility) with locally-computed underload/overload warnings per semester. The tooltip on hover lists all warning messages.
+> **Phase 2 update:** The dashboard uses a 3-row, 2-column grid layout:
+> - **Row 1:** Active Plan card, GPA card
+> - **Row 2:** Attention Required card (renamed from "Validation Report", with warning icon), Achievements card
+> - **Row 3:** Academic Progress card, Quick Actions card
+>
+> **"Attention Required" card:** Simplified — no category summary line or "Issues found" badge in header. Shows only category titles with counts (Graduation Gaps, Semester Gaps, Prerequisite Violations) + "View Report" button that routes to `/planner?validation=open`. Three validation categories:
+> - **Graduation Requirement Gaps** (red) — missing credits for diploma
+> - **Semester Requirement Gaps** (amber) — course load, PW/Dance, GPA waiver eligibility issues
+> - **Prerequisite Violations** (amber) — course ordering conflicts
+>
+> Non-course requirements (ACT, FAFSA) are excluded from issue counts. Honors badge removed from this card (moved to Achievements).
+>
+> **"Academic Progress" card:** Shows all requirement groups (not just graduation) with per-group segmented progress bars showing earned/planned/remaining. Replaces old graduation-only credit progress and individual requirement list. Data from requirements API.
+>
+> **"Achievements" card:** All badges (earned + unearned) in a single 2-column grid: Honor Graduate tier (computed from GPA), Graduation Ready, Credit milestones (15/30/45), GPA milestones (3.0+/3.5+/4.0+), Credits Earned. Data from requirements API (`honorsStatus`) and plan validation API for the primary/active plan.
+
+### Plan header bar validation indicator
+
+> **Phase 2 update:** The plan bar "Issues found" count includes graduation gaps, semester issues, and prerequisite violations only — non-course requirements (ACT, FAFSA) are excluded. Progress data is auto-fetched on plan load and auto-refreshed when the plan is updated while the validation side panel is open.
+
+### Planner validation report side panel
+
+> **Phase 2 update:** A side panel (380px, right side, sticky, scrollable) with frozen title "Validation Report". Collapsible summary: collapsed shows "Credits 48/45 | Reqs 11/12 | 1 gap | 15 warnings". Expanded summary has 3 groups: Credits (Total/Earned/Planned), Graduation Requirements (Met/In Progress/Gaps), Warnings (Semester/Prerequisite).
+>
+> 3 collapsible detail sections:
+> - **Graduation Gaps** (with credit progress bar inside)
+> - **Semester Requirement Gaps** (course load, PW/Dance/DriverEd, GPA waiver eligibility)
+> - **Prerequisite Violations** (course ordering conflicts)
+>
+> Warning messages use consistent "Gr X Sem Y:" prefix format as clickable links that navigate to the grade/semester in the planner grid. Clicking a link expands only that grade and highlights the target semester cell (blue ring, fades after 3s). The panel works with any selected plan (not just primary) using the `?planId=` parameter on the requirements API. When the side panel is open and the plan is updated (course added/removed, grade or status changed), the requirements API is automatically called to refresh the validation data. The planner auto-opens the validation panel when navigated with `?validation=open` URL parameter (used by the Dashboard "View Report" button).
+
+### Plan selection persistence
+
+> **Phase 2 update:** The selected plan in the planner is persisted via `sessionStorage` so navigating away and back retains the selection. Key: plan ID stored on plan switch, restored on planner mount.
 
 ### Tier gating
 
@@ -1891,6 +2205,36 @@ npx playwright test --project=accessibility
 
 Add `@axe-core/playwright` to the E2E test suite. Every new page/component must pass axe checks before merge. The Phase 5 WCAG audit focuses on AAA improvements and manual testing with assistive technologies — not baseline AA compliance.
 
+### UI Orchestration — Design System Sweep (Phase 3)
+
+A complete visual consistency sweep was performed across all 22 pages:
+
+| Area | Changes |
+|---|---|
+| **Page headers** | Standardized across all pages using consistent heading hierarchy and spacing |
+| **Component usage** | Card, Button, Badge, and Input components from shadcn/ui used consistently everywhere |
+| **Loading states** | Proper loading skeletons added to all data-dependent pages |
+| **Empty states** | Meaningful empty state messages with CTAs on all pages (e.g., "No Plans Shared Yet" for counselors) |
+| **Error states** | Error handling with user-friendly messages on all pages |
+| **Responsive grids** | 1-column on mobile, 2/3-column on desktop grids applied consistently |
+| **Focus rings** | Visible focus indicators on all interactive elements |
+| **Touch targets** | 44px minimum touch targets per WCAG 2.5.5 enforced throughout |
+| **ARIA attributes** | Labels, roles, and live regions added across all interactive components |
+| **Print styles** | `globals.css` includes `@media print` rules for the planner print page |
+| **Design tokens** | Hardcoded colors replaced with Tailwind CSS v4 `@theme` CSS variables |
+
+The sweep is documented in `ui_orchestration_plan.md` as a reusable playbook for future design system audits.
+
+### Navigation & UX Updates (Phase 3)
+
+- **Sign out:** Redirects to home page (`/`) instead of `/login` for better UX flow
+- **Auth layout:** SAPS logo links to home page; "Home" link added to footer
+- **Terms/Privacy pages:** Back button closes tab if opened via `target="_blank"`, falls back to browser history; back button moved to bottom of pages
+- **Share modal:** Close (X) button added to header
+- **Dashboard banners:** Show contextually based on plans + profile completeness + role
+- **Invite form:** Toast notifications for success/error messages
+- **Subscription tier fix:** `maxLinkedAccounts` derived from plan name when DB `features` JSONB is missing the field
+
 ### Mobile responsive design
 
 **Breakpoints (Tailwind defaults):**
@@ -1930,7 +2274,7 @@ Mobile (<640px):
 **Mobile-specific behaviors:**
 
 - Course browser opens as full-screen slide-over (not modal overlay) with sticky search bar
-- Dashboard uses single-column card stack: GPA → Graduation Progress → Alerts → Quick Actions
+- Dashboard uses single-column card stack of all 6 cards (desktop uses 3-row, 2-column grid: Active Plan/GPA, Attention Required/Achievements, Academic Progress/Quick Actions)
 - Validation tooltips render as bottom sheets on mobile (not hover tooltips, which don't work on touch)
 - Touch targets: minimum 44×44px for all interactive elements (WCAG 2.5.5)
 - Drag-and-drop (Phase 3) supported on tablet via touch events; on mobile, use explicit "Move to..." action menu instead
@@ -1962,8 +2306,31 @@ Mobile (<640px):
   - Onboarding (enter prior grades, select template, create plan)
   - Add course to plan → prerequisite violation detected
   - Enter grade → GPA updates
-  - Year-end transition workflow
+  - Year-end transition workflow (grade locked after completion, lockedGradeLevels updated)
+  - Grade-level locking: 409 on POST/DELETE/PATCH (non-waiver) for locked grades; GPA waiver toggle succeeds; lock/unlock via `POST /api/v1/plans/:id/lock-grade`
   - Upgrade flow (402 → checkout → plan unlocked)
+  - Consent flow (signup checkbox, `/consent` interstitial, consent gate redirect)
+  - Settings page (flat sections with 3x3 profile grid including state/school, linked accounts list, compact sections)
+  - Linked accounts: counselor invite/join (canEdit: false), linked accounts tier limits (402 UPGRADE_REQUIRED), linked accounts UI with usage counter
+  - Signup page (2-column grids, role selector cards, frozen state/school fields, school request form)
+  - Legal pages (`/terms`, `/privacy` rendering)
+  - Public homepage (`/`): hero rendering, stats bar, feature cards, FAQ accordion, CTA links, responsive layout
+  - About page (`/about`): story, mission, Plan/Track/Connect cards, disclaimer rendering
+  - Contact page (`/contact`): form submission, validation, feature flag gating
+  - Public layout: navbar links, footer columns, social media icons, mobile hamburger menu
+  - Feedback widget: floating button rendering, 5-star rating submission, comment field, page path capture, success animation
+  - Testimonials: three placeholder testimonials visible on home page, star ratings displayed
+  - Footer: feedback link points to /contact page
+  - SEO: meta description, Open Graph tags on root layout
+  - Guided tours: tour auto-start on first visit, tour button triggers, adaptive step counts, tour state persistence
+  - UI components: Button, Badge, Card, Input, Checkbox, Toast component tests
+  - Plan permissions: plan access gating for GPA/requirements APIs, invite shared_plans parameter
+  - Signup roles: 4-role selector (Student/Parent/Guardian/Counselor), guardian-to-parent mapping
+  - Counselor restrictions: cannot create/delete/share plans, billing hidden, "View" instead of "Edit"
+  - Share modal: close (X) button, permission selection
+  - Auth layout: logo links to home, footer "Home" link, sign out redirects to `/`
+
+**Current test count: 433 total** (7 new UI component test files: Button, Badge, Card, Input, Checkbox, Toast, plan-permissions. New test files: signup-roles, counselor-restrictions, share-modal, auth-layout. Tests for plan access gating (GPA/requirements APIs) and invite shared_plans parameter. E2E tests for homepage/about/contact, feedback widget, testimonials, consent/settings/legal pages, counselor invite/join, linked accounts UI, planner/progress/dashboard/transcript/billing/signup/auth/course-browser/grade-lock/plan-management/print-gating/accessibility. API tests for contact, feedback, consent, auth-me, accounts, counselor-join, GPA, grade-lock, health, plan-courses, plan-shares, plans, requirements, school-request. Unit tests for GPA calc, requirement matching, subscription middleware, undo stack, rate limiting).
 
 ### Test data
 
@@ -1978,6 +2345,15 @@ Seed script generates 5 student personas:
 | Athlete w/ NCAA concerns | Specific course eligibility requirements |
 
 Never use real student data in non-production environments.
+
+### Deferred to Phase 3
+
+| Feature | Notes |
+|---|---|
+| Template intensity levels | 5 levels (Easy/Moderate/Challenging/Intensive/Rigorous) auto-select CP/Accelerated/AP course variants and load per template. ~600 course placements across 6 templates × 5 levels. Requires substitution rules engine + prerequisite chain validation per level. |
+| NCAA eligibility tracking | Complex sliding-scale rules. Schema supports via `requirementGroup: "ncaa"` and `isOptIn: true`. |
+| Seal of Biliteracy | Requires exam score tracking (AAPPL, STAMP, AP language exams). |
+| P.E. waiver rules | Per-semester logic with multiple waiver types (athletic Jr/Sr, Marching Band, academic Sr). Requires tracking athletic status and band membership. |
 
 ---
 
@@ -2193,7 +2569,7 @@ config/seeds/
 ├── subscription-plans.ts     # 4 tier definitions
 ├── plan-templates.ts         # 6 starter plan templates (College Prep, STEM, Pre-Med, CS, Humanities, Business)
 ├── career-paths.ts           # Career tracks + course mappings
-├── graduation-requirements.ts # Credit requirements per subject
+├── graduation-requirements.ts # 37 requirements across 4 groups (graduation, course_load, il_public_university, non_course)
 └── divisions-departments.ts  # Subject area hierarchy
 ```
 
@@ -2206,7 +2582,7 @@ config/seeds/
 // Environment-aware: test personas only seeded in development/staging
 ```
 
-> **Plan templates (Phase 1b):** All 6 templates use the standard math progression: Algebra 1 (Gr 9) then Geometry (Gr 10) then Algebra 2 (Gr 11) then Precalculus or AP Calculus (Gr 12). U.S. History is placed in Grade 11 and Government in Grade 12, matching grade eligibility. Templates are seeded with split full-year rows (two `plan_courses` per full-year course) to support independent per-semester status and grade tracking.
+> **Plan templates (Phase 1b):** All 6 templates use the standard math progression: Algebra 1 (Gr 9) then Geometry (Gr 10) then Algebra 2 (Gr 11) then Precalculus or AP Calculus (Gr 12). U.S. History is placed in Grade 11 and Government in Grade 12, matching grade eligibility. Templates are seeded with split full-year rows (two `plan_courses` per full-year course) to support independent per-semester status and grade tracking. All 6 templates pass validation with zero violations. Fixes applied: Driver Education added to Grade 10, correct grade-level placements (U.S. History Gr 11, Government Gr 12, Health Gr 10 only), Applied Health moved after Health prerequisite (Pre-Med), Economics added to STEM/CS, electives added for Grade 10 underloads, PW coverage via Choice PE for Gr 11/12. Reset to Template uses `pc.semester` and `pc.gradeLevel` from actual course data (not group key), adds `skip_validation: true` for template reset, and logs failures.
 
 ### Environment-specific seeding
 
@@ -2305,4 +2681,4 @@ FERPA applies immediately. Before storing any school-transmitted data:
 
 ---
 
-*References: FEATURE_ANALYSIS.md (rev 6, 2026-03-15)*
+*References: FEATURE_ANALYSIS.md (rev 13, 2026-04-07)*

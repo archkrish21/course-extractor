@@ -5,6 +5,7 @@ import { apiFetch } from "@/lib/api-client";
 import { useAccount } from "@/lib/account-context";
 import { calculateGPA, formatGPA } from "@/lib/gpa/calc";
 import { GRADE_OPTIONS } from "@/config/grade-scale";
+import { UNOFFICIAL_DISCLAIMER } from "@/config/disclaimers";
 
 interface PlanCourse {
   id: string;
@@ -213,13 +214,8 @@ export default function PrintPlanPage() {
 
   return (
     <>
-      {/* Print-only styles */}
+      {/* Screen-only layout for preview (print styles live in globals.css) */}
       <style>{`
-        @media print {
-          body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-          .no-print { display: none !important; }
-          @page { margin: 0.5in; size: landscape; }
-        }
         @media screen {
           .print-container { max-width: 1100px; margin: 0 auto; padding: 2rem; }
         }
@@ -230,13 +226,13 @@ export default function PrintPlanPage() {
         <div className="no-print mb-4 flex items-center gap-3">
           <button
             onClick={() => window.history.back()}
-            className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium hover:bg-gray-50"
+            className="rounded-lg border border-border px-4 py-2 text-sm font-medium hover:bg-muted"
           >
             ← Back to Planner
           </button>
           <button
             onClick={() => window.print()}
-            className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
+            className="rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary-hover"
           >
             Print / Save as PDF
           </button>
@@ -263,7 +259,7 @@ export default function PrintPlanPage() {
         </div>
 
         {/* Summary bar */}
-        <div className="mb-4 flex items-center gap-6 rounded border border-gray-300 bg-gray-50 px-4 py-2 text-sm">
+        <div className="mb-4 flex items-center gap-6 rounded border border-border bg-muted px-4 py-2 text-sm">
           <span>
             <strong>Credits:</strong>{" "}
             {totalPlannedCredits} planned
@@ -273,13 +269,13 @@ export default function PrintPlanPage() {
           {projectedGPA.unweighted !== null && (
             <span>
               <strong>Projected GPA:</strong>{" "}
-              {formatGPA(projectedGPA.unweighted)} / {formatGPA(projectedGPA.weighted)}
+              {formatGPA(projectedGPA.unweighted)} UW / {formatGPA(projectedGPA.weighted)} W
             </span>
           )}
           {actualGPA.unweighted !== null && (
             <span>
               <strong>Actual GPA:</strong>{" "}
-              {formatGPA(actualGPA.unweighted)} / {formatGPA(actualGPA.weighted)}
+              {formatGPA(actualGPA.unweighted)} UW / {formatGPA(actualGPA.weighted)} W
             </span>
           )}
           <span>
@@ -305,7 +301,7 @@ export default function PrintPlanPage() {
           const gradeGPA = calculateGPA(gradeGpaInput, "projected");
 
           return (
-            <div key={grade} className="mb-4">
+            <div key={grade} className="mb-4 print-grade-block">
               <div className="flex items-center gap-4 border-b border-gray-400 pb-1">
                 <h3 className="text-base font-bold">Grade {grade}</h3>
                 <span className="text-xs text-gray-600">
@@ -314,7 +310,7 @@ export default function PrintPlanPage() {
                 </span>
                 {gradeGPA.unweighted !== null && (
                   <span className="text-xs text-gray-600">
-                    GPA: {formatGPA(gradeGPA.unweighted)} / {formatGPA(gradeGPA.weighted)}
+                    GPA: {formatGPA(gradeGPA.unweighted)} UW / {formatGPA(gradeGPA.weighted)} W
                   </span>
                 )}
               </div>
@@ -338,7 +334,7 @@ export default function PrintPlanPage() {
                       {sem1.length === 0 ? (
                         <tr><td colSpan={6} className="py-1 text-gray-400 italic">No courses</td></tr>
                       ) : sem1.map((c) => (
-                        <tr key={c.id} className="border-b border-gray-100">
+                        <tr key={c.id} className="border-b border-gray-300">
                           <td className="py-0.5 truncate max-w-[200px]" title={c.name}>
                             {c.name}
                             {c.gpaWaiverApplied && <span className="ml-1 text-[9px] text-gray-400">(W)</span>}
@@ -372,7 +368,7 @@ export default function PrintPlanPage() {
                       {sem2.length === 0 ? (
                         <tr><td colSpan={6} className="py-1 text-gray-400 italic">No courses</td></tr>
                       ) : sem2.map((c) => (
-                        <tr key={c.id} className="border-b border-gray-100">
+                        <tr key={c.id} className="border-b border-gray-300">
                           <td className="py-0.5 truncate max-w-[200px]" title={c.name}>
                             {c.name}
                             {c.gpaWaiverApplied && <span className="ml-1 text-[9px] text-gray-400">(W)</span>}
@@ -393,9 +389,10 @@ export default function PrintPlanPage() {
         })}
 
         {/* Footer */}
-        <div className="mt-4 border-t border-gray-300 pt-2 text-[10px] text-gray-400">
+        <div className="mt-4 border-t border-border pt-2 text-[10px] text-muted-foreground">
           <p>Generated by SAPS (Student Academic Planning System) — Stevenson High School | {today}</p>
           <p>(W) = GPA waiver applied | UW/W = Unweighted/Weighted | Cr = Credits per semester</p>
+          <p className="mt-1 italic">{UNOFFICIAL_DISCLAIMER}</p>
         </div>
       </div>
     </>

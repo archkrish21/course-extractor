@@ -5,8 +5,9 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Checkbox } from "@/components/ui/checkbox";
 
-type Role = "student" | "parent" | "counselor";
+type Role = "student" | "parent" | "guardian" | "counselor";
 
 interface FieldErrors {
   email?: string;
@@ -14,13 +15,15 @@ interface FieldErrors {
   confirmPassword?: string;
   dob?: string;
   role?: string;
+  tos?: string;
   form?: string;
 }
 
-const ROLES: { value: Role; label: string }[] = [
-  { value: "student", label: "Student" },
-  { value: "parent", label: "Parent" },
-  { value: "counselor", label: "Counselor" },
+const ROLES: { value: Role; label: string; desc: string }[] = [
+  { value: "student", label: "Student", desc: "Plan your courses" },
+  { value: "parent", label: "Parent", desc: "Monitor progress" },
+  { value: "guardian", label: "Guardian", desc: "Support your student" },
+  { value: "counselor", label: "Counselor", desc: "Guide students" },
 ];
 
 function isUnder13(dob: string): boolean {
@@ -41,65 +44,47 @@ export default function SignupPage() {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [dob, setDob] = useState("");
   const [role, setRole] = useState<Role>("student");
+  const [tosAccepted, setTosAccepted] = useState(false);
+  const [showSchoolRequest, setShowSchoolRequest] = useState(false);
+  const [requestSchool, setRequestSchool] = useState("");
+  const [requestEmail, setRequestEmail] = useState("");
+  const [schoolRequestSent, setSchoolRequestSent] = useState(false);
   const [errors, setErrors] = useState<FieldErrors>({});
   const [loading, setLoading] = useState(false);
   const [coppaBlocked, setCoppaBlocked] = useState(false);
 
   function validate(): FieldErrors {
     const errs: FieldErrors = {};
-    if (!email.trim()) {
-      errs.email = "Email is required.";
-    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-      errs.email = "Enter a valid email address.";
-    }
-    if (!password) {
-      errs.password = "Password is required.";
-    } else if (password.length < 8) {
-      errs.password = "Password must be at least 8 characters.";
-    }
-    if (!confirmPassword) {
-      errs.confirmPassword = "Please confirm your password.";
-    } else if (password !== confirmPassword) {
-      errs.confirmPassword = "Passwords do not match.";
-    }
-    if (!dob) {
-      errs.dob = "Date of birth is required.";
-    } else if (isUnder13(dob)) {
-      errs.dob = "You must be at least 13 years old to create an account.";
-    }
-    if (!role) {
-      errs.role = "Please select a role.";
-    }
+    if (!email.trim()) errs.email = "Email is required.";
+    else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) errs.email = "Enter a valid email address.";
+    if (!password) errs.password = "Password is required.";
+    else if (password.length < 8) errs.password = "Must be at least 8 characters.";
+    if (!confirmPassword) errs.confirmPassword = "Please confirm your password.";
+    else if (password !== confirmPassword) errs.confirmPassword = "Passwords do not match.";
+    if (!dob) errs.dob = "Date of birth is required.";
+    else if (isUnder13(dob)) errs.dob = "You must be at least 13 years old.";
+    if (!role) errs.role = "Please select a role.";
+    if (!tosAccepted) errs.tos = "You must agree to continue.";
     return errs;
   }
 
   function handleDobChange(value: string) {
     setDob(value);
-    if (value && isUnder13(value)) {
-      setCoppaBlocked(true);
-    } else {
-      setCoppaBlocked(false);
-    }
+    setCoppaBlocked(value ? isUnder13(value) : false);
   }
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
     const fieldErrors = validate();
-    if (Object.keys(fieldErrors).length > 0) {
-      setErrors(fieldErrors);
-      return;
-    }
-
+    if (Object.keys(fieldErrors).length > 0) { setErrors(fieldErrors); return; }
     if (coppaBlocked) return;
-
-    setErrors({});
-    setLoading(true);
+    setErrors({}); setLoading(true);
 
     try {
       const res = await fetch("/api/v1/auth/signup", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password, date_of_birth: dob, role }),
+        body: JSON.stringify({ email, password, date_of_birth: dob, role, state: "IL", school_name: "Adlai E. Stevenson High School", tos_accepted: true }),
       });
 
       if (!res.ok) {
@@ -108,11 +93,17 @@ export default function SignupPage() {
         return;
       }
 
-      // Parents go to onboarding with add_child flow; students go to onboarding
-      if (role === "parent") {
-        router.push("/onboarding?add_child=true");
+      const inviteCode = new URLSearchParams(window.location.search).get("invite") ?? new URLSearchParams(window.location.search).get("code");
+      const inviteAccount = new URLSearchParams(window.location.search).get("account");
+
+      if (inviteCode && inviteAccount) {
+        router.push(`/join?code=${inviteCode}&account=${inviteAccount}`);
+      } else if (role === "student") {
+        router.push("/onboarding?welcome=1");
       } else {
-        router.push("/onboarding");
+        // Non-student roles (parent, guardian, counselor) skip onboarding
+        // and go to dashboard if they have plans, or planner otherwise
+        router.push("/dashboard");
       }
     } catch {
       setErrors({ form: "Something went wrong. Please try again." });
@@ -122,177 +113,164 @@ export default function SignupPage() {
   }
 
   return (
-    <>
-      <h2 className="mb-1 text-xl font-semibold text-foreground">Create your account</h2>
-      <p className="mb-6 text-sm text-muted-foreground">
-        Start planning your academic path today.
-      </p>
+    <div className="-mx-6 -my-6 sm:-mx-8 sm:-my-8">
+      {/* Wider signup layout */}
+      <div className="px-6 py-6 sm:px-8 sm:py-8" style={{ maxWidth: "540px", margin: "0 auto" }}>
 
-      {errors.form && (
-        <div
-          className="mb-4 rounded-lg border border-destructive/30 bg-destructive-light p-3 text-sm text-destructive"
-          role="alert"
-        >
-          <span className="flex items-center gap-2">
-            <svg
-              aria-hidden="true"
-              className="h-4 w-4 shrink-0"
-              fill="none"
-              viewBox="0 0 24 24"
-              strokeWidth={2}
-              stroke="currentColor"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126ZM12 15.75h.007v.008H12v-.008Z"
-              />
+        {/* Header */}
+        <div className="mb-6">
+          <h2 className="text-xl font-bold text-foreground">Create your account</h2>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Start planning your academic path today.
+          </p>
+        </div>
+
+        {/* Error banner */}
+        {errors.form && (
+          <div className="mb-5 flex items-center gap-2 rounded-lg border border-destructive/30 bg-destructive-light px-4 py-3 text-sm text-destructive" role="alert">
+            <svg aria-hidden="true" className="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126ZM12 15.75h.007v.008H12v-.008Z" />
             </svg>
             {errors.form}
-          </span>
-        </div>
-      )}
+          </div>
+        )}
 
-      {coppaBlocked && (
-        <div
-          className="mb-4 rounded-lg border border-warning/30 bg-warning-light p-4 text-sm text-warning"
-          role="alert"
-          aria-live="assertive"
-        >
-          <div className="flex items-start gap-2">
-            <svg
-              aria-hidden="true"
-              className="mt-0.5 h-5 w-5 shrink-0"
-              fill="none"
-              viewBox="0 0 24 24"
-              strokeWidth={2}
-              stroke="currentColor"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126ZM12 15.75h.007v.008H12v-.008Z"
-              />
-            </svg>
-            <div>
-              <p className="font-semibold">Account creation unavailable</p>
-              <p className="mt-1">
-                You must be at least 13 years old to create a SAPS account (COPPA compliance).
-                Please ask a parent or guardian for assistance.
-              </p>
+        {/* COPPA block */}
+        {coppaBlocked && (
+          <div className="mb-5 rounded-lg border border-warning/30 bg-warning-light px-4 py-3 text-sm text-warning" role="alert">
+            <p className="font-semibold">Account creation unavailable</p>
+            <p className="mt-1 text-xs">You must be at least 13 years old (COPPA). Please ask a parent for assistance.</p>
+          </div>
+        )}
+
+        <form onSubmit={handleSubmit} noValidate className="space-y-5">
+
+          {/* Step 1: Role */}
+          <fieldset>
+            <legend className="mb-2 text-sm font-medium text-foreground">I am a</legend>
+            <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+              {ROLES.map((r) => (
+                <button
+                  key={r.value}
+                  type="button"
+                  role="radio"
+                  aria-checked={role === r.value}
+                  onClick={() => setRole(r.value)}
+                  className={`
+                    flex h-full flex-col items-center justify-center gap-0.5 rounded-xl border px-3 py-3 text-center
+                    min-h-[44px] cursor-pointer transition-all duration-150
+                    focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring
+                    ${role === r.value
+                      ? "border-primary bg-primary-light text-primary shadow-sm"
+                      : "border-border bg-background text-muted-foreground hover:border-primary/30 hover:bg-muted/50"
+                    }
+                  `}
+                >
+                  <span className="text-sm font-semibold">{r.label}</span>
+                  <span className="text-[10px] leading-tight">{r.desc}</span>
+                </button>
+              ))}
+            </div>
+            {errors.role && <p className="mt-1.5 text-sm text-destructive" role="alert">{errors.role}</p>}
+          </fieldset>
+
+          {/* Step 2: Credentials — 2 column */}
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <div className="sm:col-span-2">
+              <Input label="Email" type="email" autoComplete="email" required
+                value={email} onChange={(e) => setEmail(e.target.value)}
+                error={errors.email} placeholder="you@example.com" />
+            </div>
+            <Input label="Password" type="password" autoComplete="new-password" required
+              value={password} onChange={(e) => setPassword(e.target.value)}
+              error={errors.password} placeholder="Min. 8 characters" />
+            <Input label="Confirm password" type="password" autoComplete="new-password" required
+              value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)}
+              error={errors.confirmPassword} placeholder="Re-enter password" />
+          </div>
+
+          {/* Step 3: Personal */}
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <Input label="Date of birth" type="date" required
+              value={dob} onChange={(e) => handleDobChange(e.target.value)}
+              error={errors.dob} max={new Date().toISOString().split("T")[0]} />
+            <div className="flex flex-col gap-1.5">
+              <label className="text-sm font-medium text-foreground">State</label>
+              <div className="flex h-11 min-h-[44px] items-center rounded-lg border border-border bg-muted px-3 text-sm text-muted-foreground cursor-not-allowed">
+                Illinois
+              </div>
+            </div>
+            <div className="sm:col-span-2 flex flex-col gap-1.5">
+              <label className="text-sm font-medium text-foreground">School</label>
+              <div className="flex h-11 min-h-[44px] items-center rounded-lg border border-border bg-muted px-3 text-sm text-muted-foreground cursor-not-allowed">
+                Adlai E. Stevenson High School
+              </div>
             </div>
           </div>
-        </div>
-      )}
+          <p className="-mt-3 text-[11px] text-muted-foreground">
+            Currently supporting Stevenson High School. More schools coming soon!{" "}
+            <button type="button" onClick={() => setShowSchoolRequest(true)} className="text-primary hover:underline">
+              Request yours
+            </button>
+          </p>
 
-      <form onSubmit={handleSubmit} noValidate className="flex flex-col gap-4">
-        <Input
-          label="Email address"
-          type="email"
-          autoComplete="email"
-          required
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          error={errors.email}
-          placeholder="you@example.com"
-        />
-
-        <Input
-          label="Password"
-          type="password"
-          autoComplete="new-password"
-          required
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          error={errors.password}
-          helperText="Must be at least 8 characters."
-          placeholder="Create a password"
-        />
-
-        <Input
-          label="Confirm password"
-          type="password"
-          autoComplete="new-password"
-          required
-          value={confirmPassword}
-          onChange={(e) => setConfirmPassword(e.target.value)}
-          error={errors.confirmPassword}
-          placeholder="Confirm your password"
-        />
-
-        <Input
-          label="Date of birth"
-          type="date"
-          required
-          value={dob}
-          onChange={(e) => handleDobChange(e.target.value)}
-          error={errors.dob}
-          max={new Date().toISOString().split("T")[0]}
-        />
-
-        <fieldset>
-          <legend className="mb-2 text-sm font-medium text-foreground">
-            I am a <span className="text-destructive ml-0.5" aria-hidden="true">*</span>
-          </legend>
-          <div className="flex gap-2">
-            {ROLES.map((r) => (
-              <button
-                key={r.value}
-                type="button"
-                role="radio"
-                aria-checked={role === r.value}
-                onClick={() => setRole(r.value)}
-                className={`
-                  flex-1 rounded-lg border px-3 py-2.5 text-sm font-medium
-                  min-h-[44px] cursor-pointer
-                  transition-colors duration-150
-                  focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring
-                  ${
-                    role === r.value
-                      ? "border-primary bg-primary-light text-primary"
-                      : "border-border bg-background text-muted-foreground hover:border-secondary hover:bg-muted"
-                  }
-                `}
-              >
-                {r.label}
-              </button>
-            ))}
-          </div>
-          {errors.role && (
-            <p className="mt-1.5 text-sm text-destructive" role="alert">
-              {errors.role}
-            </p>
+          {/* School request form */}
+          {showSchoolRequest && (
+            <div className="rounded-lg border border-border bg-muted/30 p-4">
+              <p className="mb-3 text-xs font-medium text-foreground">Request your school</p>
+              <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+                <Input label="School name" hideLabel type="text" value={requestSchool} onChange={(e) => setRequestSchool(e.target.value)}
+                  placeholder="School name and state" />
+                <Input label="Your email" hideLabel type="email" value={requestEmail} onChange={(e) => setRequestEmail(e.target.value)}
+                  placeholder="Your email" />
+              </div>
+              <Button type="button" size="sm" className="mt-3 w-full"
+                disabled={!requestSchool.trim() || !requestEmail.trim() || schoolRequestSent}
+                onClick={async () => {
+                  try { await fetch("/api/v1/school-request", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ school: requestSchool.trim(), email: requestEmail.trim() }) }); } catch {}
+                  setSchoolRequestSent(true);
+                }}>
+                {schoolRequestSent ? "Sent!" : "Notify Me"}
+              </Button>
+              {schoolRequestSent && (
+                <p className="mt-2 text-xs text-success">Thanks! We&apos;ll notify you when your school is supported.</p>
+              )}
+            </div>
           )}
-        </fieldset>
 
-        <Button
-          type="submit"
-          disabled={loading || coppaBlocked}
-          className="mt-2 w-full"
-        >
-          {loading ? "Creating account..." : "Create account"}
-        </Button>
-      </form>
+          {/* Terms */}
+          <Checkbox
+            id="tos-checkbox"
+            checked={tosAccepted}
+            onChange={(e) => setTosAccepted(e.target.checked)}
+            error={errors.tos}
+            label={
+              <span className="text-xs">
+                I agree to the{" "}
+                <Link href="/terms" target="_blank" className="text-primary hover:underline">Terms of Service</Link>
+                {" "}and{" "}
+                <Link href="/privacy" target="_blank" className="text-primary hover:underline">Privacy Policy</Link>.
+                {(role === "parent" || role === "guardian") && (
+                  <span className="block mt-0.5 text-muted-foreground">
+                    I confirm that I am the parent or legal guardian of the student.
+                  </span>
+                )}
+              </span>
+            }
+          />
 
-      <p className="mt-6 text-center text-sm text-muted-foreground">
-        Already have an account?{" "}
-        <Link
-          href="/login"
-          className="font-medium text-primary hover:text-primary-hover underline underline-offset-4 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
-        >
-          Sign in
-        </Link>
-      </p>
+          {/* Submit */}
+          <Button type="submit" disabled={loading || coppaBlocked || !tosAccepted} className="w-full">
+            {loading ? "Creating account..." : "Create account"}
+          </Button>
+        </form>
 
-      <p className="mt-3 text-center text-sm text-muted-foreground">
-        Have a claim code from your parent?{" "}
-        <Link
-          href="/claim"
-          className="font-medium text-primary hover:text-primary-hover underline underline-offset-4 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
-        >
-          Claim your account
-        </Link>
-      </p>
-    </>
+        {/* Footer */}
+        <p className="mt-6 text-center text-sm text-muted-foreground">
+          Already have an account?{" "}
+          <Link href="/login" className="font-medium text-primary hover:underline">Sign in</Link>
+        </p>
+      </div>
+    </div>
   );
 }

@@ -1,0 +1,1 @@
+ALTER TABLE "account_invite_codes" ADD COLUMN "shared_plans" jsonb;

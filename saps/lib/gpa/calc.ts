@@ -1,4 +1,4 @@
-import { GRADE_TO_POINTS } from "@/config/grade-scale";
+import { GRADE_TO_POINTS, isPassFailCourse } from "@/config/grade-scale";
 import { CREDIT_TYPE_WEIGHT } from "@/config/gpa-weights";
 
 interface CourseForGPA {
@@ -8,6 +8,7 @@ interface CourseForGPA {
   status: "planned" | "enrolled" | "completed" | "dropped";
   gpaWaiver?: boolean;
   gpaWaiverApplied?: boolean;
+  code?: string;
 }
 
 interface GPAResult {
@@ -42,6 +43,9 @@ export function calculateGPA(
 
     // Skip courses where student applied GPA waiver
     if (c.gpaWaiverApplied) continue;
+
+    // Skip P/F-only courses (Driver Ed, regular PE) from GPA per Stevenson policy
+    if (c.code && isPassFailCourse(c.code)) continue;
 
     // Skip courses without a grade
     const grade = c.plannedGrade;

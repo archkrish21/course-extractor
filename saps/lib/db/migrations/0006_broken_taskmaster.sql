@@ -1,0 +1,1 @@
+ALTER TABLE "users" ADD COLUMN "tour_state" jsonb DEFAULT '{}'::jsonb;

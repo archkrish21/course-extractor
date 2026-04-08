@@ -9,6 +9,8 @@ import {
   subscriptionPlans,
   accounts,
   accountMembers,
+  legalDocuments,
+  consentRecords,
 } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
 import { successResponse, errorResponse } from "@/lib/api/response";
@@ -18,8 +20,13 @@ const signupSchema = z.object({
   email: z.string().email("Invalid email address"),
   password: z.string().min(8, "Password must be at least 8 characters"),
   date_of_birth: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Date must be YYYY-MM-DD format"),
-  role: z.enum(["student", "parent", "counselor"]),
+  role: z.enum(["student", "parent", "guardian", "counselor"]),
   name: z.string().min(1).max(200).optional(),
+  state: z.string().length(2).optional(),
+  school_name: z.string().min(1).max(200).optional(),
+  tos_accepted: z.literal(true, {
+    message: "You must agree to the Terms of Service and Privacy Policy.",
+  }),
 });
 
 function calculateAge(dateOfBirth: string): number {
@@ -57,7 +64,10 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const { email, password, date_of_birth, role, name } = parsed.data;
+    const { email, password, date_of_birth, role: rawRole, name, state, school_name } = parsed.data;
+
+    // Map "guardian" to "parent" for storage — they have identical behavior
+    const role = rawRole === "guardian" ? "parent" : rawRole;
 
     // COPPA check: must be 13 or older
     const age = calculateAge(date_of_birth);
@@ -90,13 +100,35 @@ export async function POST(request: NextRequest) {
     const userId = authData.user.id;
 
     // Insert into users table
+    const now = new Date();
     await db.insert(users).values({
       id: userId,
       email,
+      firstName: name ?? email.split("@")[0],
       role,
       dateOfBirth: date_of_birth,
       isEmailVerified: false,
+      tosAcceptedAt: now,
+      ppAcceptedAt: now,
     });
+
+    // Record consent for current legal documents
+    const currentDocs = await db
+      .select({ id: legalDocuments.id })
+      .from(legalDocuments)
+      .where(eq(legalDocuments.isCurrent, true));
+
+    const userAgent = request.headers.get("user-agent") ?? null;
+    for (const doc of currentDocs) {
+      await db.insert(consentRecords).values({
+        userId,
+        legalDocumentId: doc.id,
+        action: "accepted",
+        ipAddress: ip,
+        userAgent,
+        consentedAt: now,
+      });
+    }
 
     if (role === "student") {
       // ── Student signup: create account, membership, profile, subscription ──
@@ -116,6 +148,8 @@ export async function POST(request: NextRequest) {
           studentDateOfBirth: date_of_birth,
           gradeLevel: 9,
           graduationYear: defaultGradYear,
+          state: state ?? "IL",
+          schoolName: school_name ?? "Adlai E. Stevenson High School",
           studentUserId: userId,
           createdBy: userId,
           claimedAt: new Date(),
@@ -137,22 +171,23 @@ export async function POST(request: NextRequest) {
         currentGradeLevel: 9,
       });
 
-      // Create subscription on the account: 14-day trial on elite plan
-      const elitePlan = await db
+      // Create subscription on the account: 14-day trial on plus plan
+      // Trial gives Plus-level features with restrictions (max 2 plans, no AI, no compare/export/share)
+      const plusPlan = await db
         .select({ id: subscriptionPlans.id })
         .from(subscriptionPlans)
-        .where(eq(subscriptionPlans.name, "elite"))
+        .where(eq(subscriptionPlans.name, "plus"))
         .limit(1)
         .then((rows) => rows[0]);
 
-      if (elitePlan) {
+      if (plusPlan) {
         const trialEndsAt = new Date();
         trialEndsAt.setDate(trialEndsAt.getDate() + 14);
 
         await db.insert(subscriptions).values({
           userId,
           accountId: newAccount.id,
-          subscriptionPlanId: elitePlan.id,
+          subscriptionPlanId: plusPlan.id,
           status: "trialing",
           trialEndsAt,
         });

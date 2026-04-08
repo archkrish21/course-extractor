@@ -11,6 +11,7 @@ interface PlannerGridProps {
   planId: string;
   courses: PlanCourse[];
   currentGradeLevel: number;
+  lockedGradeLevels?: number[];
   onAddCourse: (gradeLevel: number, semester: number) => void;
   onRemoveCourse: (planCourseId: string) => void;
   onCourseClick: (planCourse: PlanCourse) => void;
@@ -22,7 +23,10 @@ interface PlannerGridProps {
   onBulkStatusChange?: (planCourseIds: string[], status: PlanCourse["status"]) => void;
   onBulkGradeChange?: (planCourseIds: string[], grade: string | null) => void;
   onGpaWaiverToggle?: (planCourseId: string, applied: boolean) => void;
+  onToggleGradeLock?: (gradeLevel: number, locked: boolean) => void;
   violations: Record<string, Violation[]>;
+  semesterGaps?: Record<string, string[]>;
+  focusGrade?: { grade: number; semester: number } | null;
   readOnly?: boolean;
 }
 
@@ -104,6 +108,7 @@ function DesktopGrid({
   planId,
   courses,
   currentGradeLevel,
+  lockedGradeLevels = [],
   onAddCourse,
   onRemoveCourse,
   onCourseClick,
@@ -115,17 +120,38 @@ function DesktopGrid({
   onBulkStatusChange,
   onBulkGradeChange,
   onGpaWaiverToggle,
+  onToggleGradeLock,
   violations,
+  semesterGaps,
+  focusGrade,
   readOnly,
 }: PlannerGridProps) {
+  // Effective current grade = first unlocked grade level at or after account grade level
+  const effectiveGrade = GRADE_LEVELS.find((g) => !lockedGradeLevels.includes(g)) ?? currentGradeLevel;
   const gridRef = useRef<HTMLDivElement>(null);
   const [collapsedGrades, setCollapsedGrades] = useState<Set<number>>(
-    () => new Set(GRADE_LEVELS.filter((g) => g !== currentGradeLevel))
+    () => new Set(GRADE_LEVELS.filter((g) => g !== effectiveGrade))
   );
+  const [highlightedSem, setHighlightedSem] = useState<{ grade: number; semester: number } | null>(null);
   const [focusedCell, setFocusedCell] = useState<{
     row: number;
     col: number;
   }>({ row: 0, col: 0 });
+
+  // When focusGrade changes, expand only that grade and highlight the semester
+  useEffect(() => {
+    if (!focusGrade) return;
+    setCollapsedGrades(new Set(GRADE_LEVELS.filter((g) => g !== focusGrade.grade)));
+    setHighlightedSem(focusGrade);
+    // Scroll to the grade after a short delay for DOM update
+    setTimeout(() => {
+      const gradeSpan = document.querySelector(`[data-grade="${focusGrade.grade}"]`);
+      gradeSpan?.closest('button[role="rowheader"]')?.scrollIntoView({ behavior: "smooth", block: "start" });
+    }, 100);
+    // Clear highlight after 3 seconds
+    const timer = setTimeout(() => setHighlightedSem(null), 3000);
+    return () => clearTimeout(timer);
+  }, [focusGrade]);
 
   const cellRefs = useRef<Map<string, HTMLDivElement>>(new Map());
 
@@ -205,7 +231,7 @@ function DesktopGrid({
 
       {/* Grade rows */}
       {GRADE_LEVELS.map((grade, rowIdx) => {
-        const isCurrentGrade = grade === currentGradeLevel;
+        const isCurrentGrade = grade === effectiveGrade;
         const isCollapsed = collapsedGrades.has(grade);
         const gradeCourses = courses.filter((c) => c.gradeLevel === grade);
         const gradeCourseCount = gradeCourses.length;
@@ -223,34 +249,32 @@ function DesktopGrid({
           .reduce((sum, c) => sum + creditPerRow(c), 0);
         const gradeProjectedGPA = calculateGPA(gradeCourses, "projected");
         const gradeActualGPA = calculateGPA(gradeCourses, "actual");
-        const gradeViolationCount = courses
-          .filter((c) => c.gradeLevel === grade)
-          .reduce((count, c) => count + (violations[c.courseId]?.length ?? 0), 0);
+        // Semester requirement gaps from API (course load, PW/Dance, GPA waiver)
+        const normalizeMsg = (msg: string, defaultGrade: number, defaultSem: number) => {
+          // Normalize "Grade X Sem Y:" to "Gr X Sem Y:"
+          const normalized = msg.replace(/^Grade (\d+) Sem (\d)/, "Gr $1 Sem $2");
+          // If already prefixed, return as-is
+          if (/^Gr \d+ Sem \d/.test(normalized)) return normalized;
+          // Otherwise add prefix
+          return `Gr ${defaultGrade} Sem ${defaultSem}: ${msg}`;
+        };
+        const sem1Gaps = (semesterGaps?.[`${grade}-1`] ?? []).map((msg) => normalizeMsg(msg, grade, 1));
+        const sem2Gaps = (semesterGaps?.[`${grade}-2`] ?? []).map((msg) => normalizeMsg(msg, grade, 2));
 
-        // Compute per-semester counts for underload/overload warnings at grade level
-        const gradeFullYear = getFullYearCourses(courses, grade);
-        const sem1Total = gradeFullYear.length + getSemesterCourses(courses, grade, 1).length;
-        const sem2Total = gradeFullYear.length + getSemesterCourses(courses, grade, 2).length;
-        const sem1HasEarlyBird = [...gradeFullYear, ...getSemesterCourses(courses, grade, 1)].some(
-          (c) => (c.name ?? "").toLowerCase().includes("early bird") || /E\d$/.test(c.code ?? "") || /E\d\//.test(c.code ?? "")
-        );
-        const sem2HasEarlyBird = [...gradeFullYear, ...getSemesterCourses(courses, grade, 2)].some(
-          (c) => (c.name ?? "").toLowerCase().includes("early bird") || /E\d$/.test(c.code ?? "") || /E\d\//.test(c.code ?? "")
-        );
-        const sem1Underload = sem1Total < 5;
-        const sem2Underload = sem2Total < 5;
-        const sem1Overload = sem1Total > (sem1HasEarlyBird ? 8 : 7);
-        const sem2Overload = sem2Total > (sem2HasEarlyBird ? 8 : 7);
-        const hasScheduleWarning = sem1Underload || sem2Underload || sem1Overload || sem2Overload;
+        // Prerequisite violations for courses in this grade (deduplicate full-year courses)
+        const prereqWarnings: string[] = [];
+        const seenCourseIds = new Set<string>();
+        for (const c of courses.filter((c) => c.gradeLevel === grade)) {
+          if (seenCourseIds.has(c.courseId)) continue;
+          seenCourseIds.add(c.courseId);
+          for (const v of violations[c.courseId] ?? []) {
+            prereqWarnings.push(`Gr ${grade} Sem ${c.semester}: ${c.code ?? c.name} — ${v.message}`);
+          }
+        }
 
-        // Build warning messages
-        const gradeWarnings: string[] = [];
-        if (sem1Underload) gradeWarnings.push(`Sem 1: ${sem1Total} courses (min 5)`);
-        if (sem2Underload) gradeWarnings.push(`Sem 2: ${sem2Total} courses (min 5)`);
-        if (sem1Overload) gradeWarnings.push(`Sem 1: ${sem1Total} courses (max ${sem1HasEarlyBird ? 8 : 7})`);
-        if (sem2Overload) gradeWarnings.push(`Sem 2: ${sem2Total} courses (max ${sem2HasEarlyBird ? 8 : 7})`);
-
-        const totalWarnings = gradeViolationCount + gradeWarnings.length;
+        const gradeWarnings = [...sem1Gaps, ...sem2Gaps, ...prereqWarnings];
+        const totalWarnings = gradeWarnings.length;
+        const isGradeLocked = lockedGradeLevels.includes(grade);
 
         const toggleCollapse = () =>
           setCollapsedGrades((prev) => {
@@ -264,14 +288,14 @@ function DesktopGrid({
           });
 
         return (
-          <div key={grade} role="row" className="mb-3">
+          <div key={grade} role="row" className="mb-3 rounded-xl border border-border overflow-hidden">
             {/* Grade header — full width, clickable toggle */}
             <button
               type="button"
               role="rowheader"
               aria-expanded={!isCollapsed}
               onClick={toggleCollapse}
-              className={`flex w-full items-center gap-2 rounded-lg px-3 py-2.5 text-sm font-semibold text-left
+              className={`flex w-full items-center gap-2 px-4 py-3 text-sm font-semibold text-left
                 min-h-[44px] cursor-pointer transition-colors duration-150
                 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring
                 ${isCurrentGrade ? "bg-primary-light text-primary" : "bg-muted/50 text-foreground hover:bg-muted"}`}
@@ -286,33 +310,13 @@ function DesktopGrid({
               >
                 <path strokeLinecap="round" strokeLinejoin="round" d="m8.25 4.5 7.5 7.5-7.5 7.5" />
               </svg>
-              <span>Grade {grade}</span>
+              <span data-grade={grade}>Grade {grade}</span>
               {isCurrentGrade && (
                 <span className="text-[10px] font-normal text-primary/70">(current)</span>
               )}
 
-              {/* Warning icon with tooltip on hover */}
-              {totalWarnings > 0 && (
-                <span
-                  className="relative group/warn flex items-center gap-1 text-warning"
-                  title={[...gradeWarnings, ...(gradeViolationCount > 0 ? [`${gradeViolationCount} prerequisite warning${gradeViolationCount !== 1 ? "s" : ""}`] : [])].join(" · ")}
-                >
-                  <svg aria-hidden="true" className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126ZM12 15.75h.007v.008H12v-.008Z" />
-                  </svg>
-                  <span className="text-[10px] font-normal">{totalWarnings}</span>
-
-                  {/* Tooltip */}
-                  <span className="pointer-events-none absolute left-1/2 top-full z-50 mt-2 -translate-x-1/2 whitespace-nowrap rounded-lg border border-warning/30 bg-card px-3 py-2 text-xs font-medium text-warning shadow-lg opacity-0 transition-opacity group-hover/warn:opacity-100">
-                    {[...gradeWarnings, ...(gradeViolationCount > 0 ? [`${gradeViolationCount} prerequisite warning${gradeViolationCount !== 1 ? "s" : ""}`] : [])].map((msg, i) => (
-                      <span key={i} className="block">{msg}</span>
-                    ))}
-                  </span>
-                </span>
-              )}
-
               {/* Clear grade button */}
-              {!readOnly && onClearGrade && gradeCourseCount > 0 && (
+              {!readOnly && !isGradeLocked && onClearGrade && gradeCourseCount > 0 && (
                 <button
                   type="button"
                   onClick={(e) => { e.stopPropagation(); onClearGrade(grade); }}
@@ -324,6 +328,54 @@ function DesktopGrid({
                   </svg>
                   Clear
                 </button>
+              )}
+
+              {/* Lock/unlock toggle — only for current and previous grades */}
+              {!readOnly && onToggleGradeLock && grade <= effectiveGrade && (
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onToggleGradeLock(grade, !isGradeLocked);
+                  }}
+                  className={`ml-1 flex h-5 items-center gap-0.5 rounded px-1.5 text-[10px] font-normal transition-colors
+                    focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring
+                    ${isGradeLocked
+                      ? "text-warning hover:text-warning/80 hover:bg-warning-light"
+                      : "text-muted-foreground hover:text-foreground hover:bg-muted"}`}
+                  title={isGradeLocked ? `Grade ${grade} is locked — click to unlock` : `Lock Grade ${grade}`}
+                  aria-label={isGradeLocked ? `Unlock Grade ${grade}` : `Lock Grade ${grade}`}
+                >
+                  {isGradeLocked ? (
+                    <svg aria-hidden="true" className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 1 0-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 0 0 2.25-2.25v-6.75a2.25 2.25 0 0 0-2.25-2.25H6.75a2.25 2.25 0 0 0-2.25 2.25v6.75a2.25 2.25 0 0 0 2.25 2.25Z" />
+                    </svg>
+                  ) : (
+                    <svg aria-hidden="true" className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 10.5V6.75a4.5 4.5 0 1 1 9 0v3.75M3.75 21.75h10.5a2.25 2.25 0 0 0 2.25-2.25v-6.75a2.25 2.25 0 0 0-2.25-2.25H3.75a2.25 2.25 0 0 0-2.25 2.25v6.75a2.25 2.25 0 0 0 2.25 2.25Z" />
+                    </svg>
+                  )}
+                  {isGradeLocked ? "Locked" : "Lock"}
+                </button>
+              )}
+
+              {/* Warning icon with tooltip on hover */}
+              {totalWarnings > 0 && (
+                <span
+                  className="relative group/warn flex items-center gap-1 text-warning"
+                >
+                  <svg aria-hidden="true" className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126ZM12 15.75h.007v.008H12v-.008Z" />
+                  </svg>
+                  <span className="text-[10px] font-normal">{totalWarnings}</span>
+
+                  {/* Tooltip */}
+                  <span className="pointer-events-none absolute left-1/2 top-full z-50 mt-2 -translate-x-1/2 w-max max-w-sm rounded-lg border border-warning/30 bg-card px-3 py-2 text-xs font-medium text-warning shadow-lg opacity-0 transition-opacity group-hover/warn:opacity-100">
+                    {gradeWarnings.map((msg, i) => (
+                      <span key={i} className="block whitespace-normal">{msg}</span>
+                    ))}
+                  </span>
+                </span>
               )}
 
               <span className="ml-auto flex items-center gap-3 text-xs font-normal text-muted-foreground">
@@ -355,7 +407,7 @@ function DesktopGrid({
             {/* Expanded content */}
             {!isCollapsed && (() => {
               return (
-              <div className="mt-2">
+              <div className="border-t border-border bg-card p-3">
                 <div className="grid grid-cols-2 gap-3">
                 {SEMESTERS.map((sem, colIdx) => {
                   const cellCourses = sortCourses(getSemesterCourses(courses, grade, sem));
@@ -391,13 +443,15 @@ function DesktopGrid({
                       onKeyDown={(e) => handleKeyDown(e, rowIdx, colIdx)}
                       onFocus={() => setFocusedCell({ row: rowIdx, col: colIdx })}
                       className={`
-                        min-h-[100px] rounded-lg border-2 border-dashed p-2
-                        transition-colors duration-150
+                        min-h-[100px] rounded-xl border-2 border-dashed p-3
+                        transition-all duration-300
                         focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring
                         ${
-                          cellViolationCount > 0
-                            ? "border-warning/50 bg-warning-light/30"
-                            : "border-border bg-card hover:border-primary/30"
+                          highlightedSem?.grade === grade && highlightedSem?.semester === sem
+                            ? "border-primary bg-primary/5 ring-2 ring-primary/30"
+                            : cellViolationCount > 0
+                              ? "border-warning/50 bg-warning-light/30"
+                              : "border-border bg-background hover:border-primary/30"
                         }
                       `}
                     >
@@ -407,7 +461,7 @@ function DesktopGrid({
                           <p className="text-xs font-medium text-muted-foreground">
                             Semester {sem}
                           </p>
-                          {!readOnly && cellCourses.length > 0 && (
+                          {!readOnly && !isGradeLocked && cellCourses.length > 0 && (
                             <>
                               {/* Bulk status */}
                               {onBulkStatusChange && (
@@ -456,7 +510,7 @@ function DesktopGrid({
                           )}
                         </div>
                         <div className="flex items-center gap-1.5">
-                        {!readOnly && onClearSemester && cellCourses.length > 0 && (
+                        {!readOnly && !isGradeLocked && onClearSemester && cellCourses.length > 0 && (
                           <button
                             type="button"
                             onClick={() => onClearSemester(grade, sem)}
@@ -486,10 +540,10 @@ function DesktopGrid({
                             key={course.id}
                             course={course}
                             violations={violations[course.courseId]}
-                            onRemove={() => onRemoveCourse(course.id)}
+                            onRemove={isGradeLocked ? undefined : () => onRemoveCourse(course.id)}
                             onClick={onViewDetails ? () => onViewDetails(course.courseId) : () => onCourseClick(course)}
-                            onStatusChange={onStatusChange ? (s) => onStatusChange(course.id, s) : undefined}
-                            onGradeChange={onGradeChange ? (g) => onGradeChange(course.id, g) : undefined}
+                            onStatusChange={isGradeLocked ? undefined : (onStatusChange ? (s) => onStatusChange(course.id, s) : undefined)}
+                            onGradeChange={isGradeLocked ? undefined : (onGradeChange ? (g) => onGradeChange(course.id, g) : undefined)}
                             onGpaWaiverToggle={onGpaWaiverToggle ? (applied) => onGpaWaiverToggle(course.id, applied) : undefined}
                             readOnly={readOnly}
                           />
@@ -497,7 +551,7 @@ function DesktopGrid({
                       </div>
 
                       {/* Add course button */}
-                      {!readOnly && (
+                      {!readOnly && !isGradeLocked && (
                         <button
                           type="button"
                           onClick={() => !isAtMax && onAddCourse(grade, sem)}
@@ -554,6 +608,7 @@ function MobileAccordion({
   planId,
   courses,
   currentGradeLevel,
+  lockedGradeLevels = [],
   onAddCourse,
   onRemoveCourse,
   onCourseClick,
@@ -565,11 +620,15 @@ function MobileAccordion({
   onBulkStatusChange,
   onBulkGradeChange,
   onGpaWaiverToggle,
+  onToggleGradeLock,
   violations,
+  semesterGaps,
+  focusGrade: _focusGrade,
   readOnly,
 }: PlannerGridProps) {
+  const effectiveGrade = GRADE_LEVELS.find((g) => !lockedGradeLevels.includes(g)) ?? currentGradeLevel;
   const [expandedGrades, setExpandedGrades] = useState<Set<number>>(
-    new Set([currentGradeLevel])
+    new Set([effectiveGrade])
   );
 
   const toggleGrade = useCallback((grade: number) => {
@@ -588,12 +647,17 @@ function MobileAccordion({
     <div className="md:hidden flex flex-col gap-2" role="grid" aria-label="Four-year course planner">
       {GRADE_LEVELS.map((grade) => {
         const isExpanded = expandedGrades.has(grade);
-        const isCurrentGrade = grade === currentGradeLevel;
+        const isCurrentGrade = grade === effectiveGrade;
         const gradeCoursesAll = courses.filter((c) => c.gradeLevel === grade);
         const gradeViolationCount = gradeCoursesAll.reduce(
           (count, c) => count + (violations[c.courseId]?.length ?? 0),
           0
         );
+        const gradeSemGaps = [
+          ...(semesterGaps?.[`${grade}-1`] ?? []),
+          ...(semesterGaps?.[`${grade}-2`] ?? []),
+        ];
+        const mobileWarningCount = gradeViolationCount + gradeSemGaps.length;
 
         return (
           <div
@@ -632,7 +696,7 @@ function MobileAccordion({
                   {gradeCoursesAll.length} course
                   {gradeCoursesAll.length !== 1 ? "s" : ""}
                 </span>
-                {gradeViolationCount > 0 && (
+                {mobileWarningCount > 0 && (
                   <span className="flex items-center gap-0.5 text-xs text-warning">
                     <svg
                       aria-hidden="true"
@@ -648,7 +712,7 @@ function MobileAccordion({
                         d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126ZM12 15.75h.007v.008H12v-.008Z"
                       />
                     </svg>
-                    {gradeViolationCount}
+                    {mobileWarningCount}
                   </span>
                 )}
               </span>
@@ -672,7 +736,7 @@ function MobileAccordion({
 
             {/* Accordion content */}
             {isExpanded && (
-              <div id={`grade-${grade}-content`} className="px-4 pb-4 pt-2">
+              <div id={`grade-${grade}-content`} className="border-t border-border px-4 pb-4 pt-3">
                 {SEMESTERS.map((sem) => {
                   const cellCourses = getCoursesForCell(courses, grade, sem);
                   const cellViolationCount = cellCourses.reduce(
@@ -697,22 +761,25 @@ function MobileAccordion({
                       </h3>
 
                       <div className="flex flex-col gap-1.5">
-                        {cellCourses.map((course) => (
-                          <PlanCourseCard
-                            key={course.id}
-                            course={course}
-                            violations={violations[course.courseId]}
-                            onRemove={() => onRemoveCourse(course.id)}
-                            onClick={onViewDetails ? () => onViewDetails(course.courseId) : () => onCourseClick(course)}
-                            onStatusChange={onStatusChange ? (s) => onStatusChange(course.id, s) : undefined}
-                            onGradeChange={onGradeChange ? (g) => onGradeChange(course.id, g) : undefined}
-                            onGpaWaiverToggle={onGpaWaiverToggle ? (applied) => onGpaWaiverToggle(course.id, applied) : undefined}
-                            readOnly={readOnly}
-                          />
-                        ))}
+                        {cellCourses.map((course) => {
+                          const mobileGradeLocked = lockedGradeLevels.includes(grade);
+                          return (
+                            <PlanCourseCard
+                              key={course.id}
+                              course={course}
+                              violations={violations[course.courseId]}
+                              onRemove={mobileGradeLocked ? undefined : () => onRemoveCourse(course.id)}
+                              onClick={onViewDetails ? () => onViewDetails(course.courseId) : () => onCourseClick(course)}
+                              onStatusChange={mobileGradeLocked ? undefined : (onStatusChange ? (s) => onStatusChange(course.id, s) : undefined)}
+                              onGradeChange={mobileGradeLocked ? undefined : (onGradeChange ? (g) => onGradeChange(course.id, g) : undefined)}
+                              onGpaWaiverToggle={onGpaWaiverToggle ? (applied) => onGpaWaiverToggle(course.id, applied) : undefined}
+                              readOnly={readOnly}
+                            />
+                          );
+                        })}
                       </div>
 
-                      {!readOnly && (
+                      {!readOnly && !lockedGradeLevels.includes(grade) && (
                         <button
                           type="button"
                           onClick={() => onAddCourse(grade, sem)}

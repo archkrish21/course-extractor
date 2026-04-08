@@ -27,6 +27,8 @@ export const users = pgTable(
   {
     id: uuid("id").primaryKey().defaultRandom(),
     email: text("email").notNull().unique(),
+    firstName: text("first_name"),
+    lastName: text("last_name"),
     role: text("role", {
       enum: ["student", "parent", "counselor", "admin"],
     }).notNull(),
@@ -51,6 +53,9 @@ export const users = pgTable(
       .defaultNow()
       .$onUpdate(() => new Date()),
     lastLogin: timestamp("last_login", { withTimezone: true }),
+    tourState: jsonb("tour_state").$type<Record<string, boolean>>().default({}),
+    tosAcceptedAt: timestamp("tos_accepted_at", { withTimezone: true }),
+    ppAcceptedAt: timestamp("pp_accepted_at", { withTimezone: true }),
     notificationPreferences: jsonb("notification_preferences").default({
       alert_triggered: { email: true, in_app: true },
       catalog_update: { email: true, in_app: true },
@@ -75,6 +80,51 @@ export const users = pgTable(
   ]
 );
 
+// ─── LEGAL DOCUMENTS & CONSENT ──────────────────────────────────────────────
+
+export const legalDocuments = pgTable(
+  "legal_documents",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    type: text("type", {
+      enum: ["terms_of_service", "privacy_policy"],
+    }).notNull(),
+    version: text("version").notNull(),
+    effectiveDate: date("effective_date").notNull(),
+    contentHash: text("content_hash").notNull(),
+    summaryOfChanges: text("summary_of_changes"),
+    isCurrent: boolean("is_current").notNull().default(false),
+    publishedAt: timestamp("published_at", { withTimezone: true }),
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow(),
+  },
+  (table) => [
+    uniqueIndex("legal_documents_type_version_unique").on(table.type, table.version),
+  ]
+);
+
+export const consentRecords = pgTable(
+  "consent_records",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    userId: uuid("user_id").references(() => users.id, { onDelete: "set null" }),
+    legalDocumentId: uuid("legal_document_id")
+      .notNull()
+      .references(() => legalDocuments.id, { onDelete: "restrict" }),
+    action: text("action", {
+      enum: ["accepted", "withdrawn"],
+    }).notNull(),
+    ipAddress: text("ip_address"),
+    userAgent: text("user_agent"),
+    consentedAt: timestamp("consented_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => [
+    index("idx_consent_records_user").on(table.userId),
+    index("idx_consent_records_user_date").on(table.userId, table.consentedAt),
+  ]
+);
+
 // ─── ACCOUNTS (student-centric) ─────────────────────────────────────────────
 
 export const accounts = pgTable("accounts", {
@@ -83,6 +133,8 @@ export const accounts = pgTable("accounts", {
   studentDateOfBirth: date("student_date_of_birth"),
   gradeLevel: smallint("grade_level"),
   graduationYear: smallint("graduation_year"),
+  state: text("state"),
+  schoolName: text("school_name"),
   schoolId: uuid("school_id"),
   studentUserId: uuid("student_user_id").unique().references(() => users.id, { onDelete: "set null" }),
   createdBy: uuid("created_by").notNull().references(() => users.id, { onDelete: "restrict" }),
@@ -190,6 +242,7 @@ export const subscriptionPlans = pgTable("subscription_plans", {
   displayName: text("display_name").notNull(),
   priceMonthly: decimal("price_monthly", { precision: 6, scale: 2 }),
   priceAnnual: decimal("price_annual", { precision: 7, scale: 2 }),
+  priceFourYear: decimal("price_four_year", { precision: 7, scale: 2 }),
   maxPlans: smallint("max_plans"),
   features: jsonb("features").notNull(),
 });
@@ -210,7 +263,7 @@ export const subscriptions = pgTable("subscriptions", {
     enum: ["trialing", "active", "past_due", "canceled", "paused"],
   }).notNull(),
   trialEndsAt: timestamp("trial_ends_at", { withTimezone: true }).notNull(),
-  billingCycle: text("billing_cycle", { enum: ["monthly", "annual"] }),
+  billingCycle: text("billing_cycle", { enum: ["monthly", "annual", "four_year"] }),
   currentPeriodStart: timestamp("current_period_start", {
     withTimezone: true,
   }),
@@ -427,7 +480,6 @@ export const graduationRequirements = pgTable(
   {
     id: uuid("id").primaryKey().defaultRandom(),
     divisionId: uuid("division_id")
-      .notNull()
       .references(() => divisions.id, { onDelete: "restrict" }),
     requirementName: text("requirement_name").notNull(),
     requiredCredits: decimal("required_credits", {
@@ -435,16 +487,68 @@ export const graduationRequirements = pgTable(
       scale: 1,
     }).notNull(),
     eligibleCreditTypes: text("eligible_credit_types").array(),
+    matchingRule: jsonb("matching_rule"),
     notes: text("notes"),
     catalogVersionId: uuid("catalog_version_id")
       .notNull()
       .references(() => courseCatalogVersions.id, { onDelete: "restrict" }),
+    requirementGroup: text("requirement_group").notNull().default("graduation"),
+    evaluationType: text("evaluation_type").notNull().default("course_match"),
+    displayOrder: smallint("display_order").default(0),
+    isOptIn: boolean("is_opt_in").notNull().default(false),
   },
   (table) => [
     uniqueIndex("grad_req_version_name_unique").on(
       table.catalogVersionId,
       table.requirementName
     ),
+    index("idx_grad_req_group").on(table.requirementGroup),
+  ]
+);
+
+// ─── STUDENT REQUIREMENT STATUS (non-course requirement tracking) ───────────
+
+export const studentRequirementStatus = pgTable(
+  "student_requirement_status",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    accountId: uuid("account_id")
+      .notNull()
+      .references(() => accounts.id, { onDelete: "cascade" }),
+    requirementId: uuid("requirement_id")
+      .notNull()
+      .references(() => graduationRequirements.id, { onDelete: "cascade" }),
+    status: text("status", {
+      enum: ["not_started", "in_progress", "completed", "waived"],
+    }).notNull().default("not_started"),
+    completedAt: timestamp("completed_at", { withTimezone: true }),
+    notes: text("notes"),
+    metadata: jsonb("metadata"),
+    updatedAt: timestamp("updated_at", { withTimezone: true })
+      .defaultNow()
+      .$onUpdate(() => new Date()),
+  },
+  (table) => [
+    uniqueIndex("student_req_status_unique").on(
+      table.accountId,
+      table.requirementId
+    ),
+  ]
+);
+
+// ─── STUDENT REQUIREMENT OPT-INS ───────────────────────────────────────────
+
+export const studentRequirementOptIns = pgTable(
+  "student_requirement_opt_ins",
+  {
+    accountId: uuid("account_id")
+      .notNull()
+      .references(() => accounts.id, { onDelete: "cascade" }),
+    requirementGroup: text("requirement_group").notNull(),
+    enabledAt: timestamp("enabled_at", { withTimezone: true }).defaultNow(),
+  },
+  (table) => [
+    primaryKey({ columns: [table.accountId, table.requirementGroup] }),
   ]
 );
 
@@ -513,6 +617,7 @@ export const fourYearPlans = pgTable(
       .notNull()
       .default("draft"),
     isPrimary: boolean("is_primary").notNull().default(false),
+    lockedGradeLevels: jsonb("locked_grade_levels").$type<number[]>().default([]),
     activatedAt: timestamp("activated_at", { withTimezone: true }),
     createdAt: timestamp("created_at", { withTimezone: true }).defaultNow(),
     updatedAt: timestamp("updated_at", { withTimezone: true })
@@ -601,6 +706,34 @@ export const planShareLinks = pgTable("plan_share_links", {
   createdAt: timestamp("created_at", { withTimezone: true }).defaultNow(),
 });
 
+// ─── PLAN SHARES (per-user permissions) ────────────────────────────────────
+
+export const planShares = pgTable(
+  "plan_shares",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    planId: uuid("plan_id")
+      .notNull()
+      .references(() => fourYearPlans.id, { onDelete: "cascade" }),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    grantedBy: uuid("granted_by").references(() => users.id, { onDelete: "set null" }),
+    permission: text("permission", {
+      enum: ["owner", "view", "edit", "delete"],
+    }).notNull(),
+    isHidden: boolean("is_hidden").notNull().default(false),
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true })
+      .defaultNow()
+      .$onUpdate(() => new Date()),
+  },
+  (table) => [
+    uniqueIndex("plan_shares_plan_user_unique").on(table.planId, table.userId),
+    index("idx_plan_shares_user").on(table.userId),
+  ]
+);
+
 // ─── PLAN HISTORY ───────────────────────────────────────────────────────────
 
 export const planHistory = pgTable(
@@ -649,12 +782,6 @@ export const gradeEntries = pgTable(
       .references(() => courses.id, { onDelete: "restrict" }),
     academicYear: text("academic_year").notNull(),
     semester: smallint("semester").notNull(),
-    gradeType: text("grade_type", {
-      enum: ["letter", "pass_fail", "numeric"],
-    }).default("letter"),
-    midtermGrade: text("midterm_grade", {
-      enum: ["A", "B", "C", "D", "F", "P", "I"],
-    }),
     finalGrade: text("final_grade", {
       enum: ["A", "B", "C", "D", "F", "P", "I"],
     }),
@@ -990,12 +1117,13 @@ export const accountInviteCodes = pgTable(
       .references(() => accounts.id, { onDelete: "cascade" }),
     code: varchar("code", { length: 8 }).notNull().unique(),
     targetRole: text("target_role", {
-      enum: ["parent", "guardian"],
+      enum: ["student", "parent", "guardian", "counselor"],
     }).notNull(),
     expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
     createdBy: uuid("created_by")
       .notNull()
       .references(() => users.id, { onDelete: "cascade" }),
+    sharedPlans: jsonb("shared_plans").$type<Array<{ planId: string; permission: string }>>(),
     claimedBy: uuid("claimed_by").references(() => users.id),
     claimedAt: timestamp("claimed_at", { withTimezone: true }),
     createdAt: timestamp("created_at", { withTimezone: true }).defaultNow(),
@@ -1252,12 +1380,24 @@ export const fourYearPlansRelations = relations(
     }),
     planCourses: many(planCourses),
     planShareLinks: many(planShareLinks),
+    planShares: many(planShares),
     planHistory: many(planHistory),
     alerts: many(alerts),
     dualCreditLog: many(dualCreditLog),
     requirementProgress: many(requirementProgress),
   })
 );
+
+export const planSharesRelations = relations(planShares, ({ one }) => ({
+  plan: one(fourYearPlans, {
+    fields: [planShares.planId],
+    references: [fourYearPlans.id],
+  }),
+  user: one(users, {
+    fields: [planShares.userId],
+    references: [users.id],
+  }),
+}));
 
 export const planCoursesRelations = relations(planCourses, ({ one }) => ({
   plan: one(fourYearPlans, {

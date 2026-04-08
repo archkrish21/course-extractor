@@ -127,8 +127,8 @@ export async function GET(request: NextRequest) {
         `[auth/callback] Provisioned new Google OAuth user: ${email} (${authUser.id})`
       );
 
-      // Redirect to onboarding for first-time users
-      return NextResponse.redirect(`${origin}/onboarding`);
+      // Redirect to consent page for first-time users (then onboarding)
+      return NextResponse.redirect(`${origin}/consent?next=/onboarding`);
     } catch (provisionError) {
       console.error(
         "[auth/callback] Failed to provision OAuth user:",

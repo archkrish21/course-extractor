@@ -1,0 +1,1083 @@
+"use client";
+
+import { useState, useCallback, useEffect, type ChangeEvent } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Badge } from "@/components/ui/badge";
+import { Card, CardHeader, CardContent, CardFooter } from "@/components/ui/card";
+
+// ─── Types ─────────────────────────────────────────────────────────────────
+
+interface CompletedCourse {
+  code: string;
+  name: string;
+  grade: string;
+  academic_year: string;
+  semester: number;
+}
+
+interface PlanTemplateInfo {
+  id: string;
+  name: string;
+  courseCount: number;
+  courses: {
+    code: string;
+    name: string;
+    gradeLevel: number;
+    semester: number | null;
+  }[];
+}
+
+interface CollegeTargets {
+  reach: string;
+  match: string;
+  safety: string;
+}
+
+// ─── Constants ─────────────────────────────────────────────────────────────
+
+const GRADE_LEVELS = [9, 10, 11, 12] as const;
+
+// Import from central config — Stevenson uses A, B, C, D, F (no +/- variants)
+import { GRADE_OPTIONS } from "@/config/grade-scale";
+const LETTER_GRADES = GRADE_OPTIONS;
+
+const STEPS = [
+  { label: "About You", number: 1 },
+  { label: "Past Courses", number: 2 },
+  { label: "Starting Plan", number: 3 },
+  { label: "Goals", number: 4 },
+] as const;
+
+// ─── Helper: academic year string from grade + graduation year ─────────
+
+function getAcademicYear(gradeLevel: number, graduationYear: number): string {
+  const startYear = graduationYear - (12 - gradeLevel) - 1;
+  return `${startYear}-${startYear + 1}`;
+}
+
+// ─── Step Indicator ────────────────────────────────────────────────────────
+
+function StepIndicator({ currentStep }: { currentStep: number }) {
+  return (
+    <div className="mb-8">
+      {/* Progress bar */}
+      <div className="mb-6 h-2 w-full rounded-full bg-muted overflow-hidden">
+        <div
+          className="h-2 rounded-full bg-primary transition-all duration-300"
+          style={{ width: `${(currentStep / STEPS.length) * 100}%` }}
+          role="progressbar"
+          aria-valuenow={currentStep}
+          aria-valuemin={1}
+          aria-valuemax={STEPS.length}
+          aria-label={`Step ${currentStep} of ${STEPS.length}`}
+        />
+      </div>
+      {/* Step labels with connecting line */}
+      <div className="relative flex justify-between">
+        {/* Connecting line behind circles */}
+        <div className="absolute top-4 left-4 right-4 h-0.5 bg-border" aria-hidden="true" />
+        <div
+          className="absolute top-4 left-4 h-0.5 bg-primary transition-all duration-300"
+          style={{ width: currentStep > 1 ? `${((currentStep - 1) / (STEPS.length - 1)) * 100}%` : "0%" }}
+          aria-hidden="true"
+        />
+        {STEPS.map((step) => (
+          <div
+            key={step.number}
+            className={`relative z-10 flex flex-col items-center gap-1.5 ${
+              step.number <= currentStep
+                ? "text-primary"
+                : "text-muted-foreground"
+            }`}
+          >
+            <div
+              className={`flex h-8 w-8 items-center justify-center rounded-full text-sm font-semibold transition-colors duration-200 ${
+                step.number < currentStep
+                  ? "bg-primary text-primary-foreground shadow-sm"
+                  : step.number === currentStep
+                  ? "border-2 border-primary bg-primary-light text-primary shadow-sm"
+                  : "border-2 border-border bg-card text-muted-foreground"
+              }`}
+              aria-current={step.number === currentStep ? "step" : undefined}
+            >
+              {step.number < currentStep ? (
+                <svg
+                  aria-hidden="true"
+                  className="h-4 w-4"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  strokeWidth={3}
+                  stroke="currentColor"
+                >
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+                </svg>
+              ) : (
+                step.number
+              )}
+            </div>
+            <span
+              className={`hidden text-xs font-medium sm:block ${
+                step.number === currentStep
+                  ? "text-primary font-semibold"
+                  : step.number < currentStep
+                  ? "text-primary"
+                  : "text-muted-foreground"
+              }`}
+            >
+              {step.label}
+            </span>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// ─── Step 1: About You ─────────────────────────────────────────────────────
+
+function StepAboutYou({
+  gradeLevel,
+  setGradeLevel,
+  graduationYear,
+  setGraduationYear,
+}: {
+  gradeLevel: number;
+  setGradeLevel: (g: number) => void;
+  graduationYear: number;
+  setGraduationYear: (y: number) => void;
+}) {
+  return (
+    <Card>
+      <CardHeader>
+        <h2 className="text-2xl font-bold text-foreground">About You</h2>
+        <p className="text-sm text-muted-foreground">
+          Tell us about your current status so we can personalize your experience.
+        </p>
+      </CardHeader>
+      <CardContent>
+        {/* Grade level radio buttons */}
+        <fieldset className="mb-6">
+          <legend className="mb-3 text-sm font-medium text-foreground">
+            Current grade level
+          </legend>
+          <div className="flex flex-wrap gap-3">
+            {GRADE_LEVELS.map((g) => (
+              <label
+                key={g}
+                className={`flex min-h-[44px] min-w-[72px] cursor-pointer items-center justify-center rounded-lg border px-4 py-2 text-sm font-medium transition-colors ${
+                  gradeLevel === g
+                    ? "border-primary bg-primary-light text-primary"
+                    : "border-border bg-card text-foreground hover:border-secondary"
+                }`}
+              >
+                <input
+                  type="radio"
+                  name="grade_level"
+                  value={g}
+                  checked={gradeLevel === g}
+                  onChange={() => setGradeLevel(g)}
+                  className="sr-only"
+                />
+                Grade {g}
+              </label>
+            ))}
+          </div>
+        </fieldset>
+
+        {/* Graduation year */}
+        <Input
+          label="Expected graduation year"
+          type="number"
+          min={2025}
+          max={2035}
+          value={graduationYear}
+          onChange={(e: ChangeEvent<HTMLInputElement>) =>
+            setGraduationYear(parseInt(e.target.value, 10) || graduationYear)
+          }
+          helperText="Auto-calculated from your grade level. You can adjust if needed."
+        />
+      </CardContent>
+    </Card>
+  );
+}
+
+// ─── Step 2: Past Courses ──────────────────────────────────────────────────
+
+interface ChecklistCourse {
+  id: string;
+  code: string;
+  name: string;
+  creditType: string;
+  duration: string;
+  divisionName: string;
+  gradeLevels: number[];
+  semestersOffered: number[] | null;
+}
+
+function StepPastCourses({
+  gradeLevel,
+  graduationYear,
+  completedCourses,
+  setCompletedCourses,
+  onSkip,
+}: {
+  gradeLevel: number;
+  graduationYear: number;
+  completedCourses: CompletedCourse[];
+  setCompletedCourses: (c: CompletedCourse[]) => void;
+  onSkip: () => void;
+}) {
+  const [allCourses, setAllCourses] = useState<ChecklistCourse[]>([]);
+  const [loadingCourses, setLoadingCourses] = useState(true);
+  const [searchFilter, setSearchFilter] = useState("");
+  const [divisionFilter, setDivisionFilter] = useState("All");
+  const [activeGrade, setActiveGrade] = useState<number>(gradeLevel > 9 ? gradeLevel - 1 : 9);
+
+  // Compute completed grades (grades before current grade)
+  const completedGrades: number[] = [];
+  for (let g = 9; g < gradeLevel; g++) {
+    completedGrades.push(g);
+  }
+
+  // Fetch all courses for the active grade (paginated)
+  useEffect(() => {
+    async function fetchAllCourses() {
+      setLoadingCourses(true);
+      const all: ChecklistCourse[] = [];
+      let cursor: string | null = null;
+      try {
+        do {
+          const params = new URLSearchParams({ grade_level: String(activeGrade), limit: "100" });
+          if (cursor) params.set("cursor", cursor);
+          const res = await fetch(`/api/v1/courses?${params.toString()}`);
+          if (!res.ok) break;
+          const json = await res.json();
+          for (const c of json.data ?? []) {
+            all.push({
+              id: c.id, code: c.code, name: c.name,
+              creditType: c.creditType ?? "CP", duration: c.duration ?? "semester",
+              divisionName: c.divisionName ?? "Other", gradeLevels: c.gradeLevels ?? [],
+              semestersOffered: c.semestersOffered ?? null,
+            });
+          }
+          cursor = json.meta?.next_cursor ?? null;
+        } while (cursor);
+      } catch { /* silent */ }
+      setAllCourses(all);
+      setLoadingCourses(false);
+    }
+    fetchAllCourses();
+  }, [activeGrade]);
+
+  // Filter courses by search and division
+  const filteredCourses = allCourses.filter((c) => {
+    if (divisionFilter !== "All" && c.divisionName !== divisionFilter) return false;
+    if (searchFilter) {
+      const q = searchFilter.toLowerCase();
+      return c.name.toLowerCase().includes(q) || c.code.toLowerCase().includes(q);
+    }
+    return true;
+  });
+
+  const divisions = [...new Set(allCourses.map((c) => c.divisionName))].sort();
+  const groupedByDivision: Record<string, ChecklistCourse[]> = {};
+  for (const c of filteredCourses) {
+    if (!groupedByDivision[c.divisionName]) groupedByDivision[c.divisionName] = [];
+    groupedByDivision[c.divisionName].push(c);
+  }
+
+  const curAcademicYear = getAcademicYear(activeGrade, graduationYear);
+  const selectedForGrade = [...new Set(completedCourses.filter((c) => c.academic_year === curAcademicYear).map((c) => c.code))];
+
+  function isCourseSelected(code: string) {
+    return completedCourses.some((c) => c.code === code && c.academic_year === curAcademicYear);
+  }
+
+  function toggleCourse(course: ChecklistCourse) {
+    if (isCourseSelected(course.code)) {
+      setCompletedCourses(completedCourses.filter((c) => !(c.code === course.code && c.academic_year === curAcademicYear)));
+    } else {
+      const newEntries: CompletedCourse[] = [];
+      if (course.duration === "full_year") {
+        newEntries.push({ code: course.code, name: course.name, grade: "A", academic_year: curAcademicYear, semester: 1 });
+        newEntries.push({ code: course.code, name: course.name, grade: "A", academic_year: curAcademicYear, semester: 2 });
+      } else {
+        newEntries.push({ code: course.code, name: course.name, grade: "A", academic_year: curAcademicYear, semester: course.semestersOffered?.[0] ?? 1 });
+      }
+      setCompletedCourses([...completedCourses, ...newEntries]);
+    }
+  }
+
+  function getCreditBadgeVariant(ct: string) {
+    const l = ct.toLowerCase();
+    if (l.includes("ap")) return "ap" as const;
+    if (l.includes("honors")) return "honors" as const;
+    if (l.includes("dual")) return "dual-credit" as const;
+    if (l.includes("accelerated")) return "accelerated" as const;
+    return "default" as const;
+  }
+
+  if (gradeLevel === 9) {
+    return (
+      <Card>
+        <CardHeader>
+          <h2 className="text-2xl font-bold text-foreground">Past Courses</h2>
+          <p className="text-sm text-muted-foreground">
+            As an incoming freshman, you don&apos;t have any high school courses to enter yet.
+          </p>
+        </CardHeader>
+        <CardContent>
+          <div className="rounded-lg border border-border bg-muted/50 p-6 text-center">
+            <p className="text-sm text-muted-foreground">
+              No courses to enter for Grade 9 students. Continue to the next step.
+            </p>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  return (
+    <Card>
+      <CardHeader>
+        <h2 className="text-2xl font-bold text-foreground">Select Past Courses</h2>
+        <p className="text-sm text-muted-foreground">
+          Check the courses you&apos;ve completed. Grades default to A — you can adjust them later in the planner.
+        </p>
+      </CardHeader>
+      <CardContent>
+        {/* Grade tabs */}
+        <div className="mb-4 flex gap-2">
+          {completedGrades.map((g) => {
+            const yr = getAcademicYear(g, graduationYear);
+            const count = [...new Set(completedCourses.filter((c) => c.academic_year === yr).map((c) => c.code))].length;
+            return (
+              <button
+                key={g}
+                type="button"
+                onClick={() => setActiveGrade(g)}
+                className={`flex items-center gap-1.5 rounded-lg px-3 py-2 text-sm font-medium transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring ${
+                  activeGrade === g
+                    ? "bg-primary text-primary-foreground shadow-sm"
+                    : "border border-border text-muted-foreground hover:bg-muted"
+                }`}
+              >
+                Grade {g}
+                {count > 0 && (
+                  <span className={`rounded-full px-1.5 py-0.5 text-[10px] font-semibold ${
+                    activeGrade === g ? "bg-primary-foreground/20 text-primary-foreground" : "bg-primary/10 text-primary"
+                  }`}>{count}</span>
+                )}
+              </button>
+            );
+          })}
+        </div>
+
+        {/* Search + division filter */}
+        <div className="mb-4 flex flex-col gap-2 sm:flex-row">
+          <div className="relative flex-1">
+            <svg aria-hidden="true" className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z" />
+            </svg>
+            <input
+              type="text"
+              value={searchFilter}
+              onChange={(e) => setSearchFilter(e.target.value)}
+              placeholder="Filter courses..."
+              className="h-10 w-full rounded-lg border border-border bg-background pl-9 pr-3 text-sm text-foreground placeholder:text-muted-foreground focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
+              aria-label="Filter courses by name or code"
+            />
+          </div>
+          <select
+            value={divisionFilter}
+            onChange={(e) => setDivisionFilter(e.target.value)}
+            className="h-10 rounded-lg border border-border bg-background px-3 text-sm text-foreground focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
+            aria-label="Filter by division"
+          >
+            <option value="All">All Divisions</option>
+            {divisions.map((d) => (<option key={d} value={d}>{d}</option>))}
+          </select>
+        </div>
+
+        {/* Course checklist */}
+        {loadingCourses ? (
+          <div className="space-y-3">{[...Array(8)].map((_, i) => (<div key={i} className="h-10 animate-pulse rounded-lg bg-muted" />))}</div>
+        ) : filteredCourses.length === 0 ? (
+          <div className="py-8 text-center text-sm text-muted-foreground">
+            {searchFilter || divisionFilter !== "All" ? "No courses match your filters." : "No courses available for this grade level."}
+          </div>
+        ) : (
+          <div className="max-h-[400px] overflow-y-auto rounded-lg border border-border">
+            {Object.entries(groupedByDivision).sort(([a], [b]) => a.localeCompare(b)).map(([division, courses]) => (
+              <div key={division}>
+                <div className="sticky top-0 z-10 bg-muted px-3 py-1.5">
+                  <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">{division}</p>
+                </div>
+                {courses.map((course) => {
+                  const selected = isCourseSelected(course.code);
+                  return (
+                    <label key={course.id} className={`flex cursor-pointer items-center gap-3 border-b border-border/50 px-3 py-2.5 transition-colors hover:bg-muted/50 ${selected ? "bg-primary-light/50" : ""}`}>
+                      <input type="checkbox" checked={selected} onChange={() => toggleCourse(course)} className="h-4 w-4 shrink-0 rounded border-border text-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring" />
+                      <span className="font-mono text-xs text-muted-foreground w-20 shrink-0">{course.code}</span>
+                      <span className="flex-1 text-sm text-foreground min-w-0 truncate">{course.name}</span>
+                      <Badge variant={getCreditBadgeVariant(course.creditType)} className="shrink-0">{course.creditType}</Badge>
+                    </label>
+                  );
+                })}
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* Selection summary */}
+        <div className="mt-4">
+          <p className="text-sm text-muted-foreground">
+            {selectedForGrade.length} course{selectedForGrade.length !== 1 ? "s" : ""} selected for Grade {activeGrade}
+            {completedCourses.length > 0 && selectedForGrade.length !== [...new Set(completedCourses.map((c) => c.code))].length && (
+              <span className="ml-1 text-foreground font-medium">
+                ({[...new Set(completedCourses.map((c) => c.code))].length} total across all grades)
+              </span>
+            )}
+          </p>
+        </div>
+      </CardContent>
+      <CardFooter>
+        <button type="button" onClick={onSkip} className="min-h-[44px] text-sm text-muted-foreground underline underline-offset-4 hover:text-foreground focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring">
+          I&apos;m a freshman / skip for now
+        </button>
+      </CardFooter>
+    </Card>
+  );
+}
+
+// ─── Step 3: Choose a Starting Plan ────────────────────────────────────────
+
+function StepChoosePlan({
+  templates,
+  selectedTemplateId,
+  setSelectedTemplateId,
+  isLoadingTemplates,
+}: {
+  templates: PlanTemplateInfo[];
+  selectedTemplateId: string | null;
+  setSelectedTemplateId: (id: string | null) => void;
+  isLoadingTemplates: boolean;
+}) {
+  const [expandedId, setExpandedId] = useState<string | null>(null);
+
+  return (
+    <Card>
+      <CardHeader>
+        <h2 className="text-2xl font-bold text-foreground">Choose a Starting Plan</h2>
+        <p className="text-sm text-muted-foreground">
+          Pick a plan template that matches your interests. You can customize it later.
+        </p>
+      </CardHeader>
+      <CardContent>
+        {isLoadingTemplates ? (
+          <div className="flex items-center justify-center py-12">
+            <div className="h-8 w-8 animate-spin rounded-full border-4 border-muted-foreground border-t-transparent" />
+            <span className="ml-3 text-sm text-muted-foreground">Loading templates...</span>
+          </div>
+        ) : (
+          <div className="grid gap-4 grid-cols-1 sm:grid-cols-2">
+            {templates.map((t) => {
+              const isSelected = selectedTemplateId === t.id;
+              const isExpanded = expandedId === t.id;
+
+              // Group courses by grade level
+              const coursesByGrade: Record<number, typeof t.courses> = {};
+              for (const c of t.courses) {
+                if (!coursesByGrade[c.gradeLevel]) coursesByGrade[c.gradeLevel] = [];
+                coursesByGrade[c.gradeLevel].push(c);
+              }
+
+              return (
+                <div
+                  key={t.id}
+                  className={`flex flex-col rounded-xl border bg-card shadow-sm transition-all duration-200 ${
+                    isSelected
+                      ? "border-primary ring-2 ring-primary/20 bg-primary-light/30"
+                      : "border-border hover:border-secondary hover:shadow-md"
+                  }`}
+                >
+                  <div className="flex flex-col flex-1 p-5">
+                    <div className="flex items-start justify-between gap-2 mb-3">
+                      <div className="min-w-0">
+                        <h3 className="text-base font-semibold text-foreground">{t.name}</h3>
+                        <p className="mt-1 text-xs text-muted-foreground">
+                          {t.courseCount} courses over 4 years
+                        </p>
+                      </div>
+                      <div
+                        className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full transition-colors ${
+                          isSelected ? "bg-primary" : "border-2 border-border"
+                        }`}
+                      >
+                        {isSelected && (
+                          <svg
+                            aria-hidden="true"
+                            className="h-3.5 w-3.5 text-primary-foreground"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            strokeWidth={3}
+                            stroke="currentColor"
+                          >
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+                          </svg>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Expandable course preview */}
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setExpandedId(isExpanded ? null : t.id);
+                      }}
+                      className="mb-3 inline-flex min-h-[44px] items-center gap-1 text-xs font-medium text-primary hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring self-start"
+                      aria-expanded={isExpanded}
+                      aria-controls={`template-courses-${t.id}`}
+                    >
+                      <svg
+                        aria-hidden="true"
+                        className={`h-3 w-3 transition-transform ${isExpanded ? "rotate-90" : ""}`}
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        strokeWidth={2.5}
+                        stroke="currentColor"
+                      >
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
+                      </svg>
+                      {isExpanded ? "Hide" : "Preview"} courses
+                    </button>
+
+                    {isExpanded && (
+                      <div
+                        id={`template-courses-${t.id}`}
+                        className="mb-3 max-h-48 overflow-y-auto rounded-lg bg-muted/50 p-3"
+                      >
+                        {GRADE_LEVELS.map((g) => {
+                          const gradeCourses = coursesByGrade[g];
+                          if (!gradeCourses || gradeCourses.length === 0) return null;
+                          return (
+                            <div key={g} className="mb-2 last:mb-0">
+                              <p className="text-xs font-semibold text-muted-foreground">
+                                Grade {g}
+                              </p>
+                              <ul className="ml-2">
+                                {gradeCourses.map((c, idx) => (
+                                  <li key={idx} className="text-xs text-foreground">
+                                    <span className="font-mono text-muted-foreground">{c.code}</span>{" "}
+                                    {c.name}
+                                  </li>
+                                ))}
+                              </ul>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Button pinned to bottom */}
+                  <div className="p-5 pt-0 mt-auto">
+                    <Button
+                      type="button"
+                      variant={isSelected ? "default" : "outline"}
+                      size="sm"
+                      className="w-full"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setSelectedTemplateId(isSelected ? null : t.id);
+                      }}
+                    >
+                      {isSelected ? "Selected" : "Select this plan"}
+                    </Button>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </CardContent>
+      <CardFooter>
+        <button
+          type="button"
+          onClick={() => setSelectedTemplateId(null)}
+          className="min-h-[44px] text-sm text-muted-foreground underline underline-offset-4 hover:text-foreground focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
+        >
+          Start from scratch (no template)
+        </button>
+      </CardFooter>
+    </Card>
+  );
+}
+
+// ─── Step 4: Set Your Goals ────────────────────────────────────────────────
+
+function StepGoals({
+  gpaGoal,
+  setGpaGoal,
+  collegeTargets,
+  setCollegeTargets,
+  careerGoals,
+  setCareerGoals,
+}: {
+  gpaGoal: string;
+  setGpaGoal: (v: string) => void;
+  collegeTargets: CollegeTargets;
+  setCollegeTargets: (v: CollegeTargets) => void;
+  careerGoals: string;
+  setCareerGoals: (v: string) => void;
+}) {
+  return (
+    <Card>
+      <CardHeader>
+        <h2 className="text-2xl font-bold text-foreground">Set Your Goals</h2>
+        <p className="text-sm text-muted-foreground">
+          These goals help us personalize recommendations. All fields are optional
+          — you can set or change them anytime.
+        </p>
+      </CardHeader>
+      <CardContent>
+        {/* GPA Target */}
+        <div className="mb-6">
+          <Input
+            label="GPA Target"
+            type="number"
+            min={0}
+            max={4.0}
+            step={0.1}
+            value={gpaGoal}
+            onChange={(e: ChangeEvent<HTMLInputElement>) => setGpaGoal(e.target.value)}
+            placeholder="e.g., 3.5"
+            helperText="Unweighted GPA on a 4.0 scale"
+          />
+        </div>
+
+        {/* College targets */}
+        <fieldset className="mb-6">
+          <legend className="mb-3 text-sm font-medium text-foreground">
+            College Targets
+          </legend>
+          <div className="flex flex-col gap-4">
+            <Input
+              label="Reach school"
+              type="text"
+              value={collegeTargets.reach}
+              onChange={(e: ChangeEvent<HTMLInputElement>) =>
+                setCollegeTargets({ ...collegeTargets, reach: e.target.value })
+              }
+              placeholder="e.g., MIT"
+            />
+            <Input
+              label="Match school"
+              type="text"
+              value={collegeTargets.match}
+              onChange={(e: ChangeEvent<HTMLInputElement>) =>
+                setCollegeTargets({ ...collegeTargets, match: e.target.value })
+              }
+              placeholder="e.g., University of Illinois"
+            />
+            <Input
+              label="Safety school"
+              type="text"
+              value={collegeTargets.safety}
+              onChange={(e: ChangeEvent<HTMLInputElement>) =>
+                setCollegeTargets({ ...collegeTargets, safety: e.target.value })
+              }
+              placeholder="e.g., Illinois State"
+            />
+          </div>
+        </fieldset>
+
+        {/* Career interest */}
+        <div>
+          <label htmlFor="career-goals" className="mb-1.5 block text-sm font-medium text-foreground">
+            Career interest
+          </label>
+          <select
+            id="career-goals"
+            value={careerGoals}
+            onChange={(e) => setCareerGoals(e.target.value)}
+            className="h-11 min-h-[44px] w-full rounded-lg border border-border bg-background px-3 text-sm text-foreground focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
+          >
+            <option value="">Select an interest (optional)</option>
+            <option value="engineering">Engineering</option>
+            <option value="medicine">Medicine / Healthcare</option>
+            <option value="computer_science">Computer Science / Technology</option>
+            <option value="business">Business / Finance</option>
+            <option value="law">Law / Government</option>
+            <option value="arts">Arts / Design</option>
+            <option value="education">Education</option>
+            <option value="science">Science / Research</option>
+            <option value="communications">Communications / Media</option>
+            <option value="undecided">Undecided</option>
+          </select>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
+// ─── Main Onboarding Wizard ────────────────────────────────────────────────
+
+export default function OnboardingPage() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const isNewUser = searchParams.get("welcome") === "1";
+  const [showWelcome, setShowWelcome] = useState(isNewUser);
+
+  // Auto-dismiss welcome banner after 6 seconds
+  useEffect(() => {
+    if (showWelcome) {
+      const timer = setTimeout(() => setShowWelcome(false), 6000);
+      return () => clearTimeout(timer);
+    }
+  }, [showWelcome]);
+
+  // Wizard state
+  const [currentStep, setCurrentStep] = useState(1);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  // Step 1
+  const currentYear = new Date().getFullYear();
+  const [gradeLevel, setGradeLevel] = useState(9);
+  const [graduationYear, setGraduationYear] = useState(currentYear + 3);
+
+  // Auto-calculate graduation year when grade changes
+  function handleGradeLevelChange(g: number) {
+    setGradeLevel(g);
+    setGraduationYear(currentYear + (12 - g));
+  }
+
+  // Step 2
+  const [completedCourses, setCompletedCourses] = useState<CompletedCourse[]>([]);
+
+  // Step 3
+  const [templates, setTemplates] = useState<PlanTemplateInfo[]>([]);
+  const [isLoadingTemplates, setIsLoadingTemplates] = useState(false);
+  const [selectedTemplateId, setSelectedTemplateId] = useState<string | null>(null);
+
+  // Step 4
+  const [gpaGoal, setGpaGoal] = useState("");
+  const [collegeTargets, setCollegeTargets] = useState<CollegeTargets>({
+    reach: "",
+    match: "",
+    safety: "",
+  });
+  const [careerGoals, setCareerGoals] = useState("");
+
+  // Load templates when entering step 3
+  useEffect(() => {
+    if (currentStep === 3 && templates.length === 0) {
+      loadTemplates();
+    }
+  }, [currentStep]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  async function loadTemplates() {
+    setIsLoadingTemplates(true);
+    try {
+      const res = await fetch("/api/v1/plans/templates");
+      if (res.ok) {
+        const data = await res.json();
+        setTemplates(data.data || []);
+      }
+    } catch {
+      // If templates fail to load, user can still proceed with "start from scratch"
+    } finally {
+      setIsLoadingTemplates(false);
+    }
+  }
+
+  function goNext() {
+    if (currentStep === 1 && gradeLevel === 9) {
+      // Freshmen skip step 2 (no past courses)
+      setCurrentStep(3);
+    } else if (currentStep === 2 && completedCourses.length > 0) {
+      // If user entered past courses, skip step 3 (Starting Plan) — go straight to Goals
+      setCurrentStep(4);
+    } else {
+      setCurrentStep(Math.min(currentStep + 1, STEPS.length));
+    }
+    setError(null);
+  }
+
+  function goPrevious() {
+    if (currentStep === 3 && gradeLevel === 9) {
+      // If on step 3 and was a freshman, go back to step 1
+      setCurrentStep(1);
+    } else if (currentStep === 4 && completedCourses.length > 0) {
+      // If user entered past courses and is on Goals, go back to Past Courses (skip step 3)
+      setCurrentStep(2);
+    } else {
+      setCurrentStep(Math.max(currentStep - 1, 1));
+    }
+    setError(null);
+  }
+
+  async function handleComplete() {
+    setIsSubmitting(true);
+    setError(null);
+
+    try {
+      const payload: Record<string, unknown> = {
+        grade_level: gradeLevel,
+        graduation_year: graduationYear,
+      };
+
+      if (completedCourses.length > 0) {
+        payload.courses_completed = completedCourses.map((c) => ({
+          code: c.code,
+          grade: c.grade,
+          academic_year: c.academic_year,
+          semester: c.semester,
+        }));
+      }
+
+      if (selectedTemplateId) {
+        payload.template_id = selectedTemplateId;
+      }
+
+      const gpaNum = parseFloat(gpaGoal);
+      if (!isNaN(gpaNum) && gpaNum >= 0 && gpaNum <= 4.0) {
+        payload.gpa_goal = gpaNum;
+      }
+
+      const hasCollegeTargets =
+        collegeTargets.reach || collegeTargets.match || collegeTargets.safety;
+      if (hasCollegeTargets) {
+        payload.college_targets = collegeTargets;
+      }
+
+      if (careerGoals) {
+        payload.career_goals = careerGoals;
+      }
+
+      const res = await fetch("/api/v1/auth/onboarding", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        setError(
+          data?.error?.message || "Something went wrong. Please try again."
+        );
+        return;
+      }
+
+      // Success — check if user has existing plans (from linked accounts)
+      try {
+        const plansRes = await fetch("/api/v1/plans");
+        if (plansRes.ok) {
+          const plansData = await plansRes.json();
+          const plans = plansData?.data ?? plansData?.plans ?? plansData ?? [];
+          if (Array.isArray(plans) && plans.length > 0) {
+            router.push("/dashboard");
+            return;
+          }
+        }
+      } catch { /* fall through to planner */ }
+      router.push("/planner");
+    } catch {
+      setError("Something went wrong. Please try again.");
+    } finally {
+      setIsSubmitting(false);
+    }
+  }
+
+  return (
+    <div>
+      {/* Welcome banner */}
+      {showWelcome && (
+        <div className="mb-6 flex items-center gap-3 rounded-lg border border-success/30 bg-success-light p-3">
+          <svg aria-hidden="true" className="h-5 w-5 shrink-0 text-success" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" d="m4.5 12.75 6 6 9-13.5" />
+          </svg>
+          <p className="flex-1 text-sm font-medium text-success">Account created successfully! Let&apos;s set up your profile.</p>
+          <button
+            type="button"
+            onClick={() => setShowWelcome(false)}
+            className="flex h-6 w-6 items-center justify-center rounded text-success/60 hover:text-success transition-colors"
+            aria-label="Dismiss welcome message"
+          >
+            <svg aria-hidden="true" className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M6 18 18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+      )}
+
+      <div className="mb-4 flex justify-end">
+        <button
+          type="button"
+          onClick={async () => {
+            try {
+              const res = await fetch("/api/v1/plans");
+              if (res.ok) {
+                const data = await res.json();
+                const plans = data?.data ?? data?.plans ?? data ?? [];
+                if (Array.isArray(plans) && plans.length > 0) {
+                  router.push("/dashboard");
+                  return;
+                }
+              }
+            } catch { /* fall through */ }
+            router.push("/planner");
+          }}
+          className="text-xs text-muted-foreground hover:text-foreground transition-colors"
+        >
+          Skip setup →
+        </button>
+      </div>
+
+      <StepIndicator currentStep={currentStep} />
+
+      {/* Error banner */}
+      {error && (
+        <div
+          className="mb-6 rounded-lg border border-destructive/30 bg-destructive-light p-3 text-sm text-destructive"
+          role="alert"
+        >
+          <span className="flex items-center gap-2">
+            <svg
+              aria-hidden="true"
+              className="h-4 w-4 shrink-0"
+              fill="none"
+              viewBox="0 0 24 24"
+              strokeWidth={2}
+              stroke="currentColor"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126ZM12 15.75h.007v.008H12v-.008Z"
+              />
+            </svg>
+            {error}
+          </span>
+        </div>
+      )}
+
+      {/* Step content */}
+      <div className="min-h-[400px]">
+        {currentStep === 1 && (
+          <StepAboutYou
+            gradeLevel={gradeLevel}
+            setGradeLevel={handleGradeLevelChange}
+            graduationYear={graduationYear}
+            setGraduationYear={setGraduationYear}
+          />
+        )}
+
+        {currentStep === 2 && (
+          <StepPastCourses
+            gradeLevel={gradeLevel}
+            graduationYear={graduationYear}
+            completedCourses={completedCourses}
+            setCompletedCourses={setCompletedCourses}
+            onSkip={goNext}
+          />
+        )}
+
+        {currentStep === 3 && (
+          <StepChoosePlan
+            templates={templates}
+            selectedTemplateId={selectedTemplateId}
+            setSelectedTemplateId={setSelectedTemplateId}
+            isLoadingTemplates={isLoadingTemplates}
+          />
+        )}
+
+        {currentStep === 4 && (
+          <StepGoals
+            gpaGoal={gpaGoal}
+            setGpaGoal={setGpaGoal}
+            collegeTargets={collegeTargets}
+            setCollegeTargets={setCollegeTargets}
+            careerGoals={careerGoals}
+            setCareerGoals={setCareerGoals}
+          />
+        )}
+      </div>
+
+      {/* Navigation buttons */}
+      <div className="mt-8 flex items-center justify-between gap-4">
+        <div>
+          {currentStep > 1 && (
+            <Button
+              type="button"
+              variant="outline"
+              onClick={goPrevious}
+              disabled={isSubmitting}
+            >
+              <svg
+                aria-hidden="true"
+                className="mr-1 h-4 w-4"
+                fill="none"
+                viewBox="0 0 24 24"
+                strokeWidth={2}
+                stroke="currentColor"
+              >
+                <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" />
+              </svg>
+              Back
+            </Button>
+          )}
+        </div>
+
+        <div className="flex items-center gap-3">
+          {/* Skip button (except on step 1 which is required) */}
+          {currentStep > 1 && currentStep < STEPS.length && (
+            <Button
+              type="button"
+              variant="ghost"
+              onClick={goNext}
+              disabled={isSubmitting}
+            >
+              Skip
+            </Button>
+          )}
+
+          {currentStep < STEPS.length ? (
+            <Button type="button" onClick={goNext} disabled={isSubmitting}>
+              Next
+              <svg
+                aria-hidden="true"
+                className="ml-1 h-4 w-4"
+                fill="none"
+                viewBox="0 0 24 24"
+                strokeWidth={2}
+                stroke="currentColor"
+              >
+                <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
+              </svg>
+            </Button>
+          ) : (
+            <Button
+              type="button"
+              onClick={handleComplete}
+              disabled={isSubmitting}
+            >
+              {isSubmitting ? (
+                <>
+                  <div className="h-4 w-4 animate-spin rounded-full border-2 border-primary-foreground border-t-transparent" />
+                  Saving...
+                </>
+              ) : (
+                "Complete"
+              )}
+            </Button>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}

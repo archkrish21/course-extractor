@@ -1,8 +1,8 @@
 "use client";
 
-import { useState, type FormEvent } from "react";
+import { useState, useEffect, type FormEvent } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
@@ -14,10 +14,19 @@ interface FieldErrors {
 
 export default function LoginPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [errors, setErrors] = useState<FieldErrors>({});
   const [loading, setLoading] = useState(false);
+
+  // Show error from URL params (e.g., account_not_found)
+  useEffect(() => {
+    const urlError = searchParams.get("error");
+    if (urlError === "account_not_found") {
+      setErrors({ form: "Account not found. Please sign up to create a new account." });
+    }
+  }, [searchParams]);
 
   function validate(): FieldErrors {
     const errs: FieldErrors = {};
@@ -56,7 +65,7 @@ export default function LoginPage() {
       });
 
       if (authError) {
-        setErrors({ form: authError.message || "Invalid email or password." });
+        setErrors({ form: "Invalid email or password." });
         return;
       }
 
@@ -160,7 +169,7 @@ export default function LoginPage() {
       <Button
         type="button"
         variant="outline"
-        className="w-full"
+        className="w-full bg-white hover:bg-gray-50"
         onClick={handleGoogleSignIn}
       >
         <svg aria-hidden="true" className="h-5 w-5" viewBox="0 0 24 24">

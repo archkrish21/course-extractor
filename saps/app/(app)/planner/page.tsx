@@ -1246,7 +1246,7 @@ export default function PlannerPage() {
       <div className="mb-6 flex flex-wrap items-start justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold text-foreground">
-            {selectedPlan?.name ?? "Course Planner"}
+            Course Planner
           </h1>
           {selectedPlan && (() => {
             const creatorName = selectedPlan.creatorEmail
@@ -1259,9 +1259,7 @@ export default function PlannerPage() {
               <p className="mt-1 text-sm text-muted-foreground">
                 {selectedPlan.creatorRole && selectedPlan.creatorRole !== "student"
                   ? `${creatorName ?? selectedPlan.creatorRole}'s plan`
-                  : selectedPlan.createdFromTemplateId
-                    ? "Created from template"
-                    : `${ownerName}'s plan`
+                  : `${ownerName}'s plan`
                 }
               </p>
             );

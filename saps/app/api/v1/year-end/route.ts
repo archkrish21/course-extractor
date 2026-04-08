@@ -178,9 +178,9 @@ export async function POST(request: NextRequest) {
       return errorResponse("VALIDATION_ERROR", "Invalid action.", 400);
     }
 
-    // Get account
+    // Get account (including studentUserId for snapshot)
     const [account] = await db
-      .select({ gradeLevel: accounts.gradeLevel })
+      .select({ gradeLevel: accounts.gradeLevel, studentUserId: accounts.studentUserId })
       .from(accounts)
       .where(eq(accounts.id, accountId))
       .limit(1);
@@ -269,16 +269,20 @@ export async function POST(request: NextRequest) {
     }
 
     // Update transition state only if completing current grade
+    // Use account's studentUserId — the caller may be a parent
     if (isCurrentGrade) {
+      const profileUserId = account?.studentUserId ?? user.id;
       await db
         .update(studentProfiles)
         .set({ yearEndTransitionState: "completed" })
-        .where(eq(studentProfiles.userId, user.id));
+        .where(eq(studentProfiles.userId, profileUserId));
     }
 
     // Auto-create GPA snapshot for the completed semester
+    // Use the account's actual student ID, not the authenticated user (who may be a parent)
+    const studentId = account?.studentUserId ?? user.id;
     await maybeCreateSemesterSnapshot({
-      studentId: user.id,
+      studentId,
       accountId,
       planId: plan.id,
     });

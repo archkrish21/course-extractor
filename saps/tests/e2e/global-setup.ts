@@ -124,11 +124,11 @@ async function globalSetup() {
       if (!id) continue;
       const [first, last] = user.name.split(" ");
       await client.query(
-        `INSERT INTO users (id, email, first_name, last_name, role, date_of_birth, state, school_name, created_at)
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, NOW())
+        `INSERT INTO users (id, email, first_name, last_name, role, date_of_birth, created_at)
+         VALUES ($1, $2, $3, $4, $5, $6, NOW())
          ON CONFLICT (id) DO UPDATE SET email = EXCLUDED.email, first_name = EXCLUDED.first_name,
            last_name = EXCLUDED.last_name, role = EXCLUDED.role`,
-        [id, user.email, first, last || null, user.role, user.dob, TEST_STATE, TEST_SCHOOL],
+        [id, user.email, first, last || null, user.role, user.dob],
       );
     }
     console.log("[e2e-setup] Upserted app users");
@@ -142,8 +142,8 @@ async function globalSetup() {
       accountId = acctResult.rows[0].id;
     } else {
       const ins = await client.query(
-        `INSERT INTO accounts (student_user_id, student_name, grade_level, graduation_year, state, school_name, is_claimed, created_by)
-         VALUES ($1, 'Test Student', $2, $3, $4, $5, true, $1) RETURNING id`,
+        `INSERT INTO accounts (student_user_id, student_name, grade_level, graduation_year, state, school_name, claimed_at, created_by)
+         VALUES ($1, 'Test Student', $2, $3, $4, $5, NOW(), $1) RETURNING id`,
         [studentId, TEST_GRADE_LEVEL, TEST_GRADUATION_YEAR, TEST_STATE, TEST_SCHOOL],
       );
       accountId = ins.rows[0].id;
@@ -163,9 +163,9 @@ async function globalSetup() {
 
     // ── Student profile ──────────────────────────────────────────────
     await client.query(
-      `INSERT INTO student_profiles (user_id, grade_level, graduation_year, state, school_name)
-       VALUES ($1, $2, $3, $4, $5) ON CONFLICT (user_id) DO NOTHING`,
-      [studentId, TEST_GRADE_LEVEL, TEST_GRADUATION_YEAR, TEST_STATE, TEST_SCHOOL],
+      `INSERT INTO student_profiles (user_id, current_grade_level, graduation_year)
+       VALUES ($1, $2, $3) ON CONFLICT (user_id) DO NOTHING`,
+      [studentId, TEST_GRADE_LEVEL, TEST_GRADUATION_YEAR],
     );
 
     // ── Primary plan ─────────────────────────────────────────────────
@@ -177,8 +177,8 @@ async function globalSetup() {
       planId = planResult.rows[0].id;
     } else {
       const ins = await client.query(
-        `INSERT INTO four_year_plans (account_id, student_id, name, is_primary, is_template, status, created_by)
-         VALUES ($1, $2, 'E2E Test Plan', true, false, 'active', $2) RETURNING id`,
+        `INSERT INTO four_year_plans (account_id, student_id, name, school_year, is_primary, is_template, status, created_by)
+         VALUES ($1, $2, 'E2E Test Plan', '2024-2025', true, false, 'active', $2) RETURNING id`,
         [accountId, studentId],
       );
       planId = ins.rows[0].id;
@@ -250,9 +250,9 @@ async function globalSetup() {
         `SELECT id FROM consent_records WHERE user_id = $1 LIMIT 1`, [userId],
       );
       if (existing.rows.length === 0 && docs.rows.length > 0) {
-        const vals = docs.rows.map((_, i) => `($1, $${i + 2}, NOW())`).join(", ");
+        const vals = docs.rows.map((_, i) => `($1, $${i + 2}, 'accepted', NOW())`).join(", ");
         await client.query(
-          `INSERT INTO consent_records (user_id, document_id, accepted_at) VALUES ${vals} ON CONFLICT DO NOTHING`,
+          `INSERT INTO consent_records (user_id, legal_document_id, action, consented_at) VALUES ${vals} ON CONFLICT DO NOTHING`,
           [userId, ...docs.rows.map((d: { id: string }) => d.id)],
         );
         console.log(`[e2e-setup] Created consent for ${userId}`);

@@ -243,7 +243,6 @@ test.describe("Course Detail Modal", () => {
 
 // ─── Feedback Widget ───────────────────────────────────────────────────────
 // Feedback widget tests are in linked-accounts.spec.ts (Feedback Widget section).
-});
 
 // ─── Plan Sharing ──────────────────────────────────────────────────────────
 

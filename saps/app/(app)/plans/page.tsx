@@ -141,7 +141,7 @@ export default function PlansPage() {
               <div className="flex items-center gap-2 flex-wrap">
                 <Link
                   href={`/planner?planId=${plan.id}`}
-                  className="text-base font-semibold text-foreground hover:text-primary transition-colors"
+                  className="rounded text-base font-semibold text-foreground hover:text-primary transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
                 >
                   {plan.name}{plan.isPrimary ? " \u2605" : ""}
                 </Link>
@@ -276,7 +276,7 @@ export default function PlansPage() {
         <div className="flex items-center gap-3">
           <Link
             href="/planner"
-            className="flex h-8 w-8 items-center justify-center rounded-lg text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
+            className="flex h-8 w-8 items-center justify-center rounded-lg text-muted-foreground hover:bg-muted hover:text-foreground transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
             aria-label="Back to planner"
           >
             <svg aria-hidden="true" className="h-5 w-5" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
@@ -302,7 +302,7 @@ export default function PlansPage() {
         <button
           type="button"
           onClick={() => setActiveTab("my")}
-          className={`px-4 py-2.5 text-sm font-medium transition-colors relative ${
+          className={`px-4 py-2.5 text-sm font-medium transition-colors relative rounded-t-lg focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring ${
             activeTab === "my"
               ? "text-primary after:absolute after:inset-x-0 after:bottom-0 after:h-0.5 after:bg-primary after:rounded-full"
               : "text-muted-foreground hover:text-foreground"
@@ -313,7 +313,7 @@ export default function PlansPage() {
         <button
           type="button"
           onClick={() => setActiveTab("shared")}
-          className={`px-4 py-2.5 text-sm font-medium transition-colors relative ${
+          className={`px-4 py-2.5 text-sm font-medium transition-colors relative rounded-t-lg focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring ${
             activeTab === "shared"
               ? "text-primary after:absolute after:inset-x-0 after:bottom-0 after:h-0.5 after:bg-primary after:rounded-full"
               : "text-muted-foreground hover:text-foreground"
@@ -385,13 +385,13 @@ export default function PlansPage() {
       {deleteConfirm && (
         <>
           <div
-            className="fixed inset-0 z-40 bg-black/50"
+            className="fixed inset-0 z-40 bg-foreground/30"
             onClick={() => setDeleteConfirm(null)}
             aria-hidden="true"
           />
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
             <div
-              className="w-full max-w-md rounded-xl bg-card shadow-xl"
+              className="w-full max-w-md rounded-2xl border border-border bg-card shadow-xl"
               role="alertdialog"
               aria-modal="true"
               aria-label="Delete plan confirmation"

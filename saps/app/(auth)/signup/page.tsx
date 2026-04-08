@@ -115,11 +115,11 @@ export default function SignupPage() {
   return (
     <div className="-mx-6 -my-6 sm:-mx-8 sm:-my-8">
       {/* Wider signup layout */}
-      <div className="px-6 py-6 sm:px-8 sm:py-8" style={{ maxWidth: "540px", margin: "0 auto" }}>
+      <div className="mx-auto max-w-[540px] px-6 py-6 sm:px-8 sm:py-8">
 
         {/* Header */}
         <div className="mb-6">
-          <h2 className="text-xl font-bold text-foreground">Create your account</h2>
+          <h2 className="text-2xl font-bold text-foreground">Create your account</h2>
           <p className="mt-1 text-sm text-muted-foreground">
             Start planning your academic path today.
           </p>
@@ -209,7 +209,7 @@ export default function SignupPage() {
           </div>
           <p className="-mt-3 text-[11px] text-muted-foreground">
             Currently supporting Stevenson High School. More schools coming soon!{" "}
-            <button type="button" onClick={() => setShowSchoolRequest(true)} className="text-primary hover:underline">
+            <button type="button" onClick={() => setShowSchoolRequest(true)} className="text-primary hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring rounded">
               Request yours
             </button>
           </p>
@@ -268,7 +268,7 @@ export default function SignupPage() {
         {/* Footer */}
         <p className="mt-6 text-center text-sm text-muted-foreground">
           Already have an account?{" "}
-          <Link href="/login" className="font-medium text-primary hover:underline">Sign in</Link>
+          <Link href="/login" className="font-medium text-primary hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring">Sign in</Link>
         </p>
       </div>
     </div>

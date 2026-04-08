@@ -432,9 +432,14 @@ export default function CourseBrowserPage() {
 
   return (
     <div className="mx-auto max-w-6xl">
-      <h1 className="mb-6 text-2xl font-bold tracking-tight text-foreground sm:text-3xl">
-        Course Browser
-      </h1>
+      <div className="mb-6">
+        <h1 className="text-2xl font-bold text-foreground">
+          Course Browser
+        </h1>
+        <p className="mt-1 text-sm text-muted-foreground">
+          Search and explore available courses by division, level, and type
+        </p>
+      </div>
 
       <div className="flex gap-6">
         {/* Desktop sidebar filters */}

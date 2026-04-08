@@ -561,7 +561,7 @@ export default function DashboardPage() {
                   <div className="h-4 w-28 rounded bg-muted" />
                   <div className="h-4 w-20 rounded bg-muted" />
                 </div>
-                <div className="h-3 w-full rounded-full bg-muted" />
+                <div className="h-2 w-full rounded-full bg-muted" />
                 <div className="space-y-2 pt-2">
                   <div className="h-4 w-40 rounded bg-muted" />
                   <div className="h-4 w-36 rounded bg-muted" />
@@ -1014,7 +1014,7 @@ export default function DashboardPage() {
           <div className="flex items-center gap-2">
             <svg
               aria-hidden="true"
-              className="h-5 w-5 text-amber-500"
+              className="h-5 w-5 text-warning"
               fill="none"
               viewBox="0 0 24 24"
               strokeWidth={1.5}
@@ -1110,7 +1110,7 @@ export default function DashboardPage() {
             };
 
             const colorMap: Record<string, string> = {
-              amber: "border-amber-400/40 bg-gradient-to-r from-amber-50 to-yellow-50 text-amber-700",
+              amber: "border-warning/30 bg-warning-light text-warning",
               success: "border-success/30 bg-success/5 text-success",
               primary: "border-primary/30 bg-primary/5 text-primary",
             };

@@ -60,7 +60,7 @@ export default function ContactPage() {
       </p>
 
       <form onSubmit={handleSubmit} className="mt-8 space-y-4">
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <Input label="Name" required value={name} onChange={(e) => setName(e.target.value)} placeholder="Your name" />
           <Input label="Email" type="email" required value={email} onChange={(e) => setEmail(e.target.value)} placeholder="you@example.com" />
         </div>
@@ -88,7 +88,7 @@ export default function ContactPage() {
 
       <div className="mt-8 text-center text-xs text-muted-foreground">
         Or email us directly at{" "}
-        <a href="mailto:support@saps.app" className="text-primary hover:underline">support@saps.app</a>
+        <a href="mailto:support@saps.app" className="text-primary hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring rounded-sm">support@saps.app</a>
       </div>
     </div>
   );

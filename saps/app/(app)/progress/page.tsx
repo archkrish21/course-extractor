@@ -94,15 +94,15 @@ function StatusIcon({ status }: { status: string }) {
 
 function StatusBadge({ status }: { status: string }) {
   if (status === "met" || status === "completed") {
-    return <Badge className="bg-success/15 text-success text-[10px]">Complete</Badge>;
+    return <Badge variant="success" className="text-[10px]">Complete</Badge>;
   }
   if (status === "in_progress") {
-    return <Badge className="bg-primary/15 text-primary text-[10px]">In Progress</Badge>;
+    return <Badge variant="default" className="text-[10px]">In Progress</Badge>;
   }
   if (status === "gap") {
     return <Badge variant="destructive" className="text-[10px]">Gap</Badge>;
   }
-  return <Badge variant="default" className="bg-muted text-muted-foreground text-[10px]">Not Started</Badge>;
+  return <Badge variant="default" className="text-[10px]">Not Started</Badge>;
 }
 
 // ─── Page ───────────────────────────────────────────────────────────────────
@@ -299,7 +299,7 @@ export default function ProgressPage() {
           <h1 className="text-2xl font-bold tracking-tight text-foreground sm:text-3xl">Academic Progress</h1>
           <p className="mt-1 text-sm text-muted-foreground">Track your graduation requirements, credits, and GPA over time.</p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="no-print flex items-center gap-2">
           {(() => {
             const canPrint = true; // FREE_LAUNCH_MODE: print enabled for all users
             return (
@@ -345,7 +345,7 @@ export default function ProgressPage() {
           { key: "not_started", label: "Not Started" },
         ];
         return (
-          <div className="mb-5 flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none" data-tour="progress-filter">
+          <div className="no-print mb-5 flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none" data-tour="progress-filter">
             <div className="flex items-center gap-1.5 shrink-0">
               {filters.map((f) => (
                 <button
@@ -432,9 +432,8 @@ export default function ProgressPage() {
               </div>
             </div>
 
-            {/* Group content */}
-            {expandedGroups.has(group.group) && (
-              <div className="space-y-3">
+            {/* Group content — always rendered for print, visually hidden when collapsed */}
+            <div className={`print-expand space-y-3 ${expandedGroups.has(group.group) ? "" : "hidden"}`}>
                 {(!group.isOptIn || group.enabled) ? (
                   (() => {
                     // Sub-group course_load requirements by evaluation type
@@ -491,7 +490,7 @@ export default function ProgressPage() {
                                 </svg>
                                 Course Count Per Semester ({courseLoadReqs.filter((r) => r.status === "gap").length} issue{courseLoadReqs.filter((r) => r.status === "gap").length !== 1 ? "s" : ""})
                               </button>
-                              {expandedGroups.has("course_load:count") && renderCards(courseLoadReqs)}
+                              <div className={`print-expand ${expandedGroups.has("course_load:count") ? "" : "hidden"}`}>{renderCards(courseLoadReqs)}</div>
                             </div>
                           )}
                           {pwDanceReqs.length > 0 && (
@@ -511,7 +510,7 @@ export default function ProgressPage() {
                                 </svg>
                                 Physical Welfare / Dance / Driver Ed ({pwDanceReqs.filter((r) => r.status === "gap").length} issue{pwDanceReqs.filter((r) => r.status === "gap").length !== 1 ? "s" : ""})
                               </button>
-                              {expandedGroups.has("course_load:pw") && renderCards(pwDanceReqs)}
+                              <div className={`print-expand ${expandedGroups.has("course_load:pw") ? "" : "hidden"}`}>{renderCards(pwDanceReqs)}</div>
                             </div>
                           )}
                         </>
@@ -614,7 +613,7 @@ export default function ProgressPage() {
                                 type="button"
                                 onClick={() => handleStatusToggle(req.id, req.status)}
                                 className={`flex h-5 w-5 shrink-0 items-center justify-center rounded border-2 transition-colors ${
-                                  isComplete ? "border-success bg-success text-white" : "border-muted-foreground/40 hover:border-primary"
+                                  isComplete ? "border-success bg-success text-primary-foreground" : "border-muted-foreground/40 hover:border-primary"
                                 }`}
                                 aria-label={`Mark ${req.name} as ${isComplete ? "incomplete" : "complete"}`}
                               >
@@ -704,8 +703,7 @@ export default function ProgressPage() {
                     </CardContent>
                   </Card>
                 )}
-              </div>
-            )}
+            </div>
           </div>
         ))}
       </div>
@@ -717,13 +715,13 @@ export default function ProgressPage() {
           <div className="sticky top-4 space-y-4">
             {/* Honors achievement badge */}
             {data.honorsStatus && (
-              <div className="flex items-center gap-3 rounded-xl border border-amber-400/40 bg-gradient-to-r from-amber-50 to-yellow-50 px-4 py-3">
-                <svg aria-hidden="true" className="h-7 w-7 shrink-0 text-amber-500" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+              <div className="flex items-center gap-3 rounded-xl border border-warning/40 bg-warning-light px-4 py-3">
+                <svg aria-hidden="true" className="h-7 w-7 shrink-0 text-warning" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" d="M11.48 3.499a.562.562 0 0 1 1.04 0l2.125 5.111a.563.563 0 0 0 .475.345l5.518.442c.499.04.701.663.321.988l-4.204 3.602a.563.563 0 0 0-.182.557l1.285 5.385a.562.562 0 0 1-.84.61l-4.725-2.885a.562.562 0 0 0-.586 0L6.982 20.54a.562.562 0 0 1-.84-.61l1.285-5.386a.562.562 0 0 0-.182-.557l-4.204-3.602a.562.562 0 0 1 .321-.988l5.518-.442a.563.563 0 0 0 .475-.345L11.48 3.5Z" />
                 </svg>
                 <div>
-                  <p className="font-bold text-amber-700">{data.honorsStatus.tier}</p>
-                  <p className="text-xs text-amber-600/80">
+                  <p className="font-bold text-warning">{data.honorsStatus.tier}</p>
+                  <p className="text-xs text-warning/80">
                     GPA {data.honorsStatus.weightedGpa.toFixed(2)} · {data.honorsStatus.totalCredits} credits
                   </p>
                 </div>
@@ -849,7 +847,7 @@ export default function ProgressPage() {
                             <span className="text-muted-foreground">/ {gs.total}</span>
                           </div>
                         </div>
-                        <div className="mt-1 flex h-1.5 w-full overflow-hidden rounded-full bg-muted">
+                        <div className="mt-1 flex h-2 w-full overflow-hidden rounded-full bg-muted">
                           {ePct > 0 && <div className="h-full bg-success" style={{ width: `${ePct}%` }} />}
                           {pPct > 0 && <div className="h-full bg-primary/50" style={{ width: `${pPct}%` }} />}
                         </div>
@@ -877,7 +875,7 @@ export default function ProgressPage() {
 
       </div>{/* end two-column layout */}
 
-      <div className="hidden print:block mt-4 border-t border-gray-300 pt-2 text-[10px] text-gray-500 italic">
+      <div className="hidden print:block mt-4 border-t border-border pt-2 text-[10px] text-muted-foreground italic">
         <p>{UNOFFICIAL_DISCLAIMER}</p>
       </div>
 
@@ -887,7 +885,7 @@ export default function ProgressPage() {
         aria-hidden="true"
       >
         <p
-          className="whitespace-nowrap text-[72px] font-bold uppercase tracking-widest text-black/[0.06]"
+          className="whitespace-nowrap text-[72px] font-bold uppercase tracking-widest text-foreground/[0.06]"
           style={{ transform: "rotate(-35deg)" }}
         >
           UNOFFICIAL &mdash; SAPS

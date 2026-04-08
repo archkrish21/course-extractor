@@ -162,6 +162,33 @@ test.describe("Transcript — Print", () => {
   });
 });
 
+// ─── Print Layout ──────────────────────────────────────────────────────────
+
+test.describe("Transcript — Print Layout", () => {
+  test("buttons are hidden in print (have no-print class)", async ({ page }) => {
+    await navigateToTranscript(page);
+
+    const buttonContainer = page.locator(".no-print", { has: page.getByRole("button", { name: /Print/ }) });
+    await expect(buttonContainer).toBeVisible({ timeout: 5_000 });
+    await expect(buttonContainer).toHaveClass(/no-print/);
+  });
+
+  test("collapsed grade sections have print-expand class for forced display", async ({ page }) => {
+    await navigateToTranscript(page);
+
+    const emptyState = page.locator("text=/no completed courses|no grades/i");
+    if ((await emptyState.count()) > 0) {
+      test.skip();
+      return;
+    }
+
+    // All grade content divs should have print-expand class (visible or hidden)
+    const printExpandDivs = page.locator(".print-expand");
+    const count = await printExpandDivs.count();
+    expect(count).toBeGreaterThanOrEqual(1);
+  });
+});
+
 // ─── Disclaimer ────────────────────────────────────────────────────────────
 
 test.describe("Transcript — Disclaimer", () => {

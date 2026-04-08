@@ -1117,7 +1117,7 @@ export default function PlannerPage() {
                 <button
                   type="button"
                   onClick={() => setNewPlanTemplateId(null)}
-                  className={`flex min-h-[44px] items-center gap-3 rounded-xl border px-3 py-2.5 text-left transition-colors
+                  className={`flex min-h-[44px] items-center gap-3 rounded-xl border px-3 py-2.5 text-left transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring
                     ${newPlanTemplateId === null
                       ? "border-primary bg-primary-light text-primary"
                       : "border-border hover:bg-muted text-foreground"
@@ -1142,7 +1142,7 @@ export default function PlannerPage() {
                       setNewPlanTemplateId(t.id);
                       if (!newPlanName.trim()) setNewPlanName(`My ${t.name}`);
                     }}
-                    className={`flex min-h-[44px] items-center gap-3 rounded-xl border px-3 py-2.5 text-left transition-colors
+                    className={`flex min-h-[44px] items-center gap-3 rounded-xl border px-3 py-2.5 text-left transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring
                       ${newPlanTemplateId === t.id
                         ? "border-primary bg-primary-light text-primary"
                         : "border-border hover:bg-muted text-foreground"
@@ -1184,7 +1184,7 @@ export default function PlannerPage() {
     return (
       <div className="mx-auto max-w-6xl">
         <div className="mb-6">
-          <h1 className="text-2xl font-bold text-foreground">
+          <h1 className="text-2xl font-bold tracking-tight text-foreground">
             Course Planner
           </h1>
           <p className="mt-1 text-sm text-muted-foreground">Plan your four-year academic path</p>
@@ -1245,7 +1245,7 @@ export default function PlannerPage() {
       {/* Page header */}
       <div className="mb-6 flex flex-wrap items-start justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-foreground">
+          <h1 className="text-2xl font-bold tracking-tight text-foreground">
             Course Planner
           </h1>
           {selectedPlan && (() => {
@@ -1676,7 +1676,7 @@ export default function PlannerPage() {
 
                           {/* Summary — collapsible */}
                           <div className="mb-3 rounded-lg border border-border">
-                            <button type="button" onClick={() => setSummaryExpanded((v) => !v)} className="flex w-full items-center justify-between p-2.5 text-left">
+                            <button type="button" onClick={() => setSummaryExpanded((v) => !v)} className="flex w-full items-center justify-between rounded-lg p-2.5 text-left focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring">
                               <span className="text-xs font-semibold text-muted-foreground">Summary</span>
                               <svg aria-hidden="true" className={`h-3.5 w-3.5 text-muted-foreground transition-transform ${summaryExpanded ? "rotate-180" : ""}`} fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
                                 <path strokeLinecap="round" strokeLinejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" />
@@ -1768,7 +1768,7 @@ export default function PlannerPage() {
                           {/* Graduation Requirement Gaps */}
                           {gaps.length > 0 && (
                             <div className="mb-3 rounded-lg border border-destructive/30 bg-destructive/5">
-                              <button type="button" onClick={() => setGapsExpanded((v) => !v)} className="flex w-full items-center justify-between p-2.5 text-left">
+                              <button type="button" onClick={() => setGapsExpanded((v) => !v)} className="flex w-full items-center justify-between rounded-lg p-2.5 text-left focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring">
                                 <span className="text-xs font-semibold text-destructive">Graduation Gaps ({gaps.length})</span>
                                 <svg aria-hidden="true" className={`h-3.5 w-3.5 text-destructive transition-transform ${gapsExpanded ? "rotate-180" : ""}`} fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
                                   <path strokeLinecap="round" strokeLinejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" />
@@ -1809,7 +1809,7 @@ export default function PlannerPage() {
                           {/* Semester Requirement Gaps */}
                           {(courseLoadWarnings.length > 0 || gpaWaiverWarnings.length > 0) && (
                             <div className="mb-3 rounded-lg border border-warning/30 bg-warning/5">
-                              <button type="button" onClick={() => setSemesterIssuesExpanded((v) => !v)} className="flex w-full items-center justify-between p-2.5 text-left">
+                              <button type="button" onClick={() => setSemesterIssuesExpanded((v) => !v)} className="flex w-full items-center justify-between rounded-lg p-2.5 text-left focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring">
                                 <span className="text-xs font-semibold text-warning">Semester Gaps ({courseLoadWarnings.length + gpaWaiverWarnings.length})</span>
                                 <svg aria-hidden="true" className={`h-3.5 w-3.5 text-warning transition-transform ${semesterIssuesExpanded ? "rotate-180" : ""}`} fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
                                   <path strokeLinecap="round" strokeLinejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" />
@@ -1823,7 +1823,7 @@ export default function PlannerPage() {
                                       <li key={i} className="flex items-start gap-1 text-xs text-foreground">
                                         <span className="mt-1 h-1 w-1 shrink-0 rounded-full bg-warning" />
                                         {grMatch ? (
-                                          <span className="inline"><button type="button" onClick={() => navigateToGrade(Number(grMatch[2]), Number(grMatch[3]))} className="shrink-0 whitespace-nowrap font-medium text-primary hover:underline">{grMatch[1]}</button> {grMatch[4]}</span>
+                                          <span className="inline"><button type="button" onClick={() => navigateToGrade(Number(grMatch[2]), Number(grMatch[3]))} className="shrink-0 whitespace-nowrap font-medium text-primary hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring rounded">{grMatch[1]}</button> {grMatch[4]}</span>
                                         ) : msg}
                                       </li>
                                     );
@@ -1836,7 +1836,7 @@ export default function PlannerPage() {
                           {/* Prerequisite Violations */}
                           {planWarnings.length > 0 && (
                             <div className="mb-3 rounded-lg border border-warning/30 bg-warning/5">
-                              <button type="button" onClick={() => setViolationsExpanded((v) => !v)} className="flex w-full items-center justify-between p-2.5 text-left">
+                              <button type="button" onClick={() => setViolationsExpanded((v) => !v)} className="flex w-full items-center justify-between rounded-lg p-2.5 text-left focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring">
                                 <span className="text-xs font-semibold text-warning">Prerequisite Violations ({planWarnings.length})</span>
                                 <svg aria-hidden="true" className={`h-3.5 w-3.5 text-warning transition-transform ${violationsExpanded ? "rotate-180" : ""}`} fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
                                   <path strokeLinecap="round" strokeLinejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" />
@@ -1850,7 +1850,7 @@ export default function PlannerPage() {
                                       <li key={i} className="flex items-start gap-1 text-xs text-foreground">
                                         <span className="mt-1 h-1 w-1 shrink-0 rounded-full bg-warning" />
                                         {grMatch ? (
-                                          <span className="inline"><button type="button" onClick={() => navigateToGrade(Number(grMatch[2]), Number(grMatch[3]))} className="shrink-0 whitespace-nowrap font-medium text-primary hover:underline">{grMatch[1]}</button> {grMatch[4]}</span>
+                                          <span className="inline"><button type="button" onClick={() => navigateToGrade(Number(grMatch[2]), Number(grMatch[3]))} className="shrink-0 whitespace-nowrap font-medium text-primary hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring rounded">{grMatch[1]}</button> {grMatch[4]}</span>
                                         ) : msg}
                                       </li>
                                     );
@@ -1863,7 +1863,7 @@ export default function PlannerPage() {
                           {/* Covered requirements */}
                           {met.length > 0 && (
                             <div className="rounded-lg border border-border">
-                              <button type="button" onClick={() => setCoveredExpanded((v) => !v)} className="flex w-full items-center justify-between p-2.5 text-left">
+                              <button type="button" onClick={() => setCoveredExpanded((v) => !v)} className="flex w-full items-center justify-between rounded-lg p-2.5 text-left focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring">
                                 <span className="text-xs font-semibold text-muted-foreground">Covered ({met.length})</span>
                                 <svg aria-hidden="true" className={`h-3.5 w-3.5 text-muted-foreground transition-transform ${coveredExpanded ? "rotate-180" : ""}`} fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
                                   <path strokeLinecap="round" strokeLinejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" />

@@ -133,6 +133,18 @@ body {
     background-color: #f3f4f6;
   }
 
+  /* Force print-collapsible sections to show in print */
+  .print-expand {
+    display: block !important;
+    height: auto !important;
+    overflow: visible !important;
+  }
+
+  /* Hide collapse/expand chevron icons and opt-in buttons in print */
+  .no-print-toggle {
+    display: none !important;
+  }
+
   /* Prevent page breaks inside grade blocks */
   .print-grade-block {
     break-inside: avoid;

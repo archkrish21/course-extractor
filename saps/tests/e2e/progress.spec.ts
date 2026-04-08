@@ -511,6 +511,41 @@ test.describe("Progress — Credit Breakdown", () => {
   });
 });
 
+// ─── Print Layout ──────────────────────────────────────────────────────────
+
+test.describe("Progress — Print Layout", () => {
+  test("buttons are hidden in print (have no-print class)", async ({ page }) => {
+    await navigateToProgress(page);
+
+    // The button container should have the no-print class
+    const buttonContainer = page.locator(".no-print", { has: page.getByRole("button", { name: /Print/ }) });
+    await expect(buttonContainer).toBeVisible({ timeout: 5_000 });
+    await expect(buttonContainer).toHaveClass(/no-print/);
+  });
+
+  test("filter bar is hidden in print (has no-print class)", async ({ page }) => {
+    await navigateToProgress(page);
+
+    const filterBar = page.locator("[data-tour='progress-filter']");
+    await expect(filterBar).toBeVisible({ timeout: 5_000 });
+    await expect(filterBar).toHaveClass(/no-print/);
+  });
+
+  test("collapsed sections have print-expand class for forced display", async ({ page }) => {
+    await navigateToProgress(page);
+
+    // Collapse a group
+    const groupHeader = page.locator("button", { hasText: "Graduation Requirements" });
+    await expect(groupHeader).toBeVisible({ timeout: 10_000 });
+    await groupHeader.click();
+    await page.waitForTimeout(300);
+
+    // The content container should still exist in DOM with print-expand class
+    const contentDiv = page.locator(".print-expand.hidden").first();
+    await expect(contentDiv).toBeAttached();
+  });
+});
+
 // ─── Summary Sidebar — Segmented Progress ───────────────────────────────────
 
 test.describe("Progress — Summary Sidebar", () => {

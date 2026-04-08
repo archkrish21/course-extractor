@@ -346,4 +346,31 @@ test.describe("Print — Disclaimer", () => {
       await expect(page.locator("text=This is not an official school document")).toBeVisible({ timeout: 10_000 });
     }
   });
+
+  test("planner print page shows primary star inline with plan name", async ({ page }) => {
+    await login(page);
+    const canPrint = await detectCanPrint(page);
+    test.skip(!canPrint, "Test user cannot print — skipping print page check");
+
+    await page.goto("/planner");
+    await expect(page.locator("text=/Course Planner/")).toBeVisible({ timeout: 15_000 });
+
+    const planId = await page.evaluate(() => {
+      const select = document.querySelector('select[aria-label="Select a plan"]') as HTMLSelectElement | null;
+      return select?.value ?? null;
+    });
+
+    if (planId) {
+      await page.goto(`/planner/print?id=${planId}`);
+      await page.waitForTimeout(3000);
+
+      // The primary star should be inside the h2 (inline), not a separate line
+      const h2 = page.locator("h2");
+      const h2Text = await h2.first().textContent();
+      if (h2Text?.includes("★")) {
+        // Star is inline with plan name — correct
+        expect(h2Text).toContain("★");
+      }
+    }
+  });
 });

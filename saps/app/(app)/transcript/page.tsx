@@ -225,12 +225,12 @@ export default function GradesPage() {
               {planName && <span className="font-medium"> — {planName}</span>}
             </p>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="no-print flex items-center gap-2">
             {(() => {
               const canPrint = true; // FREE_LAUNCH_MODE: print enabled for all users
               return (
                 <span title={canPrint ? "Print" : "Upgrade to Plus to print"}>
-                  <Button variant="outline" size="sm" onClick={() => canPrint && window.print()} disabled={!canPrint}>
+                  <Button variant="outline" size="sm" onClick={() => canPrint && window.print()} disabled={!canPrint} aria-label="Print transcript">
                     <svg aria-hidden="true" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" d="M6.72 13.829c-.24.03-.48.062-.72.096m.72-.096a42.415 42.415 0 0 1 10.56 0m-10.56 0L6.34 18m10.94-4.171c.24.03.48.062.72.096m-.72-.096L17.66 18m0 0 .229 2.523a1.125 1.125 0 0 1-1.12 1.227H7.231c-.662 0-1.18-.568-1.12-1.227L6.34 18m11.318 0h1.091A2.25 2.25 0 0 0 21 15.75V9.456c0-1.081-.768-2.015-1.837-2.175a48.055 48.055 0 0 0-1.913-.247M6.34 18H5.25A2.25 2.25 0 0 1 3 15.75V9.456c0-1.081.768-2.015 1.837-2.175a48.041 48.041 0 0 1 1.913-.247m10.5 0a48.536 48.536 0 0 0-10.5 0m10.5 0V3.375c0-.621-.504-1.125-1.125-1.125h-8.25c-.621 0-1.125.504-1.125 1.125v3.659M9.75 8.25h.008v.008H9.75V8.25Zm.375 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Z" />
                     </svg>
@@ -255,7 +255,7 @@ export default function GradesPage() {
           <Card className="flex-1 min-w-[180px]">
             <CardContent className="flex items-center justify-between p-4">
               <div>
-                <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+                <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
                   Unweighted GPA
                 </p>
                 <p className="mt-1 text-2xl font-bold text-foreground">
@@ -272,7 +272,7 @@ export default function GradesPage() {
           <Card className="flex-1 min-w-[180px]">
             <CardContent className="flex items-center justify-between p-4">
               <div>
-                <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+                <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
                   Weighted GPA
                 </p>
                 <p className="mt-1 text-2xl font-bold text-foreground">
@@ -289,7 +289,7 @@ export default function GradesPage() {
           <Card className="flex-1 min-w-[180px]">
             <CardContent className="flex items-center justify-between p-4">
               <div>
-                <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+                <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
                   Credits Earned
                 </p>
                 <p className="mt-1 text-2xl font-bold text-foreground">
@@ -387,8 +387,7 @@ export default function GradesPage() {
                   </div>
                 </button>
 
-                {isExpanded && (
-                  <div className="border-t border-border">
+                <div className={`print-expand border-t border-border ${isExpanded ? "" : "hidden"}`}>
                     {[1, 2].map((sem) => {
                       const semCourses = semMap?.get(sem) ?? [];
                       if (semCourses.length === 0) return null;
@@ -480,14 +479,13 @@ export default function GradesPage() {
                           {/* Semester GPA footer */}
                           <div className="flex items-center justify-end gap-4 bg-muted/30 px-4 py-2 sm:px-5 text-sm">
                             <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Semester {sem} GPA</span>
-                            <span className="text-muted-foreground">UW <span className="font-semibold text-foreground">{fmtGpa(semGpa.unweighted)}</span></span>
-                            <span className="text-muted-foreground">W <span className="font-semibold text-foreground">{fmtGpa(semGpa.weighted)}</span></span>
+                            <span className="text-muted-foreground">UW <span className="font-bold text-foreground">{fmtGpa(semGpa.unweighted)}</span></span>
+                            <span className="text-muted-foreground">W <span className="font-bold text-foreground">{fmtGpa(semGpa.weighted)}</span></span>
                           </div>
                         </div>
                       );
                     })}
-                  </div>
-                )}
+                </div>
               </Card>
             );
           })}
@@ -507,7 +505,7 @@ export default function GradesPage() {
         aria-hidden="true"
       >
         <p
-          className="whitespace-nowrap text-[72px] font-bold uppercase tracking-widest text-black/[0.06]"
+          className="whitespace-nowrap text-[72px] font-bold uppercase tracking-widest text-foreground/[0.06]"
           style={{ transform: "rotate(-35deg)" }}
         >
           UNOFFICIAL &mdash; SAPS

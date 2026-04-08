@@ -189,7 +189,7 @@ export default function YearEndPage() {
   if (loading) {
     return (
       <div className="mx-auto max-w-3xl">
-        <h1 className="mb-6 text-2xl font-bold text-foreground">Year-End Review</h1>
+        <h1 className="mb-6 text-2xl font-bold tracking-tight text-foreground">Year-End Review</h1>
         <div className="animate-pulse space-y-4">
           <div className="h-12 rounded-full bg-muted" />
           <div className="h-64 rounded-xl bg-muted" />
@@ -200,7 +200,7 @@ export default function YearEndPage() {
 
   return (
     <div className="mx-auto max-w-3xl">
-      <h1 className="mb-2 text-2xl font-bold text-foreground">Year-End Review</h1>
+      <h1 className="mb-2 text-2xl font-bold tracking-tight text-foreground">Year-End Review</h1>
       <p className="mb-6 text-sm text-muted-foreground">
         Complete your Grade {gradeLevel} year-end review to advance to {isGraduating ? "graduation" : `Grade ${gradeLevel + 1}`}.
       </p>
@@ -252,7 +252,7 @@ export default function YearEndPage() {
                                       <select
                                         value={grades[c.id] ?? c.plannedGrade ?? ""}
                                         onChange={(e) => handleGradeChange(c.id, e.target.value)}
-                                        className="h-9 min-w-[80px] rounded-lg border border-border bg-background px-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+                                        className="h-9 min-w-[80px] rounded-lg border border-border bg-background px-2 text-sm focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
                                       >
                                         <option value="">Select</option>
                                         {options.map((g) => (
@@ -301,9 +301,9 @@ export default function YearEndPage() {
                 <p className="text-sm text-foreground">
                   You've completed Grade 12! Your courses and grades will be locked as a permanent record.
                 </p>
-                <div className="rounded-lg border border-amber-400/40 bg-gradient-to-r from-amber-50 to-yellow-50 p-4">
-                  <p className="font-bold text-amber-700">Graduation Complete</p>
-                  <p className="mt-1 text-sm text-amber-600/80">
+                <div className="rounded-lg border border-warning/40 bg-warning/5 p-4">
+                  <p className="font-bold text-warning">Graduation Complete</p>
+                  <p className="mt-1 text-sm text-muted-foreground">
                     Your account will remain accessible as a read-only archive.
                   </p>
                 </div>

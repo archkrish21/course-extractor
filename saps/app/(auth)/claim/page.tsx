@@ -63,7 +63,7 @@ export default function ClaimAccountPage() {
 
   return (
     <>
-      <h2 className="mb-1 text-xl font-semibold text-foreground">
+      <h2 className="mb-1 text-2xl font-bold text-foreground">
         Claim your account
       </h2>
       <p className="mb-6 text-sm text-muted-foreground">

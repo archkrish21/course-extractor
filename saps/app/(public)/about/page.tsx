@@ -32,15 +32,15 @@ export default function AboutPage() {
         <section>
           <h2 className="text-lg font-semibold text-foreground">What We Do</h2>
           <div className="mt-3 grid gap-4 sm:grid-cols-3">
-            <div className="rounded-lg border border-border p-4">
+            <div className="rounded-2xl border border-border p-4">
               <p className="font-semibold text-foreground">Plan</p>
               <p className="mt-1 text-xs">4-year course planning with prerequisite validation and graduation tracking.</p>
             </div>
-            <div className="rounded-lg border border-border p-4">
+            <div className="rounded-2xl border border-border p-4">
               <p className="font-semibold text-foreground">Track</p>
               <p className="mt-1 text-xs">Real-time GPA calculation, grade tracking, and academic progress monitoring.</p>
             </div>
-            <div className="rounded-lg border border-border p-4">
+            <div className="rounded-2xl border border-border p-4">
               <p className="font-semibold text-foreground">Connect</p>
               <p className="mt-1 text-xs">Link parents, guardians, and counselors for shared visibility into your plan.</p>
             </div>
@@ -55,7 +55,7 @@ export default function AboutPage() {
             and support for schools across Illinois and beyond.
           </p>
           <p className="mt-3">
-            <Link href="/signup" className="text-primary hover:underline font-medium">
+            <Link href="/signup" className="text-primary hover:underline font-medium focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring rounded-sm">
               Join us
             </Link>{" "}
             and be part of the journey.

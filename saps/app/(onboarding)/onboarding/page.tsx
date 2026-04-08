@@ -166,7 +166,7 @@ function StepAboutYou({
             {GRADE_LEVELS.map((g) => (
               <label
                 key={g}
-                className={`flex min-h-[44px] min-w-[72px] cursor-pointer items-center justify-center rounded-lg border px-4 py-2 text-sm font-medium transition-colors ${
+                className={`flex min-h-[44px] min-w-[72px] cursor-pointer items-center justify-center rounded-lg border px-4 py-2 text-sm font-medium transition-colors has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-ring ${
                   gradeLevel === g
                     ? "border-primary bg-primary-light text-primary"
                     : "border-border bg-card text-foreground hover:border-secondary"
@@ -418,7 +418,7 @@ function StepPastCourses({
                 {courses.map((course) => {
                   const selected = isCourseSelected(course.code);
                   return (
-                    <label key={course.id} className={`flex cursor-pointer items-center gap-3 border-b border-border/50 px-3 py-2.5 transition-colors hover:bg-muted/50 ${selected ? "bg-primary-light/50" : ""}`}>
+                    <label key={course.id} className={`flex min-h-[44px] cursor-pointer items-center gap-3 border-b border-border/50 px-3 py-2.5 transition-colors hover:bg-muted/50 has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-ring ${selected ? "bg-primary-light/50" : ""}`}>
                       <input type="checkbox" checked={selected} onChange={() => toggleCourse(course)} className="h-4 w-4 shrink-0 rounded border-border text-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring" />
                       <span className="font-mono text-xs text-muted-foreground w-20 shrink-0">{course.code}</span>
                       <span className="flex-1 text-sm text-foreground min-w-0 truncate">{course.name}</span>
@@ -588,7 +588,6 @@ function StepChoosePlan({
                     <Button
                       type="button"
                       variant={isSelected ? "default" : "outline"}
-                      size="sm"
                       className="w-full"
                       onClick={(e) => {
                         e.stopPropagation();
@@ -905,7 +904,7 @@ export default function OnboardingPage() {
           <button
             type="button"
             onClick={() => setShowWelcome(false)}
-            className="flex h-6 w-6 items-center justify-center rounded text-success/60 hover:text-success transition-colors"
+            className="flex h-6 w-6 items-center justify-center rounded text-success/60 hover:text-success transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
             aria-label="Dismiss welcome message"
           >
             <svg aria-hidden="true" className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
@@ -932,7 +931,7 @@ export default function OnboardingPage() {
             } catch { /* fall through */ }
             router.push("/planner");
           }}
-          className="text-xs text-muted-foreground hover:text-foreground transition-colors"
+          className="text-xs text-muted-foreground hover:text-foreground transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring rounded"
         >
           Skip setup →
         </button>

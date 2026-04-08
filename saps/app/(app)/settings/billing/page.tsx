@@ -269,9 +269,9 @@ export default function BillingPage() {
             key={interval.key}
             type="button"
             onClick={() => setBillingInterval(interval.key)}
-            className={`flex items-center gap-1.5 rounded-full px-4 py-2 text-sm font-medium transition-colors ${
+            className={`flex items-center gap-1.5 rounded-full px-4 py-2 text-sm font-medium transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring ${
               billingInterval === interval.key
-                ? "bg-primary text-white shadow-sm"
+                ? "bg-primary text-primary-foreground shadow-sm"
                 : "text-muted-foreground hover:text-foreground"
             }`}
           >
@@ -279,7 +279,7 @@ export default function BillingPage() {
             {interval.badge && (
               <span className={`rounded-full px-1.5 py-0.5 text-[10px] font-semibold ${
                 billingInterval === interval.key
-                  ? "bg-white/20 text-white"
+                  ? "bg-primary-foreground/20 text-primary-foreground"
                   : "bg-success/15 text-success"
               }`}>
                 {interval.badge}

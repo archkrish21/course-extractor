@@ -60,19 +60,37 @@ export default function JoinPage() {
     }
   }
 
-  if (success) {
+  if (joining && !error) {
     return (
       <div className="flex min-h-[60vh] items-center justify-center px-4">
         <div className="w-full max-w-md">
           <Card>
             <CardContent>
               <div className="py-8 text-center">
+                <div className="mx-auto mb-4 h-10 w-10 animate-spin rounded-full border-4 border-muted border-t-primary" aria-hidden="true" />
+                <p className="text-sm font-medium text-foreground">Joining account...</p>
+                <p className="mt-1 text-xs text-muted-foreground">Please wait while we connect you.</p>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    );
+  }
+
+  if (success) {
+    return (
+      <div className="flex min-h-[60vh] items-center justify-center px-4">
+        <div className="w-full max-w-md">
+          <Card>
+            <CardContent>
+              <div className="py-8 text-center" role="status">
                 <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-success-light">
                   <svg aria-hidden="true" className="h-8 w-8 text-success" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" d="m4.5 12.75 6 6 9-13.5" />
                   </svg>
                 </div>
-                <h2 className="text-xl font-semibold text-foreground">You&apos;re in!</h2>
+                <h2 className="text-xl font-semibold tracking-tight text-foreground">You&apos;re in!</h2>
                 <p className="mt-2 text-sm text-muted-foreground">
                   You&apos;ve successfully joined the account. You can now view and manage the student&apos;s course plans.
                 </p>
@@ -92,7 +110,7 @@ export default function JoinPage() {
       <div className="w-full max-w-md">
         <Card>
           <CardHeader>
-            <h2 className="text-xl font-semibold text-foreground">Join Account</h2>
+            <h2 className="text-xl font-semibold tracking-tight text-foreground">Join Account</h2>
             <p className="text-sm text-muted-foreground">
               Enter your invite code to join a student&apos;s account.
             </p>

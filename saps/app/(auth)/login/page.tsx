@@ -99,7 +99,7 @@ export default function LoginPage() {
 
   return (
     <>
-      <h2 className="mb-1 text-xl font-semibold text-foreground">Sign in to your account</h2>
+      <h2 className="mb-1 text-2xl font-bold text-foreground">Sign in to your account</h2>
       <p className="mb-6 text-sm text-muted-foreground">
         Welcome back. Enter your credentials to continue.
       </p>
@@ -169,7 +169,7 @@ export default function LoginPage() {
       <Button
         type="button"
         variant="outline"
-        className="w-full bg-white hover:bg-gray-50"
+        className="w-full bg-white hover:bg-muted"
         onClick={handleGoogleSignIn}
       >
         <svg aria-hidden="true" className="h-5 w-5" viewBox="0 0 24 24">

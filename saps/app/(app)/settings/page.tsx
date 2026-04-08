@@ -211,7 +211,7 @@ export default function SettingsPage() {
             {(userFirstName ?? userEmail ?? "U").charAt(0).toUpperCase()}
           </div>
           <div>
-            <h1 className="text-2xl font-bold text-foreground">
+            <h1 className="text-2xl font-bold tracking-tight text-foreground">
               {[userFirstName, userLastName].filter(Boolean).join(" ") || "Settings"}
             </h1>
             <p className="mt-1 text-sm text-muted-foreground">{userEmail}</p>
@@ -251,58 +251,62 @@ export default function SettingsPage() {
             </Card>
           ) : null}
 
-          <div className="grid grid-cols-1 gap-x-8 gap-y-5 sm:grid-cols-3">
-            <div className="flex items-start justify-between sm:block">
-              <p className="text-xs text-muted-foreground">Name</p>
-              {!editingUserName ? (
-                <button type="button" onClick={() => { setEditFirstName(userFirstName ?? ""); setEditLastName(userLastName ?? ""); setEditingUserName(true); }}
-                  className="mt-0.5 flex items-center gap-1.5 text-sm font-medium text-foreground hover:text-primary transition-colors">
-                  {[userFirstName, userLastName].filter(Boolean).join(" ") || "Not set"}
-                  <svg aria-hidden="true" className="h-3.5 w-3.5 text-muted-foreground/50" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Z" />
-                  </svg>
-                </button>
-              ) : <p className="mt-0.5 text-sm text-muted-foreground/50">Editing...</p>}
-            </div>
-            <div className="flex items-start justify-between sm:block">
-              <p className="text-xs text-muted-foreground">Email</p>
-              <p className="mt-0.5 text-sm font-medium text-foreground">{userEmail ?? "---"}</p>
-            </div>
-            <div className="flex items-start justify-between sm:block">
-              <p className="text-xs text-muted-foreground">Password</p>
-              <button type="button" onClick={handleResetPassword}
-                className="mt-0.5 flex items-center gap-1.5 text-sm text-foreground hover:text-primary transition-colors">
-                --------
-                <span className="text-[11px] font-medium text-primary">Reset</span>
-              </button>
-            </div>
-            <div className="flex items-start justify-between sm:block">
-              <p className="text-xs text-muted-foreground">Role</p>
-              <div className="mt-1"><Badge className={roleColor(currentAccount?.role ?? "student")}>{currentAccount?.role ?? "student"}</Badge></div>
-            </div>
-            {currentAccount?.role === "student" && (
-              <>
+          <Card>
+            <CardContent>
+              <div className="grid grid-cols-1 gap-x-8 gap-y-5 sm:grid-cols-3">
                 <div className="flex items-start justify-between sm:block">
-                  <p className="text-xs text-muted-foreground">Grade</p>
-                  <p className="mt-0.5 text-sm font-medium text-foreground">{currentAccount?.gradeLevel ?? "---"}</p>
+                  <p className="text-xs text-muted-foreground">Name</p>
+                  {!editingUserName ? (
+                    <button type="button" onClick={() => { setEditFirstName(userFirstName ?? ""); setEditLastName(userLastName ?? ""); setEditingUserName(true); }}
+                      className="mt-0.5 flex items-center gap-1.5 text-sm font-medium text-foreground hover:text-primary transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring rounded">
+                      {[userFirstName, userLastName].filter(Boolean).join(" ") || "Not set"}
+                      <svg aria-hidden="true" className="h-3.5 w-3.5 text-muted-foreground/50" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Z" />
+                      </svg>
+                    </button>
+                  ) : <p className="mt-0.5 text-sm text-muted-foreground/50">Editing...</p>}
                 </div>
                 <div className="flex items-start justify-between sm:block">
-                  <p className="text-xs text-muted-foreground">Graduation</p>
-                  <p className="mt-0.5 text-sm font-medium text-foreground">{currentAccount?.graduationYear ?? "---"}</p>
+                  <p className="text-xs text-muted-foreground">Email</p>
+                  <p className="mt-0.5 text-sm font-medium text-foreground">{userEmail ?? "---"}</p>
                 </div>
                 <div className="flex items-start justify-between sm:block">
-                  <p className="text-xs text-muted-foreground">State</p>
-                  <p className="mt-0.5 text-sm font-medium text-foreground">
-                    {US_STATES.find((s) => s.code === currentAccount?.state)?.name ?? currentAccount?.state ?? "---"}
-                  </p>
+                  <p className="text-xs text-muted-foreground">Password</p>
+                  <button type="button" onClick={handleResetPassword}
+                    className="mt-0.5 flex items-center gap-1.5 text-sm text-foreground hover:text-primary transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring rounded">
+                    --------
+                    <span className="text-[11px] font-medium text-primary">Reset</span>
+                  </button>
                 </div>
                 <div className="flex items-start justify-between sm:block">
-                  <p className="text-xs text-muted-foreground">School</p>
-                  <p className="mt-0.5 text-sm font-medium text-foreground">{currentAccount?.schoolName ?? "---"}</p>
+                  <p className="text-xs text-muted-foreground">Role</p>
+                  <div className="mt-1"><Badge className={roleColor(currentAccount?.role ?? "student")}>{currentAccount?.role ?? "student"}</Badge></div>
                 </div>
-              </>
-            )}
-          </div>
+                {currentAccount?.role === "student" && (
+                  <>
+                    <div className="flex items-start justify-between sm:block">
+                      <p className="text-xs text-muted-foreground">Grade</p>
+                      <p className="mt-0.5 text-sm font-medium text-foreground">{currentAccount?.gradeLevel ?? "---"}</p>
+                    </div>
+                    <div className="flex items-start justify-between sm:block">
+                      <p className="text-xs text-muted-foreground">Graduation</p>
+                      <p className="mt-0.5 text-sm font-medium text-foreground">{currentAccount?.graduationYear ?? "---"}</p>
+                    </div>
+                    <div className="flex items-start justify-between sm:block">
+                      <p className="text-xs text-muted-foreground">State</p>
+                      <p className="mt-0.5 text-sm font-medium text-foreground">
+                        {US_STATES.find((s) => s.code === currentAccount?.state)?.name ?? currentAccount?.state ?? "---"}
+                      </p>
+                    </div>
+                    <div className="flex items-start justify-between sm:block">
+                      <p className="text-xs text-muted-foreground">School</p>
+                      <p className="mt-0.5 text-sm font-medium text-foreground">{currentAccount?.schoolName ?? "---"}</p>
+                    </div>
+                  </>
+                )}
+              </div>
+            </CardContent>
+          </Card>
 
           {/* Student info — shown for non-student roles */}
           {currentAccount && currentAccount.role !== "student" && (

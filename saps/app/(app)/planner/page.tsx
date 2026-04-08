@@ -18,6 +18,7 @@ import { calculateGPA, formatGPA } from "@/lib/gpa/calc";
 import { useUndoStack } from "@/lib/hooks/use-undo-stack";
 import { useToast } from "@/components/ui/toast";
 import { useUpgradeModal, UpgradeModal } from "@/components/upgrade-modal";
+import { canPrint } from "@/lib/subscription/can-print";
 
 interface Plan {
   id: string;
@@ -1410,15 +1411,15 @@ export default function PlannerPage() {
           )}
           {/* Print plan — requires Plus+ (canExportPdf) */}
           {selectedPlanId && (() => {
-            const canPrint = true; // FREE_LAUNCH_MODE: print enabled for all users
+            const printEnabled = canPrint(currentAccount?.subscriptionTier);
             return (
-            <span title={canPrint ? "Print plan" : "Upgrade to Plus to print plans"}>
+            <span title={printEnabled ? "Print plan" : "Upgrade to Plus to print plans"}>
             <button
               type="button"
-              onClick={() => canPrint && window.open(`/planner/print?id=${selectedPlanId}`, "_blank")}
-              disabled={!canPrint}
+              onClick={() => printEnabled && window.open(`/planner/print?id=${selectedPlanId}`, "_blank")}
+              disabled={!printEnabled}
               className={`min-h-[44px] min-w-[44px] flex items-center justify-center rounded-lg border border-border bg-card focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring ${
-                canPrint ? "text-muted-foreground hover:bg-muted hover:text-foreground" : "text-muted-foreground/30 cursor-not-allowed"
+                printEnabled ? "text-muted-foreground hover:bg-muted hover:text-foreground" : "text-muted-foreground/30 cursor-not-allowed"
               }`}
               aria-label="Print plan"
             >

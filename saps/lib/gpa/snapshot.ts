@@ -25,38 +25,38 @@ export async function maybeCreateSemesterSnapshot(params: {
   const { studentId, accountId, planId } = params;
 
   try {
-    // Check for existing snapshot today
     const today = new Date();
     today.setHours(0, 0, 0, 0);
-    const existing = await db
-      .select({ id: gpaSnapshots.id })
-      .from(gpaSnapshots)
-      .where(
-        and(
-          eq(gpaSnapshots.studentId, studentId),
-          eq(gpaSnapshots.trigger, "semester_end"),
-          gte(gpaSnapshots.snapshotDate, today)
+
+    // Run dedup check and course fetch in parallel
+    const [existing, completedCourses] = await Promise.all([
+      db
+        .select({ id: gpaSnapshots.id })
+        .from(gpaSnapshots)
+        .where(
+          and(
+            eq(gpaSnapshots.studentId, studentId),
+            eq(gpaSnapshots.trigger, "semester_end"),
+            gte(gpaSnapshots.snapshotDate, today)
+          )
         )
-      )
-      .limit(1);
+        .limit(1),
+      db
+        .select({
+          creditValue: courses.creditValue,
+          creditType: courses.creditType,
+          plannedGrade: planCourses.plannedGrade,
+          status: planCourses.status,
+          gpaWaiver: courses.gpaWaiver,
+        })
+        .from(planCourses)
+        .innerJoin(courses, eq(planCourses.courseId, courses.id))
+        .where(
+          and(eq(planCourses.planId, planId), eq(planCourses.status, "completed"))
+        ),
+    ]);
 
     if (existing.length > 0) return false; // Already snapshotted today
-
-    // Fetch all completed courses from the plan
-    const completedCourses = await db
-      .select({
-        creditValue: courses.creditValue,
-        creditType: courses.creditType,
-        plannedGrade: planCourses.plannedGrade,
-        status: planCourses.status,
-        gpaWaiver: courses.gpaWaiver,
-      })
-      .from(planCourses)
-      .innerJoin(courses, eq(planCourses.courseId, courses.id))
-      .where(
-        and(eq(planCourses.planId, planId), eq(planCourses.status, "completed"))
-      );
-
     if (completedCourses.length === 0) return false;
 
     const gpaInput = completedCourses.map((c) => ({

@@ -9,7 +9,7 @@ import { useAccount } from "@/lib/account-context";
 import { apiFetch } from "@/lib/api-client";
 import { useTour } from "@/lib/hooks/use-tour";
 import { TOUR_IDS, welcomeTourSteps } from "@/config/tours";
-import { FREE_LAUNCH_MODE } from "@/config/subscription-plans";
+import { canPrint } from "@/lib/subscription/can-print";
 
 interface DashboardPlan {
   id: string;
@@ -692,7 +692,7 @@ export default function DashboardPage() {
                         {primaryPlan.name}
                       </p>
                       <Badge variant="success" className="text-[10px]">
-                        Primary
+                        ★ Primary
                       </Badge>
                     </div>
                     <p className="mt-1 text-xs text-muted-foreground">
@@ -834,8 +834,8 @@ export default function DashboardPage() {
                 </Button>
               </Link>
               {(() => {
-                const canPrint = FREE_LAUNCH_MODE || currentAccount?.subscriptionTier === "plus" || currentAccount?.subscriptionTier === "elite";
-                return canPrint ? (
+                const printEnabled = canPrint(currentAccount?.subscriptionTier);
+                return printEnabled ? (
                   <Link href="/planner/print">
                     <Button variant="outline" className="w-full justify-start gap-2">
                       <svg aria-hidden="true" className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">

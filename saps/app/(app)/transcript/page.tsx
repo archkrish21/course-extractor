@@ -8,6 +8,7 @@ import { useAccount } from "@/lib/account-context";
 import { apiFetch } from "@/lib/api-client";
 import { GRADE_TO_POINTS } from "@/config/grade-scale";
 import { CREDIT_TYPE_WEIGHT } from "@/config/gpa-weights";
+import { UNOFFICIAL_DISCLAIMER } from "@/config/disclaimers";
 import Link from "next/link";
 
 // ---------------------------------------------------------------------------
@@ -490,6 +491,11 @@ export default function GradesPage() {
               </Card>
             );
           })}
+        </div>
+
+        <div className="mt-6 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-xs text-amber-800 dark:border-amber-900 dark:bg-amber-950 dark:text-amber-200">
+          <p className="font-semibold">Disclaimer</p>
+          <p className="mt-0.5">{UNOFFICIAL_DISCLAIMER}</p>
         </div>
       )}
     </div>

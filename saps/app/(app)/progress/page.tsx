@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { useAccount } from "@/lib/account-context";
 import { useTour } from "@/lib/hooks/use-tour";
 import { TOUR_IDS, getProgressTourSteps } from "@/config/tours";
+import { UNOFFICIAL_DISCLAIMER } from "@/config/disclaimers";
 import { apiFetch } from "@/lib/api-client";
 import {
   LineChart,
@@ -847,6 +848,10 @@ export default function ProgressPage() {
         </div>{/* end right column */}
 
       </div>{/* end two-column layout */}
+
+      <div className="hidden print:block mt-4 border-t border-gray-300 pt-2 text-[10px] text-gray-500 italic">
+        <p>{UNOFFICIAL_DISCLAIMER}</p>
+      </div>
     </div>
   );
 }

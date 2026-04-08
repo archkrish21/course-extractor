@@ -212,6 +212,118 @@ test.describe("Settings — Subscription", () => {
   });
 });
 
+// ─── Account Deletion ──────────────────────────────────────────────────────
+
+test.describe("Settings — Account Deletion", () => {
+  test("Danger Zone section is visible", async ({ page }) => {
+    test.skip(test.info().project.name === "mobile", "Desktop test");
+    await navigateToSettings(page);
+
+    const dangerZone = page.locator("text=Danger Zone");
+    await expect(dangerZone).toBeVisible({ timeout: 5_000 });
+
+    const deleteBtn = page.getByRole("button", { name: "Delete Account" });
+    await expect(deleteBtn).toBeVisible();
+  });
+
+  test("Delete Account button opens confirmation modal", async ({ page }) => {
+    test.skip(test.info().project.name === "mobile", "Desktop test");
+    await navigateToSettings(page);
+
+    const deleteBtn = page.getByRole("button", { name: "Delete Account" });
+    await deleteBtn.click();
+
+    // Modal should appear with warning
+    const modal = page.locator('[role="alertdialog"]');
+    await expect(modal).toBeVisible({ timeout: 5_000 });
+    await expect(page.locator("text=Delete your account?")).toBeVisible();
+    await expect(page.locator("text=permanently delete")).toBeVisible();
+  });
+
+  test("Delete button is disabled until DELETE is typed", async ({ page }) => {
+    test.skip(test.info().project.name === "mobile", "Desktop test");
+    await navigateToSettings(page);
+
+    await page.getByRole("button", { name: "Delete Account" }).click();
+    await page.waitForTimeout(500);
+
+    const confirmBtn = page.getByRole("button", { name: "Delete my account" });
+    await expect(confirmBtn).toBeDisabled();
+
+    // Type partial text — button should stay disabled
+    const confirmInput = page.locator("#delete-confirm");
+    await confirmInput.fill("DELET");
+    await expect(confirmBtn).toBeDisabled();
+
+    // Type full "DELETE" — button should enable
+    await confirmInput.fill("DELETE");
+    await expect(confirmBtn).toBeEnabled();
+  });
+
+  test("Cancel closes modal without action", async ({ page }) => {
+    test.skip(test.info().project.name === "mobile", "Desktop test");
+    await navigateToSettings(page);
+
+    await page.getByRole("button", { name: "Delete Account" }).click();
+    await page.waitForTimeout(500);
+
+    const modal = page.locator('[role="alertdialog"]');
+    await expect(modal).toBeVisible();
+
+    // Click Cancel
+    await page.getByRole("button", { name: "Cancel" }).click();
+    await expect(modal).not.toBeVisible({ timeout: 3_000 });
+
+    // Page should still be on settings
+    expect(page.url()).toContain("/settings");
+  });
+
+  test("Export data checkbox is present in modal", async ({ page }) => {
+    test.skip(test.info().project.name === "mobile", "Desktop test");
+    await navigateToSettings(page);
+
+    await page.getByRole("button", { name: "Delete Account" }).click();
+    await page.waitForTimeout(500);
+
+    const exportCheckbox = page.locator('input[type="checkbox"]').last();
+    await expect(exportCheckbox).toBeVisible();
+
+    const exportLabel = page.locator("text=Download my data before deleting");
+    await expect(exportLabel).toBeVisible();
+  });
+
+  test("Export checkbox is toggleable", async ({ page }) => {
+    test.skip(test.info().project.name === "mobile", "Desktop test");
+    await navigateToSettings(page);
+
+    await page.getByRole("button", { name: "Delete Account" }).click();
+    await page.waitForTimeout(500);
+
+    const exportCheckbox = page.locator("label", { hasText: "Download my data" }).locator('input[type="checkbox"]');
+    await expect(exportCheckbox).toBeVisible();
+
+    // Toggle on
+    await exportCheckbox.check();
+    await expect(exportCheckbox).toBeChecked();
+
+    // Toggle off
+    await exportCheckbox.uncheck();
+    await expect(exportCheckbox).not.toBeChecked();
+  });
+
+  test("confirmation input and type DELETE label are present", async ({ page }) => {
+    test.skip(test.info().project.name === "mobile", "Desktop test");
+    await navigateToSettings(page);
+
+    await page.getByRole("button", { name: "Delete Account" }).click();
+    await page.waitForTimeout(500);
+
+    await expect(page.locator("text=/Type.*DELETE.*to confirm/")).toBeVisible();
+    await expect(page.locator("#delete-confirm")).toBeVisible();
+    expect(await page.locator("#delete-confirm").getAttribute("placeholder")).toBe("DELETE");
+  });
+});
+
 // ─── Billing Page ───────────────────────────────────────────────────────────
 
 test.describe("Billing — Plan Details", () => {

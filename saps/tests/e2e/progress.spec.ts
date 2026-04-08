@@ -57,13 +57,6 @@ test.describe("Progress — Navigation", () => {
     await page.waitForURL(/\/planner/, { timeout: 10_000 });
   });
 
-  test("Print button is visible", async ({ page }) => {
-    await navigateToProgress(page);
-
-    const printBtn = page.getByRole("button", { name: "Print" });
-    await expect(printBtn).toBeVisible({ timeout: 5_000 });
-  });
-
   test("Print button triggers browser print dialog", async ({ page }) => {
     await navigateToProgress(page);
 

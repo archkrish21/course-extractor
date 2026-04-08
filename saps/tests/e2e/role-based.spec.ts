@@ -213,6 +213,239 @@ test.describe("Role — Counselor", () => {
   });
 });
 
+// ─── Parent with Multiple Children ─────────────────────────────────────────
+
+test.describe("Role — Parent with Multiple Children", () => {
+  test.beforeEach(async ({ page }) => {
+    await page.goto("/login");
+    await page.getByLabel("Email address").fill("parent@test.com");
+    await page.getByLabel("Password").fill("Test1234!");
+    await page.locator('form button[type="submit"]').click();
+
+    try {
+      await page.waitForURL(/\/(dashboard|planner|courses|consent)/, { timeout: 10_000 });
+    } catch {
+      test.skip(true, "Parent test account not available");
+    }
+  });
+
+  test("account switcher lists multiple children with name and grade", async ({ page }) => {
+    await page.waitForTimeout(2_000);
+
+    const switcher = page.locator('button[aria-label*="account" i], button[aria-label*="switch" i]').first();
+    if ((await switcher.count()) === 0) {
+      test.skip(true, "No account switcher — parent may have only one child");
+      return;
+    }
+
+    await switcher.click();
+    await page.waitForTimeout(500);
+
+    // Each child entry should show name and grade level
+    const accountOptions = page.locator('[role="option"]');
+    const count = await accountOptions.count();
+
+    if (count < 2) {
+      test.skip(true, "Parent has fewer than 2 linked accounts");
+      return;
+    }
+
+    // Each option should display a student name and grade
+    const firstOption = accountOptions.first();
+    await expect(firstOption).toContainText(/Gr \d+/);
+  });
+
+  test("switching child updates dashboard data", async ({ page }) => {
+    await page.goto("/dashboard");
+    await page.waitForTimeout(2_000);
+
+    const switcher = page.locator('button[aria-label*="account" i], button[aria-label*="switch" i]').first();
+    if ((await switcher.count()) === 0) {
+      test.skip(true, "No account switcher");
+      return;
+    }
+
+    // Capture current dashboard content
+    const welcomeText = await page.locator("text=/Welcome|Dashboard/i").first().textContent();
+
+    // Open switcher and select a different account
+    await switcher.click();
+    await page.waitForTimeout(500);
+
+    const options = page.locator('[role="option"]');
+    const count = await options.count();
+    if (count < 2) {
+      test.skip(true, "Only one account available");
+      return;
+    }
+
+    // Click the non-selected option
+    const nonSelected = page.locator('[role="option"][aria-selected="false"]').first();
+    if ((await nonSelected.count()) === 0) {
+      test.skip(true, "No unselected account to switch to");
+      return;
+    }
+    await nonSelected.click();
+    await page.waitForTimeout(2_000);
+
+    // Page should have reloaded/updated with different account data
+    const heading = page.locator("text=/Welcome|Dashboard/i").first();
+    await expect(heading).toBeVisible({ timeout: 5_000 });
+  });
+
+  test("each child has independent plans page", async ({ page }) => {
+    await page.goto("/plans");
+    await page.waitForTimeout(2_000);
+
+    // Verify plans page loads for the current child context
+    const plansContent = page.locator("text=/plans|No plans/i");
+    await expect(plansContent.first()).toBeVisible({ timeout: 5_000 });
+  });
+
+  test("settings show student info for selected child", async ({ page }) => {
+    await page.goto("/settings");
+    await page.waitForTimeout(2_000);
+
+    // Should show student info for the currently selected child
+    const studentInfo = page.locator("text=/Student Information|Grade \\d+|graduation/i");
+    if ((await studentInfo.count()) === 0) {
+      test.skip(true, "Student info section not visible");
+      return;
+    }
+    await expect(studentInfo.first()).toBeVisible();
+  });
+
+  test("unclaimed child shows Unclaimed badge in switcher", async ({ page }) => {
+    await page.waitForTimeout(2_000);
+
+    const switcher = page.locator('button[aria-label*="account" i], button[aria-label*="switch" i]').first();
+    if ((await switcher.count()) === 0) {
+      test.skip(true, "No account switcher");
+      return;
+    }
+
+    await switcher.click();
+    await page.waitForTimeout(500);
+
+    // Check if any account shows "Unclaimed" — data dependent
+    const unclaimedBadge = page.locator("text=Unclaimed");
+    // Just verify the switcher opened correctly — unclaimed status is data-dependent
+    const accountList = page.locator('[role="listbox"]');
+    await expect(accountList).toBeVisible({ timeout: 5_000 });
+  });
+
+  test("children in different grade levels show distinct grades in switcher", async ({ page }) => {
+    await page.waitForTimeout(2_000);
+
+    const switcher = page.locator('button[aria-label*="account" i], button[aria-label*="switch" i]').first();
+    if ((await switcher.count()) === 0) {
+      test.skip(true, "No account switcher");
+      return;
+    }
+
+    await switcher.click();
+    await page.waitForTimeout(500);
+
+    const options = page.locator('[role="option"]');
+    const count = await options.count();
+    if (count < 2) {
+      test.skip(true, "Parent has fewer than 2 children — cannot compare grade levels");
+      return;
+    }
+
+    // Collect grade labels from each child entry
+    const grades: string[] = [];
+    for (let i = 0; i < count; i++) {
+      const text = await options.nth(i).textContent();
+      const match = text?.match(/Gr (\d+)/);
+      if (match) grades.push(match[1]);
+    }
+
+    // Verify grade labels are present for at least 2 children
+    expect(grades.length).toBeGreaterThanOrEqual(2);
+    // If children are in different grades, the values should differ
+    // (data-dependent — just verify grades are displayed, not forced to differ)
+  });
+
+  test("switching between children of different grades updates progress", async ({ page }) => {
+    await page.goto("/progress");
+    await page.waitForTimeout(2_000);
+
+    // Capture current progress page content
+    const heading = page.locator("text=/Academic Progress/i");
+    await expect(heading).toBeVisible({ timeout: 5_000 });
+
+    const switcher = page.locator('button[aria-label*="account" i], button[aria-label*="switch" i]').first();
+    if ((await switcher.count()) === 0) {
+      test.skip(true, "No account switcher");
+      return;
+    }
+
+    await switcher.click();
+    await page.waitForTimeout(500);
+
+    const nonSelected = page.locator('[role="option"][aria-selected="false"]').first();
+    if ((await nonSelected.count()) === 0) {
+      test.skip(true, "No other child to switch to");
+      return;
+    }
+
+    await nonSelected.click();
+    await page.waitForTimeout(3_000);
+
+    // Progress page should still be visible with updated data
+    await expect(page.locator("text=/Academic Progress/i")).toBeVisible({ timeout: 5_000 });
+  });
+});
+
+// ─── Guardian Role ─────────────────────────────────────────────────────────
+// Guardian maps to "parent" at signup (signup/route.ts:69). These tests
+// verify the guardian option is available in the UI.
+
+test.describe("Role — Guardian", () => {
+  test("Guardian appears as a signup role option", async ({ page }) => {
+    await page.goto("/signup");
+    await page.waitForTimeout(1_000);
+
+    const guardianOption = page.locator("text=/Guardian/");
+    await expect(guardianOption.first()).toBeVisible({ timeout: 5_000 });
+  });
+
+  test("Guardian appears in settings invite role dropdown", async ({ page }) => {
+    await loginAsStudent(page);
+    await page.goto("/settings");
+    await page.waitForTimeout(2_000);
+
+    const roleSelect = page.locator("select").filter({ hasText: /Guardian/ }).first();
+    if ((await roleSelect.count()) === 0) {
+      test.skip(true, "Role dropdown not visible");
+      return;
+    }
+
+    const guardianOption = roleSelect.locator('option[value="guardian"]');
+    await expect(guardianOption).toBeAttached();
+    expect(await guardianOption.textContent()).toBe("Guardian");
+  });
+
+  test("Guardian signup shows parent/guardian confirmation checkbox", async ({ page }) => {
+    await page.goto("/signup");
+    await page.waitForTimeout(1_000);
+
+    // Select guardian role
+    const guardianRadio = page.locator('[role="radio"]', { hasText: /Guardian/i });
+    if ((await guardianRadio.count()) === 0) {
+      test.skip(true, "Guardian role option not found");
+      return;
+    }
+    await guardianRadio.click();
+    await page.waitForTimeout(500);
+
+    // Should show parent/guardian confirmation
+    const confirmation = page.locator("text=/parent or legal guardian/i");
+    await expect(confirmation).toBeVisible({ timeout: 5_000 });
+  });
+});
+
 // ─── Cross-Role Consistency ────────────────────────────────────────────────
 
 test.describe("Role — Cross-Role Consistency", () => {

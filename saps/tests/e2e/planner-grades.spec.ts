@@ -322,37 +322,7 @@ test.describe("Planner — Plan Bar Stats", () => {
 });
 
 // ─── Print Plan ─────────────────────────────────────────────────────────────
-
-test.describe("Planner — Print Plan", () => {
-  test("print button is visible in toolbar", async ({ page }) => {
-    await navigateToPlanner(page);
-    await skipIfNoPlans(page);
-
-    const printBtn = page.locator('button[aria-label="Print plan"]');
-    await expect(printBtn).toBeVisible({ timeout: 5_000 });
-  });
-
-  test("print button opens print view in new tab", async ({ page, context }) => {
-    await navigateToPlanner(page);
-    await skipIfNoPlans(page);
-
-    const printBtn = page.locator('button[aria-label="Print plan"]');
-    if ((await printBtn.count()) === 0) {
-      test.skip();
-      return;
-    }
-
-    // Listen for new page
-    const [newPage] = await Promise.all([
-      context.waitForEvent("page", { timeout: 10_000 }),
-      printBtn.click(),
-    ]);
-
-    await newPage.waitForLoadState("domcontentloaded");
-    expect(newPage.url()).toContain("/planner/print");
-    await newPage.close();
-  });
-});
+// Print button visibility and new-tab behavior are tested in planner.spec.ts.
 
 // ─── Course Card Display ────────────────────────────────────────────────────
 

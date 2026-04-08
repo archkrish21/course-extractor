@@ -126,6 +126,7 @@ vi.mock("@/lib/db/schema", () => ({
   planShares: { id: "ps_id", planId: "ps_planId", userId: "ps_userId", permission: "ps_permission", isHidden: "ps_isHidden", grantedBy: "ps_grantedBy" },
   accountMembers: { accountId: "am_accountId", userId: "am_userId", role: "am_role", canEdit: "am_canEdit" },
   accounts: { id: "a_id", gradeLevel: "a_gradeLevel", studentUserId: "a_studentUserId" },
+  gpaSnapshots: { id: "gs_id", studentId: "gs_studentId", accountId: "gs_accountId", trigger: "gs_trigger", snapshotDate: "gs_snapshotDate", cumulativeGpa: "gs_cumulativeGpa", weightedGpa: "gs_weightedGpa", creditsEarned: "gs_creditsEarned", creditsAttempted: "gs_creditsAttempted" },
 }));
 
 vi.mock("drizzle-orm", () => ({

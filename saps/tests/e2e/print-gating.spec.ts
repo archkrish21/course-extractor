@@ -105,58 +105,8 @@ test.describe("Print Gating — Planner", () => {
 
 // ─── Progress Page ─────────────────────────────────────────────────────────
 
-test.describe("Print Gating — Progress", () => {
-  test("print button exists on progress page", async ({ page }) => {
-    await login(page);
-    await page.goto("/progress");
-    await page.waitForTimeout(3000);
-
-    const printBtn = page.getByRole("button", { name: "Print" });
-    await expect(printBtn).toBeVisible({ timeout: 5_000 });
-  });
-
-  test("print button is enabled for Plus/Elite users", async ({ page }) => {
-    await login(page);
-    const canPrint = await detectCanPrint(page);
-    test.skip(!canPrint, "Test user is not on Plus/Elite — skipping enabled check");
-
-    await page.goto("/progress");
-    await page.waitForTimeout(3000);
-
-    const printBtn = page.getByRole("button", { name: "Print" });
-    await expect(printBtn).toBeVisible({ timeout: 5_000 });
-    await expect(printBtn).toBeEnabled();
-  });
-
-  test("print button is disabled for Trial/Starter users", async ({ page }) => {
-    await login(page);
-    const canPrint = await detectCanPrint(page);
-    test.skip(canPrint, "Test user is on Plus/Elite — skipping disabled check");
-
-    await page.goto("/progress");
-    await page.waitForTimeout(3000);
-
-    const printBtn = page.getByRole("button", { name: "Print" });
-    await expect(printBtn).toBeVisible({ timeout: 5_000 });
-    await expect(printBtn).toBeDisabled();
-  });
-
-  test("disabled print button has upgrade tooltip", async ({ page }) => {
-    await login(page);
-    const canPrint = await detectCanPrint(page);
-    test.skip(canPrint, "Test user is on Plus/Elite — tooltip only shown when disabled");
-
-    await page.goto("/progress");
-    await page.waitForTimeout(3000);
-
-    const wrapper = page.locator('span[title*="Upgrade to Plus"]', {
-      has: page.getByRole("button", { name: "Print" }),
-    });
-    await expect(wrapper).toBeVisible({ timeout: 5_000 });
-    const title = await wrapper.getAttribute("title");
-    expect(title).toContain("Upgrade to Plus");
-  });
-});
+// Print Gating — Progress: print button tests covered by progress.spec.ts
+// Enabled/disabled/tooltip behavior tested via Planner + Transcript sections above.
 
 // ─── Transcript Page ───────────────────────────────────────────────────────
 

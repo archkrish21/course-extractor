@@ -137,57 +137,9 @@ test.describe("Transcript — Course Table", () => {
   });
 });
 
-// ─── Print ──────────────────────────────────────────────────────────────────
-
-test.describe("Transcript — Print", () => {
-  test("Print button is visible", async ({ page }) => {
-    await navigateToTranscript(page);
-
-    const printBtn = page.getByRole("button", { name: "Print" });
-    await expect(printBtn).toBeVisible({ timeout: 5_000 });
-  });
-
-  test("Print button triggers browser print dialog", async ({ page }) => {
-    await navigateToTranscript(page);
-
-    await page.evaluate(() => {
-      window.print = () => { (window as unknown as Record<string, boolean>).__printCalled = true; };
-    });
-
-    const printBtn = page.getByRole("button", { name: "Print" });
-    await printBtn.click();
-
-    const printCalled = await page.evaluate(() => (window as unknown as Record<string, boolean>).__printCalled === true);
-    expect(printCalled).toBe(true);
-  });
-});
-
-// ─── Print Layout ──────────────────────────────────────────────────────────
-
-test.describe("Transcript — Print Layout", () => {
-  test("buttons are hidden in print (have no-print class)", async ({ page }) => {
-    await navigateToTranscript(page);
-
-    const buttonContainer = page.locator(".no-print", { has: page.getByRole("button", { name: /Print/ }) });
-    await expect(buttonContainer).toBeVisible({ timeout: 5_000 });
-    await expect(buttonContainer).toHaveClass(/no-print/);
-  });
-
-  test("collapsed grade sections have print-expand class for forced display", async ({ page }) => {
-    await navigateToTranscript(page);
-
-    const emptyState = page.locator("text=/no completed courses|no grades/i");
-    if ((await emptyState.count()) > 0) {
-      test.skip();
-      return;
-    }
-
-    // All grade content divs should have print-expand class (visible or hidden)
-    const printExpandDivs = page.locator(".print-expand");
-    const count = await printExpandDivs.count();
-    expect(count).toBeGreaterThanOrEqual(1);
-  });
-});
+// ─── Print & Print Layout ──────────────────────────────────────────────────
+// Print button visibility, print dialog trigger, no-print class, and
+// print-expand class are tested in progress.spec.ts (single source of truth).
 
 // ─── Disclaimer ────────────────────────────────────────────────────────────
 

@@ -9,6 +9,8 @@ import { useAccount } from "@/lib/account-context";
 import { useTour } from "@/lib/hooks/use-tour";
 import { TOUR_IDS, getProgressTourSteps } from "@/config/tours";
 import { UNOFFICIAL_DISCLAIMER } from "@/config/disclaimers";
+import { FREE_LAUNCH_MODE } from "@/config/subscription-plans";
+import { PrintWatermark } from "@/components/print-watermark";
 import { apiFetch } from "@/lib/api-client";
 import {
   LineChart,
@@ -301,7 +303,7 @@ export default function ProgressPage() {
         </div>
         <div className="no-print flex items-center gap-2">
           {(() => {
-            const canPrint = true; // FREE_LAUNCH_MODE: print enabled for all users
+            const canPrint = FREE_LAUNCH_MODE || currentAccount?.subscriptionTier === "plus" || currentAccount?.subscriptionTier === "elite";
             return (
               <span className="relative group" title={canPrint ? "Print progress report" : "Upgrade to Plus to print"}>
                 <Button size="sm" variant="outline" className="gap-1.5" onClick={() => canPrint && window.print()} disabled={!canPrint} aria-label={canPrint ? "Print progress report" : "Upgrade to Plus to print"}>
@@ -735,12 +737,16 @@ export default function ProgressPage() {
               const gradYear = currentAccount?.graduationYear ?? 0;
               const GRADE_ABBR: Record<number, string> = { 9: "F", 10: "SM", 11: "J", 12: "S" };
 
-              function snapshotLabel(snapshotDate: string): string {
+              function snapshotLabel(snapshotDate: string, index: number): string {
                 const d = new Date(snapshotDate);
                 const month = d.getMonth(); // 0-indexed
                 // Academic year: Aug-Dec = first half, Jan-Jul = second half
                 // Semester 1 ends ~Jan, Semester 2 ends ~Jun
                 const sem = month <= 6 ? 1 : 2; // Jan-Jun = S1 end, Jul-Dec = next S2 start area
+
+                // If graduation year is unknown, fall back to sequential labels
+                if (!gradYear) return `#${index + 1}`;
+
                 // Derive school year: if month >= 8 (Aug+), school year starts that calendar year
                 const schoolStartYear = month >= 7 ? d.getFullYear() : d.getFullYear() - 1;
                 const gradeLevel = 12 - (gradYear - schoolStartYear - 1);
@@ -750,10 +756,11 @@ export default function ProgressPage() {
               }
 
               // Deduplicate: keep only the latest snapshot per semester label
+              const reversed = [...semesterSnapshots].reverse();
               const labelMap = new Map<string, GpaSnapshot>();
-              for (const s of [...semesterSnapshots].reverse()) {
-                const label = snapshotLabel(s.snapshotDate);
-                labelMap.set(label, s); // later entry overwrites earlier
+              for (let i = 0; i < reversed.length; i++) {
+                const label = snapshotLabel(reversed[i].snapshotDate, i);
+                labelMap.set(label, reversed[i]); // later entry overwrites earlier
               }
 
               const chartData = Array.from(labelMap.entries()).map(([label, s]) => ({
@@ -879,18 +886,7 @@ export default function ProgressPage() {
         <p>{UNOFFICIAL_DISCLAIMER}</p>
       </div>
 
-      {/* Print watermark */}
-      <div
-        className="print-watermark pointer-events-none fixed inset-0 z-50 hidden items-center justify-center"
-        aria-hidden="true"
-      >
-        <p
-          className="whitespace-nowrap text-[72px] font-bold uppercase tracking-widest text-foreground/[0.06]"
-          style={{ transform: "rotate(-35deg)" }}
-        >
-          UNOFFICIAL &mdash; SAPS
-        </p>
-      </div>
+      <PrintWatermark />
     </div>
   );
 }

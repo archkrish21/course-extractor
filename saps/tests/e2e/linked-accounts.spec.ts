@@ -125,6 +125,52 @@ test.describe("Settings — Linked Accounts", () => {
   });
 });
 
+// ─── FREE_LAUNCH_MODE Linked Account Limits ─────────────────────────────────
+
+test.describe("Settings — Linked Account Limits (FREE_LAUNCH_MODE)", () => {
+  test("linked accounts badge shows /3 limit (not /5 from Plus plan)", async ({ page }) => {
+    test.skip(test.info().project.name === "mobile", "Desktop test");
+    await navigateToSettings(page);
+
+    // The badge should show "X/3 used" when FREE_LAUNCH_MODE is on
+    const badge = page.locator("text=/\\d+\\/3 used/");
+    await expect(badge).toBeVisible({ timeout: 5_000 });
+
+    // Should NOT show /5 (Plus limit) or /8 (Elite limit)
+    const wrongLimit = page.locator("text=/\\d+\\/5 used|\\d+\\/8 used/");
+    expect(await wrongLimit.count()).toBe(0);
+  });
+
+  test("subscription section is hidden in FREE_LAUNCH_MODE", async ({ page }) => {
+    test.skip(test.info().project.name === "mobile", "Desktop test");
+    await navigateToSettings(page);
+
+    // The "Subscription" heading and "Manage" button should not be visible
+    const subHeading = page.locator("h2, h3", { hasText: "Subscription" });
+    expect(await subHeading.count()).toBe(0);
+  });
+
+  test("billing page shows Free Early Access in FREE_LAUNCH_MODE", async ({ page }) => {
+    test.skip(test.info().project.name === "mobile", "Desktop test");
+    await login(page);
+    await page.goto("/settings/billing");
+    await page.waitForTimeout(2_000);
+
+    await expect(page.locator("text=Free Early Access")).toBeVisible({ timeout: 5_000 });
+    await expect(page.locator("text=No credit card required")).toBeVisible();
+    await expect(page.locator("a[href='/settings']", { hasText: "Back to Settings" })).toBeVisible();
+  });
+
+  test("invite section does not show Upgrade link in FREE_LAUNCH_MODE", async ({ page }) => {
+    test.skip(test.info().project.name === "mobile", "Desktop test");
+    await navigateToSettings(page);
+
+    // The "Upgrade" link within the invite section should be hidden
+    const upgradeLink = page.locator("a[href='/settings/billing']", { hasText: "Upgrade" });
+    expect(await upgradeLink.count()).toBe(0);
+  });
+});
+
 // ─── Settings Profile — State & School ──────────────────────────────────────
 
 test.describe("Settings — Profile", () => {
@@ -143,13 +189,18 @@ test.describe("Settings — Profile", () => {
 // ─── Settings — Subscription Section ────────────────────────────────────────
 
 test.describe("Settings — Subscription", () => {
-  test("subscription section shows plan badge and Manage button", async ({ page }) => {
+  test("subscription section shows plan badge and Manage button (when subscriptions enabled)", async ({ page }) => {
     test.skip(test.info().project.name === "mobile", "Desktop test");
     await navigateToSettings(page);
 
-    // Subscription heading
-    const subHeading = page.locator("text=Subscription").first();
-    await expect(subHeading).toBeVisible({ timeout: 5_000 });
+    // In FREE_LAUNCH_MODE, subscription section is hidden
+    const subHeading = page.locator("h2, h3", { hasText: "Subscription" });
+    if ((await subHeading.count()) === 0) {
+      // FREE_LAUNCH_MODE is on — verify it's intentionally absent
+      const freeAccessBadge = page.locator("text=/\\d+\\/3 used/");
+      await expect(freeAccessBadge).toBeVisible({ timeout: 5_000 });
+      return;
+    }
 
     // Plan badge (Starter, Plus, Elite, or Free Trial)
     const planBadge = page.locator("text=/Starter|Plus|Elite|Free Trial/").first();

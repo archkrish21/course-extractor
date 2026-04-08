@@ -364,13 +364,17 @@ test.describe("Print — Disclaimer", () => {
       await page.goto(`/planner/print?id=${planId}`);
       await page.waitForTimeout(3000);
 
-      // The primary star should be inside the h2 (inline), not a separate line
-      const h2 = page.locator("h2");
-      const h2Text = await h2.first().textContent();
-      if (h2Text?.includes("★")) {
-        // Star is inline with plan name — correct
-        expect(h2Text).toContain("★");
-      }
+      // The primary star must be inside the h2 (inline with plan name)
+      const h2 = page.locator("h2").first();
+      await expect(h2).toBeVisible({ timeout: 5_000 });
+      const h2Text = await h2.textContent();
+      // Verify the star is present inside the h2, not as a separate element
+      expect(h2Text).toContain("★");
+      // Verify there is no separate standalone star element outside h2
+      const standaloneStars = page.locator("span:has-text('★ Primary'):not(h2 span)");
+      expect(await standaloneStars.count()).toBe(0);
+    } else {
+      test.skip(true, "No plan ID found — cannot test print page");
     }
   });
 });

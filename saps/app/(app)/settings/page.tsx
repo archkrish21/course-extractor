@@ -9,7 +9,7 @@ import Link from "next/link";
 import { useAccount } from "@/lib/account-context";
 import { apiFetch } from "@/lib/api-client";
 import { useToast } from "@/components/ui/toast";
-import { FREE_LAUNCH_MODE } from "@/config/subscription-plans";
+import { FREE_LAUNCH_MODE, LAUNCH_TIER } from "@/config/subscription-plans";
 
 interface AccountMember {
   userId: string;
@@ -78,10 +78,14 @@ export default function SettingsPage() {
       setBillingCycle(sub?.billingCycle ?? null);
       setNextPayment(sub?.currentPeriodEnd ?? null);
       // Derive member limit from plan name (matches middleware logic)
-      const plan = (sub?.planName ?? "").toLowerCase();
-      if (plan.includes("elite")) setMemberLimit(8);
-      else if (plan.includes("plus")) setMemberLimit(5);
-      else setMemberLimit(3);
+      if (FREE_LAUNCH_MODE) {
+        setMemberLimit(LAUNCH_TIER.maxLinkedAccounts);
+      } else {
+        const plan = (sub?.planName ?? "").toLowerCase();
+        if (plan.includes("elite")) setMemberLimit(8);
+        else if (plan.includes("plus")) setMemberLimit(5);
+        else setMemberLimit(3);
+      }
     }).catch(() => {});
     apiFetch("/api/v1/plans").then((r) => (r.ok ? r.json() : null)).then((json) => {
       const plans = json?.data ?? json?.plans ?? json ?? [];

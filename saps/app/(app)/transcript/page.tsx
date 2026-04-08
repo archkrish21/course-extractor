@@ -9,6 +9,8 @@ import { apiFetch } from "@/lib/api-client";
 import { GRADE_TO_POINTS } from "@/config/grade-scale";
 import { CREDIT_TYPE_WEIGHT } from "@/config/gpa-weights";
 import { UNOFFICIAL_DISCLAIMER } from "@/config/disclaimers";
+import { FREE_LAUNCH_MODE } from "@/config/subscription-plans";
+import { PrintWatermark } from "@/components/print-watermark";
 import Link from "next/link";
 
 // ---------------------------------------------------------------------------
@@ -227,7 +229,7 @@ export default function GradesPage() {
           </div>
           <div className="no-print flex items-center gap-2">
             {(() => {
-              const canPrint = true; // FREE_LAUNCH_MODE: print enabled for all users
+              const canPrint = FREE_LAUNCH_MODE || currentAccount?.subscriptionTier === "plus" || currentAccount?.subscriptionTier === "elite";
               return (
                 <span title={canPrint ? "Print" : "Upgrade to Plus to print"}>
                   <Button variant="outline" size="sm" onClick={() => canPrint && window.print()} disabled={!canPrint} aria-label="Print transcript">
@@ -499,18 +501,7 @@ export default function GradesPage() {
         </div>
       )}
 
-      {/* Print watermark */}
-      <div
-        className="print-watermark pointer-events-none fixed inset-0 z-50 hidden items-center justify-center"
-        aria-hidden="true"
-      >
-        <p
-          className="whitespace-nowrap text-[72px] font-bold uppercase tracking-widest text-foreground/[0.06]"
-          style={{ transform: "rotate(-35deg)" }}
-        >
-          UNOFFICIAL &mdash; SAPS
-        </p>
-      </div>
+      <PrintWatermark />
     </div>
   );
 }

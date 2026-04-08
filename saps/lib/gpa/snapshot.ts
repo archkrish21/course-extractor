@@ -3,8 +3,6 @@ import {
   gpaSnapshots,
   planCourses,
   courses,
-  fourYearPlans,
-  accounts,
 } from "@/lib/db/schema";
 import { eq, and, gte } from "drizzle-orm";
 import { calculateGPA } from "@/lib/gpa/calc";

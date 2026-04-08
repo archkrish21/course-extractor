@@ -9,6 +9,7 @@ import { useAccount } from "@/lib/account-context";
 import { apiFetch } from "@/lib/api-client";
 import { useTour } from "@/lib/hooks/use-tour";
 import { TOUR_IDS, welcomeTourSteps } from "@/config/tours";
+import { FREE_LAUNCH_MODE } from "@/config/subscription-plans";
 
 interface DashboardPlan {
   id: string;
@@ -833,7 +834,7 @@ export default function DashboardPage() {
                 </Button>
               </Link>
               {(() => {
-                const canPrint = true; // FREE_LAUNCH_MODE: print enabled for all users
+                const canPrint = FREE_LAUNCH_MODE || currentAccount?.subscriptionTier === "plus" || currentAccount?.subscriptionTier === "elite";
                 return canPrint ? (
                   <Link href="/planner/print">
                     <Button variant="outline" className="w-full justify-start gap-2">

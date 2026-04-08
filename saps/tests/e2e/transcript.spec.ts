@@ -162,6 +162,35 @@ test.describe("Transcript — Print", () => {
   });
 });
 
+// ─── Disclaimer ────────────────────────────────────────────────────────────
+
+test.describe("Transcript — Disclaimer", () => {
+  test("shows disclaimer banner when courses exist", async ({ page }) => {
+    await navigateToTranscript(page);
+
+    const emptyState = page.locator("text=/no completed courses|no grades/i");
+    if ((await emptyState.count()) > 0) {
+      test.skip(); // No courses to show disclaimer for
+      return;
+    }
+
+    await expect(page.locator("text=Disclaimer")).toBeVisible({ timeout: 5_000 });
+    await expect(page.locator("text=This is not an official school document")).toBeVisible();
+  });
+
+  test("disclaimer is not shown when no courses exist", async ({ page }) => {
+    await navigateToTranscript(page);
+
+    const emptyState = page.locator("text=/no completed courses|no grades/i");
+    if ((await emptyState.count()) === 0) {
+      test.skip(); // Has courses — can't test empty state
+      return;
+    }
+
+    await expect(page.locator("text=Disclaimer")).not.toBeVisible();
+  });
+});
+
 // ─── Read-only Behavior ─────────────────────────────────────────────────────
 
 test.describe("Transcript — Read-only", () => {

@@ -136,6 +136,19 @@ test.describe("Plans — Plan Cards", () => {
   });
 });
 
+// ─── Primary Plan Indicator ────────────────────────────────────────────────
+
+test.describe("Plans — Primary Plan Indicator", () => {
+  test("primary plan shows star indicator in plan name", async ({ page }) => {
+    await navigateToPlans(page);
+    await skipIfNoPlans(page);
+
+    // The primary plan name should contain the star character ★
+    const starPlan = page.locator("a", { hasText: /\u2605/ }).first();
+    await expect(starPlan).toBeVisible({ timeout: 5_000 });
+  });
+});
+
 // ─── Hide/Show Toggle ───────────────────────────────────────────────────────
 
 test.describe("Plans — Hide/Show Toggle", () => {

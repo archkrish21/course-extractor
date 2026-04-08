@@ -304,3 +304,46 @@ test.describe("Print Gating — Tooltip Consistency", () => {
     await expect(plannerTooltip).toBeVisible({ timeout: 5_000 });
   });
 });
+
+// ─── Disclaimer on Print Views ────────────────────────────────────────────
+
+test.describe("Print — Disclaimer", () => {
+  test("planner print page shows disclaimer in footer", async ({ page }) => {
+    await login(page);
+    const canPrint = await detectCanPrint(page);
+    test.skip(!canPrint, "Test user cannot print — skipping print page check");
+
+    // Navigate to planner to get a plan ID
+    await page.goto("/planner");
+    await expect(page.locator("text=/Course Planner/")).toBeVisible({ timeout: 15_000 });
+
+    // Find the print button and get its target URL
+    const printBtn = page.locator('button[aria-label="Print plan"]');
+    if ((await printBtn.count()) === 0) {
+      test.skip();
+      return;
+    }
+
+    // Open print page directly (the button opens a new tab)
+    const href = await page.evaluate(() => {
+      const btn = document.querySelector('button[aria-label="Print plan"]');
+      return btn?.closest("[onclick]")?.getAttribute("onclick")?.match(/window\.open\('([^']+)'/)?.[1] ?? null;
+    });
+
+    // Alternatively, extract plan ID from the page and go to print URL
+    const planId = await page.evaluate(() => {
+      const select = document.querySelector('select[aria-label="Select a plan"]') as HTMLSelectElement | null;
+      return select?.value ?? null;
+    });
+
+    if (planId) {
+      await page.goto(`/planner/print?id=${planId}`);
+      await page.waitForTimeout(3000);
+      await expect(page.locator("text=This is not an official school document")).toBeVisible({ timeout: 10_000 });
+    } else if (href) {
+      await page.goto(href);
+      await page.waitForTimeout(3000);
+      await expect(page.locator("text=This is not an official school document")).toBeVisible({ timeout: 10_000 });
+    }
+  });
+});

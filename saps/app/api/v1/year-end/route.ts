@@ -7,10 +7,9 @@ import {
   accounts,
   accountMembers,
   studentProfiles,
-  gpaSnapshots,
 } from "@/lib/db/schema";
-import { calculateGPA } from "@/lib/gpa/calc";
 import { eq, and, sql } from "drizzle-orm";
+import { maybeCreateSemesterSnapshot } from "@/lib/gpa/snapshot";
 import { successResponse, errorResponse } from "@/lib/api/response";
 import { requireAuth, getAccountContext } from "@/lib/auth/get-user";
 import { rateLimit } from "@/lib/api/rate-limit";
@@ -277,50 +276,12 @@ export async function POST(request: NextRequest) {
         .where(eq(studentProfiles.userId, user.id));
     }
 
-    // Auto-create GPA snapshot for the completed grade
-    try {
-      const completedCourses = await db
-        .select({
-          creditValue: courses.creditValue,
-          creditType: courses.creditType,
-          code: courses.code,
-          plannedGrade: planCourses.plannedGrade,
-          status: planCourses.status,
-          gpaWaiver: courses.gpaWaiver,
-          gpaWaiverApplied: planCourses.gpaWaiverApplied,
-        })
-        .from(planCourses)
-        .innerJoin(courses, eq(planCourses.courseId, courses.id))
-        .where(
-          and(
-            eq(planCourses.planId, plan.id),
-            eq(planCourses.status, "completed")
-          )
-        );
-
-      const studentId = await db
-        .select({ studentUserId: accounts.studentUserId })
-        .from(accounts)
-        .where(eq(accounts.id, accountId))
-        .limit(1);
-
-      const sId = studentId[0]?.studentUserId ?? user.id;
-      const actual = calculateGPA(completedCourses as any, "actual");
-
-      if (actual.unweighted !== null) {
-        await db.insert(gpaSnapshots).values({
-          studentId: sId,
-          accountId,
-          trigger: "semester_end",
-          cumulativeGpa: String(actual.unweighted),
-          weightedGpa: actual.weighted !== null ? String(actual.weighted) : null,
-          creditsEarned: String(actual.totalCredits),
-          creditsAttempted: String(actual.totalCredits),
-        });
-      }
-    } catch (snapErr) {
-      console.error("[year-end] Snapshot creation failed (non-fatal):", snapErr);
-    }
+    // Auto-create GPA snapshot for the completed semester
+    await maybeCreateSemesterSnapshot({
+      studentId: user.id,
+      accountId,
+      planId: plan.id,
+    });
 
     return successResponse({
       success: true,

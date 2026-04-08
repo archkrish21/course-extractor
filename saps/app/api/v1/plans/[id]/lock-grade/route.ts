@@ -6,6 +6,7 @@ import { eq } from "drizzle-orm";
 import { successResponse, errorResponse } from "@/lib/api/response";
 import { requireAuth } from "@/lib/auth/get-user";
 import { getPlanAccess, hasPermission } from "@/lib/auth/plan-permissions";
+import { maybeCreateSemesterSnapshot } from "@/lib/gpa/snapshot";
 
 const lockGradeSchema = z.object({
   grade_level: z.number().int().min(9).max(12),
@@ -82,6 +83,15 @@ export async function POST(request: NextRequest, context: RouteContext) {
         .update(accounts)
         .set({ gradeLevel: newCurrentGrade })
         .where(eq(accounts.id, plan.accountId));
+    }
+
+    // Auto-snapshot when locking a grade level
+    if (locked && plan.studentId && plan.accountId) {
+      await maybeCreateSemesterSnapshot({
+        studentId: plan.studentId,
+        accountId: plan.accountId,
+        planId,
+      });
     }
 
     return successResponse({

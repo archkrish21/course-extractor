@@ -17,6 +17,10 @@ import {
 } from "@/lib/prereq/validator";
 
 import { ALL_GRADES } from "@/config/grade-scale";
+import {
+  maybeCreateSemesterSnapshot,
+  allSemesterCoursesCompleted,
+} from "@/lib/gpa/snapshot";
 
 const patchCourseSchema = z.object({
   semester: z.number().int().min(1).max(2).nullable().optional(),
@@ -169,6 +173,27 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
       beforeState,
       afterState: { ...afterState, planCourseId, courseId: planCourse.courseId },
     });
+
+    // Auto-snapshot: if this update completed a course with a grade,
+    // check if all courses in the semester are now completed
+    const isNowCompleted =
+      (updates.status === "completed" || updated.status === "completed") &&
+      updated.plannedGrade !== null;
+
+    if (isNowCompleted && plan.studentId && plan.accountId) {
+      const allDone = await allSemesterCoursesCompleted({
+        planId,
+        gradeLevel: updated.gradeLevel,
+        semester: updated.semester,
+      });
+      if (allDone) {
+        await maybeCreateSemesterSnapshot({
+          studentId: plan.studentId,
+          accountId: plan.accountId,
+          planId,
+        });
+      }
+    }
 
     return successResponse(updated);
   } catch (error) {

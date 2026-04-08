@@ -731,14 +731,39 @@ export default function ProgressPage() {
             )}
 
             {/* GPA Trend Chart */}
-            {snapshots.length >= 2 && (() => {
-              const chartData = [...snapshots]
-                .reverse()
-                .map((s) => ({
-                  date: new Date(s.snapshotDate).toLocaleDateString("en-US", { month: "short", year: "2-digit" }),
-                  unweighted: s.cumulativeGpa ? parseFloat(s.cumulativeGpa) : null,
-                  weighted: s.weightedGpa ? parseFloat(s.weightedGpa) : null,
-                }));
+            {(() => {
+              const semesterSnapshots = snapshots.filter((s) => s.trigger === "semester_end");
+              if (semesterSnapshots.length === 0) return null;
+              const gradYear = currentAccount?.graduationYear ?? 0;
+              const GRADE_ABBR: Record<number, string> = { 9: "F", 10: "SM", 11: "J", 12: "S" };
+
+              function snapshotLabel(snapshotDate: string): string {
+                const d = new Date(snapshotDate);
+                const month = d.getMonth(); // 0-indexed
+                // Academic year: Aug-Dec = first half, Jan-Jul = second half
+                // Semester 1 ends ~Jan, Semester 2 ends ~Jun
+                const sem = month <= 6 ? 1 : 2; // Jan-Jun = S1 end, Jul-Dec = next S2 start area
+                // Derive school year: if month >= 8 (Aug+), school year starts that calendar year
+                const schoolStartYear = month >= 7 ? d.getFullYear() : d.getFullYear() - 1;
+                const gradeLevel = 12 - (gradYear - schoolStartYear - 1);
+                const clampedGrade = Math.max(9, Math.min(12, gradeLevel));
+                const abbr = GRADE_ABBR[clampedGrade] ?? `G${clampedGrade}`;
+                return `${abbr} S${sem}`;
+              }
+
+              // Deduplicate: keep only the latest snapshot per semester label
+              const labelMap = new Map<string, GpaSnapshot>();
+              for (const s of [...semesterSnapshots].reverse()) {
+                const label = snapshotLabel(s.snapshotDate);
+                labelMap.set(label, s); // later entry overwrites earlier
+              }
+
+              const chartData = Array.from(labelMap.entries()).map(([label, s]) => ({
+                date: label,
+                fullDate: new Date(s.snapshotDate).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }),
+                unweighted: s.cumulativeGpa ? parseFloat(s.cumulativeGpa) : null,
+                weighted: s.weightedGpa ? parseFloat(s.weightedGpa) : null,
+              }));
 
               return (
                 <Card>
@@ -751,7 +776,6 @@ export default function ProgressPage() {
                           dataKey="date"
                           tick={{ fontSize: 10 }}
                           className="text-muted-foreground"
-                          label={{ value: "Date", position: "insideBottom", offset: -2, fontSize: 10, fill: "var(--color-muted-foreground)" }}
                         />
                         <YAxis
                           domain={[0, 5]}
@@ -762,6 +786,10 @@ export default function ProgressPage() {
                         <Tooltip
                           contentStyle={{ fontSize: 12, borderRadius: 8, border: "1px solid var(--color-border)", background: "var(--color-card)" }}
                           formatter={(value: unknown, name: unknown) => [Number(value)?.toFixed(3), String(name) === "unweighted" ? "Unweighted" : "Weighted"]}
+                          labelFormatter={(label, payload) => {
+                            const item = payload?.[0]?.payload;
+                            return item ? `${label} — ${item.fullDate}` : String(label);
+                          }}
                         />
                         <Legend wrapperStyle={{ fontSize: 10, paddingTop: 4 }} formatter={(value) => value === "unweighted" ? "Unweighted" : "Weighted"} />
                         <Line type="monotone" dataKey="unweighted" stroke="var(--color-primary)" strokeWidth={2} dot={{ r: 3 }} connectNulls name="unweighted" />

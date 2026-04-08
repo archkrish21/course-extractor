@@ -2,6 +2,7 @@ import { Redis } from "@upstash/redis";
 import { db } from "@/lib/db";
 import { subscriptions, subscriptionPlans, users, accounts } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
+import { FREE_LAUNCH_MODE, LAUNCH_TIER } from "@/config/subscription-plans";
 
 // Only initialize Redis if credentials are configured
 const REDIS_URL = process.env.UPSTASH_REDIS_REST_URL;
@@ -60,6 +61,26 @@ const STARTER_DEFAULTS: SubscriptionContext = {
 export async function getEffectiveTier(
   params: { accountId?: string; userId?: string }
 ): Promise<SubscriptionContext> {
+  // Free launch mode: bypass all subscription checks
+  if (FREE_LAUNCH_MODE) {
+    return {
+      tier: LAUNCH_TIER.tier,
+      accountStatus: "active",
+      freezeReason: null,
+      canUseAI: LAUNCH_TIER.features.can_use_ai,
+      maxPlans: LAUNCH_TIER.maxPlans,
+      maxLinkedAccounts: LAUNCH_TIER.maxLinkedAccounts,
+      canWhatIf: LAUNCH_TIER.features.can_what_if,
+      canComparePlans: LAUNCH_TIER.features.can_compare_plans,
+      canExportPdf: LAUNCH_TIER.features.can_export_pdf,
+      canSharePlans: LAUNCH_TIER.features.can_share_plans,
+      canParentDraft: LAUNCH_TIER.features.can_parent_draft,
+      canViewPercentile: LAUNCH_TIER.features.can_view_percentile,
+      canRigorScoring: LAUNCH_TIER.features.can_rigor_scoring,
+      canCreateGoals: LAUNCH_TIER.features.can_create_goals,
+    };
+  }
+
   const { accountId, userId } = params;
 
   // Resolve the effective accountId

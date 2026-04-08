@@ -9,6 +9,7 @@ import Link from "next/link";
 import { useAccount } from "@/lib/account-context";
 import { apiFetch } from "@/lib/api-client";
 import { useToast } from "@/components/ui/toast";
+import { FREE_LAUNCH_MODE } from "@/config/subscription-plans";
 
 interface AccountMember {
   userId: string;
@@ -468,8 +469,7 @@ export default function SettingsPage() {
                         <Badge className="bg-muted text-muted-foreground text-[11px]">{totalMembers}/{memberLimit} used</Badge>
                         {atLimit && (
                           <span className="text-[11px] text-warning">
-                            Limit reached.{" "}
-                            <Link href="/settings/billing" className="text-primary hover:underline">Upgrade</Link> for more.
+                            Limit reached.{!FREE_LAUNCH_MODE && <>{" "}<Link href="/settings/billing" className="text-primary hover:underline">Upgrade</Link> for more.</>}
                           </span>
                         )}
                       </div>
@@ -490,8 +490,8 @@ export default function SettingsPage() {
           </Card>
         </section>
 
-        {/* --- Subscription (hidden for counselors) -------------------- */}
-        {currentAccount?.role !== "counselor" && <section>
+        {/* --- Subscription (hidden in free launch mode and for counselors) ---- */}
+        {!FREE_LAUNCH_MODE && currentAccount?.role !== "counselor" && <section>
           <h2 className="mb-4 text-xs font-semibold uppercase tracking-wider text-muted-foreground">Subscription</h2>
           <Card>
             <CardContent>

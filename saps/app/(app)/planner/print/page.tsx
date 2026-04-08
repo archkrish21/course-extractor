@@ -221,6 +221,19 @@ export default function PrintPlanPage() {
         }
       `}</style>
 
+      {/* Print watermark — always visible on this page */}
+      <div
+        className="print-watermark pointer-events-none fixed inset-0 z-50 flex items-center justify-center"
+        aria-hidden="true"
+      >
+        <p
+          className="whitespace-nowrap text-[72px] font-bold uppercase tracking-widest text-black/[0.06]"
+          style={{ transform: "rotate(-35deg)" }}
+        >
+          UNOFFICIAL &mdash; SAPS
+        </p>
+      </div>
+
       <div className="print-container bg-white text-black">
         {/* Screen-only back button */}
         <div className="no-print mb-4 flex items-center gap-3">

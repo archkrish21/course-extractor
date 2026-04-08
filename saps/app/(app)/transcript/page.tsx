@@ -227,7 +227,7 @@ export default function GradesPage() {
           </div>
           <div className="flex items-center gap-2">
             {(() => {
-              const canPrint = currentAccount?.subscriptionTier === "plus" || currentAccount?.subscriptionTier === "elite";
+              const canPrint = true; // FREE_LAUNCH_MODE: print enabled for all users
               return (
                 <span title={canPrint ? "Print" : "Upgrade to Plus to print"}>
                   <Button variant="outline" size="sm" onClick={() => canPrint && window.print()} disabled={!canPrint}>
@@ -500,6 +500,19 @@ export default function GradesPage() {
           <p className="mt-0.5">{UNOFFICIAL_DISCLAIMER}</p>
         </div>
       )}
+
+      {/* Print watermark */}
+      <div
+        className="print-watermark pointer-events-none fixed inset-0 z-50 hidden items-center justify-center"
+        aria-hidden="true"
+      >
+        <p
+          className="whitespace-nowrap text-[72px] font-bold uppercase tracking-widest text-black/[0.06]"
+          style={{ transform: "rotate(-35deg)" }}
+        >
+          UNOFFICIAL &mdash; SAPS
+        </p>
+      </div>
     </div>
   );
 }

@@ -104,8 +104,13 @@ body {
   }
 
   /* Hide fixed-position floating widgets (feedback, tour, etc.) */
-  .fixed {
+  .fixed:not(.print-watermark) {
     display: none !important;
+  }
+
+  /* Show watermark overlay on print */
+  .print-watermark {
+    display: flex !important;
   }
 
   /* Remove main content constraints so print fills the page */

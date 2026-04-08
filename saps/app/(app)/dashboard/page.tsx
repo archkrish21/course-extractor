@@ -833,7 +833,7 @@ export default function DashboardPage() {
                 </Button>
               </Link>
               {(() => {
-                const canPrint = currentAccount?.subscriptionTier === "plus" || currentAccount?.subscriptionTier === "elite";
+                const canPrint = true; // FREE_LAUNCH_MODE: print enabled for all users
                 return canPrint ? (
                   <Link href="/planner/print">
                     <Button variant="outline" className="w-full justify-start gap-2">

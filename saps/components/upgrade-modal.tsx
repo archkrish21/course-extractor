@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { apiFetch } from "@/lib/api-client";
+import { FREE_LAUNCH_MODE } from "@/config/subscription-plans";
 
 interface UpgradeModalProps {
   isOpen: boolean;
@@ -142,6 +143,7 @@ export function useUpgradeModal() {
   }>({ isOpen: false, feature: "", minimumTier: "plus", currentTier: "starter" });
 
   const checkResponse = async (res: Response, featureName: string): Promise<boolean> => {
+    if (FREE_LAUNCH_MODE) return false; // No upgrade prompts in free launch mode
     if (res.status === 402) {
       try {
         const json = await res.json();

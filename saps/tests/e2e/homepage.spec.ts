@@ -18,8 +18,8 @@ test.describe("Home Page", () => {
     await expect(page.getByRole("link", { name: "See How It Works" })).toBeVisible();
   });
 
-  test("14-day free trial badge is visible", async ({ page }) => {
-    await expect(page.locator("text=14-day free trial")).toBeVisible();
+  test("free early access badge is visible", async ({ page }) => {
+    await expect(page.locator("text=Free during early access")).toBeVisible();
   });
 
   test("Why SAPS section shows 3 pain points", async ({ page }) => {
@@ -59,15 +59,15 @@ test.describe("Home Page", () => {
     await expect(faqButton).toBeVisible();
 
     // Answer should not be visible before clicking
-    await expect(page.locator("text=Yes! SAPS is free to use.")).not.toBeVisible();
+    await expect(page.locator("text=Yes! SAPS is completely free during early access.")).not.toBeVisible();
 
     // Click to expand
     await faqButton.click();
-    await expect(page.locator("text=Yes! SAPS is free to use.")).toBeVisible();
+    await expect(page.locator("text=Yes! SAPS is completely free during early access.")).toBeVisible();
 
     // Click again to collapse
     await faqButton.click();
-    await expect(page.locator("text=Yes! SAPS is free to use.")).not.toBeVisible();
+    await expect(page.locator("text=Yes! SAPS is completely free during early access.")).not.toBeVisible();
   });
 
   test("final CTA section is visible", async ({ page }) => {

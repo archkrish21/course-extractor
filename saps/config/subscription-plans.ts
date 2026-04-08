@@ -118,6 +118,30 @@ export const TRIAL_CONFIG = {
   } satisfies SubscriptionFeatures,
 } as const;
 
+/**
+ * Free launch mode — flip to false when ready to enable paid subscriptions.
+ * When true, all users get LAUNCH_TIER features with no subscription checks.
+ */
+export const FREE_LAUNCH_MODE = true;
+
+export const LAUNCH_TIER = {
+  tier: "free" as const,
+  maxPlans: 3,
+  maxLinkedAccounts: 3,
+  features: {
+    can_create_goals: true,
+    can_use_ai: false,
+    can_view_percentile: false,
+    can_what_if: true,
+    can_compare_plans: false,
+    can_export_pdf: true,
+    can_share_plans: false,
+    can_parent_draft: true,
+    can_rigor_scoring: false,
+    max_alerts: null,
+  } satisfies SubscriptionFeatures,
+} as const;
+
 /** Helper to find a plan definition by name */
 export function getPlanByName(name: string): SubscriptionPlanDef | undefined {
   return SUBSCRIPTION_PLANS.find((p) => p.name === name);

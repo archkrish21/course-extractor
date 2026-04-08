@@ -1410,7 +1410,7 @@ export default function PlannerPage() {
           )}
           {/* Print plan — requires Plus+ (canExportPdf) */}
           {selectedPlanId && (() => {
-            const canPrint = currentAccount?.subscriptionTier === "plus" || currentAccount?.subscriptionTier === "elite";
+            const canPrint = true; // FREE_LAUNCH_MODE: print enabled for all users
             return (
             <span title={canPrint ? "Print plan" : "Upgrade to Plus to print plans"}>
             <button

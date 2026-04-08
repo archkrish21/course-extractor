@@ -68,11 +68,11 @@ const STEPS = [
 ];
 
 const FAQS = [
-  { q: "Is SAPS free?", a: "Yes! SAPS is free to use. Create your account and start planning today." },
+  { q: "Is SAPS free?", a: "Yes! SAPS is completely free during early access. Create your account and start planning today — no credit card required." },
   { q: "Is SAPS affiliated with Stevenson High School?", a: "No. SAPS is an independent tool built by a Stevenson student. It is not affiliated with, endorsed by, or sponsored by Adlai E. Stevenson High School." },
   { q: "How is my data protected?", a: "Your data is encrypted in transit, stored securely, and never sold to third parties. You can delete your account and all data at any time." },
   { q: "Can my parents see my grades?", a: "Only if you invite them. Parents and guardians can be linked to your account with view access. You control who sees your data." },
-  { q: "What happens after the 14-day trial?", a: "Your account continues on the free Starter plan. All your plans and data are preserved — nothing is lost." },
+  { q: "How much does SAPS cost?", a: "Right now, SAPS is 100% free to use. We're committed to growing with our users and will soon be introducing exciting new tools and enhancements designed to help you achieve even more." },
   { q: "Can I use SAPS if I go to a different school?", a: "SAPS currently supports Stevenson High School. We're expanding to more schools soon — request yours during signup!" },
   { q: "Who built SAPS?", a: "SAPS was built by a junior at Stevenson High School who wanted a better way to plan courses and track academic progress." },
 ];
@@ -105,7 +105,7 @@ export default function HomePage() {
                 <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-primary opacity-75" />
                 <span className="relative inline-flex h-2 w-2 rounded-full bg-primary" />
               </span>
-              14-day free trial — no credit card required
+              Free during early access
             </div>
 
             <h1 className="mt-6 text-4xl font-extrabold tracking-tight text-foreground sm:text-5xl lg:text-6xl">

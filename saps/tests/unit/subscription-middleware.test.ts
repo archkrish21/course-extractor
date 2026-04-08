@@ -49,17 +49,21 @@ describe("getEffectiveTier", () => {
     delete process.env.UPSTASH_REDIS_REST_TOKEN;
   });
 
-  it("returns starter defaults when no accountId or userId is provided", async () => {
+  it("returns free launch tier when FREE_LAUNCH_MODE is on", async () => {
     const { getEffectiveTier } = await import("@/lib/subscription/middleware");
     const result = await getEffectiveTier({});
-    expect(result.tier).toBe("starter");
+    expect(result.tier).toBe("free");
     expect(result.canUseAI).toBe(false);
-    expect(result.maxPlans).toBe(1);
-    expect(result.canWhatIf).toBe(false);
+    expect(result.maxPlans).toBe(3);
+    expect(result.maxLinkedAccounts).toBe(3);
+    expect(result.canWhatIf).toBe(true);
+    expect(result.canExportPdf).toBe(true);
+    expect(result.canParentDraft).toBe(true);
+    expect(result.canCreateGoals).toBe(true);
     expect(result.canComparePlans).toBe(false);
-    expect(result.canExportPdf).toBe(false);
     expect(result.canSharePlans).toBe(false);
-    expect(result.canParentDraft).toBe(false);
+    expect(result.canViewPercentile).toBe(false);
+    expect(result.canRigorScoring).toBe(false);
   });
 
   it.skip("returns starter defaults when no subscription is found for a userId", async () => {
@@ -140,13 +144,12 @@ describe("getEffectiveTier", () => {
     expect(result.canUseAI).toBe(false);
   });
 
-  it("free tier returns maxPlans=1 and canUseAI=false", async () => {
+  it("free launch tier bypasses DB lookups for any params", async () => {
     const { getEffectiveTier } = await import("@/lib/subscription/middleware");
-    // No subscription found => starter (free) defaults
-    const result = await getEffectiveTier({});
-    expect(result.maxPlans).toBe(1);
+    const result = await getEffectiveTier({ userId: "any-user", accountId: "any-account" });
+    expect(result.tier).toBe("free");
+    expect(result.maxPlans).toBe(3);
     expect(result.canUseAI).toBe(false);
-    expect(result.tier).toBe("starter");
   });
 
   it.skip("accepts userId and resolves account via accounts table", async () => {
@@ -185,10 +188,10 @@ describe("getEffectiveTier", () => {
     expect(result.canUseAI).toBe(true);
   });
 
-  it("falls back to DB when Redis is not configured", async () => {
+  it("returns free tier regardless of Redis config in launch mode", async () => {
     const { getEffectiveTier } = await import("@/lib/subscription/middleware");
     const result = await getEffectiveTier({});
-    expect(result.tier).toBe("starter");
+    expect(result.tier).toBe("free");
   });
 });
 
@@ -251,6 +254,27 @@ describe("subscription plan config", () => {
   it("Pro tier does not exist in config", async () => {
     const { getPlanByName } = await import("@/config/subscription-plans");
     expect(getPlanByName("pro")).toBeUndefined();
+  });
+
+  it("FREE_LAUNCH_MODE is enabled", async () => {
+    const { FREE_LAUNCH_MODE } = await import("@/config/subscription-plans");
+    expect(FREE_LAUNCH_MODE).toBe(true);
+  });
+
+  it("LAUNCH_TIER has correct features for early access", async () => {
+    const { LAUNCH_TIER } = await import("@/config/subscription-plans");
+    expect(LAUNCH_TIER.tier).toBe("free");
+    expect(LAUNCH_TIER.maxPlans).toBe(3);
+    expect(LAUNCH_TIER.maxLinkedAccounts).toBe(3);
+    expect(LAUNCH_TIER.features.can_what_if).toBe(true);
+    expect(LAUNCH_TIER.features.can_export_pdf).toBe(true);
+    expect(LAUNCH_TIER.features.can_parent_draft).toBe(true);
+    expect(LAUNCH_TIER.features.can_create_goals).toBe(true);
+    expect(LAUNCH_TIER.features.can_use_ai).toBe(false);
+    expect(LAUNCH_TIER.features.can_compare_plans).toBe(false);
+    expect(LAUNCH_TIER.features.can_share_plans).toBe(false);
+    expect(LAUNCH_TIER.features.can_view_percentile).toBe(false);
+    expect(LAUNCH_TIER.features.can_rigor_scoring).toBe(false);
   });
 });
 

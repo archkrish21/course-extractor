@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { useAccount } from "@/lib/account-context";
 import { apiFetch } from "@/lib/api-client";
+import { FREE_LAUNCH_MODE } from "@/config/subscription-plans";
 
 /**
  * Trial banner that shows "X days left in your free trial" when trial is active.
@@ -18,6 +19,9 @@ export function TrialBanner() {
   const [visible, setVisible] = useState(false);
 
   useEffect(() => {
+    // Skip in free launch mode — no trials
+    if (FREE_LAUNCH_MODE) return;
+
     // Only show for trialing users
     if (currentAccount?.subscriptionTier !== "trial") return;
 

@@ -301,7 +301,7 @@ export default function ProgressPage() {
         </div>
         <div className="flex items-center gap-2">
           {(() => {
-            const canPrint = currentAccount?.subscriptionTier === "plus" || currentAccount?.subscriptionTier === "elite";
+            const canPrint = true; // FREE_LAUNCH_MODE: print enabled for all users
             return (
               <span className="relative group" title={canPrint ? "Print progress report" : "Upgrade to Plus to print"}>
                 <Button size="sm" variant="outline" className="gap-1.5" onClick={() => canPrint && window.print()} disabled={!canPrint} aria-label={canPrint ? "Print progress report" : "Upgrade to Plus to print"}>
@@ -851,6 +851,19 @@ export default function ProgressPage() {
 
       <div className="hidden print:block mt-4 border-t border-gray-300 pt-2 text-[10px] text-gray-500 italic">
         <p>{UNOFFICIAL_DISCLAIMER}</p>
+      </div>
+
+      {/* Print watermark */}
+      <div
+        className="print-watermark pointer-events-none fixed inset-0 z-50 hidden items-center justify-center"
+        aria-hidden="true"
+      >
+        <p
+          className="whitespace-nowrap text-[72px] font-bold uppercase tracking-widest text-black/[0.06]"
+          style={{ transform: "rotate(-35deg)" }}
+        >
+          UNOFFICIAL &mdash; SAPS
+        </p>
       </div>
     </div>
   );

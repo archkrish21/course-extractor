@@ -263,7 +263,7 @@ export default function DashboardPage() {
     <div className="mx-auto max-w-6xl">
       <div className="mb-6 flex flex-wrap items-start justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-foreground">
+          <h1 className="text-2xl font-bold tracking-tight text-foreground">
             Welcome, {displayName}
           </h1>
           <p className="mt-1 text-sm text-muted-foreground">

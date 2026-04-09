@@ -31,7 +31,7 @@ test.describe("Auth — Page Load", () => {
 
     // Form fields
     await expect(page.getByLabel("Email address")).toBeVisible();
-    await expect(page.getByLabel("Password")).toBeVisible();
+    await expect(page.getByLabel("Password").first()).toBeVisible();
 
     // Submit button (exact match to avoid matching "Sign in with Google")
     await expect(
@@ -57,7 +57,7 @@ test.describe("Auth — Login Flow", () => {
     await page.goto("/login");
 
     await page.getByLabel("Email address").fill("student@test.com");
-    await page.getByLabel("Password").fill("Test1234!");
+    await page.getByLabel("Password").first().fill("Test1234!");
     await page.locator('form button[type="submit"]').click();
 
     // Should redirect to dashboard (or other authenticated page)
@@ -70,7 +70,7 @@ test.describe("Auth — Login Flow", () => {
     await page.goto("/login");
 
     await page.getByLabel("Email address").fill("wrong@test.com");
-    await page.getByLabel("Password").fill("WrongPassword123!");
+    await page.getByLabel("Password").first().fill("WrongPassword123!");
     await page.locator('form button[type="submit"]').click();
 
     // Should show an error message (role="alert")

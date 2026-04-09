@@ -5,7 +5,7 @@ import { test, expect, type Page } from "@playwright/test";
 async function login(page: Page) {
   await page.goto("/login");
   await page.getByLabel("Email address").fill("student@test.com");
-  await page.getByLabel("Password").fill("Test1234!");
+  await page.getByLabel("Password").first().fill("Test1234!");
   await page.locator('form button[type="submit"]').click();
   await page.waitForURL(/\/(dashboard|planner|courses|consent)/, { timeout: 15_000 });
 }

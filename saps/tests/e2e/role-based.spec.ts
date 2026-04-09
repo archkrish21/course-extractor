@@ -5,7 +5,7 @@ import { test, expect, type Page } from "@playwright/test";
 async function loginAsStudent(page: Page) {
   await page.goto("/login");
   await page.getByLabel("Email address").fill("student@test.com");
-  await page.getByLabel("Password").fill("Test1234!");
+  await page.getByLabel("Password").first().fill("Test1234!");
   await page.locator('form button[type="submit"]').click();
   await page.waitForURL(/\/(dashboard|planner|courses)/, { timeout: 15_000 });
 }
@@ -13,7 +13,7 @@ async function loginAsStudent(page: Page) {
 async function loginAsParent(page: Page) {
   await page.goto("/login");
   await page.getByLabel("Email address").fill("parent@test.com");
-  await page.getByLabel("Password").fill("Test1234!");
+  await page.getByLabel("Password").first().fill("Test1234!");
   await page.locator('form button[type="submit"]').click();
   await page.waitForURL(/\/(dashboard|planner|courses|consent)/, { timeout: 15_000 });
 }
@@ -99,7 +99,7 @@ test.describe("Role — Parent", () => {
     // Try to log in as parent — skip all tests if account doesn't exist
     await page.goto("/login");
     await page.getByLabel("Email address").fill("parent@test.com");
-    await page.getByLabel("Password").fill("Test1234!");
+    await page.getByLabel("Password").first().fill("Test1234!");
     await page.locator('form button[type="submit"]').click();
 
     try {
@@ -148,7 +148,7 @@ test.describe("Role — Counselor", () => {
     // Try to log in as counselor — skip all tests if account doesn't exist
     await page.goto("/login");
     await page.getByLabel("Email address").fill("counselor@test.com");
-    await page.getByLabel("Password").fill("Test1234!");
+    await page.getByLabel("Password").first().fill("Test1234!");
     await page.locator('form button[type="submit"]').click();
 
     try {
@@ -219,7 +219,7 @@ test.describe("Role — Parent with Multiple Children", () => {
   test.beforeEach(async ({ page }) => {
     await page.goto("/login");
     await page.getByLabel("Email address").fill("parent@test.com");
-    await page.getByLabel("Password").fill("Test1234!");
+    await page.getByLabel("Password").first().fill("Test1234!");
     await page.locator('form button[type="submit"]').click();
 
     try {

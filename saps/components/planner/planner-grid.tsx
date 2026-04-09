@@ -416,6 +416,77 @@ function DesktopGrid({
             {!isCollapsed && (() => {
               return (
               <div className="border-t border-border bg-card p-3">
+                {/* Pre-summer row (before regular semesters) */}
+                {!summerExpanded.has(grade) ? (
+                  <button
+                    type="button"
+                    onClick={() => setSummerExpanded((prev) => new Set(prev).add(grade))}
+                    className="mb-2 flex min-h-[36px] w-full items-center justify-center gap-1.5 rounded-lg border border-dashed border-amber-300/50 bg-amber-50/30 text-xs font-medium text-amber-600 hover:border-amber-400 hover:bg-amber-50/60 transition-colors dark:border-amber-700/30 dark:bg-amber-950/20 dark:text-amber-400"
+                  >
+                    <svg aria-hidden="true" className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+                    </svg>
+                    Pre-Summer Courses
+                  </button>
+                ) : (
+                  <div className="mb-3 rounded-xl border border-amber-300/40 bg-amber-50/20 p-3 dark:border-amber-700/30 dark:bg-amber-950/10">
+                    <div className="mb-2 flex items-center justify-between">
+                      <h3 className="text-xs font-semibold uppercase tracking-wider text-amber-700 dark:text-amber-400">
+                        Pre-Summer Courses
+                      </h3>
+                      <button
+                        type="button"
+                        onClick={() => setSummerExpanded((prev) => { const n = new Set(prev); n.delete(grade); return n; })}
+                        className="text-xs text-amber-500 hover:text-amber-700"
+                      >
+                        Hide
+                      </button>
+                    </div>
+                    <div className="grid grid-cols-2 gap-3">
+                      {SUMMER_SEMESTERS.map((sem) => {
+                        const cellCourses = sortCourses(getSemesterCourses(courses, grade, sem));
+                        return (
+                          <div key={sem} className="min-h-[60px] rounded-lg border border-dashed border-amber-200/60 bg-white/50 p-2 dark:border-amber-800/30 dark:bg-amber-950/20">
+                            <p className="mb-1 text-[10px] font-medium text-amber-600 dark:text-amber-400">
+                              {semesterLabel(sem)}
+                            </p>
+                            <div className="space-y-1.5">
+                              {cellCourses.map((course) => (
+                                <PlanCourseCard
+                                  key={course.id}
+                                  course={course}
+                                  violations={violations[course.courseId]}
+                                  onRemove={!readOnly && !isGradeLocked ? () => onRemoveCourse(course.id) : undefined}
+                                  onClick={() => onCourseClick?.(course)}
+                                  onStatusChange={onStatusChange ? (status) => onStatusChange(course.id, status) : undefined}
+                                  onGradeChange={onGradeChange ? (g) => onGradeChange(course.id, g) : undefined}
+                                  onViewDetails={onViewDetails ? () => onViewDetails(course.courseId) : undefined}
+                                  onGpaWaiverToggle={onGpaWaiverToggle ? (applied) => onGpaWaiverToggle(course.id, applied) : undefined}
+                                  readOnly={readOnly}
+                                />
+                              ))}
+                            </div>
+                            {!readOnly && !isGradeLocked && (
+                              <button
+                                type="button"
+                                onClick={() => onAddCourse(grade, sem)}
+                                className="mt-1 flex min-h-[32px] w-full items-center justify-center gap-1 rounded border border-dashed border-amber-200 text-[10px] text-amber-500 hover:border-amber-400 hover:text-amber-700 transition-colors"
+                                aria-label={`Add course to Grade ${grade}, ${semesterLabel(sem)}`}
+                              >
+                                <svg aria-hidden="true" className="h-3 w-3" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+                                </svg>
+                                Add
+                              </button>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+
+                {/* Regular semesters */}
                 <div className="grid grid-cols-2 gap-3">
                 {REGULAR_SEMESTERS.map((sem, colIdx) => {
                   const cellCourses = sortCourses(getSemesterCourses(courses, grade, sem));
@@ -601,75 +672,6 @@ function DesktopGrid({
                 })}
                 </div>
 
-                {/* Summer row */}
-                {!summerExpanded.has(grade) ? (
-                  <button
-                    type="button"
-                    onClick={() => setSummerExpanded((prev) => new Set(prev).add(grade))}
-                    className="mt-2 flex min-h-[36px] w-full items-center justify-center gap-1.5 rounded-lg border border-dashed border-amber-300/50 bg-amber-50/30 text-xs font-medium text-amber-600 hover:border-amber-400 hover:bg-amber-50/60 transition-colors dark:border-amber-700/30 dark:bg-amber-950/20 dark:text-amber-400"
-                  >
-                    <svg aria-hidden="true" className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
-                    </svg>
-                    Summer Courses
-                  </button>
-                ) : (
-                  <div className="mt-2 rounded-xl border border-amber-300/40 bg-amber-50/20 p-3 dark:border-amber-700/30 dark:bg-amber-950/10">
-                    <div className="mb-2 flex items-center justify-between">
-                      <h3 className="text-xs font-semibold uppercase tracking-wider text-amber-700 dark:text-amber-400">
-                        Summer Courses
-                      </h3>
-                      <button
-                        type="button"
-                        onClick={() => setSummerExpanded((prev) => { const n = new Set(prev); n.delete(grade); return n; })}
-                        className="text-xs text-amber-500 hover:text-amber-700"
-                      >
-                        Hide
-                      </button>
-                    </div>
-                    <div className="grid grid-cols-2 gap-3">
-                      {SUMMER_SEMESTERS.map((sem) => {
-                        const cellCourses = sortCourses(getSemesterCourses(courses, grade, sem));
-                        return (
-                          <div key={sem} className="min-h-[60px] rounded-lg border border-dashed border-amber-200/60 bg-white/50 p-2 dark:border-amber-800/30 dark:bg-amber-950/20">
-                            <p className="mb-1 text-[10px] font-medium text-amber-600 dark:text-amber-400">
-                              {semesterLabel(sem)}
-                            </p>
-                            <div className="space-y-1.5">
-                              {cellCourses.map((course) => (
-                                <PlanCourseCard
-                                  key={course.id}
-                                  course={course}
-                                  violations={violations[course.courseId]}
-                                  onRemove={!readOnly && !isGradeLocked ? () => onRemoveCourse(course.id) : undefined}
-                                  onClick={() => onCourseClick?.(course)}
-                                  onStatusChange={onStatusChange ? (status) => onStatusChange(course.id, status) : undefined}
-                                  onGradeChange={onGradeChange ? (g) => onGradeChange(course.id, g) : undefined}
-                                  onViewDetails={onViewDetails ? () => onViewDetails(course.courseId) : undefined}
-                                  onGpaWaiverToggle={onGpaWaiverToggle ? (applied) => onGpaWaiverToggle(course.id, applied) : undefined}
-                                  readOnly={readOnly}
-                                />
-                              ))}
-                            </div>
-                            {!readOnly && !isGradeLocked && (
-                              <button
-                                type="button"
-                                onClick={() => onAddCourse(grade, sem)}
-                                className="mt-1 flex min-h-[32px] w-full items-center justify-center gap-1 rounded border border-dashed border-amber-200 text-[10px] text-amber-500 hover:border-amber-400 hover:text-amber-700 transition-colors"
-                                aria-label={`Add summer course to Grade ${grade}, ${semesterLabel(sem)}`}
-                              >
-                                <svg aria-hidden="true" className="h-3 w-3" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
-                                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
-                                </svg>
-                                Add
-                              </button>
-                            )}
-                          </div>
-                        );
-                      })}
-                    </div>
-                  </div>
-                )}
               </div>
               );
             })()}

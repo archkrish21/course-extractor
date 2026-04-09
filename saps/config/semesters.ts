@@ -10,11 +10,14 @@ export function isSummerSemester(sem: number): boolean {
   return sem < 0;
 }
 
-/** Human-readable label for a semester value. */
+/**
+ * Human-readable label for a semester value.
+ * Summer semesters (-2, -1) happen BEFORE the regular school year at that grade level.
+ */
 export function semesterLabel(sem: number): string {
   switch (sem) {
-    case -2: return "Summer Session 1";
-    case -1: return "Summer Session 2";
+    case -2: return "Pre-Summer Session 1";
+    case -1: return "Pre-Summer Session 2";
     case 1: return "Semester 1";
     case 2: return "Semester 2";
     default: return `Semester ${sem}`;

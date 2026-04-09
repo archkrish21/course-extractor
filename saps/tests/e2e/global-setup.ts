@@ -2,9 +2,11 @@
  * Playwright global setup — creates and VERIFIES all test data before E2E tests.
  *
  * Ensures (not just creates):
- *   - student@test.com: student with plan, completed courses, grades, GPA snapshot
- *   - parent@test.com: parent linked to student's account with consent
- *   - counselor@test.com: counselor linked to student's account (read-only) with consent
+ *   - student@test.com: student (Gr10) with plan, completed courses, grades, GPA snapshot
+ *   - student-b@test.com: 2nd student (Gr9) — parent's other child for multi-child switcher tests
+ *   - parent@test.com: parent linked to BOTH student accounts with edit access + plan shares
+ *   - counselor@test.com: counselor linked to student's account (read-only) with plan share (view)
+ *   - Course catalog verified non-empty (fails loudly if not seeded)
  *   - Ephemeral accounts cleaned up from previous runs
  *
  * Idempotent: safe to run multiple times. Fills gaps in existing data.
@@ -25,6 +27,7 @@ const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY!;
 
 export const TEST_PASSWORD = "Test1234!";
 export const TEST_STUDENT_EMAIL = "student@test.com";
+export const TEST_STUDENT_B_EMAIL = "student-b@test.com";
 export const TEST_PARENT_EMAIL = "parent@test.com";
 export const TEST_COUNSELOR_EMAIL = "counselor@test.com";
 export const EPHEMERAL_EMAILS = ["student2@test.com", "student3@test.com"];
@@ -33,6 +36,8 @@ const TEST_STATE = "IL";
 const TEST_SCHOOL = "Stevenson High School";
 const TEST_GRADE_LEVEL = 10;
 const TEST_GRADUATION_YEAR = 2028;
+const STUDENT_B_GRADE_LEVEL = 9;
+const STUDENT_B_GRADUATION_YEAR = 2029;
 const COURSES_PER_SEMESTER = 4;
 const SAMPLE_GRADES = ["A", "A-", "B+", "B"];
 
@@ -45,6 +50,7 @@ interface TestUser {
 
 const TEST_USERS: TestUser[] = [
   { email: TEST_STUDENT_EMAIL, role: "student", name: "Test Student", dob: "2010-03-15" },
+  { email: TEST_STUDENT_B_EMAIL, role: "student", name: "Test Sibling", dob: "2012-07-22" },
   { email: TEST_PARENT_EMAIL, role: "parent", name: "Test Parent", dob: "1980-06-01" },
   { email: TEST_COUNSELOR_EMAIL, role: "counselor", name: "Test Counselor", dob: "1985-09-20" },
 ];
@@ -140,6 +146,7 @@ async function globalSetup() {
     }
 
     const studentId = userIds[TEST_STUDENT_EMAIL];
+    const studentBId = userIds[TEST_STUDENT_B_EMAIL];
     const parentId = userIds[TEST_PARENT_EMAIL];
     const counselorId = userIds[TEST_COUNSELOR_EMAIL];
 
@@ -215,48 +222,54 @@ async function globalSetup() {
     }
     console.log(`[e2e-setup] Primary plan: ${planId}`);
 
-    // ── 8. Ensure plan has courses (Gr9 completed + Gr10 enrolled) ───
-    // Check for completed courses specifically (not just any courses)
+    // ── 8. Verify course catalog is seeded ─────────────────────────
+    const catalogCheck = await client.query(
+      `SELECT COUNT(*)::int as n FROM courses WHERE is_active = true`,
+    );
+    if (catalogCheck.rows[0].n === 0) {
+      throw new Error(
+        "[e2e-setup] Course catalog is empty — run `npx tsx scripts/seed.ts` before tests. " +
+        "Transcript, GPA, and planner tests depend on real course data."
+      );
+    }
+    console.log(`[e2e-setup] Course catalog: ${catalogCheck.rows[0].n} active courses`);
+
+    // ── 9. Ensure plan has courses (Gr9 completed + Gr10 enrolled) ───
     const completedCount = await client.query(
       `SELECT COUNT(*)::int as n FROM plan_courses WHERE plan_id = $1 AND status = 'completed' AND planned_grade IS NOT NULL`,
       [planId],
     );
 
     if (completedCount.rows[0].n === 0) {
-      // Remove any existing courses without grades and re-create properly
       const catalog = await client.query(
-        `SELECT id, code FROM courses ORDER BY code LIMIT $1`,
+        `SELECT id, code FROM courses WHERE is_active = true ORDER BY code LIMIT $1`,
         [COURSES_PER_SEMESTER * 4],
       );
 
-      if (catalog.rows.length >= COURSES_PER_SEMESTER) {
-        let courseIdx = 0;
-        for (let grade = 9; grade <= TEST_GRADE_LEVEL; grade++) {
-          for (let sem = 1; sem <= 2; sem++) {
-            for (let i = 0; i < COURSES_PER_SEMESTER && courseIdx < catalog.rows.length; i++) {
-              const isCompleted = grade === 9;
-              const status = isCompleted ? "completed" : "enrolled";
-              const plannedGrade = isCompleted ? SAMPLE_GRADES[i] : null;
+      let courseIdx = 0;
+      for (let grade = 9; grade <= TEST_GRADE_LEVEL; grade++) {
+        for (let sem = 1; sem <= 2; sem++) {
+          for (let i = 0; i < COURSES_PER_SEMESTER && courseIdx < catalog.rows.length; i++) {
+            const isCompleted = grade === 9;
+            const status = isCompleted ? "completed" : "enrolled";
+            const plannedGrade = isCompleted ? SAMPLE_GRADES[i] : null;
 
-              await client.query(
-                `INSERT INTO plan_courses (plan_id, course_id, grade_level, semester, status, planned_grade)
-                 VALUES ($1, $2, $3, $4, $5, $6)
-                 ON CONFLICT DO NOTHING`,
-                [planId, catalog.rows[courseIdx].id, grade, sem, status, plannedGrade],
-              );
-              courseIdx++;
-            }
+            await client.query(
+              `INSERT INTO plan_courses (plan_id, course_id, grade_level, semester, status, planned_grade)
+               VALUES ($1, $2, $3, $4, $5, $6)
+               ON CONFLICT DO NOTHING`,
+              [planId, catalog.rows[courseIdx].id, grade, sem, status, plannedGrade],
+            );
+            courseIdx++;
           }
         }
-        console.log(`[e2e-setup] Ensured ${courseIdx} courses (Gr9 completed with grades, Gr10 enrolled)`);
-      } else {
-        console.warn("[e2e-setup] Not enough courses in catalog — run seed first");
       }
+      console.log(`[e2e-setup] Ensured ${courseIdx} courses (Gr9 completed with grades, Gr10 enrolled)`);
     } else {
       console.log(`[e2e-setup] Plan has ${completedCount.rows[0].n} completed courses with grades`);
     }
 
-    // ── 9. Ensure GPA snapshot exists ────────────────────────────────
+    // ── 10. Ensure GPA snapshot exists ───────────────────────────────
     const snap = await client.query(
       `SELECT id FROM gpa_snapshots WHERE student_id = $1 AND trigger = 'semester_end' LIMIT 1`,
       [studentId],
@@ -270,30 +283,108 @@ async function globalSetup() {
       console.log("[e2e-setup] Created GPA snapshot");
     }
 
-    // ── 10. Ensure consent for ALL users ─────────────────────────────
-    for (const userId of [studentId, parentId, counselorId].filter(Boolean)) {
+    // ── 11. Ensure consent for ALL users ─────────────────────────────
+    for (const userId of [studentId, studentBId, parentId, counselorId].filter(Boolean)) {
       await ensureConsent(client, userId as string);
     }
     console.log("[e2e-setup] Ensured consent records for all users");
 
-    // ── 11. Ensure Grade 9 locked ────────────────────────────────────
+    // ── 12. Ensure Grade 9 locked ────────────────────────────────────
     await client.query(
       `UPDATE four_year_plans SET locked_grade_levels = $1 WHERE id = $2`,
       [JSON.stringify([9]), planId],
     );
 
-    // ── 12. Verify final state ───────────────────────────────────────
+    // ── 13. Ensure plan shares for parent & counselor ────────────────
+    for (const { userId, perm } of [
+      { userId: parentId, perm: "edit" },
+      { userId: counselorId, perm: "view" },
+    ]) {
+      if (!userId) continue;
+      await client.query(
+        `INSERT INTO plan_shares (plan_id, user_id, granted_by, permission)
+         VALUES ($1, $2, $3, $4)
+         ON CONFLICT (plan_id, user_id) DO NOTHING`,
+        [planId, userId, studentId, perm],
+      );
+    }
+    console.log("[e2e-setup] Ensured plan shares for parent (edit) and counselor (view)");
+
+    // ── 14. Ensure 2nd student account for multi-child tests ─────────
+    let accountBId: string | null = null;
+    if (studentBId) {
+      const acctBResult = await client.query(
+        `SELECT id FROM accounts WHERE student_user_id = $1 LIMIT 1`, [studentBId],
+      );
+      if (acctBResult.rows.length > 0) {
+        accountBId = acctBResult.rows[0].id;
+        await client.query(
+          `UPDATE accounts SET student_name = 'Test Sibling', grade_level = $1, graduation_year = $2,
+           state = $3, school_name = $4, claimed_at = COALESCE(claimed_at, NOW())
+           WHERE id = $5`,
+          [STUDENT_B_GRADE_LEVEL, STUDENT_B_GRADUATION_YEAR, TEST_STATE, TEST_SCHOOL, accountBId],
+        );
+      } else {
+        const ins = await client.query(
+          `INSERT INTO accounts (student_user_id, student_name, grade_level, graduation_year, state, school_name, claimed_at, created_by)
+           VALUES ($1, 'Test Sibling', $2, $3, $4, $5, NOW(), $1) RETURNING id`,
+          [studentBId, STUDENT_B_GRADE_LEVEL, STUDENT_B_GRADUATION_YEAR, TEST_STATE, TEST_SCHOOL],
+        );
+        accountBId = ins.rows[0].id;
+      }
+
+      // Student B is a member of their own account
+      await ensureAccountMember(client, accountBId!, studentBId, "student", true, studentBId);
+      // Parent linked to 2nd child's account too
+      if (parentId) await ensureAccountMember(client, accountBId!, parentId, "parent", true, studentBId);
+
+      // Student profile for student B
+      await client.query(
+        `INSERT INTO student_profiles (user_id, current_grade_level, graduation_year)
+         VALUES ($1, $2, $3)
+         ON CONFLICT (user_id) DO UPDATE SET current_grade_level = EXCLUDED.current_grade_level,
+           graduation_year = EXCLUDED.graduation_year`,
+        [studentBId, STUDENT_B_GRADE_LEVEL, STUDENT_B_GRADUATION_YEAR],
+      );
+
+      // Create a basic plan for student B so parent sees content when switching
+      const planBResult = await client.query(
+        `SELECT id FROM four_year_plans WHERE account_id = $1 AND is_primary = true LIMIT 1`,
+        [accountBId],
+      );
+      if (planBResult.rows.length === 0) {
+        await client.query(
+          `INSERT INTO four_year_plans (account_id, student_id, name, school_year, is_primary, is_template, status, created_by)
+           VALUES ($1, $2, 'Sibling Test Plan', '2024-2025', true, false, 'active', $2)`,
+          [accountBId, studentBId],
+        );
+      }
+
+      console.log(`[e2e-setup] 2nd student account: ${accountBId} (Grade ${STUDENT_B_GRADE_LEVEL}, linked to parent)`);
+    }
+
+    // ── 15. Verify final state ───────────────────────────────────────
     const verify = await client.query(`
       SELECT
         (SELECT COUNT(*) FROM account_members WHERE account_id = $1) as members,
         (SELECT COUNT(*) FROM plan_courses WHERE plan_id = $2) as courses,
         (SELECT COUNT(*) FROM plan_courses WHERE plan_id = $2 AND status = 'completed' AND planned_grade IS NOT NULL) as graded,
         (SELECT COUNT(*) FROM gpa_snapshots WHERE student_id = $3) as snapshots,
-        (SELECT COUNT(*) FROM consent_records WHERE user_id = $3) as consent
+        (SELECT COUNT(*) FROM consent_records WHERE user_id = $3) as consent,
+        (SELECT COUNT(*) FROM plan_shares WHERE plan_id = $2) as shares
     `, [accountId, planId, studentId]);
 
+    const parentAccounts = await client.query(
+      `SELECT COUNT(*)::int as n FROM account_members WHERE user_id = $1 AND role = 'parent'`,
+      [parentId],
+    );
+
     const v = verify.rows[0];
-    console.log(`[e2e-setup] ✅ Setup complete — ${v.members} members, ${v.courses} courses (${v.graded} graded), ${v.snapshots} snapshots, ${v.consent} consent records`);
+    console.log(
+      `[e2e-setup] ✅ Setup complete — ${v.members} members, ${v.courses} courses (${v.graded} graded), ` +
+      `${v.snapshots} snapshots, ${v.consent} consent records, ${v.shares} plan shares, ` +
+      `parent linked to ${parentAccounts.rows[0].n} child account(s)`
+    );
 
   } catch (error) {
     console.error("[e2e-setup] Setup failed:", error);

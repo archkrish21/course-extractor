@@ -63,21 +63,27 @@ For every route, scenarios are tested across these dimensions:
 
 | Role | Email | Password | Created By | Lifecycle |
 |------|-------|----------|-----------|-----------|
-| Student | `student@test.com` | `Test1234!` | global-setup.ts | Persistent — survives across runs |
-| Parent | `parent@test.com` | `Test1234!` | global-setup.ts | Persistent — linked to student |
-| Counselor | `counselor@test.com` | `Test1234!` | global-setup.ts | Persistent — read-only access |
+| Student (Gr10) | `student@test.com` | `Test1234!` | global-setup.ts | Persistent — primary test student |
+| Student (Gr9) | `student-b@test.com` | `Test1234!` | global-setup.ts | Persistent — parent's 2nd child for multi-child tests |
+| Parent | `parent@test.com` | `Test1234!` | global-setup.ts | Persistent — linked to BOTH students |
+| Counselor | `counselor@test.com` | `Test1234!` | global-setup.ts | Persistent — read-only access + plan share (view) |
 | Ephemeral | `student2@test.com` | `Test1234!` | onboarding.spec.ts | Cleaned up by global-teardown.ts |
 | Ephemeral | `student3@test.com` | `Test1234!` | onboarding.spec.ts | Cleaned up by global-teardown.ts |
 
 **Test data created by global-setup.ts:**
-- Student account with Grade 10, graduation year 2028, IL/Stevenson HS
+- Course catalog verified non-empty (setup fails if not seeded — run `npx tsx scripts/seed.ts` first)
+- Student A account (Gr10, graduation 2028, IL/Stevenson HS)
+- Student B account (Gr9, graduation 2029, IL/Stevenson HS) — parent's 2nd child
 - Primary plan ("E2E Test Plan") with 16 courses across Grades 9–10
 - Grade 9 courses marked as completed with grades (A, A-, B+, B)
 - Grade 10 courses marked as enrolled
 - Grade 9 locked on primary plan
 - GPA snapshot (3.500 UW / 3.750 W)
-- Parent and counselor linked to student's account
-- Consent records for all 3 users
+- Parent linked to both student accounts (edit access)
+- Counselor linked to student A's account (read-only)
+- Plan shares: parent (edit) + counselor (view) on primary plan
+- Student B has a basic plan ("Sibling Test Plan") so parent sees content when switching
+- Consent records for all 4 users
 
 **Automatic cleanup by global-teardown.ts (runs after all tests):**
 - Removes plans named "E2E %" or "Demo" (created during planner tests)
@@ -97,10 +103,10 @@ Each sub-agent runs its spec files via `npx playwright test <files>` and reports
 |-----------|---------|-----------|-------|
 | Auth-Tester | `npx playwright test auth claim consent signup-redesign consent-settings` | 5 files | ~60 |
 | Onboarding-Tester | `npx playwright test onboarding` | 1 file | ~24 |
-| Planner-Tester | `npx playwright test planner planner-add-course planner-grades planner-manage planner-validation course-browser` | 6 files | ~118 |
+| Planner-Tester | `npx playwright test planner planner-add-course planner-grades planner-manage planner-validation course-browser summer-planner summer-course-browser` | 8 files | ~148 |
 | Plans-Tester | `npx playwright test plan-management print-gating` | 2 files | ~32 |
 | Progress-Tester | `npx playwright test progress gpa-trend grade-lock` | 3 files | ~76 |
-| Transcript-Tester | `npx playwright test transcript` | 1 file | ~12 |
+| Transcript-Tester | `npx playwright test transcript summer-transcript-print` | 2 files | ~24 |
 | Settings-Tester | `npx playwright test linked-accounts billing` | 2 files | ~50 |
 | Dashboard-Tester | `npx playwright test dashboard` | 1 file | ~38 |
 | Public-Tester | `npx playwright test homepage` | 1 file | ~19 |
@@ -110,7 +116,7 @@ Each sub-agent runs its spec files via `npx playwright test <files>` and reports
 | Join-Tester | `npx playwright test join` | 1 file | ~8 |
 | Gap-Tester | `npx playwright test gaps-high-priority gaps-medium-priority` | 2 files | ~40 |
 | Journey-Tester | `npx playwright test critical-journeys` | 1 file | ~14 |
-| **TOTAL** | | **31 files** | **~612** |
+| **TOTAL** | | **34 files** | **~652** |
 
 ### Selector resilience guidelines
 
@@ -145,8 +151,8 @@ These are **multi-page flows** that prove the app works as a connected system. I
 | J10 | P2 | Transcript GPA matches planner | Grade courses in planner → transcript GPA recalculates | UW/W GPA values match across pages | *Not yet tested* |
 | J11 | P2 | Delete account with export | Settings → Danger Zone → check export → type DELETE → confirm | JSON file downloads, then redirects to /login | linked-accounts.spec.ts (modal only) |
 | J12 | P2 | Homepage → signup | Visit / → click "Get Started Free" → lands on /signup | URL changes to /signup, form visible | gaps-medium-priority.spec.ts |
-| J13 | P1 | Summer course → planner → validation | Login → planner → expand Pre-Summer → add summer course → verify in grid + validation report counts it + graduation requirement met | Course appears in summer cell, validation report shows no gap for that requirement | — |
-| J14 | P1 | Summer/regular equivalence | Login → add SOC13S/SOC14S to summer cell → open regular semester picker → search World History | SOC101/SOC102 does NOT appear in picker (filtered as equivalent) | — |
+| J13 | P1 | Summer course → planner → validation | Login → planner → expand Pre-Summer → add summer course → verify in grid + validation report counts it + graduation requirement met | Course appears in summer cell, validation report shows no gap for that requirement | summer-planner.spec.ts |
+| J14 | P1 | Summer/regular equivalence | Login → add SOC13S/SOC14S to summer cell → open regular semester picker → search World History | SOC101/SOC102 does NOT appear in picker (filtered as equivalent) | summer-planner.spec.ts |
 
 ### Section B — Edge case scenarios
 
@@ -322,29 +328,29 @@ Each scenario has:
 #### B22. Summer courses
 | ID | Scenario | Steps | Expected | Spec |
 |----|----------|-------|----------|------|
-| E86 | Pre-Summer row expands | Login → planner → click "+ Pre-Summer Courses" on a grade | Summer row appears above regular semesters with Session 1 and Session 2 cells | — |
-| E87 | Pre-Summer row hides | Expand summer row → click "Hide" | Summer row collapses back to the "+ Pre-Summer Courses" button | — |
-| E88 | Summer row auto-expands when courses exist | Add a summer course → reload planner | Summer row is already expanded for that grade | — |
-| E89 | Summer cell limited to 1 course | Add a course to Pre-Summer Session 1 cell | Add button disappears, counter shows "1/1" | — |
-| E90 | Full-year summer course auto-fills both sessions | Add Algebra 1 (MTH15S/MTH16S) from summer picker | Both Session 1 and Session 2 cells show the course | — |
-| E91 | Summer courses hidden from regular picker | Open course picker from Semester 1 cell | No courses with "Summer" badge appear | — |
-| E92 | Regular courses hidden from summer picker | Open course picker from Pre-Summer Session 1 cell | Only summer courses appear, filters are hidden | — |
-| E93 | Summer picker shows "Add Summer Course" header | Open picker from summer cell | Title says "Add Summer Course" with warning-colored subtitle | — |
-| E94 | Summer badge on course cards | View a summer course in planner grid | Card shows amber "Summer" badge after credit type | — |
-| E95 | Summer badge in course browser | Open course browser → filter by "☀ Summer" | Only summer courses shown, each with "Summer" badge | — |
-| E96 | Summer badge in course detail modal | Click a summer course card → view detail | "Summer" badge visible in header badges | — |
-| E97 | "Also available as" shows equivalents | Open SOC13S/SOC14S detail | "Also available as" section shows SOC101/SOC102 | — |
-| E98 | "Also available as" reverse direction | Open SOC101/SOC102 detail | "Also available as" section shows SOC13S/SOC14S | — |
-| E99 | Equivalent course blocked from picker | Add SOC13S/SOC14S to summer → open Semester 1 picker | SOC101/SOC102 does not appear in results | — |
+| E86 | Pre-Summer row expands | Login → planner → click "+ Pre-Summer Courses" on a grade | Summer row appears above regular semesters with Session 1 and Session 2 cells | summer-planner.spec.ts |
+| E87 | Pre-Summer row hides | Expand summer row → click "Hide" | Summer row collapses back to the "+ Pre-Summer Courses" button | summer-planner.spec.ts |
+| E88 | Summer row auto-expands when courses exist | Add a summer course → reload planner | Summer row is already expanded for that grade | summer-planner.spec.ts |
+| E89 | Summer cell limited to 1 course | Add a course to Pre-Summer Session 1 cell | Add button disappears, counter shows "1/1" | summer-planner.spec.ts |
+| E90 | Full-year summer course auto-fills both sessions | Add Algebra 1 (MTH15S/MTH16S) from summer picker | Both Session 1 and Session 2 cells show the course | summer-planner.spec.ts |
+| E91 | Summer courses hidden from regular picker | Open course picker from Semester 1 cell | No courses with "Summer" badge appear | summer-planner.spec.ts |
+| E92 | Regular courses hidden from summer picker | Open course picker from Pre-Summer Session 1 cell | Only summer courses appear, filters are hidden | summer-planner.spec.ts |
+| E93 | Summer picker shows "Add Summer Course" header | Open picker from summer cell | Title says "Add Summer Course" with warning-colored subtitle | summer-planner.spec.ts |
+| E94 | Summer badge on course cards | View a summer course in planner grid | Card shows amber "Summer" badge after credit type | summer-planner.spec.ts |
+| E95 | Summer badge in course browser | Open course browser → filter by "☀ Summer" | Only summer courses shown, each with "Summer" badge | summer-course-browser.spec.ts |
+| E96 | Summer badge in course detail modal | Click a summer course card → view detail | "Summer" badge visible in header badges | summer-course-browser.spec.ts |
+| E97 | "Also available as" shows equivalents | Open SOC13S/SOC14S detail | "Also available as" section shows SOC101/SOC102 | summer-course-browser.spec.ts |
+| E98 | "Also available as" reverse direction | Open SOC101/SOC102 detail | "Also available as" section shows SOC13S/SOC14S | summer-course-browser.spec.ts |
+| E99 | Equivalent course blocked from picker | Add SOC13S/SOC14S to summer → open Semester 1 picker | SOC101/SOC102 does not appear in results | summer-planner.spec.ts |
 | E100 | Equivalent course warning from validator | Try to force-add SOC101/SOC102 via API when SOC13S/SOC14S exists | Warning: "SOC101/SOC102 is equivalent to SOC13S/SOC14S which is already in your plan" | — |
 | E101 | Full-year summer add from detail page | Open MTH15S/MTH16S detail → click "Add to Plan" | Adds to both Session 1 (-2) and Session 2 (-1), message says "both summer sessions" | — |
-| E102 | Summer courses in validation report | Add SOC13S/SOC14S to summer cell → open validation report | World History graduation requirement shows as met (not gap) | — |
-| E103 | Summer courses in transcript | Complete a summer course with grade → view transcript | Summer course appears under grade section with amber "Pre-Summer Session" header | — |
-| E104 | Summer courses in print view | Add summer courses → open planner print | Summer courses appear inline under Semester 1/2 tables with ☀ prefix and amber text | — |
-| E105 | Summer courses in year-end wizard | Navigate to year-end with summer courses in plan | Summer courses appear in grade confirmation with amber "Pre-Summer Session" label | — |
-| E106 | Summer course GPA contribution | Complete a summer course with grade A → view transcript GPA | Summer course credits and grade counted in cumulative GPA | — |
+| E102 | Summer courses in validation report | Add SOC13S/SOC14S to summer cell → open validation report | World History graduation requirement shows as met (not gap) | summer-transcript-print.spec.ts |
+| E103 | Summer courses in transcript | Complete a summer course with grade → view transcript | Summer course appears under grade section with amber "Pre-Summer Session" header | summer-transcript-print.spec.ts |
+| E104 | Summer courses in print view | Add summer courses → open planner print | Summer courses appear inline under Semester 1/2 tables with ☀ prefix and amber text | summer-transcript-print.spec.ts |
+| E105 | Summer courses in year-end wizard | Navigate to year-end with summer courses in plan | Summer courses appear in grade confirmation with amber "Pre-Summer Session" label | summer-transcript-print.spec.ts |
+| E106 | Summer course GPA contribution | Complete a summer course with grade A → view transcript GPA | Summer course credits and grade counted in cumulative GPA | summer-transcript-print.spec.ts |
 | E107 | Summer prerequisite satisfaction | Add summer Algebra 1 (MTH15S/MTH16S) → add regular Geometry (MTH251/252) | No prerequisite violation — summer Algebra 1 satisfies Geometry's prerequisite | — |
-| E108 | Course browser summer filter | Click "☀ Summer" in Semester Offered filter | Only summer courses shown, semester text says "Summer" instead of "Sem -2 only" | — |
+| E108 | Course browser summer filter | Click "☀ Summer" in Semester Offered filter | Only summer courses shown, semester text says "Summer" instead of "Sem -2 only" | summer-course-browser.spec.ts |
 
 #### B21. Google OAuth
 | ID | Scenario | Steps | Expected | Spec |
@@ -356,73 +362,194 @@ Each scenario has:
 
 ## Phase IV: Consolidation & Reporting
 
-After all sub-agents complete, produce this report:
-
-### Summary block
+After all sub-agents complete, generate an HTML report file at:
 
 ```
-╔══════════════════════════════════════════════════════════════╗
-║                  SAPS E2E TEST REPORT                       ║
-║                  Date: YYYY-MM-DD HH:MM                     ║
-╠══════════════════════════════════════════════════════════════╣
-║  E2E Tests:        612 total | ___ passed | ___ failed      ║
-║  Unit/API Tests:   445 total | ___ passed | ___ failed      ║
-║  Critical Journeys: 14 (J01–J14) | ___ passed | ___ gaps    ║
-║  Edge Cases:       108 (E01–E108) | ___ covered | ___ gaps  ║
-║  Route Coverage:    22/22 pages (100%)                       ║
-║  Verdict:           GO / NO-GO                               ║
-╚══════════════════════════════════════════════════════════════╝
+saps/tests/report/QA_DEPLOYMENT_REPORT_<YYYY-MM-DD>.html
 ```
 
-### Per-agent results
+Use the Write tool to create this file. The HTML must be a single self-contained file (inline CSS, no external dependencies) that can be opened directly in a browser.
 
-| Sub-Agent | Tests | Passed | Failed | Skipped | Duration | Verdict |
-|-----------|-------|--------|--------|---------|----------|---------|
-| Auth-Tester | 60 | | | | | |
-| Onboarding-Tester | 24 | | | | | |
-| Planner-Tester | 118 | | | | | |
-| ... | ... | | | | | |
+### Report template
 
-### Critical failures
+Generate the HTML file with the following structure. Replace all `___` placeholders with actual values from the test run.
 
-Any test failure gets escalated here with full context:
+```html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SAPS QA Deployment Report — YYYY-MM-DD</title>
+  <style>
+    :root {
+      --green: #16a34a; --red: #dc2626; --amber: #d97706;
+      --bg: #f8fafc; --card: #ffffff; --border: #e2e8f0;
+      --text: #1e293b; --muted: #64748b;
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: var(--bg); color: var(--text); line-height: 1.6; padding: 2rem; max-width: 1100px; margin: 0 auto; }
+    h1 { font-size: 1.75rem; margin-bottom: 0.25rem; }
+    h2 { font-size: 1.25rem; margin: 2rem 0 1rem; border-bottom: 2px solid var(--border); padding-bottom: 0.5rem; }
+    h3 { font-size: 1rem; margin: 1.5rem 0 0.75rem; }
+    .subtitle { color: var(--muted); font-size: 0.875rem; margin-bottom: 2rem; }
+    .verdict-banner { padding: 1.5rem; border-radius: 12px; text-align: center; font-size: 1.5rem; font-weight: 700; margin-bottom: 2rem; }
+    .verdict-go { background: #dcfce7; color: var(--green); border: 2px solid var(--green); }
+    .verdict-nogo { background: #fef2f2; color: var(--red); border: 2px solid var(--red); }
+    .summary-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 1rem; margin-bottom: 2rem; }
+    .summary-card { background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 1.25rem; text-align: center; }
+    .summary-card .label { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--muted); font-weight: 600; }
+    .summary-card .value { font-size: 1.75rem; font-weight: 700; margin-top: 0.25rem; }
+    .pass { color: var(--green); } .fail { color: var(--red); } .warn { color: var(--amber); }
+    table { width: 100%; border-collapse: collapse; background: var(--card); border-radius: 10px; overflow: hidden; border: 1px solid var(--border); margin-bottom: 1.5rem; }
+    th { background: #f1f5f9; text-align: left; padding: 0.75rem 1rem; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--muted); font-weight: 600; }
+    td { padding: 0.625rem 1rem; border-top: 1px solid var(--border); font-size: 0.875rem; }
+    tr:hover { background: #f8fafc; }
+    .badge { display: inline-block; padding: 0.125rem 0.5rem; border-radius: 9999px; font-size: 0.75rem; font-weight: 600; }
+    .badge-pass { background: #dcfce7; color: var(--green); }
+    .badge-fail { background: #fef2f2; color: var(--red); }
+    .badge-skip { background: #fef9c3; color: var(--amber); }
+    .failure-block { background: #fef2f2; border: 1px solid #fecaca; border-radius: 10px; padding: 1rem 1.25rem; margin-bottom: 1rem; font-size: 0.875rem; }
+    .failure-block strong { color: var(--red); }
+    .failure-block code { background: #fee2e2; padding: 0.125rem 0.375rem; border-radius: 4px; font-size: 0.8125rem; }
+    .gap-row td:first-child { font-weight: 600; }
+    .criteria-table td:last-child { font-weight: 600; text-align: center; }
+    .timestamp { color: var(--muted); font-size: 0.75rem; margin-top: 3rem; text-align: center; padding-top: 1.5rem; border-top: 1px solid var(--border); }
+  </style>
+</head>
+<body>
 
+<h1>SAPS QA Deployment Report</h1>
+<p class="subtitle">Generated: YYYY-MM-DD HH:MM — Environment: localhost:3000</p>
+
+<!-- ═══ VERDICT BANNER ═══ -->
+<!-- Use class="verdict-banner verdict-go" for GO, "verdict-banner verdict-nogo" for NO-GO -->
+<div class="verdict-banner verdict-go">
+  ✅ GO — All criteria met
+  <!-- OR: ❌ NO-GO — ___ criteria failed -->
+</div>
+
+<!-- ═══ SUMMARY CARDS ═══ -->
+<div class="summary-grid">
+  <div class="summary-card">
+    <div class="label">E2E Tests</div>
+    <div class="value pass">___/652</div>
+  </div>
+  <div class="summary-card">
+    <div class="label">Unit / API Tests</div>
+    <div class="value pass">___/445</div>
+  </div>
+  <div class="summary-card">
+    <div class="label">Critical Journeys</div>
+    <div class="value pass">___/14</div>
+  </div>
+  <div class="summary-card">
+    <div class="label">Edge Cases</div>
+    <div class="value pass">___/108</div>
+  </div>
+  <div class="summary-card">
+    <div class="label">Route Coverage</div>
+    <div class="value pass">22/22</div>
+  </div>
+  <div class="summary-card">
+    <div class="label">Failed</div>
+    <div class="value fail">___</div>
+  </div>
+</div>
+
+<h2>Per-Agent Results</h2>
+<table>
+  <thead>
+    <tr><th>Sub-Agent</th><th>Tests</th><th>Passed</th><th>Failed</th><th>Skipped</th><th>Duration</th><th>Verdict</th></tr>
+  </thead>
+  <tbody>
+    <!-- Repeat for each sub-agent. Example row: -->
+    <tr>
+      <td>Auth-Tester</td><td>60</td><td>___</td><td>___</td><td>___</td><td>___s</td>
+      <td><span class="badge badge-pass">PASS</span></td>
+      <!-- OR: <td><span class="badge badge-fail">FAIL</span></td> -->
+    </tr>
+    <tr><td>Onboarding-Tester</td><td>24</td><td>___</td><td>___</td><td>___</td><td>___s</td><td><span class="badge badge-pass">PASS</span></td></tr>
+    <tr><td>Planner-Tester</td><td>148</td><td>___</td><td>___</td><td>___</td><td>___s</td><td><span class="badge badge-pass">PASS</span></td></tr>
+    <tr><td>Plans-Tester</td><td>32</td><td>___</td><td>___</td><td>___</td><td>___s</td><td><span class="badge badge-pass">PASS</span></td></tr>
+    <tr><td>Progress-Tester</td><td>76</td><td>___</td><td>___</td><td>___</td><td>___s</td><td><span class="badge badge-pass">PASS</span></td></tr>
+    <tr><td>Transcript-Tester</td><td>24</td><td>___</td><td>___</td><td>___</td><td>___s</td><td><span class="badge badge-pass">PASS</span></td></tr>
+    <tr><td>Settings-Tester</td><td>50</td><td>___</td><td>___</td><td>___</td><td>___s</td><td><span class="badge badge-pass">PASS</span></td></tr>
+    <tr><td>Dashboard-Tester</td><td>38</td><td>___</td><td>___</td><td>___</td><td>___s</td><td><span class="badge badge-pass">PASS</span></td></tr>
+    <tr><td>Public-Tester</td><td>19</td><td>___</td><td>___</td><td>___</td><td>___s</td><td><span class="badge badge-pass">PASS</span></td></tr>
+    <tr><td>Role-Tester</td><td>26</td><td>___</td><td>___</td><td>___</td><td>___s</td><td><span class="badge badge-pass">PASS</span></td></tr>
+    <tr><td>YearEnd-Tester</td><td>19</td><td>___</td><td>___</td><td>___</td><td>___s</td><td><span class="badge badge-pass">PASS</span></td></tr>
+    <tr><td>A11y-Tester</td><td>20</td><td>___</td><td>___</td><td>___</td><td>___s</td><td><span class="badge badge-pass">PASS</span></td></tr>
+    <tr><td>Join-Tester</td><td>8</td><td>___</td><td>___</td><td>___</td><td>___s</td><td><span class="badge badge-pass">PASS</span></td></tr>
+    <tr><td>Gap-Tester</td><td>40</td><td>___</td><td>___</td><td>___</td><td>___s</td><td><span class="badge badge-pass">PASS</span></td></tr>
+    <tr><td>Journey-Tester</td><td>14</td><td>___</td><td>___</td><td>___</td><td>___s</td><td><span class="badge badge-pass">PASS</span></td></tr>
+  </tbody>
+</table>
+
+<h2>Critical Failures</h2>
+<!-- If no failures, show: -->
+<p style="color: var(--green); font-weight: 600;">No critical failures.</p>
+<!-- If failures exist, repeat this block for each: -->
+<!--
+<div class="failure-block">
+  <strong>[FAIL] E03 — Edit locked grade blocked</strong><br>
+  File: <code>grade-lock.spec.ts:142</code><br>
+  Expected: Add course button disabled for locked Grade 9<br>
+  Actual: Button was enabled — user could add courses to locked grade<br>
+  Severity: <strong>P0 — data integrity risk</strong>
+</div>
+-->
+
+<h2>Known Gaps</h2>
+<p style="color: var(--muted); font-size: 0.875rem; margin-bottom: 0.75rem;">Features with no automated coverage — require manual testing before release.</p>
+<table>
+  <thead><tr><th>Gap</th><th>Risk</th><th>Mitigation</th></tr></thead>
+  <tbody>
+    <tr class="gap-row"><td>J09: Fix progress gap via planner</td><td>Medium — core workflow</td><td>Manual test before release</td></tr>
+    <tr class="gap-row"><td>J10: Transcript GPA matches planner</td><td>Medium — data accuracy</td><td>Manual verification with test data</td></tr>
+    <tr class="gap-row"><td>E07: No graduation year GPA fallback</td><td>Low — edge case</td><td>Unit test covers logic</td></tr>
+    <tr class="gap-row"><td>E08: Lock/unlock/re-lock same day</td><td>Low — dedup guard</td><td>Server-side dedup tested in unit tests</td></tr>
+    <tr class="gap-row"><td>E76–E77: Manual completion checkboxes</td><td>Low — niche feature</td><td>Manual test with seeded data</td></tr>
+    <tr class="gap-row"><td>E78–E79: Profile completion banner</td><td>Low — first-run only</td><td>Manual test with new account</td></tr>
+    <tr class="gap-row"><td>E80–E81: Consent history display</td><td>Low — informational</td><td>Manual verification</td></tr>
+    <tr class="gap-row"><td>E82–E83: What-if GPA</td><td>Medium — Plus+ feature</td><td>API unit tests exist</td></tr>
+    <tr class="gap-row"><td>E85: Google OAuth full flow</td><td>Low — third-party OAuth</td><td>Manual test with real Google account</td></tr>
+    <tr class="gap-row"><td>Mobile hamburger menu</td><td>Low — most users on desktop</td><td>Manual spot-check on iPhone</td></tr>
+    <tr class="gap-row"><td>Drag-and-drop in planner</td><td>Medium — core feature</td><td>Manual test, Playwright lacks native drag</td></tr>
+  </tbody>
+</table>
+
+<h2>Go / No-Go Criteria</h2>
+<table class="criteria-table">
+  <thead><tr><th>Criterion</th><th>Threshold</th><th>Status</th></tr></thead>
+  <tbody>
+    <tr><td>All P0 journeys (J01–J05) pass</td><td>5/5</td><td><span class="badge badge-pass">___</span></td></tr>
+    <tr><td>All P1 journeys (J06–J08, J13–J14) pass</td><td>5/6 (J09 exempt — manual)</td><td><span class="badge badge-pass">___</span></td></tr>
+    <tr><td>Zero critical (P0) failures in edge cases</td><td>0 failures</td><td><span class="badge badge-pass">___</span></td></tr>
+    <tr><td>Unit/API tests 100% pass</td><td>445/445</td><td><span class="badge badge-pass">___</span></td></tr>
+    <tr><td>No security vulnerabilities open</td><td>0 open</td><td><span class="badge badge-pass">___</span></td></tr>
+  </tbody>
+</table>
+
+<div class="timestamp">
+  Report generated by SAPS Test Orchestration — YYYY-MM-DD HH:MM<br>
+  Playwright HTML report available via: <code>npx playwright show-report</code>
+</div>
+
+</body>
+</html>
 ```
-[FAIL] E03 — Edit locked grade blocked
-  File: grade-lock.spec.ts:142
-  Expected: Add course button disabled for locked Grade 9
-  Actual: Button was enabled — user could add courses to locked grade
-  Screenshot: test-results/E03-locked-grade-edit.png
-  Severity: P0 — data integrity risk
-```
 
-### Known gaps
+### How to populate the report
 
-Features with no automated coverage:
-
-| Gap | Risk | Mitigation |
-|-----|------|-----------|
-| J09: Fix progress gap via planner | Medium — core workflow | Manual test before release |
-| J10: Transcript GPA matches planner | Medium — data accuracy | Manual verification with test data |
-| E07: No graduation year GPA fallback | Low — edge case | Unit test covers logic |
-| E08: Lock/unlock/re-lock same day | Low — dedup guard exists | Server-side dedup tested in unit tests |
-| E76–E77: Manual completion checkboxes | Low — niche feature | Manual test with seeded data |
-| E78–E79: Profile completion banner | Low — first-run only | Manual test with new account |
-| E80–E81: Consent history display | Low — informational | Manual verification |
-| E82–E83: What-if GPA | Medium — Plus+ feature, disabled in FREE_LAUNCH_MODE | API unit tests exist |
-| E85: Google OAuth full flow | Low — cannot automate third-party OAuth | Manual test with real Google account |
-| Mobile hamburger menu | Low — most users on desktop | Manual spot-check on iPhone |
-| Drag-and-drop in planner | Medium — core feature | Manual test, Playwright lacks native drag support |
-
-### Go/No-Go criteria
-
-| Criterion | Threshold | Status |
-|-----------|-----------|--------|
-| All P0 journeys (J01–J05) pass | 5/5 | |
-| All P1 journeys (J06–J08) pass | 3/4 (J09 exempt — manual) | |
-| Zero critical (P0) failures in edge cases | 0 failures | |
-| Unit/API tests 100% pass | 445/445 | |
-| No security vulnerabilities open | 0 open | |
+When filling the template above:
+1. Replace all `YYYY-MM-DD HH:MM` with the actual date/time
+2. Replace all `___` with actual counts from each sub-agent's test output
+3. Set the verdict banner class to `verdict-go` or `verdict-nogo`
+4. For each failed test, add a `failure-block` div under Critical Failures
+5. For each sub-agent row, use `badge-pass`, `badge-fail`, or `badge-skip` based on results
+6. Summary card `.value` should use class `pass`, `fail`, or `warn` based on thresholds
+7. Write the file to `saps/tests/report/QA_DEPLOYMENT_REPORT_<YYYY-MM-DD>.html`
 
 ---
 
@@ -455,6 +582,7 @@ npx playwright test --retries=2
 # Run a single sub-agent group
 npx playwright test auth claim consent signup-redesign consent-settings          # Auth
 npx playwright test planner planner-add-course planner-grades planner-manage     # Planner
+npx playwright test summer-planner summer-course-browser summer-transcript-print # Summer
 npx playwright test progress gpa-trend grade-lock                                # Progress
 npx playwright test critical-journeys                                            # Journeys
 npx playwright test role-based                                                   # Roles

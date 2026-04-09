@@ -133,7 +133,7 @@ test.describe("Course Browser — Summer Detail Modal", () => {
     await firstCard.click();
 
     // Wait for modal
-    const modal = page.locator('[role="dialog"][aria-modal="true"]');
+    const modal = page.locator('[role="dialog"][aria-modal="true"]').filter({ hasText: "Course" });
     await expect(modal).toBeVisible({ timeout: 5_000 });
 
     // Modal header should contain "Summer" badge
@@ -156,23 +156,22 @@ test.describe("Course Browser — Summer Equivalents", () => {
 
     const searchInput = page.locator("#course-search");
     await searchInput.fill("SOC13S");
+    // Wait for debounce + API response
+    await page.waitForTimeout(2_000);
     await waitForCoursesLoaded(page);
 
-    if (await page.locator("text=No courses found").isVisible()) {
-      test.skip(true, "SOC13S/SOC14S not in catalog");
-      return;
-    }
-
-    // Click the course card to open detail
+    // Verify SOC13S appears in results
     const courseList = page.getByRole("list", { name: "Course results" });
     const card = courseList.getByRole("listitem").first();
+    await expect(card).toContainText("SOC13S", { timeout: 5_000 });
+
     await card.click();
 
-    const modal = page.locator('[role="dialog"][aria-modal="true"]');
+    const modal = page.locator('[role="dialog"][aria-modal="true"]').filter({ hasText: "Course" });
     await expect(modal).toBeVisible({ timeout: 5_000 });
 
     // Should show "Also available as" section with SOC101/SOC102
-    await expect(modal.locator("text=Also available as")).toBeVisible({ timeout: 5_000 });
+    await expect(modal.locator("text=Also available as")).toBeVisible({ timeout: 10_000 });
     await expect(modal.locator("text=SOC101")).toBeVisible();
   });
 
@@ -180,23 +179,22 @@ test.describe("Course Browser — Summer Equivalents", () => {
     // Search for a regular course that has a summer equivalent
     const searchInput = page.locator("#course-search");
     await searchInput.fill("SOC101");
+    // Wait for debounce + API response
+    await page.waitForTimeout(2_000);
     await waitForCoursesLoaded(page);
 
-    if (await page.locator("text=No courses found").isVisible()) {
-      test.skip(true, "SOC101/SOC102 not in catalog");
-      return;
-    }
-
-    // Click the course card to open detail
+    // Verify SOC101 appears in results
     const courseList = page.getByRole("list", { name: "Course results" });
     const card = courseList.getByRole("listitem").first();
+    await expect(card).toContainText("SOC101", { timeout: 5_000 });
+
     await card.click();
 
-    const modal = page.locator('[role="dialog"][aria-modal="true"]');
+    const modal = page.locator('[role="dialog"][aria-modal="true"]').filter({ hasText: "Course" });
     await expect(modal).toBeVisible({ timeout: 5_000 });
 
     // Should show "Also available as" section with SOC13S/SOC14S
-    await expect(modal.locator("text=Also available as")).toBeVisible({ timeout: 5_000 });
+    await expect(modal.locator("text=Also available as")).toBeVisible({ timeout: 10_000 });
     await expect(modal.locator("text=SOC13S")).toBeVisible();
   });
 });

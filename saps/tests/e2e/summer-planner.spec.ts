@@ -52,7 +52,10 @@ async function openSummerPicker(page: Page, grade: number, session: 1 | 2) {
   await expect(addBtn).toBeVisible({ timeout: 3_000 });
   await addBtn.click();
 
-  const picker = page.locator('[role="dialog"][aria-modal="true"]');
+  // Filter to the course picker dialog (not Next.js error overlay)
+  const picker = page.locator('[role="dialog"][aria-modal="true"]').filter({
+    hasText: "Add",
+  });
   await expect(picker).toBeVisible({ timeout: 5_000 });
   return picker;
 }
@@ -187,7 +190,7 @@ test.describe("Summer Planner — Course Picker", () => {
     if (!(await addBtn.isVisible())) { test.skip(); return; }
 
     await addBtn.click();
-    const picker = page.locator('[role="dialog"][aria-modal="true"]');
+    const picker = page.locator('[role="dialog"][aria-modal="true"]').filter({ hasText: "Add" });
     await expect(picker).toBeVisible({ timeout: 5_000 });
 
     // Should say "Add Course" (not "Add Summer Course")
@@ -225,18 +228,16 @@ test.describe("Summer Planner — Badge Display", () => {
 
     const picker = await openSummerPicker(page, 10, 1);
 
-    // Wait for courses to load in picker
-    await page.waitForTimeout(2_000);
+    // Wait for courses to finish loading (spinner gone, results visible)
+    await expect(picker.locator("text=Searching courses")).toBeHidden({ timeout: 10_000 });
 
-    // Summer course cards should have "Summer" badge
     const courseCards = picker.locator('[role="list"] [role="button"]');
-    const count = await courseCards.count();
-    if (count === 0) { test.skip(true, "No summer courses in catalog"); return; }
+    await expect(courseCards.first()).toBeVisible({ timeout: 5_000 });
 
-    // At least one card should have a Summer badge
-    await expect(
-      picker.locator('text="Summer"').first()
-    ).toBeVisible({ timeout: 3_000 });
+    // At least one card should have a Summer badge (warning variant)
+    // The badge text "Summer" may be tiny — use a broader locator
+    const summerBadge = picker.locator('[role="list"] :text("Summer")');
+    await expect(summerBadge.first()).toBeVisible({ timeout: 5_000 });
   });
 });
 
@@ -333,7 +334,7 @@ test.describe("Summer Planner — Equivalence Filtering", () => {
     }
 
     await regularAddBtn.click();
-    const regularPicker = page.locator('[role="dialog"][aria-modal="true"]');
+    const regularPicker = page.locator('[role="dialog"][aria-modal="true"]').filter({ hasText: "Add" });
     await expect(regularPicker).toBeVisible({ timeout: 5_000 });
 
     const searchInput = regularPicker.locator('input[placeholder*="Search"]');

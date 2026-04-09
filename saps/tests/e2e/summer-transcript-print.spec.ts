@@ -108,11 +108,8 @@ test.describe("Summer — Year-End Wizard", () => {
     // The year-end wizard should show courses grouped by semester
     // including pre-summer sessions if any exist
 
-    const heading = page.locator("text=Year-End Review");
-    if (!(await heading.isVisible())) {
-      test.skip(true, "Year-end page not accessible");
-      return;
-    }
+    const heading = page.getByRole("heading", { name: "Year-End Review" });
+    await expect(heading).toBeVisible({ timeout: 10_000 });
 
     // Check for Pre-Summer Session labels
     const session1 = page.locator("text=Pre-Summer Session 1");

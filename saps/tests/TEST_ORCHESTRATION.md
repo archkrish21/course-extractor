@@ -145,6 +145,8 @@ These are **multi-page flows** that prove the app works as a connected system. I
 | J10 | P2 | Transcript GPA matches planner | Grade courses in planner → transcript GPA recalculates | UW/W GPA values match across pages | *Not yet tested* |
 | J11 | P2 | Delete account with export | Settings → Danger Zone → check export → type DELETE → confirm | JSON file downloads, then redirects to /login | linked-accounts.spec.ts (modal only) |
 | J12 | P2 | Homepage → signup | Visit / → click "Get Started Free" → lands on /signup | URL changes to /signup, form visible | gaps-medium-priority.spec.ts |
+| J13 | P1 | Summer course → planner → validation | Login → planner → expand Pre-Summer → add summer course → verify in grid + validation report counts it + graduation requirement met | Course appears in summer cell, validation report shows no gap for that requirement | — |
+| J14 | P1 | Summer/regular equivalence | Login → add SOC13S/SOC14S to summer cell → open regular semester picker → search World History | SOC101/SOC102 does NOT appear in picker (filtered as equivalent) | — |
 
 ### Section B — Edge case scenarios
 
@@ -317,6 +319,33 @@ Each scenario has:
 | E82 | What-if GPA API returns simulation | POST /api/v1/gpa/what-if with grade changes | Response contains recalculated UW/W GPA | — |
 | E83 | What-if blocked in FREE_LAUNCH_MODE if can_what_if=false | Call API when feature disabled | 402 or appropriate error | unit: subscription-middleware.test.ts |
 
+#### B22. Summer courses
+| ID | Scenario | Steps | Expected | Spec |
+|----|----------|-------|----------|------|
+| E86 | Pre-Summer row expands | Login → planner → click "+ Pre-Summer Courses" on a grade | Summer row appears above regular semesters with Session 1 and Session 2 cells | — |
+| E87 | Pre-Summer row hides | Expand summer row → click "Hide" | Summer row collapses back to the "+ Pre-Summer Courses" button | — |
+| E88 | Summer row auto-expands when courses exist | Add a summer course → reload planner | Summer row is already expanded for that grade | — |
+| E89 | Summer cell limited to 1 course | Add a course to Pre-Summer Session 1 cell | Add button disappears, counter shows "1/1" | — |
+| E90 | Full-year summer course auto-fills both sessions | Add Algebra 1 (MTH15S/MTH16S) from summer picker | Both Session 1 and Session 2 cells show the course | — |
+| E91 | Summer courses hidden from regular picker | Open course picker from Semester 1 cell | No courses with "Summer" badge appear | — |
+| E92 | Regular courses hidden from summer picker | Open course picker from Pre-Summer Session 1 cell | Only summer courses appear, filters are hidden | — |
+| E93 | Summer picker shows "Add Summer Course" header | Open picker from summer cell | Title says "Add Summer Course" with warning-colored subtitle | — |
+| E94 | Summer badge on course cards | View a summer course in planner grid | Card shows amber "Summer" badge after credit type | — |
+| E95 | Summer badge in course browser | Open course browser → filter by "☀ Summer" | Only summer courses shown, each with "Summer" badge | — |
+| E96 | Summer badge in course detail modal | Click a summer course card → view detail | "Summer" badge visible in header badges | — |
+| E97 | "Also available as" shows equivalents | Open SOC13S/SOC14S detail | "Also available as" section shows SOC101/SOC102 | — |
+| E98 | "Also available as" reverse direction | Open SOC101/SOC102 detail | "Also available as" section shows SOC13S/SOC14S | — |
+| E99 | Equivalent course blocked from picker | Add SOC13S/SOC14S to summer → open Semester 1 picker | SOC101/SOC102 does not appear in results | — |
+| E100 | Equivalent course warning from validator | Try to force-add SOC101/SOC102 via API when SOC13S/SOC14S exists | Warning: "SOC101/SOC102 is equivalent to SOC13S/SOC14S which is already in your plan" | — |
+| E101 | Full-year summer add from detail page | Open MTH15S/MTH16S detail → click "Add to Plan" | Adds to both Session 1 (-2) and Session 2 (-1), message says "both summer sessions" | — |
+| E102 | Summer courses in validation report | Add SOC13S/SOC14S to summer cell → open validation report | World History graduation requirement shows as met (not gap) | — |
+| E103 | Summer courses in transcript | Complete a summer course with grade → view transcript | Summer course appears under grade section with amber "Pre-Summer Session" header | — |
+| E104 | Summer courses in print view | Add summer courses → open planner print | Summer courses appear inline under Semester 1/2 tables with ☀ prefix and amber text | — |
+| E105 | Summer courses in year-end wizard | Navigate to year-end with summer courses in plan | Summer courses appear in grade confirmation with amber "Pre-Summer Session" label | — |
+| E106 | Summer course GPA contribution | Complete a summer course with grade A → view transcript GPA | Summer course credits and grade counted in cumulative GPA | — |
+| E107 | Summer prerequisite satisfaction | Add summer Algebra 1 (MTH15S/MTH16S) → add regular Geometry (MTH251/252) | No prerequisite violation — summer Algebra 1 satisfies Geometry's prerequisite | — |
+| E108 | Course browser summer filter | Click "☀ Summer" in Semester Offered filter | Only summer courses shown, semester text says "Summer" instead of "Sem -2 only" | — |
+
 #### B21. Google OAuth
 | ID | Scenario | Steps | Expected | Spec |
 |----|----------|-------|----------|------|
@@ -338,8 +367,8 @@ After all sub-agents complete, produce this report:
 ╠══════════════════════════════════════════════════════════════╣
 ║  E2E Tests:        612 total | ___ passed | ___ failed      ║
 ║  Unit/API Tests:   445 total | ___ passed | ___ failed      ║
-║  Critical Journeys: 12 (J01–J12) | ___ passed | ___ gaps    ║
-║  Edge Cases:        85 (E01–E85) | ___ covered | ___ gaps   ║
+║  Critical Journeys: 14 (J01–J14) | ___ passed | ___ gaps    ║
+║  Edge Cases:       108 (E01–E108) | ___ covered | ___ gaps  ║
 ║  Route Coverage:    22/22 pages (100%)                       ║
 ║  Verdict:           GO / NO-GO                               ║
 ╚══════════════════════════════════════════════════════════════╝

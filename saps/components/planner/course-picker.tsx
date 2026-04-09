@@ -168,6 +168,8 @@ export function CoursePicker({
       try {
         const params = new URLSearchParams();
         params.set("grade_level", String(gradeLevel));
+        // For summer semesters, filter to only summer-offered courses
+        if (semester < 0) params.set("semester_offered", String(semester));
         if (debouncedQuery) params.set("q", debouncedQuery);
         if (creditFilter !== "All") params.set("credit_type", creditFilter);
         if (divisionFilter !== "All Divisions") params.set("division", divisionFilter);
@@ -192,7 +194,7 @@ export function CoursePicker({
     }
 
     fetchCourses();
-  }, [isOpen, debouncedQuery, creditFilter, divisionFilter, departmentFilter, gradeLevel]);
+  }, [isOpen, debouncedQuery, creditFilter, divisionFilter, departmentFilter, gradeLevel, semester]);
 
   // Apply client-side filters (runs on rawCourses change or filter toggle change, no API call)
   useEffect(() => {
@@ -310,7 +312,7 @@ export function CoursePicker({
         ref={panelRef}
         role="dialog"
         aria-modal="true"
-        aria-label={`Add course to Grade ${gradeLevel}, Semester ${semester}`}
+        aria-label={`Add course to Grade ${gradeLevel}, ${semester < 0 ? "Pre-Summer" : `Semester ${semester}`}`}
         className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto p-4 sm:p-6"
       >
         <div
@@ -339,9 +341,11 @@ export function CoursePicker({
               </svg>
             </button>
             <div className="shrink-0">
-              <h2 className="text-lg font-semibold text-foreground">Add Course</h2>
-              <p className="text-xs text-muted-foreground">
-                Grade {gradeLevel}, Semester {semester}
+              <h2 className="text-lg font-semibold text-foreground">
+                {semester < 0 ? "Add Summer Course" : "Add Course"}
+              </h2>
+              <p className={`text-xs ${semester < 0 ? "text-amber-600 dark:text-amber-400" : "text-muted-foreground"}`}>
+                Grade {gradeLevel}{semester === -2 ? ", Pre-Summer Session 1" : semester === -1 ? ", Pre-Summer Session 2" : `, Semester ${semester}`}
               </p>
             </div>
             <div className="flex-1">

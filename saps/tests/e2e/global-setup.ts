@@ -214,8 +214,8 @@ async function globalSetup() {
       planId = planResult.rows[0].id;
     } else {
       const ins = await client.query(
-        `INSERT INTO four_year_plans (account_id, student_id, name, school_year, is_primary, is_template, status, created_by)
-         VALUES ($1, $2, 'E2E Test Plan', '2024-2025', true, false, 'active', $2) RETURNING id`,
+        `INSERT INTO four_year_plans (account_id, student_id, name, school_year, is_primary, is_template, status, activated_at, created_by)
+         VALUES ($1, $2, 'E2E Test Plan', '2024-2025', true, false, 'active', NOW(), $2) RETURNING id`,
         [accountId, studentId],
       );
       planId = ins.rows[0].id;
@@ -354,8 +354,8 @@ async function globalSetup() {
       );
       if (planBResult.rows.length === 0) {
         await client.query(
-          `INSERT INTO four_year_plans (account_id, student_id, name, school_year, is_primary, is_template, status, created_by)
-           VALUES ($1, $2, 'Sibling Test Plan', '2024-2025', true, false, 'active', $2)`,
+          `INSERT INTO four_year_plans (account_id, student_id, name, school_year, is_primary, is_template, status, activated_at, created_by)
+           VALUES ($1, $2, 'Sibling Test Plan', '2024-2025', true, false, 'active', NOW(), $2)`,
           [accountBId, studentBId],
         );
       }

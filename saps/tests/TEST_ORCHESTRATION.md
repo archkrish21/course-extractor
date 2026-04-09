@@ -139,6 +139,10 @@ import { login, loginAndGoTo } from "./helpers";
 - Use `.first()` on locators that may match multiple elements (e.g., "Terms of Service" appears in heading, checkbox label, and footer)
 - Use `getByLabel("Password").first()` for password inputs — avoids matching "Show password" toggle button
 - Always check ToS checkbox before submitting signup form — submit button is disabled without it
+- For dialog/modal selectors, filter with `{ hasText: "Add" }` or `{ hasText: "Course" }` — avoids matching Next.js error overlay (`data-nextjs-dialog`)
+- Wait for "Searching courses" spinner to hide before asserting picker content — `await expect(picker.locator("text=Searching courses")).toBeHidden({ timeout: 10_000 })`
+- After filling search inputs, add `await page.waitForTimeout(2_000)` for debounce + API response before checking results
+- Verify the expected course code appears in results before clicking — `await expect(card).toContainText("SOC13S")` — prevents clicking the wrong card during search transitions
 
 ### Sub-Agent assignments
 

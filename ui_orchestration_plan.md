@@ -273,6 +273,15 @@ Before creating any sub-agents:
    ```
    Note any that need fixing.
 
+6. **Identify files changed since the last sweep** (critical for new feature compliance):
+   ```bash
+   # Find the last sweep commit
+   git log --oneline --grep="UI.*sweep\|orchestration\|design.*consistency" -1
+   # List all app/component files changed since then
+   git diff --name-only <commit>..HEAD -- saps/app/ saps/components/
+   ```
+   Every file in this list MUST be audited against the full per-page checklist in Phase 2 AND Gate 5. These are new or modified since the last review and have never passed the design system check.
+
 ### Phase 1: Design System Foundation
 
 **I do this myself — no sub-agent.** These are shared infrastructure changes that cascade to every page.
@@ -654,6 +663,40 @@ For all pages at 390px width:
 - All buttons/inputs 44px minimum tap target
 - Cards stack single-column
 - Modals don't overflow viewport
+
+#### Gate 5: New Feature Audit (MANDATORY)
+
+**Any code added or modified in the same session — including by the orchestration itself — MUST pass the full per-page checklist before the sweep is considered complete.**
+
+This is the most commonly missed gate. The orchestration plan is often run AFTER new features are built. Those features have never been through the design system review. Skipping this gate produces inconsistent UI.
+
+**Procedure:**
+
+1. **Identify all files changed since the last committed sweep:**
+   ```bash
+   git diff --name-only <last-sweep-commit>..HEAD -- saps/app/ saps/components/
+   ```
+
+2. **For every changed file, run the full per-page checklist:**
+   - [ ] Component standards: radius, shadow, border, min-height match the standards table
+   - [ ] Color tokens: no hardcoded Tailwind colors (amber-*, green-*, etc.) — use design tokens
+   - [ ] No `dark:` variants (light-only app)
+   - [ ] Focus rings: `focus-visible:outline-2 outline-offset-2 outline-ring` on every interactive element
+   - [ ] Touch targets: `min-h-[44px]` on all buttons and clickable elements
+   - [ ] Accessibility: `aria-label` on icon-only buttons, `aria-hidden="true"` on decorative SVGs
+   - [ ] Typography: section labels use `text-xs font-semibold uppercase tracking-wider text-muted-foreground`
+   - [ ] Consistency: new elements visually match the closest existing pattern (e.g., new grid cells match existing grid cells in size, padding, border style)
+
+3. **Pay special attention to:**
+   - New collapsible/expandable sections — must match existing expand/collapse patterns
+   - New badge types — must use `<Badge variant="...">`, not inline `className`
+   - New grid cells — must match existing cell dimensions (min-height, padding, border-radius, border-width)
+   - New buttons — must use `<Button>` component or match its sizing (min-h-[44px], rounded-lg)
+   - New filter/toggle UI — must match existing chip/pill patterns
+
+4. **If any violations are found, fix them BEFORE declaring the sweep complete.** Do not leave them as "known issues" or "will fix later."
+
+**Why this gate exists:** In a previous run, summer course UI was added with hardcoded `amber-*` colors, `dark:` variants, undersized buttons (32px vs 44px), mismatched border-radius (rounded-lg vs rounded-xl), and no focus rings. These were all caught by the user, not the orchestration. This gate prevents that from happening again.
 
 #### Gate 5: Functionality Integrity
 After the sweep, verify no functionality was broken:

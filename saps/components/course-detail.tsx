@@ -3,6 +3,7 @@
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { useState, useEffect } from "react";
+import { isSummerSemester } from "@/config/semesters";
 
 interface LinkedCourse {
   id: string;
@@ -402,14 +403,17 @@ export function CourseDetail({ course, onCourseClick, onDivisionClick, onDepartm
 
     try {
       if (course.duration === "full_year") {
-        // Full-year: add to both semesters
+        // Full-year: add to both semesters (regular: 1+2, summer: -2+-1)
+        const isSummer = course.semestersOffered?.some(isSummerSemester);
+        const sem1 = isSummer ? -2 : 1;
+        const sem2 = isSummer ? -1 : 2;
         const res1 = await fetch(`/api/v1/plans/${selectedPlanId}/courses`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             course_id: course.id,
             grade_level: selectedGrade,
-            semester: 1,
+            semester: sem1,
             force_add: true,
           }),
         });
@@ -419,13 +423,13 @@ export function CourseDetail({ course, onCourseClick, onDivisionClick, onDepartm
           body: JSON.stringify({
             course_id: course.id,
             grade_level: selectedGrade,
-            semester: 2,
+            semester: sem2,
             force_add: true,
           }),
         });
 
         if (res1.ok && res2.ok) {
-          setAddResult({ success: true, message: `Added to both semesters of Grade ${selectedGrade}` });
+          setAddResult({ success: true, message: `Added to both ${isSummer ? "summer sessions" : "semesters"} of Grade ${selectedGrade}` });
           onCourseAdded?.();
         } else {
           const data = await (res1.ok ? res2 : res1).json().catch(() => null);
@@ -630,7 +634,7 @@ export function CourseDetail({ course, onCourseClick, onDivisionClick, onDepartm
 
                   {course.duration === "full_year" && (
                     <p className="text-xs text-muted-foreground">
-                      Full-year course — will be added to both semesters.
+                      Full-year course — will be added to both {course.semestersOffered?.some(isSummerSemester) ? "summer sessions" : "semesters"}.
                     </p>
                   )}
 

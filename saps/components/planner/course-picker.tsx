@@ -5,6 +5,8 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import type { BadgeVariant } from "@/components/ui/badge";
+import { findEquivalentInPlan } from "@/config/summer-equivalents";
+import { isSummerSemester } from "@/config/semesters";
 
 interface CourseResult {
   id: string;
@@ -39,6 +41,7 @@ interface CoursePickerProps {
   otherSemesterAtMax?: boolean;
   existingCourseIds?: Set<string>;
   existingCourseNames?: Set<string>;
+  existingCourseCodes?: string[];
   onAddCourse: (courseId: string, addAnyway?: boolean, courseDuration?: string) => Promise<ValidationPreview | null>;
   onViewDetails?: (courseId: string) => void;
   lastViewedCourseId?: string | null;
@@ -96,6 +99,7 @@ export function CoursePicker({
   otherSemesterAtMax = false,
   existingCourseIds = new Set(),
   existingCourseNames = new Set(),
+  existingCourseCodes = [],
   onAddCourse,
   onViewDetails,
   lastViewedCourseId,
@@ -204,6 +208,12 @@ export function CoursePicker({
       if (addedInSession.has(c.id)) return false;
       // Exclude semester partners of already-added courses (e.g., CSC162 if CSC161 is in plan)
       if (c.duration === "semester" && existingNamesRef.current.has(c.name)) return false;
+      // Exclude summer/regular equivalents already in plan (e.g., hide SOC101/102 if SOC13S is planned)
+      if (existingCourseCodes.length > 0 && findEquivalentInPlan(c.code, existingCourseCodes)) return false;
+      // Exclude summer courses from regular semester pickers and vice versa
+      const isSummerCourse = c.semestersOffered?.some(isSummerSemester) ?? false;
+      if (semester > 0 && isSummerCourse) return false;
+      if (semester < 0 && !isSummerCourse) return false;
 
       // Semester/duration filter
       if (c.duration === "full_year") {
@@ -229,7 +239,7 @@ export function CoursePicker({
     });
     setCourses(filtered);
     setCurrentPage(1); // Reset to first page when filters change
-  }, [rawCourses, durationFilter, earlyBirdOnly, gpaWaiverOnly, semester, otherSemesterAtMax, addedInSession]);
+  }, [rawCourses, durationFilter, earlyBirdOnly, gpaWaiverOnly, semester, otherSemesterAtMax, addedInSession, existingCourseCodes]);
 
   // Escape to close
   useEffect(() => {

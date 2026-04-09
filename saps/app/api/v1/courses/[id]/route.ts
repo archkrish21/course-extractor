@@ -6,8 +6,9 @@ import {
   departments,
   coursePrerequisites,
 } from "@/lib/db/schema";
-import { eq, and, sql } from "drizzle-orm";
+import { eq, and, or, sql, inArray } from "drizzle-orm";
 import { successResponse, errorResponse } from "@/lib/api/response";
+import { getEquivalents } from "@/config/summer-equivalents";
 
 interface RouteParams {
   params: Promise<{ id: string }>;
@@ -120,25 +121,27 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
         )
       );
 
-    // Fetch linked courses: same name, different code (semester partners)
-    const linkedCourses = course.duration === "semester"
-      ? await db
-          .select({
-            id: courses.id,
-            code: courses.code,
-            name: courses.name,
-            semestersOffered: courses.semestersOffered,
-          })
-          .from(courses)
-          .where(
-            and(
-              eq(courses.name, course.name),
-              eq(courses.isActive, true),
-              eq(courses.catalogVersionId, course.catalogVersionId),
-              sql`${courses.id} != ${id}`
-            )
-          )
-      : [];
+    // Fetch linked courses: same name (semester partners) + summer/regular equivalents
+    const equivalentCodes = getEquivalents(course.code);
+
+    const linkedCourses = await db
+      .select({
+        id: courses.id,
+        code: courses.code,
+        name: courses.name,
+        semestersOffered: courses.semestersOffered,
+      })
+      .from(courses)
+      .where(
+        and(
+          eq(courses.isActive, true),
+          sql`${courses.id} != ${id}`,
+          or(
+            and(eq(courses.name, course.name), eq(courses.catalogVersionId, course.catalogVersionId)),
+            equivalentCodes.length > 0 ? inArray(courses.code, equivalentCodes) : undefined,
+          ),
+        )
+      );
 
     return successResponse({
       ...course,

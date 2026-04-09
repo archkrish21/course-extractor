@@ -6,6 +6,7 @@ import {
   fourYearPlans,
 } from "@/lib/db/schema";
 import { eq, and, sql, inArray } from "drizzle-orm";
+import { findEquivalentInPlan } from "@/config/summer-equivalents";
 
 // ─── Types ─────────────────────────────────────────────────────────────────
 
@@ -20,6 +21,7 @@ export interface Violation {
   courseName: string;
   courseCode: string;
   message: string;
+  severity?: "error" | "warning";
   details?: {
     missingPrerequisites?: Array<{ code: string; name: string; group: number }>;
     requiredGradeLevels?: number[];
@@ -199,6 +201,22 @@ export async function validateCourseAddition(
       details: { conflictingCourseId: dup.id },
     });
     break; // One duplicate violation is enough
+  }
+
+  // Check summer/regular equivalent: e.g., adding SOC101 when SOC13S is already in the plan
+  const existingCodes = existingPlanCourses
+    .filter((pc) => pc.status !== "dropped")
+    .map((pc) => pc.course.code);
+  const equivalentInPlan = findEquivalentInPlan(targetCourse.code, existingCodes);
+  if (equivalentInPlan) {
+    violations.push({
+      type: "duplicate",
+      courseId: targetCourse.id,
+      courseName: targetCourse.name,
+      courseCode: targetCourse.code,
+      message: `${targetCourse.code} is equivalent to ${equivalentInPlan} which is already in your plan.`,
+      severity: "warning",
+    });
   }
 
   // Also check semester partner: same course name (e.g., CSC162 when CSC161 is already planned)

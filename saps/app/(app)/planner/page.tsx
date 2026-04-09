@@ -2112,9 +2112,10 @@ export default function PlannerPage() {
           .some((c) => (c.name ?? "").toLowerCase().includes("early bird") || /E\d$/.test(c.code ?? "") || /E\d\//.test(c.code ?? ""));
         const otherMax = otherHasEarlyBird ? 8 : 7;
 
-        // Collect all course IDs and names already in the plan
+        // Collect all course IDs, names, and codes already in the plan
         const existingIds = new Set(courses.map((c) => c.courseId));
         const existingNames = new Set(courses.map((c) => c.name));
+        const existingCodes = courses.map((c) => c.code);
 
         return (
           <CoursePicker
@@ -2126,6 +2127,7 @@ export default function PlannerPage() {
             otherSemesterAtMax={otherSemCount >= otherMax}
             existingCourseIds={existingIds}
             existingCourseNames={existingNames}
+            existingCourseCodes={existingCodes}
             onAddCourse={handlePickerAddCourse}
             onViewDetails={(courseId) => setDetailCourseId(courseId)}
             lastViewedCourseId={lastViewedCourseId}
@@ -2141,8 +2143,8 @@ export default function PlannerPage() {
           onCourseNavigate={(id) => setDetailCourseId(id)}
           zIndex={70}
           hideAddButton={!pickerTarget}
-          onDirectAdd={pickerTarget ? (cid) => {
-            handlePickerAddCourse(cid, true);
+          onDirectAdd={pickerTarget ? (cid, duration) => {
+            handlePickerAddCourse(cid, true, duration);
             setDetailCourseId(null);
           } : undefined}
         />

@@ -83,13 +83,32 @@ def main():
     out_dir = args.out_dir or os.path.join(os.path.dirname(__file__), "data")
     os.makedirs(out_dir, exist_ok=True)
 
+    # Expand courses: full-year courses get composite codes (MTH15S/MTH16S),
+    # semester courses offered in both sessions get separate rows per session.
+    expanded = []
+    for c in courses:
+        codes = c["all_codes"]
+        if c["duration"] == "full_year" and len(codes) == 2:
+            # Full-year: single row with composite code (like regular catalog)
+            expanded.append({
+                **c,
+                "code": f"{codes[0]}/{codes[1]}",
+            })
+        elif c["duration"] == "semester" and len(codes) >= 2 and len(c["semesters_offered"]) == 2:
+            # Semester course offered in both sessions: separate rows
+            # First code = Session 1 (-2), second code = Session 2 (-1)
+            expanded.append({**c, "code": codes[0], "all_codes": [codes[0]], "semesters_offered": [-2]})
+            expanded.append({**c, "code": codes[1], "all_codes": [codes[1]], "semesters_offered": [-1]})
+        else:
+            expanded.append(c)
+
     output = {
         "metadata": {
             "source": f"summer_courses_{args.year}.py (manually curated)",
             "extracted_at": datetime.now(timezone.utc).isoformat(),
             "year": args.year,
             "type": "summer",
-            "total_courses": len(courses),
+            "total_courses": len(expanded),
         },
         "courses": [
             {
@@ -98,7 +117,7 @@ def main():
                 "name": c["name"],
                 "division": c["division"],
                 "department": c["department"],
-                "description": DESCRIPTIONS.get(c["code"], ""),
+                "description": DESCRIPTIONS.get(c["all_codes"][0] if len(c["all_codes"]) == 1 else c["code"].split("/")[0], ""),
                 "credit_value": c["credit_value"],
                 "duration": c["duration"],
                 "credit_type": c["credit_type"],
@@ -110,7 +129,7 @@ def main():
                 "prerequisite_groups": [],
                 "cost": c.get("cost"),
             }
-            for c in courses
+            for c in expanded
         ],
     }
 

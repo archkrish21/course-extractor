@@ -1,17 +1,16 @@
 {
   "metadata": {
     "source": "summer_courses_2026.py (manually curated)",
-    "extracted_at": "2026-04-09T05:25:21.003318+00:00",
+    "extracted_at": "2026-04-09T05:56:10.192143+00:00",
     "year": 2026,
     "type": "summer",
-    "total_courses": 35
+    "total_courses": 46
   },
   "courses": [
     {
       "code": "D/E21S",
       "all_codes": [
-        "D/E21S",
-        "D/E22S"
+        "D/E21S"
       ],
       "name": "Driver Education",
       "division": "Applied Arts",
@@ -26,7 +25,32 @@
         12
       ],
       "semesters_offered": [
-        -2,
+        -2
+      ],
+      "gpa_waiver": false,
+      "is_summer": true,
+      "prerequisite_text": "Age 15 before first day, parental consent, instruction permit, 8+ credits in previous two semesters",
+      "prerequisite_groups": [],
+      "cost": "425"
+    },
+    {
+      "code": "D/E22S",
+      "all_codes": [
+        "D/E22S"
+      ],
+      "name": "Driver Education",
+      "division": "Applied Arts",
+      "department": "Driver Education",
+      "description": "",
+      "credit_value": 1.0,
+      "duration": "semester",
+      "credit_type": "CP",
+      "grade_levels": [
+        10,
+        11,
+        12
+      ],
+      "semesters_offered": [
         -1
       ],
       "gpa_waiver": false,
@@ -38,8 +62,7 @@
     {
       "code": "BUS71S",
       "all_codes": [
-        "BUS71S",
-        "BUS72S"
+        "BUS71S"
       ],
       "name": "Introduction to Business",
       "division": "Applied Arts",
@@ -55,7 +78,33 @@
         12
       ],
       "semesters_offered": [
-        -2,
+        -2
+      ],
+      "gpa_waiver": true,
+      "is_summer": true,
+      "prerequisite_text": null,
+      "prerequisite_groups": [],
+      "cost": "425"
+    },
+    {
+      "code": "BUS72S",
+      "all_codes": [
+        "BUS72S"
+      ],
+      "name": "Introduction to Business",
+      "division": "Applied Arts",
+      "department": "Business Education",
+      "description": "",
+      "credit_value": 1.0,
+      "duration": "semester",
+      "credit_type": "CP",
+      "grade_levels": [
+        9,
+        10,
+        11,
+        12
+      ],
+      "semesters_offered": [
         -1
       ],
       "gpa_waiver": true,
@@ -199,11 +248,7 @@
     {
       "code": "ENG51S",
       "all_codes": [
-        "ENG51S",
-        "ENG53S",
-        "ENG55S",
-        "ENG54S",
-        "ENG56S"
+        "ENG51S"
       ],
       "name": "College Essay Workshop",
       "division": "Communication Arts",
@@ -217,7 +262,31 @@
         12
       ],
       "semesters_offered": [
-        -2,
+        -2
+      ],
+      "gpa_waiver": false,
+      "is_summer": true,
+      "prerequisite_text": null,
+      "prerequisite_groups": [],
+      "cost": "100"
+    },
+    {
+      "code": "ENG53S",
+      "all_codes": [
+        "ENG53S"
+      ],
+      "name": "College Essay Workshop",
+      "division": "Communication Arts",
+      "department": "English",
+      "description": "",
+      "credit_value": 0.0,
+      "duration": "semester",
+      "credit_type": "Pass/Fail",
+      "grade_levels": [
+        11,
+        12
+      ],
+      "semesters_offered": [
         -1
       ],
       "gpa_waiver": false,
@@ -360,8 +429,7 @@
     {
       "code": "ART11S",
       "all_codes": [
-        "ART11S",
-        "ART12S"
+        "ART11S"
       ],
       "name": "Art and Design",
       "division": "Fine Arts",
@@ -377,7 +445,33 @@
         12
       ],
       "semesters_offered": [
-        -2,
+        -2
+      ],
+      "gpa_waiver": true,
+      "is_summer": true,
+      "prerequisite_text": null,
+      "prerequisite_groups": [],
+      "cost": "425"
+    },
+    {
+      "code": "ART12S",
+      "all_codes": [
+        "ART12S"
+      ],
+      "name": "Art and Design",
+      "division": "Fine Arts",
+      "department": "Visual Arts",
+      "description": "",
+      "credit_value": 1.0,
+      "duration": "semester",
+      "credit_type": "CP",
+      "grade_levels": [
+        9,
+        10,
+        11,
+        12
+      ],
+      "semesters_offered": [
         -1
       ],
       "gpa_waiver": true,
@@ -389,8 +483,7 @@
     {
       "code": "ART31S",
       "all_codes": [
-        "ART31S",
-        "ART32S"
+        "ART31S"
       ],
       "name": "Photography 1",
       "division": "Fine Arts",
@@ -406,7 +499,33 @@
         12
       ],
       "semesters_offered": [
-        -2,
+        -2
+      ],
+      "gpa_waiver": true,
+      "is_summer": true,
+      "prerequisite_text": null,
+      "prerequisite_groups": [],
+      "cost": "425"
+    },
+    {
+      "code": "ART32S",
+      "all_codes": [
+        "ART32S"
+      ],
+      "name": "Photography 1",
+      "division": "Fine Arts",
+      "department": "Visual Arts",
+      "description": "",
+      "credit_value": 1.0,
+      "duration": "semester",
+      "credit_type": "CP",
+      "grade_levels": [
+        9,
+        10,
+        11,
+        12
+      ],
+      "semesters_offered": [
         -1
       ],
       "gpa_waiver": true,
@@ -418,8 +537,7 @@
     {
       "code": "ART51S",
       "all_codes": [
-        "ART51S",
-        "ART52S"
+        "ART51S"
       ],
       "name": "Digital Art and Design 1",
       "division": "Fine Arts",
@@ -435,7 +553,33 @@
         12
       ],
       "semesters_offered": [
-        -2,
+        -2
+      ],
+      "gpa_waiver": true,
+      "is_summer": true,
+      "prerequisite_text": null,
+      "prerequisite_groups": [],
+      "cost": "425"
+    },
+    {
+      "code": "ART52S",
+      "all_codes": [
+        "ART52S"
+      ],
+      "name": "Digital Art and Design 1",
+      "division": "Fine Arts",
+      "department": "Visual Arts",
+      "description": "",
+      "credit_value": 1.0,
+      "duration": "semester",
+      "credit_type": "CP",
+      "grade_levels": [
+        9,
+        10,
+        11,
+        12
+      ],
+      "semesters_offered": [
         -1
       ],
       "gpa_waiver": true,
@@ -472,7 +616,7 @@
       "cost": "425"
     },
     {
-      "code": "MTH15S",
+      "code": "MTH15S/MTH16S",
       "all_codes": [
         "MTH15S",
         "MTH16S"
@@ -501,7 +645,7 @@
       "cost": "425"
     },
     {
-      "code": "MTH25S",
+      "code": "MTH25S/MTH26S",
       "all_codes": [
         "MTH25S",
         "MTH26S"
@@ -529,7 +673,7 @@
       "cost": "425"
     },
     {
-      "code": "MTH51S",
+      "code": "MTH51S/MTH52S",
       "all_codes": [
         "MTH51S",
         "MTH52S"
@@ -557,7 +701,7 @@
       "cost": "425"
     },
     {
-      "code": "MTH37S",
+      "code": "MTH37S/MTH38S",
       "all_codes": [
         "MTH37S",
         "MTH38S"
@@ -668,8 +812,7 @@
     {
       "code": "PED21S",
       "all_codes": [
-        "PED21S",
-        "PED22S"
+        "PED21S"
       ],
       "name": "Health Education",
       "division": "Physical Welfare",
@@ -682,7 +825,30 @@
         10
       ],
       "semesters_offered": [
-        -2,
+        -2
+      ],
+      "gpa_waiver": false,
+      "is_summer": true,
+      "prerequisite_text": null,
+      "prerequisite_groups": [],
+      "cost": "425"
+    },
+    {
+      "code": "PED22S",
+      "all_codes": [
+        "PED22S"
+      ],
+      "name": "Health Education",
+      "division": "Physical Welfare",
+      "department": "Physical Education",
+      "description": "",
+      "credit_value": 1.0,
+      "duration": "semester",
+      "credit_type": "CP",
+      "grade_levels": [
+        10
+      ],
+      "semesters_offered": [
         -1
       ],
       "gpa_waiver": false,
@@ -746,7 +912,7 @@
       "cost": "225"
     },
     {
-      "code": "SOC13S",
+      "code": "SOC13S/SOC14S",
       "all_codes": [
         "SOC13S",
         "SOC14S"
@@ -800,7 +966,7 @@
       "cost": "425"
     },
     {
-      "code": "SOC33S",
+      "code": "SOC33S/SOC34S",
       "all_codes": [
         "SOC33S",
         "SOC34S"
@@ -829,8 +995,7 @@
     {
       "code": "SOC43S",
       "all_codes": [
-        "SOC43S",
-        "SOC44S"
+        "SOC43S"
       ],
       "name": "Economics",
       "division": "Social Studies",
@@ -844,7 +1009,31 @@
         12
       ],
       "semesters_offered": [
-        -2,
+        -2
+      ],
+      "gpa_waiver": false,
+      "is_summer": true,
+      "prerequisite_text": null,
+      "prerequisite_groups": [],
+      "cost": "425"
+    },
+    {
+      "code": "SOC44S",
+      "all_codes": [
+        "SOC44S"
+      ],
+      "name": "Economics",
+      "division": "Social Studies",
+      "department": "Social Studies",
+      "description": "",
+      "credit_value": 1.0,
+      "duration": "semester",
+      "credit_type": "CP",
+      "grade_levels": [
+        11,
+        12
+      ],
+      "semesters_offered": [
         -1
       ],
       "gpa_waiver": false,
@@ -856,8 +1045,7 @@
     {
       "code": "IEN51S",
       "all_codes": [
-        "IEN51S",
-        "IEN52S"
+        "IEN51S"
       ],
       "name": "Reading and Writing for Stevenson",
       "division": "Special Education",
@@ -870,7 +1058,30 @@
         9
       ],
       "semesters_offered": [
-        -2,
+        -2
+      ],
+      "gpa_waiver": true,
+      "is_summer": true,
+      "prerequisite_text": "Special Education Identification and Approval of Director",
+      "prerequisite_groups": [],
+      "cost": "425"
+    },
+    {
+      "code": "IEN52S",
+      "all_codes": [
+        "IEN52S"
+      ],
+      "name": "Reading and Writing for Stevenson",
+      "division": "Special Education",
+      "department": "Special Education",
+      "description": "",
+      "credit_value": 1.0,
+      "duration": "semester",
+      "credit_type": "CP",
+      "grade_levels": [
+        9
+      ],
+      "semesters_offered": [
         -1
       ],
       "gpa_waiver": true,
@@ -909,8 +1120,7 @@
     {
       "code": "TCH91S",
       "all_codes": [
-        "TCH91S",
-        "TCH92S"
+        "TCH91S"
       ],
       "name": "Keys to Success",
       "division": "Student Services",
@@ -926,7 +1136,33 @@
         12
       ],
       "semesters_offered": [
-        -2,
+        -2
+      ],
+      "gpa_waiver": false,
+      "is_summer": true,
+      "prerequisite_text": null,
+      "prerequisite_groups": [],
+      "cost": "225"
+    },
+    {
+      "code": "TCH92S",
+      "all_codes": [
+        "TCH92S"
+      ],
+      "name": "Keys to Success",
+      "division": "Student Services",
+      "department": "Student Services",
+      "description": "",
+      "credit_value": 0.5,
+      "duration": "semester",
+      "credit_type": "Pass/Fail",
+      "grade_levels": [
+        9,
+        10,
+        11,
+        12
+      ],
+      "semesters_offered": [
         -1
       ],
       "gpa_waiver": false,
@@ -938,8 +1174,7 @@
     {
       "code": "ACTPREPS",
       "all_codes": [
-        "ACTPREPS",
-        "ACTPREPS2"
+        "ACTPREPS"
       ],
       "name": "ACT Preparatory Course",
       "division": "Student Learning Programs",
@@ -954,7 +1189,32 @@
         12
       ],
       "semesters_offered": [
-        -2,
+        -2
+      ],
+      "gpa_waiver": false,
+      "is_summer": true,
+      "prerequisite_text": null,
+      "prerequisite_groups": [],
+      "cost": "150"
+    },
+    {
+      "code": "ACTPREPS2",
+      "all_codes": [
+        "ACTPREPS2"
+      ],
+      "name": "ACT Preparatory Course",
+      "division": "Student Learning Programs",
+      "department": "Student Learning Programs",
+      "description": "",
+      "credit_value": 0.0,
+      "duration": "semester",
+      "credit_type": "Pass/Fail",
+      "grade_levels": [
+        10,
+        11,
+        12
+      ],
+      "semesters_offered": [
         -1
       ],
       "gpa_waiver": false,

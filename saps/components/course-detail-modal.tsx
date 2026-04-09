@@ -15,7 +15,7 @@ interface CourseDetailModalProps {
   /** Hide the "Add to Plan" button (e.g., when opened from planner/picker) */
   hideAddButton?: boolean;
   /** Direct add callback — skips the plan/grade/semester form. Used from course picker where context is known. */
-  onDirectAdd?: (courseId: string) => void;
+  onDirectAdd?: (courseId: string, duration?: string) => void;
 }
 
 function creditTypeBadgeVariant(type: string) {
@@ -164,7 +164,7 @@ export function CourseDetailModal({
                   onCourseClick={handleCourseCodeClick}
                   hideAddButton={hideAddButton}
                   onClose={onClose}
-                  onDirectAdd={onDirectAdd ? () => onDirectAdd(courseId) : undefined}
+                  onDirectAdd={onDirectAdd ? () => onDirectAdd(courseId, typeof c.duration === "string" ? c.duration : undefined) : undefined}
                 />
               </div>
             </>

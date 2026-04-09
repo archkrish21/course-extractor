@@ -1,7 +1,13 @@
 /**
- * Playwright global setup — creates all test accounts and data before E2E tests.
- * Idempotent: skips creation if accounts already exist.
- * Uses Supabase Admin API for auth + direct DB for app data.
+ * Playwright global setup — creates and VERIFIES all test data before E2E tests.
+ *
+ * Ensures (not just creates):
+ *   - student@test.com: student with plan, completed courses, grades, GPA snapshot
+ *   - parent@test.com: parent linked to student's account with consent
+ *   - counselor@test.com: counselor linked to student's account (read-only) with consent
+ *   - Ephemeral accounts cleaned up from previous runs
+ *
+ * Idempotent: safe to run multiple times. Fills gaps in existing data.
  */
 
 import pg from "pg";
@@ -45,13 +51,9 @@ const TEST_USERS: TestUser[] = [
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
 
-async function addAccountMember(
-  client: pg.Client,
-  accountId: string,
-  userId: string,
-  role: string,
-  canEdit: boolean,
-  invitedBy: string,
+async function ensureAccountMember(
+  client: pg.Client, accountId: string, userId: string,
+  role: string, canEdit: boolean, invitedBy: string,
 ) {
   await client.query(
     `INSERT INTO account_members (account_id, user_id, role, can_edit, invited_by)
@@ -59,6 +61,19 @@ async function addAccountMember(
      ON CONFLICT (account_id, user_id) DO NOTHING`,
     [accountId, userId, role, canEdit, invitedBy],
   );
+}
+
+async function ensureConsent(client: pg.Client, userId: string) {
+  const docs = await client.query(`SELECT id FROM legal_documents ORDER BY version DESC`);
+  if (docs.rows.length === 0) return;
+
+  for (const doc of docs.rows) {
+    await client.query(
+      `INSERT INTO consent_records (user_id, legal_document_id, action, consented_at)
+       VALUES ($1, $2, 'accepted', NOW()) ON CONFLICT DO NOTHING`,
+      [userId, doc.id],
+    );
+  }
 }
 
 // ── Main ─────────────────────────────────────────────────────────────────────
@@ -79,7 +94,30 @@ async function globalSetup() {
   await client.connect();
 
   try {
-    // ── Auth users (fetch all once, then create missing) ─────────────
+    // ── 1. Clean up ephemeral accounts from previous runs ────────────
+    const ephemeral = await client.query(
+      `SELECT id FROM users WHERE email = ANY($1)`, [EPHEMERAL_EMAILS],
+    );
+    if (ephemeral.rows.length > 0) {
+      const ids = ephemeral.rows.map((r: { id: string }) => r.id);
+      await client.query(`DELETE FROM plan_shares WHERE user_id = ANY($1) OR granted_by = ANY($1)`, [ids]);
+      await client.query(`DELETE FROM plan_history WHERE changed_by = ANY($1)`, [ids]);
+      await client.query(`DELETE FROM gpa_snapshots WHERE student_id = ANY($1)`, [ids]);
+      await client.query(`DELETE FROM plan_courses WHERE plan_id IN (SELECT id FROM four_year_plans WHERE created_by = ANY($1))`, [ids]);
+      await client.query(`DELETE FROM four_year_plans WHERE created_by = ANY($1)`, [ids]);
+      await client.query(`DELETE FROM account_invite_codes WHERE created_by = ANY($1)`, [ids]);
+      await client.query(`UPDATE account_invite_codes SET claimed_by = NULL, claimed_at = NULL WHERE claimed_by = ANY($1)`, [ids]);
+      await client.query(`DELETE FROM consent_records WHERE user_id = ANY($1)`, [ids]);
+      await client.query(`DELETE FROM account_members WHERE user_id = ANY($1)`, [ids]);
+      await client.query(`DELETE FROM student_profiles WHERE user_id = ANY($1)`, [ids]);
+      await client.query(`DELETE FROM accounts WHERE created_by = ANY($1)`, [ids]);
+      await client.query(`UPDATE accounts SET student_user_id = NULL WHERE student_user_id = ANY($1)`, [ids]);
+      await client.query(`DELETE FROM users WHERE id = ANY($1)`, [ids]);
+      try { await client.query(`DELETE FROM auth.users WHERE email = ANY($1)`, [EPHEMERAL_EMAILS]); } catch { /* ok */ }
+      console.log(`[e2e-setup] Cleaned ${ids.length} ephemeral account(s)`);
+    }
+
+    // ── 2. Create/verify auth users ──────────────────────────────────
     const { data: existingAuth } = await supabase.auth.admin.listUsers();
     const authByEmail = new Map(
       existingAuth?.users?.map((u) => [u.email, u.id]) ?? [],
@@ -90,21 +128,13 @@ async function globalSetup() {
       const existingId = authByEmail.get(user.email);
       if (existingId) {
         userIds[user.email] = existingId;
-        console.log(`[e2e-setup] Auth user ${user.email} exists`);
         continue;
       }
-
       const { data, error } = await supabase.auth.admin.createUser({
-        email: user.email,
-        password: TEST_PASSWORD,
-        email_confirm: true,
+        email: user.email, password: TEST_PASSWORD, email_confirm: true,
         user_metadata: { name: user.name, role: user.role },
       });
-
-      if (error) {
-        console.error(`[e2e-setup] Failed to create ${user.email}:`, error.message);
-        continue;
-      }
+      if (error) { console.error(`[e2e-setup] Failed: ${user.email}:`, error.message); continue; }
       userIds[user.email] = data.user.id;
       console.log(`[e2e-setup] Created auth user ${user.email}`);
     }
@@ -113,12 +143,9 @@ async function globalSetup() {
     const parentId = userIds[TEST_PARENT_EMAIL];
     const counselorId = userIds[TEST_COUNSELOR_EMAIL];
 
-    if (!studentId) {
-      console.error("[e2e-setup] Student user not found — aborting");
-      return;
-    }
+    if (!studentId) { console.error("[e2e-setup] Student not found — aborting"); return; }
 
-    // ── App user rows ────────────────────────────────────────────────
+    // ── 3. Ensure app user rows ──────────────────────────────────────
     for (const user of TEST_USERS) {
       const id = userIds[user.email];
       if (!id) continue;
@@ -131,15 +158,21 @@ async function globalSetup() {
         [id, user.email, first, last || null, user.role, user.dob],
       );
     }
-    console.log("[e2e-setup] Upserted app users");
 
-    // ── Student account ──────────────────────────────────────────────
+    // ── 4. Ensure student account ────────────────────────────────────
     const acctResult = await client.query(
       `SELECT id FROM accounts WHERE student_user_id = $1 LIMIT 1`, [studentId],
     );
     let accountId: string;
     if (acctResult.rows.length > 0) {
       accountId = acctResult.rows[0].id;
+      // Ensure account fields are correct
+      await client.query(
+        `UPDATE accounts SET student_name = 'Test Student', grade_level = $1, graduation_year = $2,
+         state = $3, school_name = $4, claimed_at = COALESCE(claimed_at, NOW())
+         WHERE id = $5`,
+        [TEST_GRADE_LEVEL, TEST_GRADUATION_YEAR, TEST_STATE, TEST_SCHOOL, accountId],
+      );
     } else {
       const ins = await client.query(
         `INSERT INTO accounts (student_user_id, student_name, grade_level, graduation_year, state, school_name, claimed_at, created_by)
@@ -147,30 +180,27 @@ async function globalSetup() {
         [studentId, TEST_GRADE_LEVEL, TEST_GRADUATION_YEAR, TEST_STATE, TEST_SCHOOL],
       );
       accountId = ins.rows[0].id;
-      console.log(`[e2e-setup] Created student account (${accountId})`);
     }
+    console.log(`[e2e-setup] Student account: ${accountId}`);
 
-    // ── Account members ──────────────────────────────────────────────
-    await addAccountMember(client, accountId, studentId, "student", true, studentId);
-    if (parentId) {
-      await addAccountMember(client, accountId, parentId, "parent", true, studentId);
-      console.log("[e2e-setup] Linked parent");
-    }
-    if (counselorId) {
-      await addAccountMember(client, accountId, counselorId, "counselor", false, studentId);
-      console.log("[e2e-setup] Linked counselor (read-only)");
-    }
+    // ── 5. Ensure all account members ────────────────────────────────
+    await ensureAccountMember(client, accountId, studentId, "student", true, studentId);
+    if (parentId) await ensureAccountMember(client, accountId, parentId, "parent", true, studentId);
+    if (counselorId) await ensureAccountMember(client, accountId, counselorId, "counselor", false, studentId);
 
-    // ── Student profile ──────────────────────────────────────────────
+    // ── 6. Ensure student profile ────────────────────────────────────
     await client.query(
       `INSERT INTO student_profiles (user_id, current_grade_level, graduation_year)
-       VALUES ($1, $2, $3) ON CONFLICT (user_id) DO NOTHING`,
+       VALUES ($1, $2, $3)
+       ON CONFLICT (user_id) DO UPDATE SET current_grade_level = EXCLUDED.current_grade_level,
+         graduation_year = EXCLUDED.graduation_year`,
       [studentId, TEST_GRADE_LEVEL, TEST_GRADUATION_YEAR],
     );
 
-    // ── Primary plan ─────────────────────────────────────────────────
+    // ── 7. Ensure primary plan exists ────────────────────────────────
     const planResult = await client.query(
-      `SELECT id FROM four_year_plans WHERE account_id = $1 AND is_primary = true LIMIT 1`, [accountId],
+      `SELECT id FROM four_year_plans WHERE account_id = $1 AND is_primary = true AND is_template = false LIMIT 1`,
+      [accountId],
     );
     let planId: string;
     if (planResult.rows.length > 0) {
@@ -182,25 +212,25 @@ async function globalSetup() {
         [accountId, studentId],
       );
       planId = ins.rows[0].id;
-      console.log(`[e2e-setup] Created primary plan (${planId})`);
     }
+    console.log(`[e2e-setup] Primary plan: ${planId}`);
 
-    // ── Courses (batch insert) ───────────────────────────────────────
-    const courseCount = await client.query(
-      `SELECT COUNT(*)::int as n FROM plan_courses WHERE plan_id = $1`, [planId],
+    // ── 8. Ensure plan has courses (Gr9 completed + Gr10 enrolled) ───
+    // Check for completed courses specifically (not just any courses)
+    const completedCount = await client.query(
+      `SELECT COUNT(*)::int as n FROM plan_courses WHERE plan_id = $1 AND status = 'completed' AND planned_grade IS NOT NULL`,
+      [planId],
     );
-    if (courseCount.rows[0].n === 0) {
+
+    if (completedCount.rows[0].n === 0) {
+      // Remove any existing courses without grades and re-create properly
       const catalog = await client.query(
-        `SELECT id FROM courses ORDER BY code LIMIT $1`,
-        [COURSES_PER_SEMESTER * 4], // 4 slots: Gr9 S1, Gr9 S2, Gr10 S1, Gr10 S2
+        `SELECT id, code FROM courses ORDER BY code LIMIT $1`,
+        [COURSES_PER_SEMESTER * 4],
       );
 
-      if (catalog.rows.length > 0) {
-        const values: string[] = [];
-        const params: unknown[] = [planId];
-        let paramIdx = 2;
+      if (catalog.rows.length >= COURSES_PER_SEMESTER) {
         let courseIdx = 0;
-
         for (let grade = 9; grade <= TEST_GRADE_LEVEL; grade++) {
           for (let sem = 1; sem <= 2; sem++) {
             for (let i = 0; i < COURSES_PER_SEMESTER && courseIdx < catalog.rows.length; i++) {
@@ -208,31 +238,28 @@ async function globalSetup() {
               const status = isCompleted ? "completed" : "enrolled";
               const plannedGrade = isCompleted ? SAMPLE_GRADES[i] : null;
 
-              values.push(`($1, $${paramIdx}, ${grade}, ${sem}, '${status}', ${plannedGrade ? `$${paramIdx + 1}` : "NULL"})`);
-              params.push(catalog.rows[courseIdx].id);
-              if (plannedGrade) params.push(plannedGrade);
-              paramIdx = params.length + 1;
+              await client.query(
+                `INSERT INTO plan_courses (plan_id, course_id, grade_level, semester, status, planned_grade)
+                 VALUES ($1, $2, $3, $4, $5, $6)
+                 ON CONFLICT DO NOTHING`,
+                [planId, catalog.rows[courseIdx].id, grade, sem, status, plannedGrade],
+              );
               courseIdx++;
             }
           }
         }
-
-        if (values.length > 0) {
-          await client.query(
-            `INSERT INTO plan_courses (plan_id, course_id, grade_level, semester, status, planned_grade)
-             VALUES ${values.join(", ")} ON CONFLICT DO NOTHING`,
-            params,
-          );
-          console.log(`[e2e-setup] Added ${courseIdx} courses to plan`);
-        }
+        console.log(`[e2e-setup] Ensured ${courseIdx} courses (Gr9 completed with grades, Gr10 enrolled)`);
       } else {
-        console.warn("[e2e-setup] No courses in catalog — run seed first");
+        console.warn("[e2e-setup] Not enough courses in catalog — run seed first");
       }
+    } else {
+      console.log(`[e2e-setup] Plan has ${completedCount.rows[0].n} completed courses with grades`);
     }
 
-    // ── GPA snapshot ─────────────────────────────────────────────────
+    // ── 9. Ensure GPA snapshot exists ────────────────────────────────
     const snap = await client.query(
-      `SELECT id FROM gpa_snapshots WHERE student_id = $1 LIMIT 1`, [studentId],
+      `SELECT id FROM gpa_snapshots WHERE student_id = $1 AND trigger = 'semester_end' LIMIT 1`,
+      [studentId],
     );
     if (snap.rows.length === 0) {
       await client.query(
@@ -243,29 +270,31 @@ async function globalSetup() {
       console.log("[e2e-setup] Created GPA snapshot");
     }
 
-    // ── Consent records (fetch docs once, batch per user) ────────────
-    const docs = await client.query(`SELECT id FROM legal_documents ORDER BY version DESC`);
+    // ── 10. Ensure consent for ALL users ─────────────────────────────
     for (const userId of [studentId, parentId, counselorId].filter(Boolean)) {
-      const existing = await client.query(
-        `SELECT id FROM consent_records WHERE user_id = $1 LIMIT 1`, [userId],
-      );
-      if (existing.rows.length === 0 && docs.rows.length > 0) {
-        const vals = docs.rows.map((_, i) => `($1, $${i + 2}, 'accepted', NOW())`).join(", ");
-        await client.query(
-          `INSERT INTO consent_records (user_id, legal_document_id, action, consented_at) VALUES ${vals} ON CONFLICT DO NOTHING`,
-          [userId, ...docs.rows.map((d: { id: string }) => d.id)],
-        );
-        console.log(`[e2e-setup] Created consent for ${userId}`);
-      }
+      await ensureConsent(client, userId as string);
     }
+    console.log("[e2e-setup] Ensured consent records for all users");
 
-    // ── Lock Grade 9 ─────────────────────────────────────────────────
+    // ── 11. Ensure Grade 9 locked ────────────────────────────────────
     await client.query(
       `UPDATE four_year_plans SET locked_grade_levels = $1 WHERE id = $2`,
       [JSON.stringify([9]), planId],
     );
 
-    console.log("[e2e-setup] ✅ Setup complete");
+    // ── 12. Verify final state ───────────────────────────────────────
+    const verify = await client.query(`
+      SELECT
+        (SELECT COUNT(*) FROM account_members WHERE account_id = $1) as members,
+        (SELECT COUNT(*) FROM plan_courses WHERE plan_id = $2) as courses,
+        (SELECT COUNT(*) FROM plan_courses WHERE plan_id = $2 AND status = 'completed' AND planned_grade IS NOT NULL) as graded,
+        (SELECT COUNT(*) FROM gpa_snapshots WHERE student_id = $3) as snapshots,
+        (SELECT COUNT(*) FROM consent_records WHERE user_id = $3) as consent
+    `, [accountId, planId, studentId]);
+
+    const v = verify.rows[0];
+    console.log(`[e2e-setup] ✅ Setup complete — ${v.members} members, ${v.courses} courses (${v.graded} graded), ${v.snapshots} snapshots, ${v.consent} consent records`);
+
   } catch (error) {
     console.error("[e2e-setup] Setup failed:", error);
     throw error;

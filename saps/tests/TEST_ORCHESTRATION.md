@@ -67,33 +67,73 @@ For every route, scenarios are tested across these dimensions:
 | Student (Gr9) | `student-b@test.com` | `Test1234!` | global-setup.ts | Persistent — parent's 2nd child for multi-child tests |
 | Parent | `parent@test.com` | `Test1234!` | global-setup.ts | Persistent — linked to BOTH students |
 | Counselor | `counselor@test.com` | `Test1234!` | global-setup.ts | Persistent — read-only access + plan share (view) |
+| Consent Tester | `consent-test@test.com` | `Test1234!` | global-setup.ts | Persistent — NO consent records (reset each run) |
 | Ephemeral | `student2@test.com` | `Test1234!` | onboarding.spec.ts | Cleaned up by global-teardown.ts |
 | Ephemeral | `student3@test.com` | `Test1234!` | onboarding.spec.ts | Cleaned up by global-teardown.ts |
 
-**Test data created by global-setup.ts:**
-- Course catalog verified non-empty (setup fails if not seeded — run `npx tsx scripts/seed.ts` first)
-- Student A account (Gr10, graduation 2028, IL/Stevenson HS)
-- Student B account (Gr9, graduation 2029, IL/Stevenson HS) — parent's 2nd child
-- Primary plan ("E2E Test Plan") with 16 courses across Grades 9–10
-- Grade 9 courses marked as completed with grades (A, A-, B+, B)
-- Grade 10 courses marked as enrolled
-- Grade 9 locked on primary plan
-- GPA snapshot (3.500 UW / 3.750 W)
-- Parent linked to both student accounts (edit access)
-- Counselor linked to student A's account (read-only)
-- Plan shares: parent (edit) + counselor (view) on primary plan
-- Student B has a basic plan ("Sibling Test Plan") so parent sees content when switching
-- Consent records for all 4 users
+**All persistent accounts must have password `Test1234!`**. If passwords get out of sync (e.g., manual Supabase changes), reset them via:
+```bash
+node -e "
+const { createClient } = require('@supabase/supabase-js');
+require('dotenv').config({ path: '.env.local' });
+const sb = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY);
+(async () => {
+  const { data } = await sb.auth.admin.listUsers();
+  for (const email of ['student@test.com','student-b@test.com','parent@test.com','counselor@test.com','consent-test@test.com']) {
+    const u = data.users.find(x => x.email === email);
+    if (u) { await sb.auth.admin.updateUserById(u.id, { password: 'Test1234!' }); console.log(email, 'OK'); }
+  }
+})();
+"
+```
+
+**Test data created by global-setup.ts (17 steps):**
+
+| # | What | Why |
+|---|------|-----|
+| 1 | Clean up ephemeral accounts from previous runs | Idempotent start |
+| 2 | Create/verify 6 auth users via Supabase Admin API | All test accounts exist in auth.users |
+| 3 | Ensure app user rows in `users` table | Links auth IDs to app-level user records |
+| 4 | Student A account (Gr10, graduation 2028, IL/Stevenson HS) | Primary test student |
+| 5 | Account members: student + parent (edit) + counselor (read-only) | Role-based and multi-child tests |
+| 6 | Student profile for Student A | Grade level and graduation year |
+| 7 | Primary plan ("E2E Test Plan") with `activated_at` | Planner, transcript, validation tests |
+| 8 | Verify course catalog non-empty (throws if 0 courses) | Transcript, GPA, and planner tests need real courses |
+| 9 | 16 courses: Gr9 completed with grades (A, A-, B+, B) + Gr10 enrolled | GPA/transcript tests need completed courses |
+| 10 | Reset 2 Gr10 courses to `enrolled` (no grade) each run | Year-end wizard needs ungraded courses for grade dropdowns |
+| 11 | GPA snapshot (3.500 UW / 3.750 W) | GPA trend chart and transcript tests |
+| 12 | Consent records for student, student-b, parent, counselor (NOT consent-test) | All users except consent tester can access app pages |
+| 13 | Grade 9 locked on primary plan | Grade-lock and read-only grade tests |
+| 14 | Plan shares: parent (edit) + counselor (view) on primary plan | Parent plan access and counselor "View" button tests |
+| 15 | Consent test account with NO consent records (deleted each run) | Consent form tests need the form to render |
+| 16 | Student B account (Gr9, graduation 2029) linked to parent | Multi-child account switcher tests |
+| 17 | Verify final state and log summary | Catch setup failures early |
+
+**Key design decisions for test data:**
+- **Consent test user** (`consent-test@test.com`): Has a valid account but consent records are *deleted* each run. This ensures the consent form tests (Terms of Service, checkbox, Accept/Decline buttons) always see the form. The redirect test uses `student@test.com` which has consent pre-accepted.
+- **Ungraded Gr10 courses**: 2 courses are reset to `enrolled` (no grade) each run even if previous test runs graded them. This ensures the year-end wizard shows grade dropdowns and the `fillAllGrades()` helper can exercise them.
+- **Parent linked to 2 children**: `parent@test.com` is a member of both Student A and Student B accounts. This enables the account switcher to show both children with different grade levels (Gr9 vs Gr10).
+- **Plan shares**: Explicit `plan_shares` rows for parent (edit) and counselor (view) on the primary plan. Without these, counselor tests that check for "View" buttons would skip.
+- **`activated_at` on primary plans**: Required by the `primary_has_activated_at` check constraint. Both Student A and Student B plans set `activated_at = NOW()`.
 
 **Automatic cleanup by global-teardown.ts (runs after all tests):**
 - Removes plans named "E2E %" or "Demo" (created during planner tests)
 - Removes ephemeral accounts (student2/student3@test.com) and all their data
 - Removes orphaned plan_history and accounts with no members
+- Does NOT remove persistent accounts (student, student-b, parent, counselor, consent-test)
 
 **Shared test helpers** (available to all spec files):
 ```typescript
 import { login, loginAndGoTo } from "./helpers";
 ```
+
+**Selector guidelines specific to this codebase:**
+- Use `{ name: "Next", exact: true }` for buttons — avoids matching Next.js dev tools button
+- Use `{ name: "Back", exact: true }` for buttons — avoids matching the "Send feedback" FAB
+- Use `getByRole("heading", { name: "..." })` instead of `text=` for page headings — avoids matching guided tour popovers
+- Use `button[aria-label="User menu"]` for the account switcher — NOT `aria-label*="account"` or `aria-label*="switch"`
+- Use `.first()` on locators that may match multiple elements (e.g., "Terms of Service" appears in heading, checkbox label, and footer)
+- Use `getByLabel("Password").first()` for password inputs — avoids matching "Show password" toggle button
 
 ### Sub-Agent assignments
 
@@ -122,12 +162,22 @@ Each sub-agent runs its spec files via `npx playwright test <files>` and reports
 
 When a test fails due to a changed selector, sub-agents should update selectors following this priority:
 
-1. `getByRole("button", { name: "..." })` — most resilient
-2. `getByLabel("...")` — form inputs
-3. `getByText("...")` — content assertions
-4. `locator('[data-testid="..."]')` — custom markers
-5. `locator('a[href="..."]')` — navigation links
-6. **Avoid:** raw CSS selectors, XPath, positional indexes
+1. `getByRole("button", { name: "...", exact: true })` — most resilient; use `exact: true` to avoid matching Next.js dev tools, feedback FAB, etc.
+2. `getByRole("heading", { name: "..." })` — for page headings; avoids matching guided tour popovers
+3. `getByLabel("...").first()` — form inputs; use `.first()` to avoid matching show/hide password toggle
+4. `getByText("...", { exact: true })` — content assertions; use `exact: true` when text appears in multiple elements
+5. `locator('[data-testid="..."]')` — custom markers
+6. `locator('a[href="..."]')` — navigation links
+7. **Avoid:** raw CSS selectors, XPath, positional indexes, regex patterns like `/Next/i` (matches Next.js dev tools)
+
+**Known strict-mode pitfalls in this codebase:**
+- `"Next"` button → matches Next.js dev tools button; always use `{ exact: true }`
+- `"Back"` button → matches "Send feedback" FAB; always use `{ exact: true }`
+- `"Review"` text → matches heading, subtitle, step label, and description; use `getByText("Review", { exact: true })`
+- `"Academic Progress"` → matches guided tour popover title; use `getByRole("heading")`
+- `"Terms of Service"` → matches 4 elements on consent page; use `locator('span:has-text(...)').first()`
+- `"Password"` → matches input AND show/hide toggle; use `.first()`
+- Account switcher → button has `aria-label="User menu"`, NOT `"account"` or `"switch"`
 
 ---
 
@@ -586,7 +636,12 @@ npx playwright test summer-planner summer-course-browser summer-transcript-print
 npx playwright test progress gpa-trend grade-lock                                # Progress
 npx playwright test critical-journeys                                            # Journeys
 npx playwright test role-based                                                   # Roles
+
+# Year-end tests are sensitive to shared state — use 1 worker to avoid flakiness
+npx playwright test year-end.spec --workers=1
 ```
+
+**Known parallel flakiness:** Year-end wizard tests share server-side state (course grades). When multiple workers run year-end tests concurrently, one worker may grade courses that another worker expects to be ungraded, causing sporadic skips on Step 3 review tests. Run with `--workers=1` if year-end tests show unexpected skips.
 
 ### Cleanup after destructive tests
 

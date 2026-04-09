@@ -387,16 +387,20 @@ export default function PlannerPage() {
 
       try {
         // Full-year courses: add to both semesters as separate rows
+        // For summer sessions: -2 and -1; for regular: 1 and 2
         if (courseDuration === "full_year") {
+          const isSummer = pickerTarget.semester < 0;
+          const sem1 = isSummer ? -2 : 1;
+          const sem2 = isSummer ? -1 : 2;
           const res1 = await apiFetch(`/api/v1/plans/${selectedPlanId}/courses`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ course_id: courseId, grade_level: pickerTarget.gradeLevel, semester: 1, force_add: addAnyway }),
+            body: JSON.stringify({ course_id: courseId, grade_level: pickerTarget.gradeLevel, semester: sem1, force_add: addAnyway }),
           });
           const res2 = await apiFetch(`/api/v1/plans/${selectedPlanId}/courses`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ course_id: courseId, grade_level: pickerTarget.gradeLevel, semester: 2, force_add: addAnyway }),
+            body: JSON.stringify({ course_id: courseId, grade_level: pickerTarget.gradeLevel, semester: sem2, force_add: addAnyway }),
           });
 
           const data1 = await res1.json();

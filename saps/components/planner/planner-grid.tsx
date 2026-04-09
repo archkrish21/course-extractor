@@ -204,7 +204,7 @@ function DesktopGrid({
           handled = true;
           break;
         case "ArrowRight":
-          newCol = Math.min(SEMESTERS.length - 1, col + 1);
+          newCol = Math.min(REGULAR_SEMESTERS.length - 1, col + 1);
           handled = true;
           break;
         case "Enter":
@@ -212,7 +212,7 @@ function DesktopGrid({
           // Open course picker for this cell
           e.preventDefault();
           if (!readOnly) {
-            onAddCourse(GRADE_LEVELS[row], SEMESTERS[col]);
+            onAddCourse(GRADE_LEVELS[row], REGULAR_SEMESTERS[col]);
           }
           handled = true;
           break;
@@ -817,7 +817,7 @@ function MobileAccordion({
             {/* Accordion content */}
             {isExpanded && (
               <div id={`grade-${grade}-content`} className="border-t border-border px-4 pb-4 pt-3">
-                {SEMESTERS.map((sem) => {
+                {REGULAR_SEMESTERS.map((sem) => {
                   const cellCourses = getCoursesForCell(courses, grade, sem);
                   const cellViolationCount = cellCourses.reduce(
                     (count, c) =>

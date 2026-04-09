@@ -123,6 +123,7 @@ export default function CourseBrowserPage() {
     else if (semesterFilter === "sem2") params.set("semester_offered", "2");
     else if (semesterFilter === "sem_both") params.set("semester_both", "true");
     else if (semesterFilter === "full_year") params.set("duration", "full_year");
+    else if (semesterFilter === "summer") params.set("semester_offered", "-2");
     if (cursor) params.set("cursor", cursor);
     params.set("limit", String(PAGE_SIZE));
 
@@ -376,6 +377,7 @@ export default function CourseBrowserPage() {
             { value: "sem2", label: "Sem 2" },
             { value: "sem_both", label: "Sem 1 & 2" },
             { value: "full_year", label: "Full Year" },
+            { value: "summer", label: "☀ Summer" },
           ] as const).map((opt) => (
             <button
               key={opt.value}

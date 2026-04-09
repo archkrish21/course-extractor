@@ -364,7 +364,8 @@ export function CoursePicker({
           </div>
         </div>
 
-        {/* Filter chips */}
+        {/* Filter chips — hidden for summer courses (only search applies) */}
+        {semester >= 0 && (
         <div className="sticky top-[73px] z-10 border-b border-border bg-background px-4 py-3">
 
           {/* Filter chips — credit type + duration + flags */}
@@ -496,6 +497,7 @@ export function CoursePicker({
             )}
           </div>
         </div>
+        )}
 
         {/* Results */}
         <div className="flex-1 overflow-y-auto px-4 py-3">
@@ -583,6 +585,11 @@ export function CoursePicker({
                             >
                               {course.creditType}
                             </Badge>
+                            {course.semestersOffered?.some((s: number) => s < 0) && (
+                              <Badge className="text-[10px] px-1.5 py-0 bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400">
+                                Summer
+                              </Badge>
+                            )}
                             {course.isAp && course.creditType !== "AP" && (
                               <Badge variant="ap" className="text-[10px] px-1.5 py-0">
                                 AP

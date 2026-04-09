@@ -9,6 +9,7 @@
 /test-results/
 /playwright-report/
 /blob-report/
+/tests/reports/
 
 # next.js
 /.next/

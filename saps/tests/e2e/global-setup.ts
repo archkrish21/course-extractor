@@ -136,6 +136,10 @@ async function globalSetup() {
       const existingId = authByEmail.get(user.email);
       if (existingId) {
         userIds[user.email] = existingId;
+        // Always reset password to ensure login works
+        await supabase.auth.admin.updateUserById(existingId, {
+          password: TEST_PASSWORD,
+        });
         continue;
       }
       const { data, error } = await supabase.auth.admin.createUser({

@@ -30,6 +30,7 @@ export const TEST_STUDENT_EMAIL = "student@test.com";
 export const TEST_STUDENT_B_EMAIL = "student-b@test.com";
 export const TEST_PARENT_EMAIL = "parent@test.com";
 export const TEST_COUNSELOR_EMAIL = "counselor@test.com";
+export const TEST_CONSENT_EMAIL = "consent-test@test.com";
 export const EPHEMERAL_EMAILS = ["student2@test.com", "student3@test.com"];
 
 const TEST_STATE = "IL";
@@ -53,6 +54,7 @@ const TEST_USERS: TestUser[] = [
   { email: TEST_STUDENT_B_EMAIL, role: "student", name: "Test Sibling", dob: "2012-07-22" },
   { email: TEST_PARENT_EMAIL, role: "parent", name: "Test Parent", dob: "1980-06-01" },
   { email: TEST_COUNSELOR_EMAIL, role: "counselor", name: "Test Counselor", dob: "1985-09-20" },
+  { email: TEST_CONSENT_EMAIL, role: "student", name: "Consent Tester", dob: "2010-01-01" },
 ];
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
@@ -149,6 +151,7 @@ async function globalSetup() {
     const studentBId = userIds[TEST_STUDENT_B_EMAIL];
     const parentId = userIds[TEST_PARENT_EMAIL];
     const counselorId = userIds[TEST_COUNSELOR_EMAIL];
+    const consentTestId = userIds[TEST_CONSENT_EMAIL];
 
     if (!studentId) { console.error("[e2e-setup] Student not found — aborting"); return; }
 
@@ -310,7 +313,37 @@ async function globalSetup() {
     }
     console.log("[e2e-setup] Ensured plan shares for parent (edit) and counselor (view)");
 
-    // ── 14. Ensure 2nd student account for multi-child tests ─────────
+    // ── 14. Ensure consent-test account (NO consent — for consent form tests)
+    if (consentTestId) {
+      // Create a minimal account so the user can log in
+      const consentAcctResult = await client.query(
+        `SELECT id FROM accounts WHERE student_user_id = $1 LIMIT 1`, [consentTestId],
+      );
+      let consentAcctId: string;
+      if (consentAcctResult.rows.length > 0) {
+        consentAcctId = consentAcctResult.rows[0].id;
+      } else {
+        const ins = await client.query(
+          `INSERT INTO accounts (student_user_id, student_name, grade_level, graduation_year, state, school_name, claimed_at, created_by)
+           VALUES ($1, 'Consent Tester', $2, $3, $4, $5, NOW(), $1) RETURNING id`,
+          [consentTestId, TEST_GRADE_LEVEL, TEST_GRADUATION_YEAR, TEST_STATE, TEST_SCHOOL],
+        );
+        consentAcctId = ins.rows[0].id;
+      }
+      await ensureAccountMember(client, consentAcctId, consentTestId, "student", true, consentTestId);
+      await client.query(
+        `INSERT INTO student_profiles (user_id, current_grade_level, graduation_year)
+         VALUES ($1, $2, $3)
+         ON CONFLICT (user_id) DO UPDATE SET current_grade_level = EXCLUDED.current_grade_level`,
+        [consentTestId, TEST_GRADE_LEVEL, TEST_GRADUATION_YEAR],
+      );
+
+      // Always remove consent records so the consent form is shown
+      await client.query(`DELETE FROM consent_records WHERE user_id = $1`, [consentTestId]);
+      console.log(`[e2e-setup] Consent test account: ${consentAcctId} (no consent — form will show)`);
+    }
+
+    // ── 15. Ensure 2nd student account for multi-child tests ────────
     let accountBId: string | null = null;
     if (studentBId) {
       const acctBResult = await client.query(
@@ -363,7 +396,7 @@ async function globalSetup() {
       console.log(`[e2e-setup] 2nd student account: ${accountBId} (Grade ${STUDENT_B_GRADE_LEVEL}, linked to parent)`);
     }
 
-    // ── 15. Verify final state ───────────────────────────────────────
+    // ── 16. Verify final state ───────────────────────────────────────
     const verify = await client.query(`
       SELECT
         (SELECT COUNT(*) FROM account_members WHERE account_id = $1) as members,

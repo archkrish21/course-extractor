@@ -2,7 +2,17 @@ import { test, expect, type Page } from "@playwright/test";
 
 // ─── Helpers ───────────────────────────────────────────────────────────────
 
-async function login(page: Page) {
+/** Log in as the consent-test user (has NO consent records — form will show). */
+async function loginAsConsentUser(page: Page) {
+  await page.goto("/login");
+  await page.getByLabel("Email address").fill("consent-test@test.com");
+  await page.getByLabel("Password").first().fill("Test1234!");
+  await page.locator('form button[type="submit"]').click();
+  await page.waitForURL(/\/(dashboard|planner|courses|consent)/, { timeout: 15_000 });
+}
+
+/** Log in as the primary student (has consent already accepted). */
+async function loginAsStudent(page: Page) {
   await page.goto("/login");
   await page.getByLabel("Email address").fill("student@test.com");
   await page.getByLabel("Password").first().fill("Test1234!");
@@ -14,11 +24,11 @@ async function login(page: Page) {
 
 test.describe("Consent — Page Load", () => {
   test("consent page loads after login", async ({ page }) => {
-    await login(page);
+    await loginAsConsentUser(page);
     await page.goto("/consent");
     await page.waitForTimeout(2_000);
 
-    // Either shows consent form or redirects (if already accepted)
+    // Should show consent form (this user has no consent records)
     const heading = page.locator("text=/Review Our Terms|Updated Our Terms/i");
     const dashboard = page.locator("text=/Welcome|Dashboard/i");
 
@@ -32,28 +42,28 @@ test.describe("Consent — Page Load", () => {
 
 test.describe("Consent — Form Elements", () => {
   test("shows Terms of Service and Privacy Policy documents", async ({ page }) => {
-    await login(page);
+    await loginAsConsentUser(page);
     await page.goto("/consent");
     await page.waitForTimeout(2_000);
 
     const heading = page.locator("text=/Review Our Terms|Updated Our Terms/i");
     if ((await heading.count()) === 0) {
-      test.skip(true, "Consent already accepted — form not shown");
+      test.skip(true, "Consent form not shown — consent-test user may already have records");
       return;
     }
 
-    await expect(page.locator("text=Terms of Service")).toBeVisible({ timeout: 5_000 });
-    await expect(page.locator("text=Privacy Policy")).toBeVisible();
+    await expect(page.locator('span:has-text("Terms of Service")').first()).toBeVisible({ timeout: 5_000 });
+    await expect(page.locator('span:has-text("Privacy Policy")').first()).toBeVisible();
   });
 
   test("shows View links for each document", async ({ page }) => {
-    await login(page);
+    await loginAsConsentUser(page);
     await page.goto("/consent");
     await page.waitForTimeout(2_000);
 
     const heading = page.locator("text=/Review Our Terms|Updated Our Terms/i");
     if ((await heading.count()) === 0) {
-      test.skip(true, "Consent already accepted");
+      test.skip(true, "Consent form not shown");
       return;
     }
 
@@ -62,13 +72,13 @@ test.describe("Consent — Form Elements", () => {
   });
 
   test("Accept button is disabled until checkbox is checked", async ({ page }) => {
-    await login(page);
+    await loginAsConsentUser(page);
     await page.goto("/consent");
     await page.waitForTimeout(2_000);
 
     const heading = page.locator("text=/Review Our Terms|Updated Our Terms/i");
     if ((await heading.count()) === 0) {
-      test.skip(true, "Consent already accepted");
+      test.skip(true, "Consent form not shown");
       return;
     }
 
@@ -85,13 +95,13 @@ test.describe("Consent — Form Elements", () => {
   });
 
   test("Decline button is visible", async ({ page }) => {
-    await login(page);
+    await loginAsConsentUser(page);
     await page.goto("/consent");
     await page.waitForTimeout(2_000);
 
     const heading = page.locator("text=/Review Our Terms|Updated Our Terms/i");
     if ((await heading.count()) === 0) {
-      test.skip(true, "Consent already accepted");
+      test.skip(true, "Consent form not shown");
       return;
     }
 
@@ -104,17 +114,11 @@ test.describe("Consent — Form Elements", () => {
 
 test.describe("Consent — Auto-Redirect", () => {
   test("redirects to dashboard if consent already given", async ({ page }) => {
-    await login(page);
+    // Use the primary student who has consent pre-accepted
+    await loginAsStudent(page);
 
-    // If user has already consented, /consent should redirect
     await page.goto("/consent");
     await page.waitForTimeout(3_000);
-
-    const heading = page.locator("text=/Review Our Terms|Updated Our Terms/i");
-    if ((await heading.count()) > 0) {
-      test.skip(true, "Consent not yet given — cannot test redirect");
-      return;
-    }
 
     // Should have redirected away from /consent
     expect(page.url()).not.toContain("/consent");

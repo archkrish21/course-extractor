@@ -92,7 +92,7 @@ const sb = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL, process.env.SUPABA
 | # | What | Why |
 |---|------|-----|
 | 1 | Clean up ephemeral accounts from previous runs | Idempotent start |
-| 2 | Create/verify 6 auth users via Supabase Admin API | All test accounts exist in auth.users |
+| 2 | Create/verify 7 auth users via Supabase Admin API + reset all passwords to `Test1234!` | All test accounts exist in auth.users with correct passwords |
 | 3 | Ensure app user rows in `users` table | Links auth IDs to app-level user records |
 | 4 | Student A account (Gr10, graduation 2028, IL/Stevenson HS) | Primary test student |
 | 5 | Account members: student + parent (edit) + counselor (read-only) | Role-based and multi-child tests |
@@ -110,11 +110,14 @@ const sb = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL, process.env.SUPABA
 | 17 | Verify final state and log summary | Catch setup failures early |
 
 **Key design decisions for test data:**
+- **Password reset on every run**: `global-setup.ts` calls `updateUserById` to reset ALL persistent test account passwords to `Test1234!`, even for pre-existing accounts. This prevents silent login failures that cause tests to skip.
 - **Consent test user** (`consent-test@test.com`): Has a valid account but consent records are *deleted* each run. This ensures the consent form tests (Terms of Service, checkbox, Accept/Decline buttons) always see the form. The redirect test uses `student@test.com` which has consent pre-accepted.
 - **Ungraded Gr10 courses**: 2 courses are reset to `enrolled` (no grade) each run even if previous test runs graded them. This ensures the year-end wizard shows grade dropdowns and the `fillAllGrades()` helper can exercise them.
 - **Parent linked to 2 children**: `parent@test.com` is a member of both Student A and Student B accounts. This enables the account switcher to show both children with different grade levels (Gr9 vs Gr10).
 - **Plan shares**: Explicit `plan_shares` rows for parent (edit) and counselor (view) on the primary plan. Without these, counselor tests that check for "View" buttons would skip.
 - **`activated_at` on primary plans**: Required by the `primary_has_activated_at` check constraint. Both Student A and Student B plans set `activated_at = NOW()`.
+- **Ephemeral accounts for onboarding signup tests**: `student2@test.com` and `student3@test.com` are created during the onboarding Blank Plan and Template Plan tests. `global-setup.ts` deletes them at the start of each run (step 1), and `global-teardown.ts` deletes them at the end. This ensures signup tests always have a clean state. The Onboarding-Tester **must run with `--workers=1`** because these tests create real accounts sequentially and the guided tour popover interferes with parallel execution.
+- **ToS checkbox on signup**: The signup form has a mandatory "I agree to the Terms of Service and Privacy Policy" checkbox that must be checked before submit. The ephemeral signup tests check this checkbox before clicking "Create account".
 
 **Automatic cleanup by global-teardown.ts (runs after all tests):**
 - Removes plans named "E2E %" or "Demo" (created during planner tests)
@@ -128,12 +131,14 @@ import { login, loginAndGoTo } from "./helpers";
 ```
 
 **Selector guidelines specific to this codebase:**
-- Use `{ name: "Next", exact: true }` for buttons — avoids matching Next.js dev tools button
+- Use `{ name: "Next", exact: true }` for buttons — avoids matching Next.js dev tools button (`data-nextjs-dev-tools-button`)
 - Use `{ name: "Back", exact: true }` for buttons — avoids matching the "Send feedback" FAB
-- Use `getByRole("heading", { name: "..." })` instead of `text=` for page headings — avoids matching guided tour popovers
+- Use `{ name: "Complete", exact: true }` and `{ name: "Accept", exact: true }` — same reason
+- Use `getByRole("heading", { name: "..." })` instead of `text=` for page headings — avoids matching guided tour popovers (e.g., "Course Planner 📋", "Academic Progress Tour 📊")
 - Use `button[aria-label="User menu"]` for the account switcher — NOT `aria-label*="account"` or `aria-label*="switch"`
 - Use `.first()` on locators that may match multiple elements (e.g., "Terms of Service" appears in heading, checkbox label, and footer)
 - Use `getByLabel("Password").first()` for password inputs — avoids matching "Show password" toggle button
+- Always check ToS checkbox before submitting signup form — submit button is disabled without it
 
 ### Sub-Agent assignments
 
@@ -142,7 +147,7 @@ Each sub-agent runs its spec files via `npx playwright test <files>` and reports
 | Sub-Agent | Command | Spec Files | Tests |
 |-----------|---------|-----------|-------|
 | Auth-Tester | `npx playwright test auth claim consent signup-redesign consent-settings` | 5 files | ~60 |
-| Onboarding-Tester | `npx playwright test onboarding` | 1 file | ~24 |
+| Onboarding-Tester | `npx playwright test onboarding --workers=1` | 1 file | ~24 |
 | Planner-Tester | `npx playwright test planner planner-add-course planner-grades planner-manage planner-validation course-browser summer-planner summer-course-browser` | 8 files | ~148 |
 | Plans-Tester | `npx playwright test plan-management print-gating` | 2 files | ~32 |
 | Progress-Tester | `npx playwright test progress gpa-trend grade-lock` | 3 files | ~76 |
@@ -637,11 +642,14 @@ npx playwright test progress gpa-trend grade-lock                               
 npx playwright test critical-journeys                                            # Journeys
 npx playwright test role-based                                                   # Roles
 
-# Year-end tests are sensitive to shared state — use 1 worker to avoid flakiness
+# Year-end and onboarding must run with 1 worker (shared state / sequential signup)
 npx playwright test year-end.spec --workers=1
+npx playwright test onboarding --workers=1
 ```
 
-**Known parallel flakiness:** Year-end wizard tests share server-side state (course grades). When multiple workers run year-end tests concurrently, one worker may grade courses that another worker expects to be ungraded, causing sporadic skips on Step 3 review tests. Run with `--workers=1` if year-end tests show unexpected skips.
+**Tests that require `--workers=1`:**
+- **Year-end wizard**: Tests share server-side state (course grades). Parallel workers may grade courses that another worker expects to be ungraded, causing sporadic skips on Step 3 review tests.
+- **Onboarding signup flows**: The Blank Plan and Template Plan tests create real accounts (`student2@test.com`, `student3@test.com`) sequentially. Running in parallel causes race conditions on account creation. The guided tour popover also interferes with page assertions if multiple tests hit the planner concurrently.
 
 ### Cleanup after destructive tests
 

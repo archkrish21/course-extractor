@@ -416,28 +416,30 @@ function DesktopGrid({
             {!isCollapsed && (() => {
               return (
               <div className="border-t border-border bg-card p-3">
-                {/* Pre-summer row (before regular semesters) */}
+                {/* Pre-summer row */}
                 {!summerExpanded.has(grade) ? (
                   <button
                     type="button"
                     onClick={() => setSummerExpanded((prev) => new Set(prev).add(grade))}
-                    className="mb-2 flex min-h-[36px] w-full items-center justify-center gap-1.5 rounded-lg border border-dashed border-warning/30 bg-warning-light/50 text-xs font-medium text-warning hover:border-warning/50 hover:bg-warning-light transition-colors"
+                    className="mb-3 flex min-h-[44px] w-full items-center justify-center gap-2 rounded-xl border-2 border-dashed border-warning/25 bg-warning-light/30 text-sm font-medium text-warning hover:border-warning/40 hover:bg-warning-light/60 transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
+                    aria-label={`Show pre-summer courses for Grade ${grade}`}
                   >
-                    <svg aria-hidden="true" className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                    <svg aria-hidden="true" className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
                     </svg>
                     Pre-Summer Courses
                   </button>
                 ) : (
-                  <div className="mb-3 rounded-xl border border-warning/30 bg-warning-light/50 p-3">
+                  <div className="mb-3">
                     <div className="mb-2 flex items-center justify-between">
-                      <h3 className="text-xs font-semibold uppercase tracking-wider text-warning">
+                      <p className="text-xs font-semibold uppercase tracking-wider text-warning">
                         Pre-Summer Courses
-                      </h3>
+                      </p>
                       <button
                         type="button"
                         onClick={() => setSummerExpanded((prev) => { const n = new Set(prev); n.delete(grade); return n; })}
-                        className="text-xs text-warning/70 hover:text-warning"
+                        className="min-h-[32px] rounded-lg px-2.5 py-1 text-xs font-medium text-warning/70 hover:bg-warning-light hover:text-warning transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
+                        aria-label={`Hide pre-summer courses for Grade ${grade}`}
                       >
                         Hide
                       </button>
@@ -446,10 +448,21 @@ function DesktopGrid({
                       {SUMMER_SEMESTERS.map((sem) => {
                         const cellCourses = sortCourses(getSemesterCourses(courses, grade, sem));
                         return (
-                          <div key={sem} className="min-h-[60px] rounded-lg border border-dashed border-warning/20 bg-card p-2">
-                            <p className="mb-1 text-[10px] font-medium text-warning">
-                              {semesterLabel(sem)}
-                            </p>
+                          <div
+                            key={sem}
+                            className="min-h-[100px] rounded-xl border-2 border-dashed border-warning/25 bg-warning-light/20 p-3 transition-colors hover:border-warning/35"
+                          >
+                            {/* Cell header — matches regular semester header */}
+                            <div className="mb-1.5 flex items-center justify-between">
+                              <p className="text-xs font-medium text-warning">
+                                {semesterLabel(sem)}
+                              </p>
+                              <span className="text-[10px] text-warning/60">
+                                {cellCourses.length} course{cellCourses.length !== 1 ? "s" : ""}
+                              </span>
+                            </div>
+
+                            {/* Course cards */}
                             <div className="space-y-1.5">
                               {cellCourses.map((course) => (
                                 <PlanCourseCard
@@ -466,17 +479,24 @@ function DesktopGrid({
                                 />
                               ))}
                             </div>
+
+                            {/* Add course button — matches regular semester add button */}
                             {!readOnly && !isGradeLocked && (
                               <button
                                 type="button"
                                 onClick={() => onAddCourse(grade, sem)}
-                                className="mt-1 flex min-h-[32px] w-full items-center justify-center gap-1 rounded border border-dashed border-warning/20 text-[10px] text-warning/70 hover:border-warning/40 hover:text-warning transition-colors"
+                                className={`
+                                  mt-1.5 flex min-h-[44px] w-full items-center justify-center gap-1.5
+                                  rounded-lg border border-dashed text-sm transition-colors duration-150
+                                  focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring
+                                  border-warning/25 text-warning/60 hover:border-warning/40 hover:text-warning hover:bg-warning-light/40 cursor-pointer
+                                `}
                                 aria-label={`Add course to Grade ${grade}, ${semesterLabel(sem)}`}
                               >
-                                <svg aria-hidden="true" className="h-3 w-3" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                                <svg aria-hidden="true" className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
                                   <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
                                 </svg>
-                                Add
+                                Add Course
                               </button>
                             )}
                           </div>

@@ -421,7 +421,7 @@ function DesktopGrid({
                   <button
                     type="button"
                     onClick={() => setSummerExpanded((prev) => new Set(prev).add(grade))}
-                    className="mb-2 flex min-h-[36px] w-full items-center justify-center gap-1.5 rounded-lg border border-dashed border-amber-300/50 bg-amber-50/30 text-xs font-medium text-amber-600 hover:border-amber-400 hover:bg-amber-50/60 transition-colors dark:border-amber-700/30 dark:bg-amber-950/20 dark:text-amber-400"
+                    className="mb-2 flex min-h-[36px] w-full items-center justify-center gap-1.5 rounded-lg border border-dashed border-warning/30 bg-warning-light/50 text-xs font-medium text-warning hover:border-warning/50 hover:bg-warning-light transition-colors"
                   >
                     <svg aria-hidden="true" className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
@@ -429,15 +429,15 @@ function DesktopGrid({
                     Pre-Summer Courses
                   </button>
                 ) : (
-                  <div className="mb-3 rounded-xl border border-amber-300/40 bg-amber-50/20 p-3 dark:border-amber-700/30 dark:bg-amber-950/10">
+                  <div className="mb-3 rounded-xl border border-warning/30 bg-warning-light/50 p-3">
                     <div className="mb-2 flex items-center justify-between">
-                      <h3 className="text-xs font-semibold uppercase tracking-wider text-amber-700 dark:text-amber-400">
+                      <h3 className="text-xs font-semibold uppercase tracking-wider text-warning">
                         Pre-Summer Courses
                       </h3>
                       <button
                         type="button"
                         onClick={() => setSummerExpanded((prev) => { const n = new Set(prev); n.delete(grade); return n; })}
-                        className="text-xs text-amber-500 hover:text-amber-700"
+                        className="text-xs text-warning/70 hover:text-warning"
                       >
                         Hide
                       </button>
@@ -446,8 +446,8 @@ function DesktopGrid({
                       {SUMMER_SEMESTERS.map((sem) => {
                         const cellCourses = sortCourses(getSemesterCourses(courses, grade, sem));
                         return (
-                          <div key={sem} className="min-h-[60px] rounded-lg border border-dashed border-amber-200/60 bg-white/50 p-2 dark:border-amber-800/30 dark:bg-amber-950/20">
-                            <p className="mb-1 text-[10px] font-medium text-amber-600 dark:text-amber-400">
+                          <div key={sem} className="min-h-[60px] rounded-lg border border-dashed border-warning/20 bg-card p-2">
+                            <p className="mb-1 text-[10px] font-medium text-warning">
                               {semesterLabel(sem)}
                             </p>
                             <div className="space-y-1.5">
@@ -470,7 +470,7 @@ function DesktopGrid({
                               <button
                                 type="button"
                                 onClick={() => onAddCourse(grade, sem)}
-                                className="mt-1 flex min-h-[32px] w-full items-center justify-center gap-1 rounded border border-dashed border-amber-200 text-[10px] text-amber-500 hover:border-amber-400 hover:text-amber-700 transition-colors"
+                                className="mt-1 flex min-h-[32px] w-full items-center justify-center gap-1 rounded border border-dashed border-warning/20 text-[10px] text-warning/70 hover:border-warning/40 hover:text-warning transition-colors"
                                 aria-label={`Add course to Grade ${grade}, ${semesterLabel(sem)}`}
                               >
                                 <svg aria-hidden="true" className="h-3 w-3" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">

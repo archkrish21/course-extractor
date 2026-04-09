@@ -344,7 +344,7 @@ export function CoursePicker({
               <h2 className="text-lg font-semibold text-foreground">
                 {semester < 0 ? "Add Summer Course" : "Add Course"}
               </h2>
-              <p className={`text-xs ${semester < 0 ? "text-amber-600 dark:text-amber-400" : "text-muted-foreground"}`}>
+              <p className={`text-xs ${semester < 0 ? "text-warning" : "text-muted-foreground"}`}>
                 Grade {gradeLevel}{semester === -2 ? ", Pre-Summer Session 1" : semester === -1 ? ", Pre-Summer Session 2" : `, Semester ${semester}`}
               </p>
             </div>
@@ -586,7 +586,7 @@ export function CoursePicker({
                               {course.creditType}
                             </Badge>
                             {course.semestersOffered?.some((s: number) => s < 0) && (
-                              <Badge className="text-[10px] px-1.5 py-0 bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400">
+                              <Badge variant="warning" className="text-[10px] px-1.5 py-0">
                                 Summer
                               </Badge>
                             )}

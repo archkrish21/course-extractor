@@ -144,7 +144,7 @@ export function CourseDetailModal({
                     {c.creditType}
                   </Badge>
                   {c.semestersOffered?.some((s: number) => s < 0) && (
-                    <Badge className="bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400">Summer</Badge>
+                    <Badge variant="warning">Summer</Badge>
                   )}
                   {c.isAp && c.creditType !== "AP" && (
                     <Badge variant="ap">Advanced Placement</Badge>

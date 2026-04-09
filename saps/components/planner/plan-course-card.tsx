@@ -240,7 +240,7 @@ export function PlanCourseCard({
           </Badge>
 
           {course.semestersOffered?.some((s: number) => s < 0) && (
-            <Badge className="text-[10px] px-1.5 py-0 bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400">
+            <Badge variant="warning" className="text-[10px] px-1.5 py-0">
               Summer
             </Badge>
           )}

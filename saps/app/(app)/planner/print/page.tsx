@@ -324,17 +324,17 @@ export default function PrintPlanPage() {
               {/* Pre-summer courses (only if present) */}
               {semGroups.some((g) => g.sem < 0 && g.courses.length > 0) && (
                 <div className="mt-1 mb-2 rounded border border-gray-200 bg-amber-50/30 p-2">
-                  <p className="mb-1 text-[10px] font-semibold text-amber-700 uppercase">Pre-Summer Courses</p>
+                  <p className="mb-1 text-[10px] font-semibold text-warning uppercase">Pre-Summer Courses</p>
                   <div className="grid grid-cols-2 gap-4">
                     {semGroups.filter((g) => g.sem < 0).map((g) => (
                       <div key={g.sem}>
-                        <p className="mb-0.5 text-[9px] font-medium text-amber-600">
+                        <p className="mb-0.5 text-[9px] font-medium text-warning">
                           {g.sem === -2 ? "Session 1" : "Session 2"}
                         </p>
                         <table className="w-full text-xs">
                           <tbody>
                             {g.courses.map((c) => (
-                              <tr key={c.id} className="border-b border-amber-200/50">
+                              <tr key={c.id} className="border-b border-warning/20">
                                 <td className="py-0.5 truncate max-w-[180px]" title={c.name}>{c.name}</td>
                                 <td className="py-0.5 text-gray-500">{c.code}</td>
                                 <td className="py-0.5 text-center font-semibold">{c.plannedGrade ?? "—"}</td>

@@ -551,7 +551,7 @@ export default function CourseBrowserPage() {
                             {course.creditType}
                           </Badge>
                           {course.semestersOffered?.some((s: number) => s < 0) && (
-                            <Badge className="bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400">Summer</Badge>
+                            <Badge variant="warning">Summer</Badge>
                           )}
                           {course.isAp && course.creditType !== "AP" && <Badge variant="ap">AP</Badge>}
                           {course.isDualCredit && <Badge variant="dual-credit">Dual Credit</Badge>}
@@ -804,7 +804,7 @@ export default function CourseBrowserPage() {
                     {selectedCourse.creditType}
                   </Badge>
                   {selectedCourse.semestersOffered?.some((s: number) => s < 0) && (
-                    <Badge className="bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400">Summer</Badge>
+                    <Badge variant="warning">Summer</Badge>
                   )}
                   {selectedCourse.isAp && selectedCourse.creditType !== "AP" && (
                     <Badge variant="ap">Advanced Placement</Badge>

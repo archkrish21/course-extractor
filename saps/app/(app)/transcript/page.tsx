@@ -399,8 +399,8 @@ export default function GradesPage() {
 
                       return (
                         <div key={sem} className="border-b border-border last:border-b-0">
-                          <div className={`px-4 py-2.5 sm:px-5 ${isSummer ? "bg-amber-50/50 dark:bg-amber-950/20" : "bg-muted/30"}`}>
-                            <h3 className={`text-xs font-semibold uppercase tracking-wider ${isSummer ? "text-amber-700 dark:text-amber-400" : "text-muted-foreground"}`}>{label}</h3>
+                          <div className={`px-4 py-2.5 sm:px-5 ${isSummer ? "bg-warning-light/50" : "bg-muted/30"}`}>
+                            <h3 className={`text-xs font-semibold uppercase tracking-wider ${isSummer ? "text-warning" : "text-muted-foreground"}`}>{label}</h3>
                           </div>
 
                           {/* Table header */}

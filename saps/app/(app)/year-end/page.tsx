@@ -228,7 +228,7 @@ export default function YearEndPage() {
                   const label = sem === -2 ? "Pre-Summer Session 1" : sem === -1 ? "Pre-Summer Session 2" : `Semester ${sem}`;
                   return (
                     <div key={sem}>
-                      <p className={`mb-2 text-xs font-semibold uppercase tracking-wider ${isSummer ? "text-amber-700 dark:text-amber-400" : "text-muted-foreground"}`}>{label}</p>
+                      <p className={`mb-2 text-xs font-semibold uppercase tracking-wider ${isSummer ? "text-warning" : "text-muted-foreground"}`}>{label}</p>
                       <div className="overflow-hidden rounded-lg border border-border">
                         <table className="w-full text-sm">
                           <thead>

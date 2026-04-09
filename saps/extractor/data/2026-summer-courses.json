@@ -1,0 +1,762 @@
+{
+  "metadata": {
+    "source": "SHSSummerSchool202632026INTERACTIVE.pdf",
+    "extracted_at": "2026-04-09T03:59:43.890707+00:00",
+    "year": 2026,
+    "type": "summer",
+    "total_courses": 27
+  },
+  "courses": [
+    {
+      "code": "D/E21S",
+      "all_codes": [
+        "D/E21S",
+        "D/E22S",
+        "BUS71S",
+        "BUS72S"
+      ],
+      "name": "Driver Education",
+      "division": "Applied Arts",
+      "department": "Driver Education",
+      "description": "APPLIED ARTS BUSINESS EDUCATION\nDRIVER EDUCATION INTRODUCTION TO BUSINESS\nOne-Semester course offered either semester One-Semester Course Offered Either Semester\nD/E21S: June 2-June 25 D/E22S: June 29-July 23 BUS71S: June 2-June 25 BUS72S: June 29-July 23\n7:45 a.m.-12:50 p.m. Open to: 10-11-12 7:45 A.m.-12:50 P.m. Open to: 9-10-11-12\n1 SEMESTER CREDIT 1 Semester Credit GPA Waiver Option\nCost: $425/semester + $400 Behind the Wheel Driving + Cost: $425/Semester Prerequisite: None\n$20 Fee to be pai",
+      "credit_value": 1.0,
+      "duration": "semester",
+      "credit_type": "CP",
+      "grade_levels": [
+        10,
+        11,
+        12
+      ],
+      "semesters_offered": [
+        -2,
+        -1
+      ],
+      "gpa_waiver": true,
+      "is_summer": true,
+      "prerequisite_text": null,
+      "prerequisite_groups": [],
+      "cost": "425"
+    },
+    {
+      "code": "BUS12S",
+      "all_codes": [
+        "BUS12S"
+      ],
+      "name": "Business Applications and Technology 1",
+      "division": "Applied Arts",
+      "department": "Business Education",
+      "description": "ESS APPLICATIONS AND TECHNOLOGY 1\nimpaired and distracted driving. Students must also meet\nOne-Semester Course Offered Second Semester Only\nall of the essential course requirements as mandated by the\nBUS12S: June 29-July 23 7:45 A.m.-12:50 P.m.\nIllinois State Board of Education and the Secretary of State\u2019s\nOpen to: 9-10-11-12 1 Semester Credit\nOffice. This includes 50 hours of at-home practice, completed\nGPA Waiver Option Cost: $425/Semester\nconcurrently while taking the course. The grade earned",
+      "credit_value": 1.0,
+      "duration": "semester",
+      "credit_type": "CP",
+      "grade_levels": [
+        9,
+        10,
+        11,
+        12
+      ],
+      "semesters_offered": [
+        -2,
+        -1
+      ],
+      "gpa_waiver": true,
+      "is_summer": true,
+      "prerequisite_text": null,
+      "prerequisite_groups": [],
+      "cost": "425"
+    },
+    {
+      "code": "CAR53S",
+      "all_codes": [
+        "CAR53S",
+        "CAR35S"
+      ],
+      "name": "Careers in Business",
+      "division": "Student Learning Programs",
+      "department": "Career Exploration",
+      "description": "CAREER EXPLORATION\nCAREERS IN BUSINESS CAREERS IN LAW\nEight-day course offered FIRST semester only Eight-day course offered FIRST semester only\nCAR53S: June 2-June 11 7:45 A.M.-12:50 P.m. CAR35S: June 2-June 11 7:45 A.M.-12:50 P.m.\nOpen to: 10-11-12 0.5 Semester Credit (Pass/Fail) Open to: 10-11-12 0.5 Semester Credit (Pass/Fail)\nCost: $225 Prerequisite: None Cost: $225 Prerequisite: None\nCareers in Business is a two-week course designed for Careers in Law is a two-week course for those students",
+      "credit_value": 0.5,
+      "duration": "semester",
+      "credit_type": "Pass/Fail",
+      "grade_levels": [
+        10,
+        11,
+        12
+      ],
+      "semesters_offered": [
+        -2,
+        -1
+      ],
+      "gpa_waiver": false,
+      "is_summer": true,
+      "prerequisite_text": "None Cost: $225 Prerequisite: None",
+      "prerequisite_groups": [],
+      "cost": "225"
+    },
+    {
+      "code": "CAR62S",
+      "all_codes": [
+        "CAR62S"
+      ],
+      "name": "Careers in STEM",
+      "division": "Student Learning Programs",
+      "department": "Career Exploration",
+      "description": "trending careers in this field through classroom visits by\nprofessionals, activities and field trips.\nCAREERS IN STEM\nEight-day course offered SECOND semester only\nCAREERS IN HEALTHCARE AND MEDICINE CAR62S: June 29-July 9 7:45 a.m.-12:50 P.M.\nEight-Day Course Offered First Semester Only Open to: 10-11-12 0.5 Semester Credit (Pass/Fail)",
+      "credit_value": 0.5,
+      "duration": "semester",
+      "credit_type": "Pass/Fail",
+      "grade_levels": [
+        10,
+        11,
+        12
+      ],
+      "semesters_offered": [
+        -2,
+        -1
+      ],
+      "gpa_waiver": false,
+      "is_summer": true,
+      "prerequisite_text": null,
+      "prerequisite_groups": [],
+      "cost": null
+    },
+    {
+      "code": "CAR31S",
+      "all_codes": [
+        "CAR31S",
+        "CAR33S"
+      ],
+      "name": "Careers in Healthcare and Medicine",
+      "division": "Student Learning Programs",
+      "department": "Career Exploration",
+      "description": "ered SECOND semester only\nCAREERS IN HEALTHCARE AND MEDICINE CAR62S: June 29-July 9 7:45 a.m.-12:50 P.M.\nEight-Day Course Offered First Semester Only Open to: 10-11-12 0.5 Semester Credit (Pass/Fail)\nCAR31S: June 2-June 11 CAR33S: June 15-JUNE 25 Cost: $225 Prerequisite: None\n7:45 A.M.-12:50 P.m. Open to: 10-11-12 Careers in Stem is a two-week course designed for those\n0.5 Semester Credit (Pass/Fail) Cost: $225 students wishing to explore careers in STEM (Science,\nPrerequisite: None\nTechnology, ",
+      "credit_value": 0.5,
+      "duration": "semester",
+      "credit_type": "Pass/Fail",
+      "grade_levels": [
+        10,
+        11,
+        12
+      ],
+      "semesters_offered": [
+        -2,
+        -1
+      ],
+      "gpa_waiver": false,
+      "is_summer": true,
+      "prerequisite_text": null,
+      "prerequisite_groups": [],
+      "cost": "225"
+    },
+    {
+      "code": "ENG25S",
+      "all_codes": [
+        "ENG25S"
+      ],
+      "name": "English Failure Credit Recovery",
+      "division": "Communication Arts",
+      "department": "English",
+      "description": "N ARTS\nCOLLEGE ESSAY WORKSHOP ENGLISH FAILURE CREDIT RECOVERY\nFour-Day Course Offered FIVE Different Times; Students May One-Semester Course Offered First Semester Only\nRegister for Multiple Sessions ENG25S: June 2-June 25 7:45 A.m.-12:50 P.m.\nOpen to: 11-12 Non-credit course Open to: 10-11-12 1 Semester English Credit\nCost: $100/semester Prerequisite: None Cost: $425/Semester\nPrerequisite: prior enrollment in Freshman, Sophomore, Junior",
+      "credit_value": 1.0,
+      "duration": "semester",
+      "credit_type": "CP",
+      "grade_levels": [
+        11,
+        12
+      ],
+      "semesters_offered": [
+        -2
+      ],
+      "gpa_waiver": false,
+      "is_summer": true,
+      "prerequisite_text": "None Cost: $425/Semester",
+      "prerequisite_groups": [],
+      "cost": "100"
+    },
+    {
+      "code": "ENG51S",
+      "all_codes": [
+        "ENG51S"
+      ],
+      "name": "College Essay Workshop",
+      "division": "Communication Arts",
+      "department": "English",
+      "description": ".\nOpen to: 11-12 Non-credit course Open to: 10-11-12 1 Semester English Credit\nCost: $100/semester Prerequisite: None Cost: $425/Semester\nPrerequisite: prior enrollment in Freshman, Sophomore, Junior\nENG51S: June 2-June 5 7:45 A.m.-12:50 P.m.\nand/or Senior English\nENG53S*: June 8-June 11 4-8:30 P.M.\nNote: This 4-8:30 p.m. course will only be offered in person. This writing-intensive one-semester course is for students\nThere will be no bus transportation available for this class. who need to earn",
+      "credit_value": 1.0,
+      "duration": "semester",
+      "credit_type": "CP",
+      "grade_levels": [
+        11,
+        12
+      ],
+      "semesters_offered": [
+        -2
+      ],
+      "gpa_waiver": false,
+      "is_summer": true,
+      "prerequisite_text": "None Cost: $425/Semester",
+      "prerequisite_groups": [],
+      "cost": "100"
+    },
+    {
+      "code": "ENG55S",
+      "all_codes": [
+        "ENG55S"
+      ],
+      "name": "College Essay Workshop",
+      "division": "Communication Arts",
+      "department": "English",
+      "description": "y be offered in person. This writing-intensive one-semester course is for students\nThere will be no bus transportation available for this class. who need to earn Freshman, Sophomore, Junior or Senior\nENG55S: June 22-June 25 7:45 A.m.-12:50 P.m. English credit due to a failure of either first or second",
+      "credit_value": 1.0,
+      "duration": "semester",
+      "credit_type": "CP",
+      "grade_levels": [
+        9,
+        10,
+        11,
+        12
+      ],
+      "semesters_offered": [
+        -2
+      ],
+      "gpa_waiver": false,
+      "is_summer": true,
+      "prerequisite_text": null,
+      "prerequisite_groups": [],
+      "cost": null
+    },
+    {
+      "code": "ENG54S",
+      "all_codes": [
+        "ENG54S"
+      ],
+      "name": "College Essay Workshop",
+      "division": "Communication Arts",
+      "department": "English",
+      "description": "transportation available for this class. who need to earn Freshman, Sophomore, Junior or Senior\nENG55S: June 22-June 25 7:45 A.m.-12:50 P.m. English credit due to a failure of either first or second\nENG54S: July 6-July 9 4-8:30 P.m. semester. Students will perform a well-rounded set of skills\nNote: This 4-8:30 p.m. course will only be offered virtually via Zoom. in various activities or remediate particular weaknesses in a",
+      "credit_value": 1.0,
+      "duration": "semester",
+      "credit_type": "CP",
+      "grade_levels": [
+        9,
+        10,
+        11,
+        12
+      ],
+      "semesters_offered": [
+        -2,
+        -1
+      ],
+      "gpa_waiver": false,
+      "is_summer": true,
+      "prerequisite_text": null,
+      "prerequisite_groups": [],
+      "cost": null
+    },
+    {
+      "code": "ENG56S",
+      "all_codes": [
+        "ENG56S"
+      ],
+      "name": "College Essay Workshop",
+      "division": "Communication Arts",
+      "department": "English",
+      "description": "P.m. semester. Students will perform a well-rounded set of skills\nNote: This 4-8:30 p.m. course will only be offered virtually via Zoom. in various activities or remediate particular weaknesses in a\nENG56S: July 20-July 23 7:45 A.m.-12:50 P.m. skill or skills that led to their earlier no credit in a course, as\ndirected by their summer school teacher. They may also cover\nStudents will write college essays/personal statements\nan ACT English unit in grammar usage, punctuation and style.\nfor multipl",
+      "credit_value": 1.0,
+      "duration": "semester",
+      "credit_type": "CP",
+      "grade_levels": [
+        9,
+        10,
+        11,
+        12
+      ],
+      "semesters_offered": [
+        -2,
+        -1
+      ],
+      "gpa_waiver": false,
+      "is_summer": true,
+      "prerequisite_text": null,
+      "prerequisite_groups": [],
+      "cost": null
+    },
+    {
+      "code": "ENG71S",
+      "all_codes": [
+        "ENG71S"
+      ],
+      "name": "Reading for College",
+      "division": "Communication Arts",
+      "department": "English",
+      "description": "student progress and\nREADING FOR COLLEGE\noffer suggestions. Students should come with their essay\nprompts. This workshop does not include counseling on One-Semester Course Offered First Semester Only\nENG71S: June 2-June 25 7:45 A.m.-12:50 P.m.\ncollege choices, nor address other aspects of the application.\nOpen to: 10-11-12 1 Semester Elective Credit\nStudents may register for multiple weeks.\nGPA Waiver Option Cost: $425/Semester\nPrerequisite: None\nCREATIVE WRITING This course is designed for stud",
+      "credit_value": 1.0,
+      "duration": "semester",
+      "credit_type": "CP",
+      "grade_levels": [
+        10,
+        11,
+        12
+      ],
+      "semesters_offered": [
+        -2
+      ],
+      "gpa_waiver": true,
+      "is_summer": true,
+      "prerequisite_text": null,
+      "prerequisite_groups": [],
+      "cost": "425"
+    },
+    {
+      "code": "ENG57S",
+      "all_codes": [
+        "ENG57S"
+      ],
+      "name": "Creative Writing",
+      "division": "Communication Arts",
+      "department": "English",
+      "description": "requisite: None\nCREATIVE WRITING This course is designed for students wanting to improve\nOne-Semester Course Offered First Semester Only their reading and analysis skills for diverse content types or\nENG57S: June 2-June 25 7:45 A.m.-12:50 P.m. simply to better prepare for the ACT and SAT. In addition to\nAccelerated Option Available Open to: 11-12 a main novel or non-fiction work, which helps establish an\n1 Semester ENGLISH Credit for Grade 11\narea of class inquiry, students will develop skills i",
+      "credit_value": 1.0,
+      "duration": "semester",
+      "credit_type": "CP",
+      "grade_levels": [
+        11,
+        12
+      ],
+      "semesters_offered": [
+        -2
+      ],
+      "gpa_waiver": false,
+      "is_summer": true,
+      "prerequisite_text": null,
+      "prerequisite_groups": [],
+      "cost": "425"
+    },
+    {
+      "code": "CSC61S",
+      "all_codes": [
+        "CSC61S",
+        "CSC82S"
+      ],
+      "name": "Computer Programming 1",
+      "division": "Computer Science, Engineering and Technology",
+      "department": "Computer Science",
+      "description": "COMPUTER SCIENCE\nCOMPUTER PROGRAMMING 1 COMPUTER PROGRAMMING 2\nOne-Semester Course Offered First Semester Only ONE-SEMESTER COURSE OFFERED second SEMESTER ONLY\nCSC61S: June 2-June 25 7:45 A.m.-12:50 P.m. CSC82S: JUNE 29-JULY 23 7:45 A.M.-12:50 P.M.\nOpen to: 9-10-11-12 1 Semester Credit OPEN TO: 9-10-11-12 1 SEMESTER CREDIT\nGPA Waiver Option Cost: $425/Semester GPA WAIVER OPTION Cost: $425/Semester\nPrerequisite: None PREREQUISITE: COMPUTER PROGRAMMING 1 (CSC161/162) OR WEB\nDEVELOPMENT 2 (TEC281/2",
+      "credit_value": 1.0,
+      "duration": "semester",
+      "credit_type": "CP",
+      "grade_levels": [
+        9,
+        10,
+        11,
+        12
+      ],
+      "semesters_offered": [
+        -2,
+        -1
+      ],
+      "gpa_waiver": true,
+      "is_summer": true,
+      "prerequisite_text": "None PREREQUISITE: COMPUTER PROGRAMMING 1 (CSC161/162) OR WEB",
+      "prerequisite_groups": [],
+      "cost": "425"
+    },
+    {
+      "code": "ART11S",
+      "all_codes": [
+        "ART11S",
+        "ART12S",
+        "ART31S",
+        "ART32S"
+      ],
+      "name": "Art and Design",
+      "division": "Fine Arts",
+      "department": "Visual Arts",
+      "description": "FINE ARTS\nART AND DESIGN PHOTOGRAPHY 1\nOne-Semester Course Offered Either Semester One-Semester Course Offered Either Semester\nART11S: June 2-June 25 ART12S: JUNE 29-JULY 23 ART31S: June 2-June 25 ART32S: JUNE 29-JULY 23\n7:45 A.m.-12:50 P.m. Open to: 9-10-11-12 7:45 A.m.-12:50 P.m. Open to: 9-10-11-12\n1 Semester Credit GPA Waiver Option 1 Semester Credit GPA Waiver Option\nCost: $425/Semester Prerequisite: None Cost: $425/semester\nPrerequisite: Students may use their own DSLR; however,\nIn this co",
+      "credit_value": 1.0,
+      "duration": "semester",
+      "credit_type": "CP",
+      "grade_levels": [
+        9,
+        10,
+        11,
+        12
+      ],
+      "semesters_offered": [
+        -2,
+        -1
+      ],
+      "gpa_waiver": true,
+      "is_summer": true,
+      "prerequisite_text": "None Cost: $425/semester",
+      "prerequisite_groups": [],
+      "cost": "425"
+    },
+    {
+      "code": "ART51S",
+      "all_codes": [
+        "ART51S",
+        "ART52S"
+      ],
+      "name": "Digital Art and Design 1",
+      "division": "Fine Arts",
+      "department": "Visual Arts",
+      "description": "l requirements\nDIGITAL ART AND DESIGN 1 of digital formats will be addressed, such as formats and\nOne-Semester Course Offered Either Semester resolution. Basic digital manipulations of images will be\nART51S: June 2-June 25 ART52S: JUNE 29-JULY 23 taught in preparation for creating finished art. All students\n7:45 A.m.-12:50 P.m. Open to: 9-10-11-12 in this class will exhibit in the Summer Art Fest.\n1 Semester Credit GPA Waiver Option\nCost: $425/semester Prerequisite: None\nTHEATRE ARTS\nThis course",
+      "credit_value": 1.0,
+      "duration": "semester",
+      "credit_type": "CP",
+      "grade_levels": [
+        9,
+        10,
+        11,
+        12
+      ],
+      "semesters_offered": [
+        -2,
+        -1
+      ],
+      "gpa_waiver": true,
+      "is_summer": true,
+      "prerequisite_text": null,
+      "prerequisite_groups": [],
+      "cost": "425"
+    },
+    {
+      "code": "THR11S",
+      "all_codes": [
+        "THR11S"
+      ],
+      "name": "Theatre Arts",
+      "division": "Fine Arts",
+      "department": "Theatre",
+      "description": "ster Prerequisite: None\nTHEATRE ARTS\nThis course is designed to introduce students to Adobe\nOne-Semester Course Offered First Semester Only\nPhotoshop and Procreate as drawing and graphic design tools\nTHR11S: June 2-June 25 7:45 A.m.-12:50 p.m.\nand as a means of producing finished artwork. Students will\nOpen to: 9-10-11-12 1 Semester Credit\nhave the opportunity to develop skills and be creative while GPA Waiver Option Cost: $425/SEMESTER\ndigitally drawing, painting and manipulating photographic P",
+      "credit_value": 1.0,
+      "duration": "semester",
+      "credit_type": "CP",
+      "grade_levels": [
+        9,
+        10,
+        11,
+        12
+      ],
+      "semesters_offered": [
+        -2
+      ],
+      "gpa_waiver": true,
+      "is_summer": true,
+      "prerequisite_text": null,
+      "prerequisite_groups": [],
+      "cost": "425"
+    },
+    {
+      "code": "MTH25S",
+      "all_codes": [
+        "MTH25S",
+        "MTH26S",
+        "MTH15S",
+        "MTH16S"
+      ],
+      "name": "Geometry",
+      "division": "Mathematics",
+      "department": "Mathematics",
+      "description": "MATHEMATICS\nALGEBRA 1 GEOMETRY\nBOTH SEMESTERS ARE REQUIRED FOR GRADE 9 MTH25S: JUNE 2-JUNE 25 MTH26S: JUNE 29-JULY 23\nMTH15S: JUNE 2-JUNE 25 MTH16S: JUNE 29-JULY 23 7:45 A.M.-12:50 P.M. OPEN TO: 10-11-12\n7:45 A.M.-12:50 P.M. OPEN TO: 9-10-11-12 1 CREDIT PER SEMESTER COST: $425/SEMESTER\n1 CREDIT PER SEMESTER COST: $425/SEMESTER PREREQUISITE: APPROVAL OF DIRECTOR AND COMPLETION OF\nPREREQUISITE: ALGEBRA 1 (MTH151/152) ALGEBRA 1 (MTH151/152)\nTARGET STUDENT GROUP: STUDENTS WHO HAVE COMPLETED A FULL-Y",
+      "credit_value": 1.0,
+      "duration": "semester",
+      "credit_type": "CP",
+      "grade_levels": [
+        10,
+        11,
+        12
+      ],
+      "semesters_offered": [
+        -2,
+        -1
+      ],
+      "gpa_waiver": false,
+      "is_summer": true,
+      "prerequisite_text": "APPROVAL OF DIRECTOR AND COMPLETION OF",
+      "prerequisite_groups": [],
+      "cost": "425"
+    },
+    {
+      "code": "MTH51S",
+      "all_codes": [
+        "MTH51S",
+        "MTH52S",
+        "MTH37S",
+        "MTH38S"
+      ],
+      "name": "Algebra 2",
+      "division": "Mathematics",
+      "department": "Mathematics",
+      "description": "ALGEBRA 2 ALGEBRA 2 AB/BC\nMTH51S: JUNE 2-JUNE 25 MTH52S: JUNE 29-JULY 23 MTH37S: JUNE 2-JUNE 25 MTH38S: JUNE 29-JULY 23\n7:45 A.M.-12:50 P.M. OPEN TO: 10-11-12 7:45 A.M.-12:50 P.M. OPEN TO: 10-11-12\n1 CREDIT PER SEMESTER COST: $425/SEMESTER 1 CREDIT PER SEMESTER COST: $425/SEMESTER\nPREREQUISITE: ALGEBRA 2 (MTH351/352) PREREQUISITE: APPROVAL OF DIRECTOR AND COMPLETION OF\nTARGET STUDENT GROUP: THIS COURSE IS APPROPRIATE FOR STUDENTS GEOMETRY AB/BC (MTH271/272)\nWHO MAY NEED TO RETAKE ALGEBRA 2 (MTH3",
+      "credit_value": 1.0,
+      "duration": "semester",
+      "credit_type": "CP",
+      "grade_levels": [
+        10,
+        11,
+        12
+      ],
+      "semesters_offered": [
+        -2,
+        -1
+      ],
+      "gpa_waiver": false,
+      "is_summer": true,
+      "prerequisite_text": "ALGEBRA 2 (MTH351/352) PREREQUISITE: APPROVAL OF DIRECTOR AND COMPLETION OF",
+      "prerequisite_groups": [],
+      "cost": "425"
+    },
+    {
+      "code": "ELD11S",
+      "all_codes": [
+        "ELD11S",
+        "ELD32S"
+      ],
+      "name": "ELD Skills in Focus: Oracy and Literacy",
+      "division": "Multilingual Learning",
+      "department": "ELD",
+      "description": "MULTILINGUAL LEARNING AND ELD\nELD SKILLS IN FOCUS: ORACY AND LITERACY ELD STUDY SKILLS\nONE-SEMESTER COURSE OFFERED FIRST SEMESTER ONLY Eight-Day Course Offered Second Semester Only\nELD11S: JUNE 2-JUNE 25 7:45 A.M.-12:50 P.M. ELD32S: July 13-July 23 7:45 A.m.-12:50 P.m.\nOPEN TO: 9-10-11-12 1 SEMESTER CREDIT (PASS/FAIL) Open to: 9-10-11-12 0.5 Semester Credit (Pass/Fail)\nCOST: $225/SEMESTER Cost: $100\nPREREQUISITE: MULTILINGUAL ADVANCED LITERATURE OR LANGUAGE Prerequisite: Enrollment in ELD Progra",
+      "credit_value": 1.0,
+      "duration": "semester",
+      "credit_type": "Pass/Fail",
+      "grade_levels": [
+        9,
+        10,
+        11,
+        12
+      ],
+      "semesters_offered": [
+        -2,
+        -1
+      ],
+      "gpa_waiver": false,
+      "is_summer": true,
+      "prerequisite_text": "MULTILINGUAL ADVANCED LITERATURE OR LANGUAGE Prerequisite: Enrollment in ELD Program or Approval of Director",
+      "prerequisite_groups": [],
+      "cost": "225"
+    },
+    {
+      "code": "ELD21S",
+      "all_codes": [
+        "ELD21S"
+      ],
+      "name": "ELD English Enrichment",
+      "division": "Multilingual Learning",
+      "department": "ELD",
+      "description": "lish will be strengthened\nthrough an exploration of various texts, with an emphasis\non self-reflection and cultural exploration.\nELD ENGLISH ENRICHMENT\nOne-Semester Course Offered First Semester Only\nELD21S: June 2-June 25 7:45 A.m.-12:50 P.m.\nOpen to: 9-10-11-12 1 Semester Credit (Pass/Fail)\nCost: $225/Semester\nPrerequisite: Enrollment in ELD Program (going into Intermediate\nor Advanced) or Approval of Director\nThis one-semester course is designed to enrich the academic\nEnglish skills of incomi",
+      "credit_value": 1.0,
+      "duration": "semester",
+      "credit_type": "Pass/Fail",
+      "grade_levels": [
+        9,
+        10,
+        11,
+        12
+      ],
+      "semesters_offered": [
+        -2
+      ],
+      "gpa_waiver": false,
+      "is_summer": true,
+      "prerequisite_text": "Enrollment in ELD Program (going into Intermediate",
+      "prerequisite_groups": [],
+      "cost": "225"
+    },
+    {
+      "code": "PED21S",
+      "all_codes": [
+        "PED21S",
+        "PED22S",
+        "SCI21S"
+      ],
+      "name": "Health Education",
+      "division": "Physical Welfare",
+      "department": "Physical Education",
+      "description": "PHYSICAL WELFARE SCIENCE\nHEALTH EDUCATION ASTRONOMY\nOne-Semester Course Offered Either Semester One-Semester Course Offered First Semester Only\nPED21S: June 2-June 25 PED22S: JUNE 29-JULY 23 SCI21S: June 2-June 25 7:45 A.m.-12:50 P.m.\n7:45 A.m.-12:50 P.m. Open to: 10 Open to: 10-11-12 1 Semester Credit\n1 Semester Credit Cost: $425/Semester GPA Waiver Option Cost: $425/Semester\nPrerequisite: None Prerequisite: Successful completion of one year of\nhigh school science\nThe following Health Education",
+      "credit_value": 1.0,
+      "duration": "semester",
+      "credit_type": "CP",
+      "grade_levels": [
+        10
+      ],
+      "semesters_offered": [
+        -2,
+        -1
+      ],
+      "gpa_waiver": true,
+      "is_summer": true,
+      "prerequisite_text": "None Prerequisite: Successful completion of one year of",
+      "prerequisite_groups": [],
+      "cost": "425"
+    },
+    {
+      "code": "SCI31S",
+      "all_codes": [
+        "SCI31S",
+        "SCI33S"
+      ],
+      "name": "Introduction to Biotechnology",
+      "division": "Science",
+      "department": "Science",
+      "description": "ential activities. During INTRODUCTION TO BIOTECHNOLOGY\nthe Reality of Drugs unit, students will be prepared for the EIGHT-DAY Course Offered First Semester Only\ngraduation-required 46th Credit exam. SCI31S: June 2-June 11 SCI33S: June 15-JUNE 25\n7:45 a.m.-12:50 p.m. Open to: 9-10-11-12\n0.5 semester credit (pass/fail) Cost: $225/SEMESTER\nPrerequisite: None\nIntroduction to Biotechnology is a two-week course\ndesigned for students who want to learn and practice skills\nand techniques used in the fie",
+      "credit_value": 0.5,
+      "duration": "semester",
+      "credit_type": "Pass/Fail",
+      "grade_levels": [
+        9,
+        10,
+        11,
+        12
+      ],
+      "semesters_offered": [
+        -2
+      ],
+      "gpa_waiver": false,
+      "is_summer": true,
+      "prerequisite_text": null,
+      "prerequisite_groups": [],
+      "cost": "225"
+    },
+    {
+      "code": "SOC13S",
+      "all_codes": [
+        "SOC13S",
+        "SOC14S",
+        "SOC43S",
+        "SOC44S"
+      ],
+      "name": "World History and Geography",
+      "division": "Social Studies",
+      "department": "Social Studies",
+      "description": "SOCIAL STUDIES\nWORLD HISTORY AND GEOGRAPHY ECONOMICS\nBoth Semesters ARE Required One-Semester Course Offered Either Semester\nSOC13S: June 2-June 25 SOC14S: JUNE 29-JULY 23 SOC43S: June 2-June 25 SOC44S: JUNE 29-JULY 23\n7:45 A.m.-12:50 P.m. Open to: 9-10-11-12 7:45 A.m.-12:50 P.m. Open to: 11-12\n1 Credit PER SEMESTER Cost: $425/Semester 1 Semester Credit Cost: $425/Semester\nPrerequisite: None Prerequisite: None\nWorld History and Geography focuses on disciplinary skills This course is designed to ",
+      "credit_value": 1.0,
+      "duration": "semester",
+      "credit_type": "CP",
+      "grade_levels": [
+        9,
+        10,
+        11,
+        12
+      ],
+      "semesters_offered": [
+        -2,
+        -1
+      ],
+      "gpa_waiver": false,
+      "is_summer": true,
+      "prerequisite_text": "None Prerequisite: None",
+      "prerequisite_groups": [],
+      "cost": "425"
+    },
+    {
+      "code": "SOC41S",
+      "all_codes": [
+        "SOC41S"
+      ],
+      "name": "U.S. History",
+      "division": "Social Studies",
+      "department": "Social Studies",
+      "description": "perative group work,\nGOVERNMENT\ndebate and class discussions will also be taught. Similar to\nOne-Semester Course Offered FIRST Semester ONLY\nthe regular-year option, completion of both semesters is a\nSOC41S: June 2-June 25 7:45 A.m.-12:50 P.m.\nprerequisite for future social studies courses and will fulfill\nOpen to: 12 1 Semester Credit\na graduation requirement. Cost: $425/Semester\nPrerequisite: World History and Geography and U.S. History\nU.S. HISTORY Topics considered in this course include the",
+      "credit_value": 1.0,
+      "duration": "semester",
+      "credit_type": "CP",
+      "grade_levels": [
+        12
+      ],
+      "semesters_offered": [
+        -2
+      ],
+      "gpa_waiver": false,
+      "is_summer": true,
+      "prerequisite_text": "World History and Geography and U.S. History",
+      "prerequisite_groups": [],
+      "cost": "425"
+    },
+    {
+      "code": "SOC33S",
+      "all_codes": [
+        "SOC33S",
+        "SOC34S"
+      ],
+      "name": "U.S. Government",
+      "division": "Social Studies",
+      "department": "Social Studies",
+      "description": "History and Geography and U.S. History\nU.S. HISTORY Topics considered in this course include the fundamental\nconcepts and structure of federal, state and local government;\nBoth Semesters ARE Required\nSOC33S: June 2-June 25 SOC34S: JUNE 29-JULY 23 methods of selecting candidates for office; methods by which\n7:45 A.m.-12:50 P.m. Open to: 11-12 individuals and groups may influence government officials\n2 Semester Credit Cost: $425/Semester and mechanics of voting. Instruction and assessment will\nPre",
+      "credit_value": 2.0,
+      "duration": "semester",
+      "credit_type": "CP",
+      "grade_levels": [
+        11,
+        12
+      ],
+      "semesters_offered": [
+        -2,
+        -1
+      ],
+      "gpa_waiver": false,
+      "is_summer": true,
+      "prerequisite_text": "World History and Geography address the principles of representative government, as",
+      "prerequisite_groups": [],
+      "cost": "425"
+    },
+    {
+      "code": "IJOB2S",
+      "all_codes": [
+        "IJOB2S"
+      ],
+      "name": "Preparing for Life",
+      "division": "Special Education",
+      "department": "Special Education",
+      "description": "tudents\nimmediate feedback providing additional guidance for\nwill be required to complete a summer reading novel.\nfurther practice.\nPREPARING FOR LIFE\nOne-Semester Course Offered Second Semester Only\nIJOB2S: JUNE 29-JULY 23 7:45 A.m.-12:50 P.m.\nOpen to: 9-10-11-12\nNOTE: NOT AVAILABLE FOR STUDENTS ENTERING TRANSITION\nPROGRAM\n1 Semester Credit Cost: $425/Semester\nPrerequisite: Special Education Identification and Approval\nof Director\nThis course is designed to provide students (at their\nindividual",
+      "credit_value": 1.0,
+      "duration": "semester",
+      "credit_type": "CP",
+      "grade_levels": [
+        9,
+        10,
+        11,
+        12
+      ],
+      "semesters_offered": [
+        -2,
+        -1
+      ],
+      "gpa_waiver": false,
+      "is_summer": true,
+      "prerequisite_text": "Special Education Identification and Approval",
+      "prerequisite_groups": [],
+      "cost": "425"
+    },
+    {
+      "code": "TCH91S",
+      "all_codes": [
+        "TCH91S",
+        "TCH92S"
+      ],
+      "name": "Keys to Success",
+      "division": "Student Services",
+      "department": "Student Services",
+      "description": "igned up for a summer travel trip, please\nKEYS TO SUCCESS remember to pay the Summer School fee online at\nEight-Day Course Offered Either Semester www.d125.org/student-life/travel. Each summer travel\nTCH91S: June 2-June 11 TCH92S: June 29-July 9 experience receives a single semester credit. For more\n7:45 A.m.-12:50 P.m. Open to: 9-10-11-12 information, please visit the Travel Experiences section\n0.5 Semester Credit (Pass/Fail) Cost: $225\nof our website.\nPrerequisite: None\nThis course will prepar",
+      "credit_value": 0.5,
+      "duration": "semester",
+      "credit_type": "Pass/Fail",
+      "grade_levels": [
+        9,
+        10,
+        11,
+        12
+      ],
+      "semesters_offered": [
+        -2,
+        -1
+      ],
+      "gpa_waiver": false,
+      "is_summer": true,
+      "prerequisite_text": null,
+      "prerequisite_groups": [],
+      "cost": "225"
+    }
+  ]
+}

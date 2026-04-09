@@ -43,7 +43,7 @@ test.describe("Year-End — Page Load", () => {
 
     // Step labels
     const confirmGrades = page.locator("text=Confirm Grades");
-    const review = page.locator("text=Review");
+    const review = page.getByText("Review", { exact: true });
     await expect(confirmGrades).toBeVisible();
     await expect(review).toBeVisible();
   });
@@ -99,7 +99,7 @@ test.describe("Year-End — Step 1: Confirm Grades", () => {
     await navigateToYearEnd(page);
 
     const ungraded = page.locator("text=/still need a grade/i");
-    const nextBtn = page.getByRole("button", { name: /Next/i });
+    const nextBtn = page.getByRole("button", { name: "Next", exact: true });
 
     if ((await ungraded.count()) > 0) {
       // Ungraded courses exist — Next should be disabled
@@ -128,7 +128,7 @@ test.describe("Year-End — Step Navigation", () => {
     await navigateToYearEnd(page);
 
     const emptyState = page.locator("text=/No courses found/i");
-    const nextBtn = page.getByRole("button", { name: /Next/i });
+    const nextBtn = page.getByRole("button", { name: "Next", exact: true });
 
     // If no courses or all graded, Next should be clickable
     if ((await emptyState.count()) > 0 || (await nextBtn.isEnabled())) {
@@ -136,7 +136,7 @@ test.describe("Year-End — Step Navigation", () => {
       await page.waitForTimeout(500);
 
       // Should show Step 2 content
-      const step2Heading = page.locator("text=/Advance to Grade|Congratulations/i");
+      const step2Heading = page.locator("text=/Advance to Grade|Congratulations/i").first();
       await expect(step2Heading).toBeVisible({ timeout: 5_000 });
     } else {
       test.skip(true, "Cannot advance — courses need grades");
@@ -146,7 +146,7 @@ test.describe("Year-End — Step Navigation", () => {
   test("Back button returns from Step 2 to Step 1", async ({ page }) => {
     await navigateToYearEnd(page);
 
-    const nextBtn = page.getByRole("button", { name: /Next/i });
+    const nextBtn = page.getByRole("button", { name: "Next", exact: true });
     if (!(await nextBtn.isEnabled())) {
       test.skip(true, "Cannot advance — courses need grades");
       return;
@@ -157,7 +157,7 @@ test.describe("Year-End — Step Navigation", () => {
     await page.waitForTimeout(500);
 
     // Click Back
-    const backBtn = page.getByRole("button", { name: /Back/i });
+    const backBtn = page.getByRole("button", { name: "Back", exact: true });
     await expect(backBtn).toBeVisible({ timeout: 5_000 });
     await backBtn.click();
     await page.waitForTimeout(500);
@@ -170,7 +170,7 @@ test.describe("Year-End — Step Navigation", () => {
   test("Step 2 shows grade advancement cards", async ({ page }) => {
     await navigateToYearEnd(page);
 
-    const nextBtn = page.getByRole("button", { name: /Next/i });
+    const nextBtn = page.getByRole("button", { name: "Next", exact: true });
     if (!(await nextBtn.isEnabled())) {
       test.skip(true, "Cannot advance — courses need grades");
       return;
@@ -187,7 +187,7 @@ test.describe("Year-End — Step Navigation", () => {
   test("can navigate from Step 2 to Step 3 (Review)", async ({ page }) => {
     await navigateToYearEnd(page);
 
-    const nextBtn = page.getByRole("button", { name: /Next/i });
+    const nextBtn = page.getByRole("button", { name: "Next", exact: true });
     if (!(await nextBtn.isEnabled())) {
       test.skip(true, "Cannot advance — courses need grades");
       return;
@@ -198,7 +198,7 @@ test.describe("Year-End — Step Navigation", () => {
     await page.waitForTimeout(500);
 
     // Step 2 → Step 3
-    const nextBtn2 = page.getByRole("button", { name: /Next/i });
+    const nextBtn2 = page.getByRole("button", { name: "Next", exact: true });
     await nextBtn2.click();
     await page.waitForTimeout(500);
 
@@ -214,13 +214,13 @@ test.describe("Year-End — Step 3: Review", () => {
   async function navigateToReview(page: Page) {
     await navigateToYearEnd(page);
 
-    const nextBtn = page.getByRole("button", { name: /Next/i });
+    const nextBtn = page.getByRole("button", { name: "Next", exact: true });
     if (!(await nextBtn.isEnabled())) return false;
 
     await nextBtn.click();
     await page.waitForTimeout(500);
 
-    const nextBtn2 = page.getByRole("button", { name: /Next/i });
+    const nextBtn2 = page.getByRole("button", { name: "Next", exact: true });
     await nextBtn2.click();
     await page.waitForTimeout(500);
     return true;

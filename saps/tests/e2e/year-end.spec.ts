@@ -16,6 +16,19 @@ async function navigateToYearEnd(page: Page) {
   await page.waitForTimeout(3_000);
 }
 
+/** Fill all ungraded course dropdowns with grade "A" so Next becomes enabled. */
+async function fillAllGrades(page: Page) {
+  const selects = page.locator("select");
+  const count = await selects.count();
+  for (let i = 0; i < count; i++) {
+    const value = await selects.nth(i).inputValue();
+    if (!value) {
+      await selects.nth(i).selectOption("A");
+    }
+  }
+  await page.waitForTimeout(500);
+}
+
 // ─── Page Load ─────────────────────────────────────────────────────────────
 
 test.describe("Year-End — Page Load", () => {
@@ -89,10 +102,20 @@ test.describe("Year-End — Step 1: Confirm Grades", () => {
       return;
     }
 
-    // Check that grade options exist
+    // Check that grade options include standard letter grades
     const options = gradeSelect.locator("option");
     const count = await options.count();
-    expect(count).toBeGreaterThanOrEqual(2); // At least "Select" + one grade
+    expect(count).toBeGreaterThanOrEqual(5); // "Select" + A, B, C, D, F at minimum
+
+    // Collect option texts
+    const optionTexts: string[] = [];
+    for (let i = 0; i < count; i++) {
+      const text = await options.nth(i).textContent();
+      if (text) optionTexts.push(text.trim());
+    }
+
+    // Should contain standard letter grades
+    expect(optionTexts).toEqual(expect.arrayContaining(["A", "B", "C", "F"]));
   });
 
   test("Next button is disabled when grades are incomplete", async ({ page }) => {
@@ -127,30 +150,26 @@ test.describe("Year-End — Step Navigation", () => {
   test("Next button advances from Step 1 to Step 2", async ({ page }) => {
     await navigateToYearEnd(page);
 
-    const emptyState = page.locator("text=/No courses found/i");
+    // Fill any ungraded courses so Next becomes enabled
+    await fillAllGrades(page);
+
     const nextBtn = page.getByRole("button", { name: "Next", exact: true });
+    await expect(nextBtn).toBeEnabled({ timeout: 3_000 });
 
-    // If no courses or all graded, Next should be clickable
-    if ((await emptyState.count()) > 0 || (await nextBtn.isEnabled())) {
-      await nextBtn.click();
-      await page.waitForTimeout(500);
+    await nextBtn.click();
+    await page.waitForTimeout(500);
 
-      // Should show Step 2 content
-      const step2Heading = page.locator("text=/Advance to Grade|Congratulations/i").first();
-      await expect(step2Heading).toBeVisible({ timeout: 5_000 });
-    } else {
-      test.skip(true, "Cannot advance — courses need grades");
-    }
+    // Should show Step 2 content
+    const step2Heading = page.locator("text=/Advance to Grade|Congratulations/i").first();
+    await expect(step2Heading).toBeVisible({ timeout: 5_000 });
   });
 
   test("Back button returns from Step 2 to Step 1", async ({ page }) => {
     await navigateToYearEnd(page);
+    await fillAllGrades(page);
 
     const nextBtn = page.getByRole("button", { name: "Next", exact: true });
-    if (!(await nextBtn.isEnabled())) {
-      test.skip(true, "Cannot advance — courses need grades");
-      return;
-    }
+    await expect(nextBtn).toBeEnabled({ timeout: 3_000 });
 
     // Go to step 2
     await nextBtn.click();
@@ -169,12 +188,10 @@ test.describe("Year-End — Step Navigation", () => {
 
   test("Step 2 shows grade advancement cards", async ({ page }) => {
     await navigateToYearEnd(page);
+    await fillAllGrades(page);
 
     const nextBtn = page.getByRole("button", { name: "Next", exact: true });
-    if (!(await nextBtn.isEnabled())) {
-      test.skip(true, "Cannot advance — courses need grades");
-      return;
-    }
+    await expect(nextBtn).toBeEnabled({ timeout: 3_000 });
 
     await nextBtn.click();
     await page.waitForTimeout(500);
@@ -186,12 +203,10 @@ test.describe("Year-End — Step Navigation", () => {
 
   test("can navigate from Step 2 to Step 3 (Review)", async ({ page }) => {
     await navigateToYearEnd(page);
+    await fillAllGrades(page);
 
     const nextBtn = page.getByRole("button", { name: "Next", exact: true });
-    if (!(await nextBtn.isEnabled())) {
-      test.skip(true, "Cannot advance — courses need grades");
-      return;
-    }
+    await expect(nextBtn).toBeEnabled({ timeout: 3_000 });
 
     // Step 1 → Step 2
     await nextBtn.click();
@@ -213,6 +228,7 @@ test.describe("Year-End — Step Navigation", () => {
 test.describe("Year-End — Step 3: Review", () => {
   async function navigateToReview(page: Page) {
     await navigateToYearEnd(page);
+    await fillAllGrades(page);
 
     const nextBtn = page.getByRole("button", { name: "Next", exact: true });
     if (!(await nextBtn.isEnabled())) return false;

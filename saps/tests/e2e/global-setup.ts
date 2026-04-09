@@ -272,7 +272,22 @@ async function globalSetup() {
       console.log(`[e2e-setup] Plan has ${completedCount.rows[0].n} completed courses with grades`);
     }
 
-    // ── 10. Ensure GPA snapshot exists ───────────────────────────────
+    // ── 10. Ensure at least one Gr10 course is enrolled (ungraded) ──
+    // Previous test runs (year-end wizard) may have graded all Gr10 courses.
+    // Reset one course per semester to 'enrolled' with no grade so the
+    // year-end wizard shows grade dropdowns.
+    await client.query(
+      `UPDATE plan_courses SET status = 'enrolled', planned_grade = NULL
+       WHERE id IN (
+         SELECT id FROM plan_courses
+         WHERE plan_id = $1 AND grade_level = $2 AND status = 'completed'
+         ORDER BY semester, course_id
+         LIMIT 2
+       )`,
+      [planId, TEST_GRADE_LEVEL],
+    );
+
+    // ── 11. Ensure GPA snapshot exists ────────────────────────────── ───────────────────────────────
     const snap = await client.query(
       `SELECT id FROM gpa_snapshots WHERE student_id = $1 AND trigger = 'semester_end' LIMIT 1`,
       [studentId],

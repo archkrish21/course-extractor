@@ -24,7 +24,7 @@ SUMMER_COURSES_2026 = [
         "semesters_offered": [-2, -1],
         "gpa_waiver": False,
         "prerequisite_text": "Age 15 before first day, parental consent, instruction permit, 8+ credits in previous two semesters",
-        "cost": "425",
+        "cost": 425,
     },
     {
         "code": "BUS71S",
@@ -39,7 +39,7 @@ SUMMER_COURSES_2026 = [
         "semesters_offered": [-2, -1],
         "gpa_waiver": True,
         "prerequisite_text": None,
-        "cost": "425",
+        "cost": 425,
     },
     {
         "code": "BUS12S",
@@ -54,7 +54,7 @@ SUMMER_COURSES_2026 = [
         "semesters_offered": [-1],
         "gpa_waiver": True,
         "prerequisite_text": None,
-        "cost": "425",
+        "cost": 425,
     },
 
     # ── Career Exploration ────────────────────────────────────────────
@@ -71,7 +71,7 @@ SUMMER_COURSES_2026 = [
         "semesters_offered": [-2],
         "gpa_waiver": False,
         "prerequisite_text": None,
-        "cost": "225",
+        "cost": 225,
     },
     {
         "code": "CAR35S",
@@ -86,7 +86,7 @@ SUMMER_COURSES_2026 = [
         "semesters_offered": [-2],
         "gpa_waiver": False,
         "prerequisite_text": None,
-        "cost": "225",
+        "cost": 225,
     },
     {
         "code": "CAR31S",
@@ -101,7 +101,7 @@ SUMMER_COURSES_2026 = [
         "semesters_offered": [-2],
         "gpa_waiver": False,
         "prerequisite_text": None,
-        "cost": "225",
+        "cost": 225,
     },
     {
         "code": "CAR62S",
@@ -116,7 +116,7 @@ SUMMER_COURSES_2026 = [
         "semesters_offered": [-1],
         "gpa_waiver": False,
         "prerequisite_text": None,
-        "cost": "225",
+        "cost": 225,
     },
 
     # ── Communication Arts ────────────────────────────────────────────
@@ -133,7 +133,7 @@ SUMMER_COURSES_2026 = [
         "semesters_offered": [-2, -1],
         "gpa_waiver": False,
         "prerequisite_text": None,
-        "cost": "100",
+        "cost": 100,
     },
     {
         "code": "ENG25S",
@@ -148,7 +148,7 @@ SUMMER_COURSES_2026 = [
         "semesters_offered": [-2],
         "gpa_waiver": False,
         "prerequisite_text": "Prior enrollment in Freshman, Sophomore, Junior and/or Senior English",
-        "cost": "425",
+        "cost": 425,
     },
     {
         "code": "ENG71S",
@@ -163,7 +163,7 @@ SUMMER_COURSES_2026 = [
         "semesters_offered": [-2],
         "gpa_waiver": False,
         "prerequisite_text": None,
-        "cost": "425",
+        "cost": 425,
     },
     {
         "code": "ENG57S",
@@ -178,7 +178,7 @@ SUMMER_COURSES_2026 = [
         "semesters_offered": [-2],
         "gpa_waiver": False,
         "prerequisite_text": None,
-        "cost": "425",
+        "cost": 425,
     },
 
     # ── Computer Science ──────────────────────────────────────────────
@@ -195,7 +195,7 @@ SUMMER_COURSES_2026 = [
         "semesters_offered": [-2],
         "gpa_waiver": True,
         "prerequisite_text": None,
-        "cost": "425",
+        "cost": 425,
     },
     {
         "code": "CSC82S",
@@ -210,7 +210,7 @@ SUMMER_COURSES_2026 = [
         "semesters_offered": [-1],
         "gpa_waiver": True,
         "prerequisite_text": "Computer Programming 1 (CSC161/162) or Web Development 2 (TEC281/282) or Principles of Engineering (TEC301/302) or AP Computer Science Principles (CSC371/372)",
-        "cost": "425",
+        "cost": 425,
     },
 
     # ── Fine Arts ─────────────────────────────────────────────────────
@@ -227,7 +227,7 @@ SUMMER_COURSES_2026 = [
         "semesters_offered": [-2, -1],
         "gpa_waiver": True,
         "prerequisite_text": None,
-        "cost": "425",
+        "cost": 425,
     },
     {
         "code": "ART31S",
@@ -242,7 +242,7 @@ SUMMER_COURSES_2026 = [
         "semesters_offered": [-2, -1],
         "gpa_waiver": True,
         "prerequisite_text": None,
-        "cost": "425",
+        "cost": 425,
     },
     {
         "code": "ART51S",
@@ -257,7 +257,7 @@ SUMMER_COURSES_2026 = [
         "semesters_offered": [-2, -1],
         "gpa_waiver": True,
         "prerequisite_text": None,
-        "cost": "425",
+        "cost": 425,
     },
     {
         "code": "THR11S",
@@ -272,7 +272,7 @@ SUMMER_COURSES_2026 = [
         "semesters_offered": [-2],
         "gpa_waiver": True,
         "prerequisite_text": None,
-        "cost": "425",
+        "cost": 425,
     },
 
     # ── Mathematics ───────────────────────────────────────────────────
@@ -289,7 +289,7 @@ SUMMER_COURSES_2026 = [
         "semesters_offered": [-2, -1],
         "gpa_waiver": False,
         "prerequisite_text": "Algebra 1 (MTH151/152)",
-        "cost": "425",
+        "cost": 425,
     },
     {
         "code": "MTH25S",
@@ -304,7 +304,7 @@ SUMMER_COURSES_2026 = [
         "semesters_offered": [-2, -1],
         "gpa_waiver": False,
         "prerequisite_text": "Approval of Director and completion of Algebra 1 (MTH151/152)",
-        "cost": "425",
+        "cost": 425,
     },
     {
         "code": "MTH51S",
@@ -319,7 +319,7 @@ SUMMER_COURSES_2026 = [
         "semesters_offered": [-2, -1],
         "gpa_waiver": False,
         "prerequisite_text": "Algebra 2 (MTH351/352)",
-        "cost": "425",
+        "cost": 425,
     },
     {
         "code": "MTH37S",
@@ -334,7 +334,7 @@ SUMMER_COURSES_2026 = [
         "semesters_offered": [-2, -1],
         "gpa_waiver": False,
         "prerequisite_text": "Approval of Director and completion of Geometry AB/BC (MTH271/272)",
-        "cost": "425",
+        "cost": 425,
     },
 
     # ── Multilingual Learning ─────────────────────────────────────────
@@ -351,7 +351,7 @@ SUMMER_COURSES_2026 = [
         "semesters_offered": [-2],
         "gpa_waiver": False,
         "prerequisite_text": "Multilingual Advanced Literature or Language (ELL361/362 or ELL371/372) or ELD World and Contemporary Literature (ELL461/462)",
-        "cost": "225",
+        "cost": 225,
     },
     {
         "code": "ELD21S",
@@ -366,7 +366,7 @@ SUMMER_COURSES_2026 = [
         "semesters_offered": [-2],
         "gpa_waiver": False,
         "prerequisite_text": "Enrollment in ELD Program (going into Intermediate or Advanced) or Approval of Director",
-        "cost": "225",
+        "cost": 225,
     },
     {
         "code": "ELD32S",
@@ -381,7 +381,7 @@ SUMMER_COURSES_2026 = [
         "semesters_offered": [-1],
         "gpa_waiver": False,
         "prerequisite_text": "Enrollment in ELD Program or Approval of Director",
-        "cost": "100",
+        "cost": 100,
     },
 
     # ── Physical Welfare ──────────────────────────────────────────────
@@ -398,7 +398,7 @@ SUMMER_COURSES_2026 = [
         "semesters_offered": [-2, -1],
         "gpa_waiver": False,
         "prerequisite_text": None,
-        "cost": "425",
+        "cost": 425,
     },
 
     # ── Science ───────────────────────────────────────────────────────
@@ -415,7 +415,7 @@ SUMMER_COURSES_2026 = [
         "semesters_offered": [-2],
         "gpa_waiver": True,
         "prerequisite_text": "Successful completion of one year of high school science",
-        "cost": "425",
+        "cost": 425,
     },
     {
         "code": "SCI31S",
@@ -430,7 +430,7 @@ SUMMER_COURSES_2026 = [
         "semesters_offered": [-2],
         "gpa_waiver": False,
         "prerequisite_text": None,
-        "cost": "225",
+        "cost": 225,
     },
 
     # ── Social Studies ────────────────────────────────────────────────
@@ -447,7 +447,7 @@ SUMMER_COURSES_2026 = [
         "semesters_offered": [-2, -1],
         "gpa_waiver": False,
         "prerequisite_text": None,
-        "cost": "425",
+        "cost": 425,
     },
     {
         "code": "SOC41S",
@@ -462,7 +462,7 @@ SUMMER_COURSES_2026 = [
         "semesters_offered": [-2],
         "gpa_waiver": False,
         "prerequisite_text": None,
-        "cost": "425",
+        "cost": 425,
     },
     {
         "code": "SOC33S",
@@ -477,7 +477,7 @@ SUMMER_COURSES_2026 = [
         "semesters_offered": [-2, -1],
         "gpa_waiver": False,
         "prerequisite_text": None,
-        "cost": "425",
+        "cost": 425,
     },
     {
         "code": "SOC43S",
@@ -492,7 +492,7 @@ SUMMER_COURSES_2026 = [
         "semesters_offered": [-2, -1],
         "gpa_waiver": False,
         "prerequisite_text": None,
-        "cost": "425",
+        "cost": 425,
     },
 
     # ── Special Education ─────────────────────────────────────────────
@@ -509,7 +509,7 @@ SUMMER_COURSES_2026 = [
         "semesters_offered": [-2, -1],
         "gpa_waiver": True,
         "prerequisite_text": "Special Education Identification and Approval of Director",
-        "cost": "425",
+        "cost": 425,
     },
     {
         "code": "IJOB2S",
@@ -524,7 +524,7 @@ SUMMER_COURSES_2026 = [
         "semesters_offered": [-1],
         "gpa_waiver": False,
         "prerequisite_text": "Special Education Identification and Approval of Director",
-        "cost": "425",
+        "cost": 425,
     },
 
     # ── Student Services ──────────────────────────────────────────────
@@ -541,7 +541,7 @@ SUMMER_COURSES_2026 = [
         "semesters_offered": [-2, -1],
         "gpa_waiver": False,
         "prerequisite_text": None,
-        "cost": "225",
+        "cost": 225,
     },
 
     # ── Student Learning Programs ─────────────────────────────────────
@@ -558,6 +558,6 @@ SUMMER_COURSES_2026 = [
         "semesters_offered": [-2, -1],
         "gpa_waiver": False,
         "prerequisite_text": None,
-        "cost": "150",
+        "cost": 150,
     },
 ]

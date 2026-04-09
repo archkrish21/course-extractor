@@ -1,11 +1,13 @@
 "use client";
 
-import { useState, useCallback, useEffect, type ChangeEvent } from "react";
+import { useState, useEffect, Suspense, type ChangeEvent } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardHeader, CardContent, CardFooter } from "@/components/ui/card";
+import { creditTypeBadgeVariant } from "@/lib/badge-utils";
+import { apiFetch } from "@/lib/api-client";
 
 // ─── Types ─────────────────────────────────────────────────────────────────
 
@@ -251,7 +253,7 @@ function StepPastCourses({
         do {
           const params = new URLSearchParams({ grade_level: String(activeGrade), limit: "100" });
           if (cursor) params.set("cursor", cursor);
-          const res = await fetch(`/api/v1/courses?${params.toString()}`);
+          const res = await apiFetch(`/api/v1/courses?${params.toString()}`);
           if (!res.ok) break;
           const json = await res.json();
           for (const c of json.data ?? []) {
@@ -308,15 +310,6 @@ function StepPastCourses({
       }
       setCompletedCourses([...completedCourses, ...newEntries]);
     }
-  }
-
-  function getCreditBadgeVariant(ct: string) {
-    const l = ct.toLowerCase();
-    if (l.includes("ap")) return "ap" as const;
-    if (l.includes("honors")) return "honors" as const;
-    if (l.includes("dual")) return "dual-credit" as const;
-    if (l.includes("accelerated")) return "accelerated" as const;
-    return "default" as const;
   }
 
   if (gradeLevel === 9) {
@@ -422,7 +415,7 @@ function StepPastCourses({
                       <input type="checkbox" checked={selected} onChange={() => toggleCourse(course)} className="h-4 w-4 shrink-0 rounded border-border text-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring" />
                       <span className="font-mono text-xs text-muted-foreground w-20 shrink-0">{course.code}</span>
                       <span className="flex-1 text-sm text-foreground min-w-0 truncate">{course.name}</span>
-                      <Badge variant={getCreditBadgeVariant(course.creditType)} className="shrink-0">{course.creditType}</Badge>
+                      <Badge variant={creditTypeBadgeVariant(course.creditType)} className="shrink-0">{course.creditType}</Badge>
                     </label>
                   );
                 })}
@@ -726,6 +719,14 @@ function StepGoals({
 // ─── Main Onboarding Wizard ────────────────────────────────────────────────
 
 export default function OnboardingPage() {
+  return (
+    <Suspense fallback={<div className="flex min-h-[60vh] items-center justify-center"><div className="animate-pulse text-muted-foreground">Loading...</div></div>}>
+      <OnboardingPageInner />
+    </Suspense>
+  );
+}
+
+function OnboardingPageInner() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const isNewUser = searchParams.get("welcome") === "1";
@@ -782,7 +783,7 @@ export default function OnboardingPage() {
   async function loadTemplates() {
     setIsLoadingTemplates(true);
     try {
-      const res = await fetch("/api/v1/plans/templates");
+      const res = await apiFetch("/api/v1/plans/templates");
       if (res.ok) {
         const data = await res.json();
         setTemplates(data.data || []);
@@ -858,7 +859,7 @@ export default function OnboardingPage() {
         payload.career_goals = careerGoals;
       }
 
-      const res = await fetch("/api/v1/auth/onboarding", {
+      const res = await apiFetch("/api/v1/auth/onboarding", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
@@ -874,7 +875,7 @@ export default function OnboardingPage() {
 
       // Success — check if user has existing plans (from linked accounts)
       try {
-        const plansRes = await fetch("/api/v1/plans");
+        const plansRes = await apiFetch("/api/v1/plans");
         if (plansRes.ok) {
           const plansData = await plansRes.json();
           const plans = plansData?.data ?? plansData?.plans ?? plansData ?? [];
@@ -919,7 +920,7 @@ export default function OnboardingPage() {
           type="button"
           onClick={async () => {
             try {
-              const res = await fetch("/api/v1/plans");
+              const res = await apiFetch("/api/v1/plans");
               if (res.ok) {
                 const data = await res.json();
                 const plans = data?.data ?? data?.plans ?? data ?? [];

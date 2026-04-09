@@ -21,11 +21,20 @@ import sys
 from collections import defaultdict, deque
 from datetime import datetime, timezone
 
+import logging
+import warnings
+
 try:
     import psycopg2
     import psycopg2.extras
 except ImportError:
     psycopg2 = None  # type: ignore[assignment]
+    warnings.warn(
+        "psycopg2 is not installed. Database operations will not be available. "
+        "Install with: pip install psycopg2-binary",
+        ImportWarning,
+        stacklevel=1,
+    )
 
 # ---------------------------------------------------------------------------
 # Topological sort (Kahn's algorithm) — cycle detection
@@ -231,10 +240,10 @@ def load_courses(conn, courses_data: dict, diff: dict, force: bool = False, forc
     By default uses UPSERT to preserve existing course IDs (safe for FK references).
     Use force_reload=True for the old DELETE+INSERT behavior (breaks FK references).
     """
-    cur = conn.cursor()
     catalog_year = courses_data["catalog_year"]
     courses = courses_data["courses"]
     now = datetime.now(timezone.utc)
+    cur = conn.cursor()
 
     try:
         # 1. Create catalog_version
@@ -308,18 +317,26 @@ def load_courses(conn, courses_data: dict, diff: dict, force: bool = False, forc
         # 4. Upsert courses (preserves existing IDs to avoid breaking FK references)
         # If --force-reload is used, fall back to DELETE+INSERT
         if force_reload:
-            course_id_subquery = "SELECT id FROM courses WHERE catalog_version_id = %s"
-            for dep_table in [
-                "plan_courses", "grade_entries", "dual_credit_log",
-                "alerts", "career_path_courses",
-            ]:
-                col = "course_id"
-                if dep_table == "alerts":
-                    col = "related_course_id"
-                cur.execute(
-                    f"DELETE FROM {dep_table} WHERE {col} IN ({course_id_subquery})",
-                    (version_id,),
-                )
+            cur.execute(
+                "DELETE FROM plan_courses WHERE course_id IN (SELECT id FROM courses WHERE catalog_version_id = %s)",
+                (version_id,),
+            )
+            cur.execute(
+                "DELETE FROM grade_entries WHERE course_id IN (SELECT id FROM courses WHERE catalog_version_id = %s)",
+                (version_id,),
+            )
+            cur.execute(
+                "DELETE FROM dual_credit_log WHERE course_id IN (SELECT id FROM courses WHERE catalog_version_id = %s)",
+                (version_id,),
+            )
+            cur.execute(
+                "DELETE FROM alerts WHERE related_course_id IN (SELECT id FROM courses WHERE catalog_version_id = %s)",
+                (version_id,),
+            )
+            cur.execute(
+                "DELETE FROM career_path_courses WHERE course_id IN (SELECT id FROM courses WHERE catalog_version_id = %s)",
+                (version_id,),
+            )
             cur.execute("DELETE FROM course_prerequisites WHERE catalog_version_id = %s", (version_id,))
             cur.execute("DELETE FROM courses WHERE catalog_version_id = %s", (version_id,))
 
@@ -449,13 +466,6 @@ def load_courses(conn, courses_data: dict, diff: dict, force: bool = False, forc
 
         print(f"  Inserted {len(courses)} courses, {prereq_count} prerequisite links")
 
-        # Deactivate old courses
-        cur.execute(
-            """UPDATE courses SET is_active = FALSE
-               WHERE catalog_version_id != %s AND is_active = TRUE""",
-            (version_id,),
-        )
-
         conn.commit()
         print("  Transaction committed.")
 
@@ -464,6 +474,8 @@ def load_courses(conn, courses_data: dict, diff: dict, force: bool = False, forc
         print(f"  ERROR: {e}", file=sys.stderr)
         print("  Transaction rolled back.", file=sys.stderr)
         raise
+    finally:
+        cur.close()
 
 
 def rollback_catalog(conn):

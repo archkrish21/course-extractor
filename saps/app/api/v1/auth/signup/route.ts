@@ -1,6 +1,7 @@
 import { NextRequest } from "next/server";
 import { z } from "zod";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { db } from "@/lib/db";
 import {
   users,
@@ -18,7 +19,13 @@ import { rateLimit } from "@/lib/api/rate-limit";
 
 const signupSchema = z.object({
   email: z.string().email("Invalid email address"),
-  password: z.string().min(8, "Password must be at least 8 characters"),
+  password: z
+    .string()
+    .min(8, "Password must be at least 8 characters")
+    .regex(/[a-z]/, "Password must contain at least 1 lowercase letter")
+    .regex(/[A-Z]/, "Password must contain at least 1 uppercase letter")
+    .regex(/[0-9]/, "Password must contain at least 1 digit")
+    .regex(/[^a-zA-Z0-9]/, "Password must contain at least 1 special character"),
   date_of_birth: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Date must be YYYY-MM-DD format"),
   role: z.enum(["student", "parent", "guardian", "counselor"]),
   name: z.string().min(1).max(200).optional(),
@@ -99,99 +106,123 @@ export async function POST(request: NextRequest) {
 
     const userId = authData.user.id;
 
-    // Insert into users table
-    const now = new Date();
-    await db.insert(users).values({
-      id: userId,
-      email,
-      firstName: name ?? email.split("@")[0],
-      role,
-      dateOfBirth: date_of_birth,
-      isEmailVerified: false,
-      tosAcceptedAt: now,
-      ppAcceptedAt: now,
-    });
-
-    // Record consent for current legal documents
-    const currentDocs = await db
-      .select({ id: legalDocuments.id })
-      .from(legalDocuments)
-      .where(eq(legalDocuments.isCurrent, true));
-
-    const userAgent = request.headers.get("user-agent") ?? null;
-    for (const doc of currentDocs) {
-      await db.insert(consentRecords).values({
-        userId,
-        legalDocumentId: doc.id,
-        action: "accepted",
-        ipAddress: ip,
-        userAgent,
-        consentedAt: now,
-      });
-    }
-
-    if (role === "student") {
-      // ── Student signup: create account, membership, profile, subscription ──
-
-      // Derive student name from the `name` field or email prefix
-      const studentName = name ?? email.split("@")[0];
-
-      // Default graduation year: current year + 4 (assumed grade 9)
-      const currentYear = new Date().getFullYear();
-      const defaultGradYear = currentYear + 4;
-
-      // Create the student-centric account
-      const [newAccount] = await db
-        .insert(accounts)
-        .values({
-          studentName,
-          studentDateOfBirth: date_of_birth,
-          gradeLevel: 9,
-          graduationYear: defaultGradYear,
-          state: state ?? "IL",
-          schoolName: school_name ?? "Adlai E. Stevenson High School",
-          studentUserId: userId,
-          createdBy: userId,
-          claimedAt: new Date(),
-        })
-        .returning({ id: accounts.id });
-
-      // Create account membership (student role)
-      await db.insert(accountMembers).values({
-        accountId: newAccount.id,
-        userId,
-        role: "student",
-        canEdit: true,
+    // Wrap all DB operations so we can clean up the Supabase auth user
+    // if any insert fails — otherwise the user is stuck (email taken in
+    // Supabase but no app-level records, so they can't re-register or log in).
+    try {
+      // Insert into users table
+      const now = new Date();
+      await db.insert(users).values({
+        id: userId,
+        email,
+        firstName: name ?? email.split("@")[0],
+        role,
+        dateOfBirth: date_of_birth,
+        isEmailVerified: false,
+        tosAcceptedAt: now,
+        ppAcceptedAt: now,
       });
 
-      // Insert into student_profiles (as before)
-      await db.insert(studentProfiles).values({
-        userId,
-        graduationYear: defaultGradYear,
-        currentGradeLevel: 9,
-      });
+      // Record consent for current legal documents
+      const currentDocs = await db
+        .select({ id: legalDocuments.id })
+        .from(legalDocuments)
+        .where(eq(legalDocuments.isCurrent, true));
 
-      // Create subscription on the account: 14-day trial on plus plan
-      // Trial gives Plus-level features with restrictions (max 2 plans, no AI, no compare/export/share)
-      const plusPlan = await db
-        .select({ id: subscriptionPlans.id })
-        .from(subscriptionPlans)
-        .where(eq(subscriptionPlans.name, "plus"))
-        .limit(1)
-        .then((rows) => rows[0]);
-
-      if (plusPlan) {
-        const trialEndsAt = new Date();
-        trialEndsAt.setDate(trialEndsAt.getDate() + 14);
-
-        await db.insert(subscriptions).values({
+      const userAgent = request.headers.get("user-agent") ?? null;
+      for (const doc of currentDocs) {
+        await db.insert(consentRecords).values({
           userId,
-          accountId: newAccount.id,
-          subscriptionPlanId: plusPlan.id,
-          status: "trialing",
-          trialEndsAt,
+          legalDocumentId: doc.id,
+          action: "accepted",
+          ipAddress: ip,
+          userAgent,
+          consentedAt: now,
         });
       }
+
+      if (role === "student") {
+        // ── Student signup: create account, membership, profile, subscription ──
+
+        // Derive student name from the `name` field or email prefix
+        const studentName = name ?? email.split("@")[0];
+
+        // Default graduation year: current year + 4 (assumed grade 9)
+        const currentYear = new Date().getFullYear();
+        const defaultGradYear = currentYear + 4;
+
+        // Create the student-centric account
+        const [newAccount] = await db
+          .insert(accounts)
+          .values({
+            studentName,
+            studentDateOfBirth: date_of_birth,
+            gradeLevel: 9,
+            graduationYear: defaultGradYear,
+            state: state ?? "IL",
+            schoolName: school_name ?? "Adlai E. Stevenson High School",
+            studentUserId: userId,
+            createdBy: userId,
+            claimedAt: new Date(),
+          })
+          .returning({ id: accounts.id });
+
+        // Create account membership (student role)
+        await db.insert(accountMembers).values({
+          accountId: newAccount.id,
+          userId,
+          role: "student",
+          canEdit: true,
+        });
+
+        // Insert into student_profiles (as before)
+        await db.insert(studentProfiles).values({
+          userId,
+          graduationYear: defaultGradYear,
+          currentGradeLevel: 9,
+        });
+
+        // Create subscription on the account: 14-day trial on plus plan
+        // Trial gives Plus-level features with restrictions (max 2 plans, no AI, no compare/export/share)
+        const plusPlan = await db
+          .select({ id: subscriptionPlans.id })
+          .from(subscriptionPlans)
+          .where(eq(subscriptionPlans.name, "plus"))
+          .limit(1)
+          .then((rows) => rows[0]);
+
+        if (plusPlan) {
+          const trialEndsAt = new Date();
+          trialEndsAt.setDate(trialEndsAt.getDate() + 14);
+
+          await db.insert(subscriptions).values({
+            userId,
+            accountId: newAccount.id,
+            subscriptionPlanId: plusPlan.id,
+            status: "trialing",
+            trialEndsAt,
+          });
+        }
+
+        return successResponse(
+          {
+            user: {
+              id: userId,
+              email,
+              role,
+            },
+            account: {
+              id: newAccount.id,
+              student_name: studentName,
+            },
+          },
+          undefined,
+          201
+        );
+      }
+
+      // ── Parent / Counselor signup: create user only, no account or subscription ──
+      // Parents will either create an account for their child or join an existing one.
 
       return successResponse(
         {
@@ -200,30 +231,22 @@ export async function POST(request: NextRequest) {
             email,
             role,
           },
-          account: {
-            id: newAccount.id,
-            student_name: studentName,
-          },
         },
         undefined,
         201
       );
+    } catch (dbError) {
+      // DB insert failed — delete the orphaned Supabase auth user so the
+      // email isn't permanently claimed without usable app-level records.
+      console.error("[signup] DB insert failed, rolling back auth user:", dbError);
+      try {
+        const supabaseAdmin = createSupabaseAdminClient();
+        await supabaseAdmin.auth.admin.deleteUser(userId);
+      } catch (cleanupError) {
+        console.error("[signup] Failed to clean up orphaned auth user:", cleanupError);
+      }
+      throw dbError;
     }
-
-    // ── Parent / Counselor signup: create user only, no account or subscription ──
-    // Parents will either create an account for their child or join an existing one.
-
-    return successResponse(
-      {
-        user: {
-          id: userId,
-          email,
-          role,
-        },
-      },
-      undefined,
-      201
-    );
   } catch (error) {
     console.error("[signup] Unexpected error:", error);
     return errorResponse("INTERNAL_ERROR", "An unexpected error occurred.", 500);

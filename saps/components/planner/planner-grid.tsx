@@ -80,15 +80,6 @@ function getSemesterCourses(
   );
 }
 
-function getFullYearCourses(
-  courses: PlanCourse[],
-  gradeLevel: number
-): PlanCourse[] {
-  return courses.filter(
-    (c) => c.gradeLevel === gradeLevel && c.semester === null
-  );
-}
-
 // Keep for backward compat with mobile accordion
 function getCoursesForCell(
   courses: PlanCourse[],
@@ -136,7 +127,7 @@ function DesktopGrid({
     // Auto-expand summer for grades that already have summer courses
     const gradesWithSummer = new Set<number>();
     for (const c of courses) {
-      if (isSummerSemester(c.semester)) gradesWithSummer.add(c.gradeLevel);
+      if (c.semester != null && isSummerSemester(c.semester)) gradesWithSummer.add(c.gradeLevel);
     }
     return gradesWithSummer;
   });
@@ -146,6 +137,9 @@ function DesktopGrid({
     col: number;
   }>({ row: 0, col: 0 });
 
+  // Refs for grade row headers, used for scrolling
+  const gradeHeaderRefs = useRef<Record<number, HTMLElement | null>>({});
+
   // When focusGrade changes, expand only that grade and highlight the semester
   useEffect(() => {
     if (!focusGrade) return;
@@ -153,8 +147,7 @@ function DesktopGrid({
     setHighlightedSem(focusGrade);
     // Scroll to the grade after a short delay for DOM update
     setTimeout(() => {
-      const gradeSpan = document.querySelector(`[data-grade="${focusGrade.grade}"]`);
-      gradeSpan?.closest('button[role="rowheader"]')?.scrollIntoView({ behavior: "smooth", block: "start" });
+      gradeHeaderRefs.current[focusGrade.grade]?.scrollIntoView({ behavior: "smooth", block: "start" });
     }, 100);
     // Clear highlight after 3 seconds
     const timer = setTimeout(() => setHighlightedSem(null), 3000);
@@ -299,6 +292,7 @@ function DesktopGrid({
           <div key={grade} role="row" className="mb-3 rounded-xl border border-border overflow-hidden">
             {/* Grade header — full width, clickable toggle */}
             <button
+              ref={(el) => { gradeHeaderRefs.current[grade] = el; }}
               type="button"
               role="rowheader"
               aria-expanded={!isCollapsed}

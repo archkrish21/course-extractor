@@ -9,6 +9,7 @@ interface CourseForGPA {
   gpaWaiver?: boolean;
   gpaWaiverApplied?: boolean;
   code?: string;
+  duration?: string;
 }
 
 interface GPAResult {
@@ -57,9 +58,15 @@ export function calculateGPA(
 
     // Credit value per semester (each row is one semester = half the course credit)
     const creditValue = parseFloat(c.creditValue) || 0;
-    // Since full-year courses are now stored as 2 rows with credit_value=2.0 each,
-    // but each row represents one semester, use 1.0 credit per row for GPA
-    const semesterCredit = creditValue > 1 ? creditValue / 2 : creditValue;
+    // Full-year courses are stored as 2 rows with credit_value=2.0 each,
+    // but each row represents one semester, so we halve to get 1.0 credit per row.
+    // Use the `duration` field when available; fall back to the creditValue > 1
+    // heuristic for callers that don't provide it (safe because Stevenson semester
+    // courses are always 0.5 or 1.0 credits).
+    const isFullYear = c.duration
+      ? c.duration === "full_year"
+      : creditValue > 1;
+    const semesterCredit = isFullYear ? creditValue / 2 : creditValue;
 
     const weightBonus = CREDIT_TYPE_WEIGHT[c.creditType] ?? 0;
 

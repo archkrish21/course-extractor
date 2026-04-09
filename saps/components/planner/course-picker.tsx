@@ -4,7 +4,8 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import type { BadgeVariant } from "@/components/ui/badge";
+import { creditTypeBadgeVariant } from "@/lib/badge-utils";
+import { Spinner } from "@/components/ui/spinner";
 import { findEquivalentInPlan } from "@/config/summer-equivalents";
 import { isSummerSemester } from "@/config/semesters";
 
@@ -81,14 +82,7 @@ const DEPARTMENTS_BY_DIVISION: Record<string, string[]> = {
   "Social Studies": ["Social Studies"],
 };
 
-function getCreditBadgeVariant(creditType: string): BadgeVariant {
-  const lower = creditType.toLowerCase();
-  if (lower.includes("ap")) return "ap";
-  if (lower.includes("honors")) return "honors";
-  if (lower.includes("dual")) return "dual-credit";
-  if (lower.includes("accelerated")) return "accelerated";
-  return "default";
-}
+const EMPTY_STRING_SET = new Set<string>();
 
 export function CoursePicker({
   isOpen,
@@ -97,8 +91,8 @@ export function CoursePicker({
   semester,
   planId,
   otherSemesterAtMax = false,
-  existingCourseIds = new Set(),
-  existingCourseNames = new Set(),
+  existingCourseIds = EMPTY_STRING_SET,
+  existingCourseNames = EMPTY_STRING_SET,
   existingCourseCodes = [],
   onAddCourse,
   onViewDetails,
@@ -513,26 +507,7 @@ export function CoursePicker({
         <div className="flex-1 overflow-y-auto px-4 py-3">
           {loading ? (
             <div className="flex flex-col items-center py-12 text-muted-foreground">
-              <svg
-                className="h-6 w-6 animate-spin"
-                fill="none"
-                viewBox="0 0 24 24"
-                aria-hidden="true"
-              >
-                <circle
-                  className="opacity-25"
-                  cx="12"
-                  cy="12"
-                  r="10"
-                  stroke="currentColor"
-                  strokeWidth="4"
-                />
-                <path
-                  className="opacity-75"
-                  fill="currentColor"
-                  d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
-                />
-              </svg>
+              <Spinner variant="svg" className="h-6 w-6" />
               <p className="mt-2 text-sm">Searching courses...</p>
             </div>
           ) : courses.length === 0 ? (
@@ -590,7 +565,7 @@ export function CoursePicker({
                           </p>
                           <div className="mt-1.5 flex flex-wrap items-center gap-1">
                             <Badge
-                              variant={getCreditBadgeVariant(course.creditType)}
+                              variant={creditTypeBadgeVariant(course.creditType)}
                               className="text-[10px] px-1.5 py-0"
                             >
                               {course.creditType}
@@ -646,26 +621,7 @@ export function CoursePicker({
                           className="shrink-0"
                         >
                           {isAdding ? (
-                            <svg
-                              className="h-4 w-4 animate-spin"
-                              fill="none"
-                              viewBox="0 0 24 24"
-                              aria-hidden="true"
-                            >
-                              <circle
-                                className="opacity-25"
-                                cx="12"
-                                cy="12"
-                                r="10"
-                                stroke="currentColor"
-                                strokeWidth="4"
-                              />
-                              <path
-                                className="opacity-75"
-                                fill="currentColor"
-                                d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
-                              />
-                            </svg>
+                            <Spinner variant="svg" className="h-4 w-4" />
                           ) : justAdded === course.id ? (
                             <span className="flex items-center gap-1 text-success">
                               <svg aria-hidden="true" className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">

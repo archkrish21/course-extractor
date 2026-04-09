@@ -1,5 +1,7 @@
 import { NextRequest } from "next/server";
+import { z } from "zod";
 import { db } from "@/lib/db";
+import { ALL_GRADES } from "@/config/grade-scale";
 import {
   fourYearPlans,
   planCourses,
@@ -172,11 +174,28 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { grades, action, grade: gradeOverride } = body;
 
-    if (action !== "complete") {
-      return errorResponse("VALIDATION_ERROR", "Invalid action.", 400);
+    const yearEndSchema = z.object({
+      action: z.literal("complete"),
+      grades: z
+        .array(
+          z.object({
+            planCourseId: z.string().uuid(),
+            grade: z.enum(ALL_GRADES),
+          })
+        )
+        .optional(),
+      grade: z.number().int().min(9).max(12).optional(),
+    });
+
+    const parsed = yearEndSchema.safeParse(body);
+    if (!parsed.success) {
+      return errorResponse("VALIDATION_ERROR", "Invalid request body.", 400, {
+        details: parsed.error.flatten().fieldErrors,
+      });
     }
+
+    const { grades, action, grade: gradeOverride } = parsed.data;
 
     // Get account (including studentUserId for snapshot)
     const [account] = await db

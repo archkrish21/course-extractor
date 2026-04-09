@@ -123,7 +123,7 @@ export default function ProgressPage() {
   const progressTourSteps = useMemo(() => getProgressTourSteps(hasPlanData), [hasPlanData]);
   useTour({ tourId: TOUR_IDS.progress, steps: progressTourSteps, autoStart: !loading, delay: 800 });
 
-  const matchesFilter = (status: string, evaluationType?: string) => {
+  const matchesFilter = (status: string) => {
     if (statusFilter === "all") return true;
     if (statusFilter === "gap") return status === "gap";
     if (statusFilter === "in_progress") return status === "in_progress";
@@ -440,8 +440,8 @@ export default function ProgressPage() {
                   (() => {
                     // Sub-group course_load requirements by evaluation type
                     if (group.group === "course_load") {
-                      const courseLoadReqs = group.requirements.filter((r) => r.evaluationType === "course_load_check" && matchesFilter(r.status, r.evaluationType));
-                      const pwDanceReqs = group.requirements.filter((r) => r.evaluationType === "pw_dance_check" && matchesFilter(r.status, r.evaluationType));
+                      const courseLoadReqs = group.requirements.filter((r) => r.evaluationType === "course_load_check" && matchesFilter(r.status));
+                      const pwDanceReqs = group.requirements.filter((r) => r.evaluationType === "pw_dance_check" && matchesFilter(r.status));
 
                       const renderCards = (reqs: typeof group.requirements) => reqs.map((req) => {
                         const meta = req.metadata ?? {};
@@ -523,9 +523,9 @@ export default function ProgressPage() {
                     return group.requirements.filter((req) => {
                       if (req.evaluationType === "course_match") {
                         const s = deriveCourseMatchStatus(req.earnedCredits ?? 0, req.plannedCredits ?? 0, req.requiredCredits ?? 0);
-                        return matchesFilter(s, req.evaluationType);
+                        return matchesFilter(s);
                       }
-                      return matchesFilter(req.status, req.evaluationType);
+                      return matchesFilter(req.status);
                     }).map((req) => {
                     // Course-match requirements
                     if (req.evaluationType === "course_match") {

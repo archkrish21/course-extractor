@@ -1,10 +1,11 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
+import { apiFetch } from "@/lib/api-client";
 
 interface PendingDocument {
   id: string;
@@ -14,6 +15,14 @@ interface PendingDocument {
 }
 
 export default function ConsentPage() {
+  return (
+    <Suspense fallback={<div className="flex min-h-[60vh] items-center justify-center"><div className="animate-pulse text-muted-foreground">Loading...</div></div>}>
+      <ConsentPageInner />
+    </Suspense>
+  );
+}
+
+function ConsentPageInner() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const nextUrl = searchParams.get("next") ?? "/dashboard";
@@ -27,7 +36,7 @@ export default function ConsentPage() {
   useEffect(() => {
     async function fetchStatus() {
       try {
-        const res = await fetch("/api/v1/auth/consent");
+        const res = await apiFetch("/api/v1/auth/consent");
         if (res.ok) {
           const json = await res.json();
           const data = json.data ?? json;
@@ -49,7 +58,7 @@ export default function ConsentPage() {
     setSubmitting(true);
     setError(null);
     try {
-      const res = await fetch("/api/v1/auth/consent", {
+      const res = await apiFetch("/api/v1/auth/consent", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ document_ids: pending.map((d) => d.id) }),

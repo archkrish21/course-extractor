@@ -226,12 +226,17 @@ export async function POST(request: NextRequest) {
 
     // Resolve account context
     const accountId = await resolveAccountId(request, user.id);
-    let accountCtx = accountId
-      ? await getAccountContext(user.id, accountId)
-      : null;
+    if (!accountId) {
+      return errorResponse("NOT_FOUND", "No account found.", 404);
+    }
 
-    // If we have an account context, verify canEdit
-    if (accountCtx && !accountCtx.canEdit) {
+    const accountCtx = await getAccountContext(user.id, accountId);
+    if (!accountCtx) {
+      return errorResponse("FORBIDDEN", "Not a member of this account.", 403);
+    }
+
+    // Verify canEdit
+    if (!accountCtx.canEdit) {
       return errorResponse("FORBIDDEN", "Read-only access.", 403);
     }
 

@@ -60,31 +60,6 @@ type BillingInterval = "monthly" | "annual" | "four_year";
 
 export default function BillingPage() {
   const { currentAccount, refetchAccounts } = useAccount();
-
-  if (FREE_LAUNCH_MODE) {
-    return (
-      <div className="mx-auto max-w-3xl">
-        <h1 className="mb-6 text-2xl font-bold tracking-tight text-foreground">Billing</h1>
-        <Card>
-          <CardContent className="flex flex-col items-center py-12 px-6 text-center">
-            <div className="flex h-12 w-12 items-center justify-center rounded-full bg-success/10">
-              <svg aria-hidden="true" className="h-6 w-6 text-success" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75 11.25 15 15 9.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
-              </svg>
-            </div>
-            <p className="mt-4 text-lg font-semibold text-foreground">Free Early Access</p>
-            <p className="mt-2 text-sm text-muted-foreground max-w-md">
-              All features are free during the early access period. No credit card required.
-              We&apos;ll notify you before any changes to pricing.
-            </p>
-            <Link href="/settings" className="mt-6 text-sm text-primary hover:underline">
-              Back to Settings
-            </Link>
-          </CardContent>
-        </Card>
-      </div>
-    );
-  }
   const [subscription, setSubscription] = useState<SubscriptionData | null>(null);
   const [trial, setTrial] = useState<TrialData | null>(null);
   const [loading, setLoading] = useState(true);
@@ -93,6 +68,8 @@ export default function BillingPage() {
   const [upgraded, setUpgraded] = useState(false);
 
   useEffect(() => {
+    if (FREE_LAUNCH_MODE) return;
+
     async function fetchSub() {
       try {
         const res = await apiFetch("/api/v1/subscriptions");
@@ -119,6 +96,31 @@ export default function BillingPage() {
       fetchSub();
     }
   }, [currentAccount, refetchAccounts]);
+
+  if (FREE_LAUNCH_MODE) {
+    return (
+      <div className="mx-auto max-w-3xl">
+        <h1 className="mb-6 text-2xl font-bold tracking-tight text-foreground">Billing</h1>
+        <Card>
+          <CardContent className="flex flex-col items-center py-12 px-6 text-center">
+            <div className="flex h-12 w-12 items-center justify-center rounded-full bg-success/10">
+              <svg aria-hidden="true" className="h-6 w-6 text-success" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75 11.25 15 15 9.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
+              </svg>
+            </div>
+            <p className="mt-4 text-lg font-semibold text-foreground">Free Early Access</p>
+            <p className="mt-2 text-sm text-muted-foreground max-w-md">
+              All features are free during the early access period. No credit card required.
+              We&apos;ll notify you before any changes to pricing.
+            </p>
+            <Link href="/settings" className="mt-6 text-sm text-primary hover:underline">
+              Back to Settings
+            </Link>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   const handleUpgrade = async (planName: string) => {
     setUpgrading(planName);

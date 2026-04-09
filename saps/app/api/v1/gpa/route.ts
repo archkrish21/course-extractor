@@ -153,12 +153,6 @@ export async function GET(request: NextRequest) {
         return sum + (val > 1 ? val / 2 : val);
       }, 0);
 
-    // Unique course count (full-year courses counted once, not twice)
-    const courseIds = new Set<string>();
-    for (const pc of activeCourses) {
-      const key = `${pc.gradeLevel}-${pc.semester ?? "fy"}-${pc.creditType}`;
-      courseIds.add(`${pc.gradeLevel}-${pc.semester}`);
-    }
     const totalCourses = activeCourses.length;
 
     return successResponse({

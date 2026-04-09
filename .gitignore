@@ -31,3 +31,7 @@ build/
 
 # Claude Code
 .claude/
+
+# Audit reports
+audit-review-report/
+security-review-report/

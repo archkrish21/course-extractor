@@ -1,13 +1,14 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Spinner } from "@/components/ui/spinner";
+import { creditTypeBadgeVariant } from "@/lib/badge-utils";
 import { useAccount } from "@/lib/account-context";
 import { apiFetch } from "@/lib/api-client";
-import { GRADE_TO_POINTS } from "@/config/grade-scale";
-import { CREDIT_TYPE_WEIGHT } from "@/config/gpa-weights";
+import { calculateGPA, formatGPA } from "@/lib/gpa/calc";
 import { UNOFFICIAL_DISCLAIMER } from "@/config/disclaimers";
 import { canPrint } from "@/lib/subscription/can-print";
 import { PrintWatermark } from "@/components/print-watermark";
@@ -50,51 +51,24 @@ function semesterCredit(creditValue: string, duration: string): number {
   return val;
 }
 
-function creditTypeBadgeVariant(type: string) {
-  switch (type) {
-    case "AP": return "ap" as const;
-    case "Honors": return "honors" as const;
-    case "Accelerated": return "accelerated" as const;
-    default: return "default" as const;
-  }
-}
-
-function calcGPA(
-  courses: PlanCourse[]
-): { unweighted: number | null; weighted: number | null; credits: number; coursesUsed: number } {
-  let totalUnweighted = 0;
-  let totalWeighted = 0;
-  let totalCredits = 0;
-  let coursesUsed = 0;
-
-  for (const c of courses) {
-    if (c.status !== "completed") continue;
-    if (c.gpaWaiverApplied) continue;
-    const grade = c.plannedGrade;
-    if (!grade) continue;
-    const pts = GRADE_TO_POINTS[grade];
-    if (pts === null || pts === undefined) continue;
-
-    const credit = semesterCredit(c.creditValue, c.duration);
-    const weight = CREDIT_TYPE_WEIGHT[c.creditType] ?? 0;
-    totalUnweighted += pts * credit;
-    totalWeighted += (pts + weight) * credit;
-    totalCredits += credit;
-    coursesUsed++;
-  }
-
-  if (totalCredits === 0) return { unweighted: null, weighted: null, credits: 0, coursesUsed: 0 };
+/** Adapt PlanCourse[] to the shared calculateGPA interface and call it in "actual" mode. */
+function calcGPA(courses: PlanCourse[]) {
+  const input = courses.map((c) => ({
+    creditValue: c.creditValue,
+    creditType: c.creditType,
+    plannedGrade: c.plannedGrade ?? null,
+    status: c.status as "planned" | "enrolled" | "completed" | "dropped",
+    gpaWaiver: c.gpaWaiver,
+    gpaWaiverApplied: c.gpaWaiverApplied,
+    code: c.code,
+  }));
+  const result = calculateGPA(input, "actual");
   return {
-    unweighted: totalUnweighted / totalCredits,
-    weighted: totalWeighted / totalCredits,
-    credits: totalCredits,
-    coursesUsed,
+    unweighted: result.unweighted,
+    weighted: result.weighted,
+    credits: result.totalCredits,
+    coursesUsed: result.coursesUsed,
   };
-}
-
-function fmtGpa(gpa: number | null): string {
-  if (gpa === null) return "--";
-  return gpa.toFixed(2);
 }
 
 // ---------------------------------------------------------------------------
@@ -174,7 +148,7 @@ export default function GradesPage() {
       }
     }
     fetchData();
-  }, []);
+  }, [currentAccount]);
 
   // Expand current grade by default
   useEffect(() => {
@@ -195,8 +169,8 @@ export default function GradesPage() {
   const cumGpa = calcGPA(completedCourses);
   const totalCreditsEarned = completedCourses.reduce((sum, c) => sum + semesterCredit(c.creditValue, c.duration), 0);
 
-  // Group by grade → semester
-  function groupedByGrade(): Map<number, Map<number, PlanCourse[]>> {
+  // Group by grade → semester (memoized)
+  const grouped = useMemo(() => {
     const result = new Map<number, Map<number, PlanCourse[]>>();
     for (const c of completedCourses) {
       if (!result.has(c.gradeLevel)) result.set(c.gradeLevel, new Map());
@@ -205,9 +179,7 @@ export default function GradesPage() {
       semMap.get(c.semester)!.push(c);
     }
     return result;
-  }
-
-  const grouped = groupedByGrade();
+  }, [completedCourses]);
 
   // ---------------------------------------------------------------------------
   // Render
@@ -261,7 +233,7 @@ export default function GradesPage() {
                   Unweighted GPA
                 </p>
                 <p className="mt-1 text-2xl font-bold text-foreground">
-                  {fmtGpa(cumGpa.unweighted)}
+                  {formatGPA(cumGpa.unweighted)}
                 </p>
               </div>
               <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10 text-primary">
@@ -278,7 +250,7 @@ export default function GradesPage() {
                   Weighted GPA
                 </p>
                 <p className="mt-1 text-2xl font-bold text-foreground">
-                  {fmtGpa(cumGpa.weighted)}
+                  {formatGPA(cumGpa.weighted)}
                 </p>
               </div>
               <div className="flex h-10 w-10 items-center justify-center rounded-full bg-success/10 text-success">
@@ -311,7 +283,7 @@ export default function GradesPage() {
       {/* Loading */}
       {loading && (
         <div className="flex justify-center py-16" role="status" aria-label="Loading grades">
-          <div className="h-6 w-6 animate-spin rounded-full border-4 border-muted border-t-primary" />
+          <Spinner className="h-6 w-6 border-4 border-muted border-t-primary" />
         </div>
       )}
 
@@ -383,9 +355,9 @@ export default function GradesPage() {
                   <div className="flex items-center gap-3 text-xs text-muted-foreground">
                     <span className="hidden sm:inline">{glCourses.length} course{glCourses.length !== 1 ? "s" : ""}</span>
                     <span className="hidden sm:inline">{glCredits} cr</span>
-                    <span>UW {fmtGpa(glGpa.unweighted)}</span>
+                    <span>UW {formatGPA(glGpa.unweighted)}</span>
                     <span className="text-muted-foreground/50">|</span>
-                    <span>W {fmtGpa(glGpa.weighted)}</span>
+                    <span>W {formatGPA(glGpa.weighted)}</span>
                   </div>
                 </button>
 
@@ -483,8 +455,8 @@ export default function GradesPage() {
                           {/* Semester GPA footer */}
                           <div className="flex items-center justify-end gap-4 bg-muted/30 px-4 py-2 sm:px-5 text-sm">
                             <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Semester {sem} GPA</span>
-                            <span className="text-muted-foreground">UW <span className="font-bold text-foreground">{fmtGpa(semGpa.unweighted)}</span></span>
-                            <span className="text-muted-foreground">W <span className="font-bold text-foreground">{fmtGpa(semGpa.weighted)}</span></span>
+                            <span className="text-muted-foreground">UW <span className="font-bold text-foreground">{formatGPA(semGpa.unweighted)}</span></span>
+                            <span className="text-muted-foreground">W <span className="font-bold text-foreground">{formatGPA(semGpa.weighted)}</span></span>
                           </div>
                         </div>
                       );

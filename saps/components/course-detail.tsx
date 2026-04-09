@@ -2,6 +2,8 @@
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Spinner } from "@/components/ui/spinner";
+import { creditTypeBadgeVariant } from "@/lib/badge-utils";
 import { useState, useEffect } from "react";
 import { isSummerSemester } from "@/config/semesters";
 
@@ -37,15 +39,6 @@ interface Course {
   isHonors: boolean;
   gpaWaiver: boolean;
   semestersOffered: number[] | null;
-}
-
-function creditTypeBadgeVariant(type: string) {
-  switch (type) {
-    case "AP": return "ap" as const;
-    case "Honors": return "honors" as const;
-    case "Accelerated": return "accelerated" as const;
-    default: return "default" as const;
-  }
 }
 
 function CourseCodeLink({ id, code, name, onCourseClick }: { id: string; code: string; name: string; onCourseClick?: (courseId: string) => void }) {
@@ -414,30 +407,58 @@ export function CourseDetail({ course, onCourseClick, onDivisionClick, onDepartm
             course_id: course.id,
             grade_level: selectedGrade,
             semester: sem1,
-            force_add: true,
-          }),
-        });
-        const res2 = await fetch(`/api/v1/plans/${selectedPlanId}/courses`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            course_id: course.id,
-            grade_level: selectedGrade,
-            semester: sem2,
-            force_add: true,
           }),
         });
 
-        if (res1.ok && res2.ok) {
-          setAddResult({ success: true, message: `Added to both ${isSummer ? "summer sessions" : "semesters"} of Grade ${selectedGrade}` });
-          onCourseAdded?.();
-        } else {
-          const data = await (res1.ok ? res2 : res1).json().catch(() => null);
+        if (!res1.ok) {
+          const data = await res1.json().catch(() => null);
           setAddResult({
             success: false,
             message: data?.error?.message ?? data?.violations?.[0]?.message ?? "Failed to add course",
             warnings: data?.violations,
           });
+          return;
+        }
+
+        const res1Data = await res1.json().catch(() => null);
+        const firstPlanCourseId = res1Data?.data?.id ?? res1Data?.id;
+
+        try {
+          const res2 = await fetch(`/api/v1/plans/${selectedPlanId}/courses`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              course_id: course.id,
+              grade_level: selectedGrade,
+              semester: sem2,
+            }),
+          });
+
+          if (res2.ok) {
+            setAddResult({ success: true, message: `Added to both ${isSummer ? "summer sessions" : "semesters"} of Grade ${selectedGrade}` });
+            onCourseAdded?.();
+          } else {
+            // Rollback the first semester add
+            if (firstPlanCourseId) {
+              await fetch(`/api/v1/plans/${selectedPlanId}/courses/${firstPlanCourseId}`, {
+                method: "DELETE",
+              }).catch(() => {});
+            }
+            const data = await res2.json().catch(() => null);
+            setAddResult({
+              success: false,
+              message: data?.error?.message ?? data?.violations?.[0]?.message ?? "Failed to add course to second semester",
+              warnings: data?.violations,
+            });
+          }
+        } catch {
+          // Rollback the first semester add on network error
+          if (firstPlanCourseId) {
+            await fetch(`/api/v1/plans/${selectedPlanId}/courses/${firstPlanCourseId}`, {
+              method: "DELETE",
+            }).catch(() => {});
+          }
+          throw new Error("Failed to add second semester");
         }
       } else {
         // Semester course: add to selected semester
@@ -448,7 +469,6 @@ export function CourseDetail({ course, onCourseClick, onDivisionClick, onDepartm
             course_id: course.id,
             grade_level: selectedGrade,
             semester: selectedSemester,
-            force_add: true,
           }),
         });
 
@@ -541,7 +561,7 @@ export function CourseDetail({ course, onCourseClick, onDivisionClick, onDepartm
 
               {loadingPlans ? (
                 <div className="flex items-center justify-center py-4">
-                  <div className="h-5 w-5 animate-spin rounded-full border-2 border-muted border-t-primary" />
+                  <Spinner className="h-5 w-5 border-2 border-muted border-t-primary" />
                 </div>
               ) : plans.length === 0 ? (
                 <div className="flex flex-col gap-3">
@@ -669,7 +689,7 @@ export function CourseDetail({ course, onCourseClick, onDivisionClick, onDepartm
                       disabled={adding || !selectedPlanId || addResult?.success === true}
                     >
                       {adding ? (
-                        <div className="h-4 w-4 animate-spin rounded-full border-2 border-primary-foreground border-t-transparent" />
+                        <Spinner className="h-4 w-4 border-2 border-primary-foreground border-t-transparent" />
                       ) : addResult?.success ? (
                         <>
                           <svg aria-hidden="true" className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">

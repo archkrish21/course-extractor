@@ -17,17 +17,26 @@ To update for a new year:
 """
 
 import argparse
+import importlib
 import json
 import os
 import sys
 from datetime import datetime, timezone
 
-from summer_courses_2026 import SUMMER_COURSES_2026
 
-# Map year to curated data
-CURATED_DATA = {
-    2026: SUMMER_COURSES_2026,
-}
+def _load_curated_data(year: int) -> list[dict]:
+    """Dynamically import curated data for the given year."""
+    module_name = f"summer_courses_{year}"
+    try:
+        mod = importlib.import_module(module_name)
+    except ModuleNotFoundError:
+        print(f"ERROR: No curated data module '{module_name}' found for year {year}.")
+        sys.exit(1)
+    attr_name = f"SUMMER_COURSES_{year}"
+    if not hasattr(mod, attr_name):
+        print(f"ERROR: Module '{module_name}' has no attribute '{attr_name}'.")
+        sys.exit(1)
+    return getattr(mod, attr_name)
 
 # Descriptions extracted from PDF (too long for the data file)
 DESCRIPTIONS = {
@@ -75,13 +84,20 @@ def main():
     parser.add_argument("--out-dir", default=None, help="Output directory (default: data/)")
     args = parser.parse_args()
 
-    if args.year not in CURATED_DATA:
-        print(f"ERROR: No curated data for year {args.year}. Available: {list(CURATED_DATA.keys())}")
-        sys.exit(1)
-
-    courses = CURATED_DATA[args.year]
+    courses = _load_curated_data(args.year)
     out_dir = args.out_dir or os.path.join(os.path.dirname(__file__), "data")
     os.makedirs(out_dir, exist_ok=True)
+
+    # Validate curated data: code counts must match duration type
+    for c in courses:
+        all_codes = c["all_codes"]
+        duration = c["duration"]
+        if duration == "full_year" and len(all_codes) != 2:
+            print(f"ERROR: full_year course {c['code']} should have 2 codes, got {len(all_codes)}: {all_codes}")
+            sys.exit(1)
+        if duration == "semester" and len(all_codes) < 1:
+            print(f"ERROR: semester course {c['code']} should have at least 1 code, got {len(all_codes)}: {all_codes}")
+            sys.exit(1)
 
     # Expand courses: full-year courses get composite codes (MTH15S/MTH16S),
     # semester courses offered in both sessions get separate rows per session.

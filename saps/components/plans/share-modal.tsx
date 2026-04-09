@@ -42,6 +42,7 @@ export function ShareModal({
   const [shares, setShares] = useState<Share[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!isOpen) return;
@@ -60,11 +61,26 @@ export function ShareModal({
           const sData = await sharesRes.json();
           setShares(sData.data ?? sData ?? []);
         }
-      } catch { /* silent */ }
+      } catch (err) {
+        console.error("[share-modal] fetchData error:", err);
+        setError("Failed to load sharing data. Please try again.");
+      }
       finally { setLoading(false); }
     }
     fetchData();
   }, [isOpen, planId, accountId]);
+
+  // Close on Escape
+  useEffect(() => {
+    if (!isOpen) return;
+    function handleKey(e: KeyboardEvent) {
+      if (e.key === "Escape") {
+        onClose();
+      }
+    }
+    document.addEventListener("keydown", handleKey);
+    return () => document.removeEventListener("keydown", handleKey);
+  }, [isOpen, onClose]);
 
   const getPermission = (userId: string): PermissionOption => {
     const share = shares.find((s) => s.user_id === userId);
@@ -111,7 +127,10 @@ export function ShareModal({
         );
       }
       onUpdated();
-    } catch { /* silent */ }
+    } catch (err) {
+      console.error("[share-modal] handleChange error:", err);
+      setError("Failed to update permissions. Please try again.");
+    }
     finally { setSaving(null); }
   };
 
@@ -156,6 +175,11 @@ export function ShareModal({
           </div>
 
           <div className="px-6 py-4">
+            {error && (
+              <div className="mb-3 rounded-lg bg-destructive-light p-2.5 text-sm text-destructive" role="alert">
+                {error}
+              </div>
+            )}
             {loading ? (
               <div className="py-4 text-center text-sm text-muted-foreground">Loading...</div>
             ) : otherMembers.length === 0 ? (

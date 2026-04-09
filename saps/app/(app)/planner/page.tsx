@@ -594,6 +594,65 @@ export default function PlannerPage() {
     [courses]
   );
 
+  const handleBulkStatusChange = useCallback(
+    async (ids: string[], status: string) => {
+      if (!selectedPlanId) return;
+      try {
+        for (const id of ids) {
+          await apiFetch(`/api/v1/plans/${selectedPlanId}/courses/${id}`, {
+            method: "PATCH",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ status }),
+          });
+        }
+        showToast(`Set ${ids.length} courses to ${status}`);
+        await fetchPlanData(selectedPlanId);
+      } catch {
+        setError("Failed to update course statuses.");
+      }
+    },
+    [selectedPlanId, showToast, fetchPlanData]
+  );
+
+  const handleBulkGradeChange = useCallback(
+    async (ids: string[], grade: string | null) => {
+      if (!selectedPlanId) return;
+      try {
+        for (const id of ids) {
+          await apiFetch(`/api/v1/plans/${selectedPlanId}/courses/${id}`, {
+            method: "PATCH",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ planned_grade: grade }),
+          });
+        }
+        showToast(grade ? `Set ${ids.length} courses to grade ${grade}` : `Cleared grades for ${ids.length} courses`);
+        await fetchPlanData(selectedPlanId);
+      } catch {
+        setError("Failed to update grades.");
+      }
+    },
+    [selectedPlanId, showToast, fetchPlanData]
+  );
+
+  const handleGpaWaiverToggle = useCallback(
+    async (planCourseId: string, applied: boolean) => {
+      if (!selectedPlanId) return;
+      try {
+        await apiFetch(`/api/v1/plans/${selectedPlanId}/courses/${planCourseId}`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ gpa_waiver_applied: applied }),
+        });
+        const course = courses.find((c) => c.id === planCourseId);
+        showToast(applied ? `GPA waiver applied for ${course?.name ?? "course"}` : `GPA waiver removed for ${course?.name ?? "course"}`);
+        await fetchPlanData(selectedPlanId);
+      } catch {
+        setError("Failed to update GPA waiver.");
+      }
+    },
+    [selectedPlanId, courses, showToast, fetchPlanData]
+  );
+
   const executeClear = useCallback(async () => {
     if (!selectedPlanId || !clearConfirm) return;
     setClearing(true);
@@ -826,8 +885,8 @@ export default function PlannerPage() {
 
   // ─── Undo logic ──────────────────────────────────────────────────────────────
 
-  // Assign the actual undo implementation to the ref (keeps performUndo stable)
-  performUndoRef.current = async () => {
+  // Wrap undo implementation in useCallback and assign to ref via useEffect
+  const performUndoImpl = useCallback(async () => {
     const entry = undoStack.pop();
     if (!entry || !selectedPlanId) {
       return;
@@ -838,7 +897,7 @@ export default function PlannerPage() {
         case "add_course": {
           // Undo add = delete the added courses
           for (const pcId of entry.action.planCourseIds) {
-            const res = await apiFetch(`/api/v1/plans/${selectedPlanId}/courses/${pcId}`, {
+            await apiFetch(`/api/v1/plans/${selectedPlanId}/courses/${pcId}`, {
               method: "DELETE",
             });
           }
@@ -862,7 +921,7 @@ export default function PlannerPage() {
               headers: { "Content-Type": "application/json" },
               body: JSON.stringify(body),
             });
-            const data = await res.json().catch(() => null);
+            await res.json().catch(() => null);
           }
           break;
         }
@@ -894,7 +953,11 @@ export default function PlannerPage() {
     } catch {
       showToast("Undo failed");
     }
-  };
+  }, [selectedPlanId, undoStack, showToast, fetchPlanData]);
+
+  useEffect(() => {
+    performUndoRef.current = performUndoImpl;
+  }, [performUndoImpl]);
 
   // Ctrl+Z / Cmd+Z keyboard shortcut
   useEffect(() => {
@@ -1566,53 +1629,9 @@ export default function PlannerPage() {
           onClearSemester={handleClearSemester}
           onClearGrade={handleClearGrade}
           onViewDetails={(courseId) => setDetailCourseId(courseId)}
-          onBulkStatusChange={async (ids, status) => {
-            if (!selectedPlanId) return;
-            try {
-              for (const id of ids) {
-                await apiFetch(`/api/v1/plans/${selectedPlanId}/courses/${id}`, {
-                  method: "PATCH",
-                  headers: { "Content-Type": "application/json" },
-                  body: JSON.stringify({ status }),
-                });
-              }
-              showToast(`Set ${ids.length} courses to ${status}`);
-              await fetchPlanData(selectedPlanId);
-            } catch {
-              setError("Failed to update course statuses.");
-            }
-          }}
-          onBulkGradeChange={async (ids, grade) => {
-            if (!selectedPlanId) return;
-            try {
-              for (const id of ids) {
-                await apiFetch(`/api/v1/plans/${selectedPlanId}/courses/${id}`, {
-                  method: "PATCH",
-                  headers: { "Content-Type": "application/json" },
-                  body: JSON.stringify({ planned_grade: grade }),
-                });
-              }
-              showToast(grade ? `Set ${ids.length} courses to grade ${grade}` : `Cleared grades for ${ids.length} courses`);
-              await fetchPlanData(selectedPlanId);
-            } catch {
-              setError("Failed to update grades.");
-            }
-          }}
-          onGpaWaiverToggle={async (planCourseId, applied) => {
-            if (!selectedPlanId) return;
-            try {
-              await apiFetch(`/api/v1/plans/${selectedPlanId}/courses/${planCourseId}`, {
-                method: "PATCH",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ gpa_waiver_applied: applied }),
-              });
-              const course = courses.find((c) => c.id === planCourseId);
-              showToast(applied ? `GPA waiver applied for ${course?.name ?? "course"}` : `GPA waiver removed for ${course?.name ?? "course"}`);
-              await fetchPlanData(selectedPlanId);
-            } catch {
-              setError("Failed to update GPA waiver.");
-            }
-          }}
+          onBulkStatusChange={handleBulkStatusChange}
+          onBulkGradeChange={handleBulkGradeChange}
+          onGpaWaiverToggle={handleGpaWaiverToggle}
           lockedGradeLevels={selectedPlan?.lockedGradeLevels ?? []}
           onToggleGradeLock={(gradeLevel, locked) => {
             if (!locked) {

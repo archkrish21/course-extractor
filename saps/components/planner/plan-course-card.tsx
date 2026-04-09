@@ -2,7 +2,7 @@
 
 import { useState, useRef, useEffect } from "react";
 import { Badge } from "@/components/ui/badge";
-import type { BadgeVariant } from "@/components/ui/badge";
+import { creditTypeBadgeVariant } from "@/lib/badge-utils";
 import { GRADE_OPTIONS, PASS_FAIL_OPTIONS, isPassFailCourse } from "@/config/grade-scale";
 
 export interface PlanCourse {
@@ -130,15 +130,6 @@ const STATUS_CONFIG: Record<
   },
 };
 
-function getCreditBadgeVariant(creditType: string): BadgeVariant {
-  const lower = creditType.toLowerCase();
-  if (lower.includes("ap")) return "ap";
-  if (lower.includes("honors")) return "honors";
-  if (lower.includes("dual")) return "dual-credit";
-  if (lower.includes("accelerated")) return "accelerated";
-  return "default";
-}
-
 export function PlanCourseCard({
   course,
   violations = [],
@@ -233,7 +224,7 @@ export function PlanCourseCard({
         {/* Badges row */}
         <div className="mt-1 flex flex-wrap items-center gap-1">
           <Badge
-            variant={getCreditBadgeVariant(course.creditType)}
+            variant={creditTypeBadgeVariant(course.creditType)}
             className="text-[10px] px-1.5 py-0"
           >
             {course.creditType}

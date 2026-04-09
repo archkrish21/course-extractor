@@ -30,9 +30,15 @@ export async function getAuthenticatedUser(): Promise<AuthenticatedUser | null> 
     return null;
   }
 
+  if (!user.email) {
+    throw new Error(
+      "User has no email address — phone/anonymous auth not supported"
+    );
+  }
+
   return {
     id: user.id,
-    email: user.email!,
+    email: user.email,
   };
 }
 

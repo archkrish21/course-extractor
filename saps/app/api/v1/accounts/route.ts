@@ -1,5 +1,6 @@
 import { NextRequest } from "next/server";
 import { z } from "zod";
+import { randomBytes } from "crypto";
 import { db } from "@/lib/db";
 import { accounts, accountMembers, studentProfiles, users, subscriptions, subscriptionPlans } from "@/lib/db/schema";
 import { eq, and, sql } from "drizzle-orm";
@@ -8,9 +9,10 @@ import { requireAuth } from "@/lib/auth/get-user";
 
 function generateClaimCode(): string {
   const chars = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789";
+  const bytes = randomBytes(8);
   let code = "";
   for (let i = 0; i < 8; i++) {
-    code += chars.charAt(Math.floor(Math.random() * chars.length));
+    code += chars.charAt(bytes[i] % chars.length);
   }
   return code;
 }

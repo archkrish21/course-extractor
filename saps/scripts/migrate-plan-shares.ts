@@ -8,7 +8,7 @@ import {
   planShares,
   accountMembers,
 } from "../lib/db/schema";
-import { eq, and, ne } from "drizzle-orm";
+import { eq, and, ne, sql } from "drizzle-orm";
 
 /**
  * One-time migration: create plan_shares rows for all existing plans.
@@ -20,6 +20,9 @@ const db = drizzle(pool);
 
 async function migrate() {
   console.log("Starting plan_shares migration...");
+
+  // Wrap in a transaction so partial failures can be rolled back
+  await db.execute(sql`BEGIN`);
 
   const plans = await db
     .select({
@@ -90,6 +93,8 @@ async function migrate() {
     }
   }
 
+  await db.execute(sql`COMMIT`);
+
   console.log(`Migration complete.`);
   console.log(`  Owner shares created: ${ownerCount}`);
   console.log(`  Member shares created: ${shareCount}`);
@@ -101,6 +106,7 @@ async function migrate() {
 
 migrate().catch(async (err) => {
   console.error("Migration failed:", err);
+  try { await db.execute(sql`ROLLBACK`); } catch { /* already rolled back */ }
   await pool.end();
   process.exit(1);
 });

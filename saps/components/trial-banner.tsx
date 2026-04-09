@@ -25,10 +25,14 @@ export function TrialBanner() {
     // Only show for trialing users
     if (currentAccount?.subscriptionTier !== "trial") return;
 
-    const wasDismissed = sessionStorage.getItem("trial-banner-dismissed");
-    if (wasDismissed === "true") {
-      setDismissed(true);
-      return;
+    try {
+      const wasDismissed = sessionStorage.getItem("trial-banner-dismissed");
+      if (wasDismissed === "true") {
+        setDismissed(true);
+        return;
+      }
+    } catch {
+      // sessionStorage may be unavailable in private browsing
     }
 
     // Fetch actual trial data from subscriptions API
@@ -54,7 +58,11 @@ export function TrialBanner() {
 
   function handleDismiss() {
     setDismissed(true);
-    sessionStorage.setItem("trial-banner-dismissed", "true");
+    try {
+      sessionStorage.setItem("trial-banner-dismissed", "true");
+    } catch {
+      // sessionStorage may be unavailable in private browsing
+    }
   }
 
   return (

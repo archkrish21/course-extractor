@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { apiFetch } from "@/lib/api-client";
 
 export default function ClaimAccountPage() {
   const router = useRouter();
@@ -29,7 +30,7 @@ export default function ClaimAccountPage() {
     setLoading(true);
 
     try {
-      const res = await fetch("/api/v1/accounts/claim", {
+      const res = await apiFetch("/api/v1/accounts/claim", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ claim_code: trimmed }),

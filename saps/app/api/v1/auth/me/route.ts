@@ -2,7 +2,7 @@ import { NextRequest } from "next/server";
 import { z } from "zod";
 import { db } from "@/lib/db";
 import { users } from "@/lib/db/schema";
-import { eq } from "drizzle-orm";
+import { eq, sql } from "drizzle-orm";
 import { successResponse, errorResponse } from "@/lib/api/response";
 import { requireAuth } from "@/lib/auth/get-user";
 
@@ -62,7 +62,10 @@ export async function PATCH(request: NextRequest) {
     const updates: Record<string, unknown> = {};
     if (parsed.data.first_name !== undefined) updates.firstName = parsed.data.first_name;
     if (parsed.data.last_name !== undefined) updates.lastName = parsed.data.last_name;
-    if (parsed.data.tour_state !== undefined) updates.tourState = parsed.data.tour_state;
+    // Merge incoming tour_state into existing value (avoids read-then-write race)
+    if (parsed.data.tour_state !== undefined) {
+      updates.tourState = sql`COALESCE(${users.tourState}, '{}'::jsonb) || ${JSON.stringify(parsed.data.tour_state)}::jsonb`;
+    }
 
     if (Object.keys(updates).length === 0) {
       return errorResponse("VALIDATION_ERROR", "At least one field required.", 400);

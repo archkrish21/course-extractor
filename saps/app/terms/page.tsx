@@ -1,15 +1,16 @@
-"use client";
-
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { BackButton } from "@/components/back-button";
+import type { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "Terms of Service — SAPS",
+};
 
 /**
  * Terms of Service page.
  * [LEGAL COUNSEL REQUIRED] Replace placeholder content with attorney-drafted terms.
  */
 export default function TermsPage() {
-  const router = useRouter();
-
   return (
     <div className="mx-auto max-w-prose px-4 py-12 sm:px-6">
       <h1 className="text-2xl font-bold tracking-tight text-foreground">Terms of Service</h1>
@@ -123,21 +124,7 @@ export default function TermsPage() {
 
       <div className="mt-12 flex items-center justify-between border-t border-border pt-6 text-xs text-muted-foreground">
         <Link href="/privacy" className="rounded text-primary hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2">Privacy Policy</Link>
-        <button
-          type="button"
-          onClick={() => {
-            if (window.opener || window.history.length <= 2) {
-              window.close();
-            }
-            router.back();
-          }}
-          className="inline-flex items-center gap-1 rounded text-sm text-muted-foreground hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-        >
-          <svg aria-hidden="true" className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" d="M10.5 19.5 3 12m0 0 7.5-7.5M3 12h18" />
-          </svg>
-          Back
-        </button>
+        <BackButton />
       </div>
     </div>
   );

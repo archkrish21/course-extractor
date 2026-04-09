@@ -2,6 +2,8 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { Badge } from "@/components/ui/badge";
+import { Spinner } from "@/components/ui/spinner";
+import { creditTypeBadgeVariant } from "@/lib/badge-utils";
 import { CourseDetail } from "@/components/course-detail";
 import { apiFetch } from "@/lib/api-client";
 
@@ -18,15 +20,6 @@ interface CourseDetailModalProps {
   onDirectAdd?: (courseId: string, duration?: string) => void;
 }
 
-function creditTypeBadgeVariant(type: string) {
-  switch (type) {
-    case "AP": return "ap" as const;
-    case "Honors": return "honors" as const;
-    case "Accelerated": return "accelerated" as const;
-    default: return "default" as const;
-  }
-}
-
 export function CourseDetailModal({
   courseId,
   onClose,
@@ -35,7 +28,28 @@ export function CourseDetailModal({
   hideAddButton = false,
   onDirectAdd,
 }: CourseDetailModalProps) {
-  const [course, setCourse] = useState<Record<string, unknown> | null>(null);
+  interface CourseData {
+    id: string;
+    name: string;
+    code: string;
+    description: string;
+    divisionId: string;
+    divisionName: string;
+    divisionCode: string;
+    departmentId?: string;
+    departmentName?: string;
+    creditType: "CP" | "Accelerated" | "Honors" | "AP";
+    creditValue: string;
+    duration: "semester" | "full_year";
+    gradeLevels: number[];
+    isAp: boolean;
+    isDualCredit: boolean;
+    isHonors: boolean;
+    gpaWaiver: boolean;
+    semestersOffered: number[] | null;
+  }
+
+  const [course, setCourse] = useState<CourseData | null>(null);
   const [loading, setLoading] = useState(true);
 
   const fetchCourse = useCallback(async (id: string) => {
@@ -78,8 +92,7 @@ export function CourseDetailModal({
     }
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const c = course as any;
+  const c = course;
 
   return (
     <>
@@ -102,7 +115,7 @@ export function CourseDetailModal({
         >
           {loading ? (
             <div className="flex items-center justify-center p-12">
-              <div className="h-8 w-8 animate-spin rounded-full border-4 border-muted border-t-primary" />
+              <Spinner className="h-8 w-8 border-4 border-muted border-t-primary" />
             </div>
           ) : c ? (
             <>

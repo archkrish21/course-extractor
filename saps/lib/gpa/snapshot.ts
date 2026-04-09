@@ -48,6 +48,7 @@ export async function maybeCreateSemesterSnapshot(params: {
           plannedGrade: planCourses.plannedGrade,
           status: planCourses.status,
           gpaWaiver: courses.gpaWaiver,
+          gpaWaiverApplied: planCourses.gpaWaiverApplied,
         })
         .from(planCourses)
         .innerJoin(courses, eq(planCourses.courseId, courses.id))
@@ -65,7 +66,7 @@ export async function maybeCreateSemesterSnapshot(params: {
       plannedGrade: c.plannedGrade,
       status: "completed" as const,
       gpaWaiver: c.gpaWaiver ?? false,
-      gpaWaiverApplied: false,
+      gpaWaiverApplied: c.gpaWaiverApplied ?? false,
     }));
 
     const result = calculateGPA(gpaInput, "actual");

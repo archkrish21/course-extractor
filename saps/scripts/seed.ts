@@ -28,6 +28,7 @@ async function seed() {
   });
   const db = drizzle(pool);
 
+  try {
   logger.info("Starting database seed...");
 
   // ─── Seed subscription plans ────────────────────────────────────────────
@@ -548,7 +549,9 @@ async function seed() {
   }
 
   logger.info("Seed complete.");
-  await pool.end();
+  } finally {
+    await pool.end();
+  }
 }
 
 seed().catch((err) => {

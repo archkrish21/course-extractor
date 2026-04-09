@@ -52,6 +52,8 @@ export function FeedbackWidget() {
 
           {/* Panel */}
           <div className="fixed bottom-6 right-6 z-50 w-80 rounded-2xl border border-border bg-card shadow-2xl"
+            role="dialog"
+            aria-label="Send feedback"
             onClick={(e) => e.stopPropagation()}>
 
             {/* Header */}
@@ -125,6 +127,7 @@ export function FeedbackWidget() {
                     onChange={(e) => setComment(e.target.value)}
                     placeholder="Tell us more (optional)..."
                     rows={3}
+                    aria-label="Feedback"
                     className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring resize-none"
                     maxLength={2000}
                   />

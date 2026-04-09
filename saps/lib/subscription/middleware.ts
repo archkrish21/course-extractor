@@ -178,7 +178,7 @@ async function getEffectiveTierByAccount(
     freezeReason: userRow?.freezeReason ?? null,
   });
   try {
-    if (redis && subRedisAvailable) await redis.setex(cacheKey, CACHE_TTL_SECONDS, JSON.stringify(tier));
+    if (redis && subRedisAvailable) await redis.setex(cacheKey, CACHE_TTL_SECONDS, tier);
   } catch (error) {
     console.warn("[subscription] Redis write failed:", error);
   }
@@ -237,7 +237,7 @@ async function getEffectiveTierByUserId(
   });
 
   try {
-    if (redis && subRedisAvailable) await redis.setex(cacheKey, CACHE_TTL_SECONDS, JSON.stringify(tier));
+    if (redis && subRedisAvailable) await redis.setex(cacheKey, CACHE_TTL_SECONDS, tier);
   } catch (error) {
     console.warn("[subscription] Redis write failed:", error);
   }

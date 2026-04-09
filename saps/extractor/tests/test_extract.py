@@ -18,6 +18,7 @@ import pytest
 DATA_DIR = os.path.join(os.path.dirname(__file__), "..", "data")
 COURSES_JSON = os.path.join(DATA_DIR, "2026-courses.json")
 REPORT_JSON = os.path.join(DATA_DIR, "2026-extraction-report.json")
+SUMMER_COURSES_JSON = os.path.join(DATA_DIR, "2026-summer-courses.json")
 
 REQUIRED_COURSE_FIELDS = [
     "code", "name", "division", "department", "description",
@@ -329,3 +330,73 @@ class TestKnownCourses:
         assert c is not None, "Spanish 1 (SPA101/SPA102) not found"
         assert "spanish" in c["name"].lower()
         assert c["duration"] == "full_year"
+
+
+# ---------------------------------------------------------------------------
+# Summer course tests
+# ---------------------------------------------------------------------------
+
+REQUIRED_SUMMER_FIELDS = [
+    "code", "name", "division", "department", "credit_value",
+    "duration", "credit_type", "grade_levels", "semesters_offered",
+    "is_summer",
+]
+
+
+@pytest.fixture(scope="module")
+def summer_data():
+    """Load the summer courses JSON file."""
+    if not os.path.isfile(SUMMER_COURSES_JSON):
+        pytest.skip(f"Summer courses JSON not found at {SUMMER_COURSES_JSON}. Run extract_summer.py first.")
+    with open(SUMMER_COURSES_JSON) as f:
+        return json.load(f)
+
+
+@pytest.fixture(scope="module")
+def summer_courses(summer_data):
+    """Return just the summer courses list."""
+    return summer_data["courses"]
+
+
+class TestSummerCourseSchema:
+    def test_summer_json_exists(self):
+        assert os.path.isfile(SUMMER_COURSES_JSON), (
+            f"Summer courses JSON not found at {SUMMER_COURSES_JSON}"
+        )
+
+    def test_required_fields_present(self, summer_courses):
+        for course in summer_courses:
+            for field in REQUIRED_SUMMER_FIELDS:
+                assert field in course, (
+                    f"Summer course {course.get('code', '???')} missing field: {field}"
+                )
+
+    def test_credit_value_allows_zero(self, summer_courses):
+        """credit_value should allow 0.0 for non-credit courses like ACT Prep."""
+        for course in summer_courses:
+            cv = course["credit_value"]
+            assert 0.0 <= cv <= 2.0, (
+                f"Summer course {course['code']}: credit_value {cv} out of range"
+            )
+
+    def test_has_zero_credit_course(self, summer_courses):
+        """At least one summer course (e.g. ACT Prep) should have 0.0 credits."""
+        zero_credit = [c for c in summer_courses if c["credit_value"] == 0.0]
+        assert len(zero_credit) > 0, "Expected at least one 0-credit summer course"
+
+    def test_is_summer_flag(self, summer_courses):
+        for course in summer_courses:
+            assert course["is_summer"] is True, (
+                f"Summer course {course['code']}: is_summer should be True"
+            )
+
+    def test_code_is_nonempty(self, summer_courses):
+        for course in summer_courses:
+            assert isinstance(course["code"], str) and len(course["code"]) >= 3
+
+    def test_grade_levels_valid(self, summer_courses):
+        for course in summer_courses:
+            for g in course["grade_levels"]:
+                assert g in VALID_GRADE_LEVELS, (
+                    f"Summer course {course['code']}: invalid grade level {g}"
+                )

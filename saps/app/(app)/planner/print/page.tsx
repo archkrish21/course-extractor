@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useSearchParams } from "next/navigation";
 import { apiFetch } from "@/lib/api-client";
 import { useAccount } from "@/lib/account-context";
 import { calculateGPA, formatGPA } from "@/lib/gpa/calc";
@@ -65,6 +66,7 @@ const STATUS_LABELS: Record<string, string> = {
 
 export default function PrintPlanPage() {
   const { currentAccount } = useAccount();
+  const searchParams = useSearchParams();
   const [plan, setPlan] = useState<{ id: string; name: string; status: string; isPrimary: boolean } | null>(null);
   const [courses, setCourses] = useState<PlanCourse[]>([]);
   const [loading, setLoading] = useState(true);
@@ -73,8 +75,7 @@ export default function PrintPlanPage() {
     async function load() {
       try {
         // Get the plan ID from URL params or use primary plan
-        const params = new URLSearchParams(window.location.search);
-        let planId = params.get("id");
+        let planId = searchParams.get("id");
 
         if (!planId) {
           // Fetch plans and use primary
@@ -170,7 +171,7 @@ export default function PrintPlanPage() {
     }
 
     load();
-  }, []);
+  }, [searchParams]);
 
   // Auto-trigger print after content loads
   useEffect(() => {

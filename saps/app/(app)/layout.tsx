@@ -8,8 +8,11 @@ import { FeedbackWidget } from "@/components/feedback-widget";
 import { TourButton } from "@/components/tour-button";
 import { AccountProvider, useAccount, type Account } from "@/lib/account-context";
 import { ToastProvider } from "@/components/ui/toast";
+import { apiFetch } from "@/lib/api-client";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 import { FREE_LAUNCH_MODE } from "@/config/subscription-plans";
+import { SapsLogo } from "@/components/ui/saps-logo";
+import { Spinner } from "@/components/ui/spinner";
 
 const NAV_ITEMS = [
   {
@@ -363,7 +366,7 @@ function AppLayoutInner({ children }: { children: React.ReactNode }) {
       }
       // Verify user exists in our DB (not just Supabase auth)
       try {
-        const res = await fetch("/api/v1/auth/me");
+        const res = await apiFetch("/api/v1/auth/me");
         if (res.status === 404) {
           // Orphaned auth user — sign out and redirect to login
           await supabase.auth.signOut();
@@ -380,7 +383,7 @@ function AppLayoutInner({ children }: { children: React.ReactNode }) {
   // Consent gate: redirect to /consent if user hasn't accepted current ToS/PP
   useEffect(() => {
     if (!isAuthenticated) return;
-    fetch("/api/v1/auth/consent")
+    apiFetch("/api/v1/auth/consent")
       .then((r) => (r.ok ? r.json() : null))
       .then((json) => {
         const data = json?.data ?? json;
@@ -411,7 +414,7 @@ function AppLayoutInner({ children }: { children: React.ReactNode }) {
   if (!authChecked || !isAuthenticated || !consentChecked) {
     return (
       <div className="flex min-h-screen items-center justify-center">
-        <div className="h-8 w-8 animate-spin rounded-full border-4 border-muted border-t-primary" />
+        <Spinner className="h-8 w-8 border-4 border-muted border-t-primary" />
       </div>
     );
   }
@@ -423,22 +426,7 @@ function AppLayoutInner({ children }: { children: React.ReactNode }) {
         <div className="mx-auto flex h-14 max-w-7xl items-center px-4 sm:px-6 lg:px-8">
           {/* Logo */}
           <Link href="/dashboard" className="flex items-center gap-2 mr-8 shrink-0">
-            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary">
-              <svg
-                aria-hidden="true"
-                className="h-5 w-5 text-primary-foreground"
-                fill="none"
-                viewBox="0 0 24 24"
-                strokeWidth={2}
-                stroke="currentColor"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  d="M4.26 10.147a60.438 60.438 0 0 0-.491 6.347A48.62 48.62 0 0 1 12 20.904a48.62 48.62 0 0 1 8.232-4.41 60.46 60.46 0 0 0-.491-6.347m-15.482 0a50.636 50.636 0 0 0-2.658-.813A59.906 59.906 0 0 1 12 3.493a59.903 59.903 0 0 1 10.399 5.84c-.896.248-1.783.52-2.658.814m-15.482 0A50.717 50.717 0 0 1 12 13.489a50.702 50.702 0 0 1 7.74-3.342M6.75 15a.75.75 0 1 0 0-1.5.75.75 0 0 0 0 1.5Zm0 0v-3.675A55.378 55.378 0 0 1 12 8.443m-7.007 11.55A5.981 5.981 0 0 0 6.75 15.75v-1.5"
-                />
-              </svg>
-            </div>
+            <SapsLogo size="md" />
             <span className="text-lg font-bold text-foreground">SAPS</span>
           </Link>
 

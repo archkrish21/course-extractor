@@ -68,6 +68,9 @@ export function UpgradeModal({ isOpen, onClose, feature, minimumTier, currentTie
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" onClick={onClose}>
       <div
         className="mx-4 w-full max-w-md rounded-xl border border-border bg-card p-6 shadow-xl"
+        role="dialog"
+        aria-modal="true"
+        aria-label="Upgrade required"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}

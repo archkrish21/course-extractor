@@ -45,8 +45,8 @@ export function isPassFailCourse(code: string): boolean {
     if (code.startsWith("PED331") || code.startsWith("PED332")) return false;
     // Lifeguard Training
     if (code.startsWith("PED501")) return false;
-    // Leadership courses (contain "L" in code)
-    if (/L/.test(code)) return false;
+    // Leadership courses (PED codes ending with L, e.g. PED101L)
+    if (/^PED\d+L/.test(code)) return false;
     // All other PED courses are P/F (regular PE)
     return true;
   }

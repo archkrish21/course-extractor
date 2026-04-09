@@ -105,8 +105,9 @@ export default function DashboardPage() {
   const [warningCount, setWarningCount] = useState(0);
   const [warningMessages, setWarningMessages] = useState<string[]>([]);
 
-  // Fetch primary plan info
+  // Fetch primary plan info + warnings
   useEffect(() => {
+    if (accountLoading) return;
     async function fetchDashboardData() {
       try {
         const res = await apiFetch("/api/v1/plans");
@@ -116,24 +117,19 @@ export default function DashboardPage() {
           const primary = plans.find((p) => p.isPrimary) ?? plans[0] ?? null;
           setPrimaryPlan(primary);
           if (plans.length === 0) {
-            // No plans — show banner pointing to planner
             setShowProfileBanner(true);
             setProfileBannerTarget("planner");
           } else if (currentAccount?.role === "student" && !userFirstName) {
-            // Has plans but no name — show banner pointing to settings
             setShowProfileBanner(true);
             setProfileBannerTarget("settings");
           }
-          // Fetch warnings for the primary plan
           if (primary) {
             try {
-              const [valRes, coursesRes] = await Promise.all([
+              const [valRes] = await Promise.all([
                 apiFetch(`/api/v1/plans/${primary.id}/validate`),
                 apiFetch(`/api/v1/plans/${primary.id}/courses`),
               ]);
               const warnings: string[] = [];
-
-              // API violations (prerequisite, duplicate, etc.) — formatted consistently
               if (valRes.ok) {
                 const valJson = await valRes.json();
                 const valData = valJson.data ?? valJson;
@@ -148,7 +144,6 @@ export default function DashboardPage() {
                   }
                 }
               }
-
               setWarningCount(warnings.length);
               setWarningMessages(warnings);
             } catch {
@@ -156,7 +151,6 @@ export default function DashboardPage() {
             }
           }
         } else {
-          // API error (404/403) — user likely has no account or no access
           setShowProfileBanner(true);
           setProfileBannerTarget("planner");
         }
@@ -166,8 +160,12 @@ export default function DashboardPage() {
         setPlanLoading(false);
       }
     }
+    fetchDashboardData();
+  }, [accountLoading, currentAccount, userFirstName]);
 
-    // Fetch GPA data
+  // Fetch GPA data
+  useEffect(() => {
+    if (accountLoading) return;
     async function fetchGpa() {
       try {
         const res = await apiFetch("/api/v1/gpa");
@@ -183,8 +181,12 @@ export default function DashboardPage() {
         setGpaLoading(false);
       }
     }
+    fetchGpa();
+  }, [accountLoading, currentAccount]);
 
-    // Fetch graduation requirements
+  // Fetch graduation requirements
+  useEffect(() => {
+    if (accountLoading) return;
     async function fetchRequirements() {
       try {
         const res = await apiFetch("/api/v1/requirements");
@@ -218,10 +220,13 @@ export default function DashboardPage() {
         setReqLoading(false);
       }
     }
+    fetchRequirements();
+  }, [accountLoading, currentAccount]);
 
-    // Fetch claim code if account is unclaimed (parent viewing)
+  // Fetch claim code if account is unclaimed (parent viewing)
+  useEffect(() => {
+    if (accountLoading || !currentAccount || currentAccount.isClaimed) return;
     async function fetchClaimCode() {
-      if (!currentAccount || currentAccount.isClaimed) return;
       try {
         const res = await apiFetch("/api/v1/accounts/claim-code");
         if (res.ok) {
@@ -232,13 +237,7 @@ export default function DashboardPage() {
         // Ignore
       }
     }
-
-    if (!accountLoading) {
-      fetchDashboardData();
-      fetchGpa();
-      fetchRequirements();
-      fetchClaimCode();
-    }
+    fetchClaimCode();
   }, [accountLoading, currentAccount]);
 
   const displayName = [userFirstName, userLastName].filter(Boolean).join(" ") || currentAccount?.studentName || "Student";

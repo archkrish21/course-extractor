@@ -4,26 +4,58 @@ config({ path: ".env.local" });
 import { drizzle } from "drizzle-orm/node-postgres";
 import { Pool } from "pg";
 import { sql } from "drizzle-orm";
+import { EPHEMERAL_EMAILS } from "../tests/e2e/global-setup";
+
+// Safety: block production execution
+if (process.env.NODE_ENV === "production") {
+  console.error("ERROR: cleanup-test-users cannot run in production (NODE_ENV=production). Aborting.");
+  process.exit(1);
+}
+
+const confirmFlag = process.argv.includes("--confirm");
 
 const pool = new Pool({ connectionString: process.env.DATABASE_URL! });
 const db = drizzle(pool);
 
 async function cleanup() {
-  const emails = ["student2@test.com", "student3@test.com"];
-  console.log("Deleting users:", emails);
+  // Accept emails from CLI args, or fall back to the shared constant from global-setup
+  const cliEmails = process.argv.filter((a) => a.includes("@"));
+  const emails = cliEmails.length > 0 ? cliEmails : EPHEMERAL_EMAILS;
 
   // Get user IDs first
   const userIds = await db.execute(
-    sql`SELECT id FROM users WHERE email IN ('student2@test.com', 'student3@test.com')`
+    sql`SELECT id, email FROM users WHERE email = ANY(${emails})`
   );
   const ids = userIds.rows.map((r: any) => r.id);
-  console.log("User IDs:", ids);
 
   if (ids.length === 0) {
-    console.log("No users found to delete.");
+    console.log("No test users found to delete.");
     await pool.end();
     return;
   }
+
+  // Print summary of what will be deleted
+  console.log("=== Cleanup Summary ===");
+  console.log(`Target emails: ${emails.join(", ")}`);
+  console.log(`Matched users: ${userIds.rows.map((r: any) => `${r.email} (${r.id})`).join(", ")}`);
+  console.log("Tables affected:");
+  console.log("  - plan_shares (user_id / granted_by)");
+  console.log("  - plan_history (changed_by)");
+  console.log("  - gpa_snapshots (student_id)");
+  console.log("  - four_year_plans (created_by)");
+  console.log("  - account_invite_codes (created_by / claimed_by)");
+  console.log("  - accounts (created_by / student_user_id / billing_contact_id)");
+  console.log("  - users (CASCADE to account_members, student_profiles, etc.)");
+  console.log("  - auth.users (Supabase auth)");
+  console.log("  - orphaned accounts (no remaining members)");
+
+  if (!confirmFlag) {
+    console.log("\nDry run — no changes made. Pass --confirm to execute deletions.");
+    await pool.end();
+    return;
+  }
+
+  console.log("\n--confirm passed. Proceeding with deletion...\n");
 
   // Clean up all references to these users
   for (const id of ids) {
@@ -44,7 +76,7 @@ async function cleanup() {
 
   // Delete users — CASCADE handles account_members, student_profiles, plan_shares, etc.
   const result = await db.execute(
-    sql`DELETE FROM users WHERE email IN ('student2@test.com', 'student3@test.com') RETURNING id, email`
+    sql`DELETE FROM users WHERE email = ANY(${emails}) RETURNING id, email`
   );
   console.log("Deleted:", result.rows);
 
@@ -60,7 +92,7 @@ async function cleanup() {
 
   // Also delete from Supabase auth.users
   await db.execute(sql`
-    DELETE FROM auth.users WHERE email IN ('student2@test.com', 'student3@test.com')
+    DELETE FROM auth.users WHERE email = ANY(${emails})
   `);
   console.log("Supabase auth users cleaned up");
 

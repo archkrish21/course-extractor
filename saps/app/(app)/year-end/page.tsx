@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import { Card, CardHeader, CardContent, CardFooter } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -107,6 +107,14 @@ function StepIndicator({ currentStep, isGraduating }: { currentStep: number; isG
 }
 
 export default function YearEndPage() {
+  return (
+    <Suspense fallback={<div className="flex min-h-[60vh] items-center justify-center"><div className="animate-pulse text-muted-foreground">Loading...</div></div>}>
+      <YearEndPageInner />
+    </Suspense>
+  );
+}
+
+function YearEndPageInner() {
   const { currentAccount, refetchAccounts } = useAccount();
   const router = useRouter();
   const searchParams = useSearchParams();

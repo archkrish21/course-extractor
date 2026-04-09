@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { CourseDetail } from "@/components/course-detail";
+import { creditTypeBadgeVariant } from "@/lib/badge-utils";
 import { apiFetch } from "@/lib/api-client";
 
 interface Course {
@@ -62,15 +63,6 @@ const DEPARTMENTS_BY_DIVISION: Record<string, string[]> = {
 
 const CREDIT_TYPES = ["CP", "Accelerated", "Honors", "AP"] as const;
 const GRADE_LEVELS = [9, 10, 11, 12];
-
-function creditTypeBadgeVariant(type: string) {
-  switch (type) {
-    case "AP": return "ap" as const;
-    case "Honors": return "honors" as const;
-    case "Accelerated": return "accelerated" as const;
-    default: return "default" as const;
-  }
-}
 
 export default function CourseBrowserPage() {
   const [courses, setCourses] = useState<Course[]>([]);

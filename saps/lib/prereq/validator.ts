@@ -254,21 +254,6 @@ export async function validateCourseAddition(
     });
   }
 
-  // 5. Check enrollment rule: full_year courses must exist in both semesters
-  // (Each semester is stored as a separate row; both must be present)
-  if (targetCourse.duration === "full_year" && semester !== null) {
-    const otherSemester = semester === 1 ? 2 : semester === 2 ? 1 : semester === -2 ? -1 : -2;
-    const hasOtherSemester = existingPlanCourses.some(
-      (pc) =>
-        pc.courseId === courseId &&
-        pc.gradeLevel === gradeLevel &&
-        pc.semester === otherSemester &&
-        pc.status !== "dropped"
-    );
-    // Only warn if this is a single add (the other semester will be added by the UI)
-    // No violation here — the planner page handles adding both semesters automatically
-  }
-
   // Semester courses must have a semester specified (1 or 2)
   if (targetCourse.duration === "semester" && semester === null) {
     violations.push({
@@ -709,7 +694,14 @@ export async function getTransitiveDownstream(
     ORDER BY course_id, depth
   `);
 
-  return (result.rows as any[]).map((row) => ({
+  interface DownstreamRow {
+    course_id: string;
+    course_code: string;
+    course_name: string;
+    depth: number;
+  }
+
+  return (result.rows as unknown as DownstreamRow[]).map((row) => ({
     courseId: row.course_id,
     courseCode: row.course_code,
     courseName: row.course_name,

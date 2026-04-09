@@ -35,19 +35,14 @@ export function useTour({ tourId, steps, autoStart = true, delay = 500 }: UseTou
   const markCompleted = useCallback(async () => {
     setCompleted(true);
     try {
-      // Get current tour state first
-      const res = await apiFetch("/api/v1/auth/me");
-      if (res.ok) {
-        const json = await res.json();
-        const currentState = json?.data?.tour_state ?? json?.tour_state ?? {};
-        await apiFetch("/api/v1/auth/me", {
-          method: "PATCH",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            tour_state: { ...currentState, [tourId]: true },
-          }),
-        });
-      }
+      // Send only the delta — the server merges into existing tour_state
+      await apiFetch("/api/v1/auth/me", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          tour_state: { [tourId]: true },
+        }),
+      });
     } catch { /* silent */ }
   }, [tourId]);
 

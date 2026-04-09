@@ -13,8 +13,10 @@ export async function apiFetch(
       ? localStorage.getItem("saps_current_account_id")
       : null;
 
+  const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
   const headers = new Headers(options?.headers);
-  if (accountId) {
+  if (accountId && UUID_RE.test(accountId)) {
     headers.set("X-Account-Id", accountId);
   }
 

@@ -447,18 +447,20 @@ function DesktopGrid({
                     <div className="grid grid-cols-2 gap-3">
                       {SUMMER_SEMESTERS.map((sem) => {
                         const cellCourses = sortCourses(getSemesterCourses(courses, grade, sem));
+                        const summerMax = 1;
+                        const isAtMax = cellCourses.length >= summerMax;
                         return (
                           <div
                             key={sem}
                             className="min-h-[100px] rounded-xl border-2 border-dashed border-warning/25 bg-warning-light/20 p-3 transition-colors hover:border-warning/35"
                           >
-                            {/* Cell header — matches regular semester header */}
+                            {/* Cell header */}
                             <div className="mb-1.5 flex items-center justify-between">
                               <p className="text-xs font-medium text-warning">
                                 {semesterLabel(sem)}
                               </p>
                               <span className="text-[10px] text-warning/60">
-                                {cellCourses.length} course{cellCourses.length !== 1 ? "s" : ""}
+                                {cellCourses.length}/{summerMax}
                               </span>
                             </div>
 
@@ -480,8 +482,8 @@ function DesktopGrid({
                               ))}
                             </div>
 
-                            {/* Add course button — matches regular semester add button */}
-                            {!readOnly && !isGradeLocked && (
+                            {/* Add course button — hidden when at max (1 per session) */}
+                            {!readOnly && !isGradeLocked && !isAtMax && (
                               <button
                                 type="button"
                                 onClick={() => onAddCourse(grade, sem)}

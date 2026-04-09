@@ -291,9 +291,11 @@ export default function PrintPlanPage() {
         {/* Grade tables */}
         {[9, 10, 11, 12].map((grade) => {
           const gradeCourses = courses.filter((c) => c.gradeLevel === grade && c.status !== "dropped");
-          const semGroups = [-2, -1, 1, 2]
-            .map((sem) => ({ sem, courses: sortCourses(gradeCourses.filter((c) => c.semester === sem)) }))
-            .filter((g) => g.sem === 1 || g.sem === 2 || g.courses.length > 0); // always show S1/S2, only show summer if has courses
+          // Merge summer into regular semesters: Session 1 (-2) → Semester 1, Session 2 (-1) → Semester 2
+          const sem1Courses = sortCourses(gradeCourses.filter((c) => c.semester === 1));
+          const sem2Courses = sortCourses(gradeCourses.filter((c) => c.semester === 2));
+          const summer1Courses = sortCourses(gradeCourses.filter((c) => c.semester === -2));
+          const summer2Courses = sortCourses(gradeCourses.filter((c) => c.semester === -1));
           const gradeCredits = gradeCourses.reduce((sum, c) => sum + creditPerRow(c), 0);
           const gradeEarned = gradeCourses.filter((c) => c.status === "completed").reduce((sum, c) => sum + creditPerRow(c), 0);
           const gradeGpaInput = gradeCourses.map((c) => ({
@@ -321,38 +323,13 @@ export default function PrintPlanPage() {
                 )}
               </div>
 
-              {/* Pre-summer courses (only if present) */}
-              {semGroups.some((g) => g.sem < 0 && g.courses.length > 0) && (
-                <div className="mt-1 mb-2 rounded border border-gray-200 bg-amber-50/30 p-2">
-                  <p className="mb-1 text-[10px] font-semibold text-warning uppercase">Pre-Summer Courses</p>
-                  <div className="grid grid-cols-2 gap-4">
-                    {semGroups.filter((g) => g.sem < 0).map((g) => (
-                      <div key={g.sem}>
-                        <p className="mb-0.5 text-[9px] font-medium text-warning">
-                          {g.sem === -2 ? "Session 1" : "Session 2"}
-                        </p>
-                        <table className="w-full text-xs">
-                          <tbody>
-                            {g.courses.map((c) => (
-                              <tr key={c.id} className="border-b border-warning/20">
-                                <td className="py-0.5 truncate max-w-[180px]" title={c.name}>{c.name}</td>
-                                <td className="py-0.5 text-gray-500">{c.code}</td>
-                                <td className="py-0.5 text-center font-semibold">{c.plannedGrade ?? "—"}</td>
-                                <td className="py-0.5 text-center">{creditPerRow(c)}</td>
-                              </tr>
-                            ))}
-                          </tbody>
-                        </table>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-
               <div className="mt-1 grid grid-cols-2 gap-4">
-                {semGroups.filter((g) => g.sem > 0).map((g) => (
-                  <div key={g.sem}>
-                    <p className="mb-1 text-xs font-semibold text-gray-500 uppercase">Semester {g.sem}</p>
+                {[
+                  { sem: 1, regular: sem1Courses, summer: summer1Courses },
+                  { sem: 2, regular: sem2Courses, summer: summer2Courses },
+                ].map(({ sem, regular, summer }) => (
+                  <div key={sem}>
+                    <p className="mb-1 text-xs font-semibold text-gray-500 uppercase">Semester {sem}</p>
                     <table className="w-full text-xs">
                       <thead>
                         <tr className="border-b border-gray-300">
@@ -365,9 +342,24 @@ export default function PrintPlanPage() {
                         </tr>
                       </thead>
                       <tbody>
-                        {g.courses.length === 0 ? (
+                        {/* Summer courses — same rows, amber text */}
+                        {summer.map((c) => (
+                          <tr key={c.id} className="border-b border-gray-300">
+                            <td className="py-0.5 truncate max-w-[200px] text-warning" title={c.name}>
+                              ☀ {c.name}
+                              {c.gpaWaiverApplied && <span className="ml-1 text-[9px] text-warning/60">(W)</span>}
+                            </td>
+                            <td className="py-0.5 text-warning/70">{c.code}</td>
+                            <td className="py-0.5 text-center text-warning/70">{c.creditType}</td>
+                            <td className="py-0.5 text-center text-warning/70">{STATUS_LABELS[c.status] ?? c.status}</td>
+                            <td className="py-0.5 text-center font-semibold text-warning">{c.plannedGrade ?? "—"}</td>
+                            <td className="py-0.5 text-center text-warning/70">{creditPerRow(c)}</td>
+                          </tr>
+                        ))}
+                        {/* Regular courses */}
+                        {regular.length === 0 && summer.length === 0 ? (
                           <tr><td colSpan={6} className="py-1 text-gray-400 italic">No courses</td></tr>
-                        ) : g.courses.map((c) => (
+                        ) : regular.map((c) => (
                           <tr key={c.id} className="border-b border-gray-300">
                             <td className="py-0.5 truncate max-w-[200px]" title={c.name}>
                               {c.name}

@@ -472,10 +472,9 @@ function DesktopGrid({
                                   course={course}
                                   violations={violations[course.courseId]}
                                   onRemove={!readOnly && !isGradeLocked ? () => onRemoveCourse(course.id) : undefined}
-                                  onClick={() => onCourseClick?.(course)}
-                                  onStatusChange={onStatusChange ? (status) => onStatusChange(course.id, status) : undefined}
-                                  onGradeChange={onGradeChange ? (g) => onGradeChange(course.id, g) : undefined}
-                                  onViewDetails={onViewDetails ? () => onViewDetails(course.courseId) : undefined}
+                                  onClick={onViewDetails ? () => onViewDetails(course.courseId) : () => onCourseClick(course)}
+                                  onStatusChange={isGradeLocked ? undefined : (onStatusChange ? (status) => onStatusChange(course.id, status) : undefined)}
+                                  onGradeChange={isGradeLocked ? undefined : (onGradeChange ? (g) => onGradeChange(course.id, g) : undefined)}
                                   onGpaWaiverToggle={onGpaWaiverToggle ? (applied) => onGpaWaiverToggle(course.id, applied) : undefined}
                                   readOnly={readOnly}
                                 />

@@ -68,7 +68,7 @@ test.describe("Onboarding — Step 1: About You", () => {
       await page.waitForTimeout(300);
     }
 
-    const nextBtn = page.getByRole("button", { name: /Next/i });
+    const nextBtn = page.getByRole("button", { name: "Next", exact: true });
     if ((await nextBtn.count()) > 0) {
       await nextBtn.click();
       await page.waitForTimeout(1_000);
@@ -93,7 +93,7 @@ test.describe("Onboarding — Step 2: Past Courses", () => {
       await page.waitForTimeout(300);
     }
 
-    const nextBtn = page.getByRole("button", { name: /Next/i });
+    const nextBtn = page.getByRole("button", { name: "Next", exact: true });
     if ((await nextBtn.count()) > 0) {
       await nextBtn.click();
       await page.waitForTimeout(1_000);
@@ -119,7 +119,7 @@ test.describe("Onboarding — Step Navigation", () => {
     await navigateToOnboarding(page);
 
     // On step 1, no back button
-    const backBtn = page.getByRole("button", { name: /Back/i });
+    const backBtn = page.getByRole("button", { name: "Back", exact: true });
     const backVisible = (await backBtn.count()) > 0 && (await backBtn.isVisible());
 
     // Select grade and go to step 2
@@ -129,13 +129,13 @@ test.describe("Onboarding — Step Navigation", () => {
       await page.waitForTimeout(300);
     }
 
-    const nextBtn = page.getByRole("button", { name: /Next/i });
+    const nextBtn = page.getByRole("button", { name: "Next", exact: true });
     if ((await nextBtn.count()) > 0) {
       await nextBtn.click();
       await page.waitForTimeout(1_000);
 
       // Back button should now be visible on step 2+
-      const backBtn2 = page.getByRole("button", { name: /Back/i });
+      const backBtn2 = page.getByRole("button", { name: "Back", exact: true });
       if ((await backBtn2.count()) > 0) {
         await expect(backBtn2).toBeVisible();
       }
@@ -193,7 +193,7 @@ test.describe("Onboarding — Freshman (Grade 9)", () => {
     await grade9.click();
     await page.waitForTimeout(300);
 
-    const nextBtn = page.getByRole("button", { name: /Next/i });
+    const nextBtn = page.getByRole("button", { name: "Next", exact: true });
     await nextBtn.click();
     await page.waitForTimeout(1_000);
 
@@ -213,11 +213,11 @@ test.describe("Onboarding — Freshman (Grade 9)", () => {
     await grade9.click();
     await page.waitForTimeout(300);
 
-    await page.getByRole("button", { name: /Next/i }).click();
+    await page.getByRole("button", { name: "Next", exact: true }).click();
     await page.waitForTimeout(1_000);
 
     // Click Back — should return to Step 1, not Step 2
-    const backBtn = page.getByRole("button", { name: /Back/i });
+    const backBtn = page.getByRole("button", { name: "Back", exact: true });
     if ((await backBtn.count()) === 0) {
       test.skip(true, "No Back button found");
       return;
@@ -243,7 +243,7 @@ test.describe("Onboarding — Sophomore (Grade 10)", () => {
     await grade10.click();
     await page.waitForTimeout(300);
 
-    await page.getByRole("button", { name: /Next/i }).click();
+    await page.getByRole("button", { name: "Next", exact: true }).click();
     await page.waitForTimeout(1_000);
 
     // Should show Step 2 with Grade 9 past courses
@@ -268,7 +268,7 @@ test.describe("Onboarding — Junior (Grade 11)", () => {
     await grade11.click();
     await page.waitForTimeout(300);
 
-    await page.getByRole("button", { name: /Next/i }).click();
+    await page.getByRole("button", { name: "Next", exact: true }).click();
     await page.waitForTimeout(1_000);
 
     // Should show Step 2 with Grade 9 and Grade 10 tabs
@@ -294,7 +294,7 @@ test.describe("Onboarding — Senior (Grade 12)", () => {
     await grade12.click();
     await page.waitForTimeout(300);
 
-    await page.getByRole("button", { name: /Next/i }).click();
+    await page.getByRole("button", { name: "Next", exact: true }).click();
     await page.waitForTimeout(1_000);
 
     // Should show Step 2 with Grade 9, 10, and 11 tabs
@@ -322,7 +322,7 @@ test.describe("Onboarding — Step Skip Logic", () => {
     await page.waitForTimeout(300);
 
     // Go to Step 2
-    await page.getByRole("button", { name: /Next/i }).click();
+    await page.getByRole("button", { name: "Next", exact: true }).click();
     await page.waitForTimeout(1_000);
 
     // Try to select a course
@@ -335,7 +335,7 @@ test.describe("Onboarding — Step Skip Logic", () => {
     await page.waitForTimeout(300);
 
     // Next should skip Step 3 (Starting Plan) and go to Step 4 (Goals)
-    await page.getByRole("button", { name: /Next/i }).click();
+    await page.getByRole("button", { name: "Next", exact: true }).click();
     await page.waitForTimeout(1_000);
 
     const goalsContent = page.locator("text=/GPA Target|Career|Goals|Complete/i");
@@ -357,7 +357,7 @@ async function navigateToTemplateStep(page: Page) {
   await grade9.click();
   await page.waitForTimeout(300);
 
-  await page.getByRole("button", { name: /Next/i }).click();
+  await page.getByRole("button", { name: "Next", exact: true }).click();
   await page.waitForTimeout(1_500);
 
   // Verify we landed on Step 3
@@ -547,6 +547,12 @@ test.describe("Onboarding → Planner: Blank Plan", () => {
       await dobInput.fill("2010-01-15");
     }
 
+    // Accept Terms of Service checkbox (required for submit)
+    const tosCheckbox = page.locator('input[type="checkbox"]');
+    if ((await tosCheckbox.count()) > 0) {
+      await tosCheckbox.check();
+    }
+
     await page.locator('form button[type="submit"]').click();
 
     // Wait for redirect to onboarding or consent
@@ -568,7 +574,7 @@ test.describe("Onboarding → Planner: Blank Plan", () => {
       const checkbox = page.locator('input[type="checkbox"]');
       if ((await checkbox.count()) > 0) {
         await checkbox.check();
-        const acceptBtn = page.getByRole("button", { name: /Accept/i });
+        const acceptBtn = page.getByRole("button", { name: "Accept", exact: true });
         await acceptBtn.click();
         await page.waitForURL(/\/onboarding/, { timeout: 10_000 });
       }
@@ -590,7 +596,7 @@ test.describe("Onboarding → Planner: Blank Plan", () => {
     await page.waitForTimeout(300);
 
     // Next → Step 3 (freshmen skip Step 2)
-    await page.getByRole("button", { name: /Next/i }).click();
+    await page.getByRole("button", { name: "Next", exact: true }).click();
     await page.waitForTimeout(1_500);
 
     // Step 3: Click "Start from scratch"
@@ -601,11 +607,11 @@ test.describe("Onboarding → Planner: Blank Plan", () => {
     }
 
     // Next → Step 4 (Goals)
-    await page.getByRole("button", { name: /Next/i }).click();
+    await page.getByRole("button", { name: "Next", exact: true }).click();
     await page.waitForTimeout(1_000);
 
     // Step 4: Complete
-    const completeBtn = page.getByRole("button", { name: /Complete/i });
+    const completeBtn = page.getByRole("button", { name: "Complete", exact: true });
     if ((await completeBtn.count()) > 0) {
       await completeBtn.click();
       await page.waitForURL(/\/(planner|dashboard)/, { timeout: 15_000 });
@@ -620,12 +626,10 @@ test.describe("Onboarding → Planner: Blank Plan", () => {
 
     // Planner should have no courses (blank plan)
     const courseCells = page.locator('[data-testid="course-card"], .course-card, [draggable="true"]');
-    const emptyCells = page.locator("text=/No courses|empty|Add courses|drag/i");
     const courseCount = await courseCells.count();
 
     // A blank plan should have 0 course cards
-    // Or the planner should show empty state / "Create Your First Plan"
-    const plannerHeading = page.locator("text=/Course Planner/i");
+    const plannerHeading = page.getByRole("heading", { name: "Course Planner" });
     await expect(plannerHeading).toBeVisible({ timeout: 5_000 });
     expect(courseCount).toBe(0);
   });
@@ -658,6 +662,12 @@ test.describe("Onboarding → Planner: Template Plan", () => {
       await dobInput.fill("2010-01-15");
     }
 
+    // Accept Terms of Service checkbox (required for submit)
+    const tosCheckbox = page.locator('input[type="checkbox"]');
+    if ((await tosCheckbox.count()) > 0) {
+      await tosCheckbox.check();
+    }
+
     await page.locator('form button[type="submit"]').click();
 
     try {
@@ -677,7 +687,7 @@ test.describe("Onboarding → Planner: Template Plan", () => {
       const checkbox = page.locator('input[type="checkbox"]');
       if ((await checkbox.count()) > 0) {
         await checkbox.check();
-        const acceptBtn = page.getByRole("button", { name: /Accept/i });
+        const acceptBtn = page.getByRole("button", { name: "Accept", exact: true });
         await acceptBtn.click();
         await page.waitForURL(/\/onboarding/, { timeout: 10_000 });
       }
@@ -698,7 +708,7 @@ test.describe("Onboarding → Planner: Template Plan", () => {
     await page.waitForTimeout(300);
 
     // Next → Step 3
-    await page.getByRole("button", { name: /Next/i }).click();
+    await page.getByRole("button", { name: "Next", exact: true }).click();
     await page.waitForTimeout(1_500);
 
     // Step 3: Select the first available template
@@ -708,13 +718,6 @@ test.describe("Onboarding → Planner: Template Plan", () => {
       return;
     }
 
-    // Capture template name and course count before selecting
-    const templateCourseCount = page.locator("text=/\\d+ courses over 4 years/").first();
-    let expectedCourseText = "";
-    if ((await templateCourseCount.count()) > 0) {
-      expectedCourseText = (await templateCourseCount.textContent()) ?? "";
-    }
-
     await selectBtn.click();
     await page.waitForTimeout(300);
 
@@ -722,11 +725,11 @@ test.describe("Onboarding → Planner: Template Plan", () => {
     await expect(page.locator("button", { hasText: "Selected" }).first()).toBeVisible();
 
     // Next → Step 4 (Goals)
-    await page.getByRole("button", { name: /Next/i }).click();
+    await page.getByRole("button", { name: "Next", exact: true }).click();
     await page.waitForTimeout(1_000);
 
     // Step 4: Complete
-    const completeBtn = page.getByRole("button", { name: /Complete/i });
+    const completeBtn = page.getByRole("button", { name: "Complete", exact: true });
     if ((await completeBtn.count()) > 0) {
       await completeBtn.click();
       await page.waitForURL(/\/(planner|dashboard)/, { timeout: 15_000 });
@@ -739,11 +742,10 @@ test.describe("Onboarding → Planner: Template Plan", () => {
     await page.goto("/planner");
     await page.waitForTimeout(3_000);
 
-    const plannerHeading = page.locator("text=/Course Planner/i");
+    const plannerHeading = page.getByRole("heading", { name: "Course Planner" });
     await expect(plannerHeading).toBeVisible({ timeout: 5_000 });
 
     // Planner should have courses from the template
-    // Look for course cards, table rows, or any course code patterns
     const courseCodes = page.locator("text=/[A-Z]{2,4}\\d{3}/");
     const courseCards = page.locator('[data-testid="course-card"], .course-card, [draggable="true"]');
     const anyCoursesIndicator = page.locator("text=/planned|enrolled|credits/i");

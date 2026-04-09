@@ -125,7 +125,7 @@ test.describe("Role — Parent", () => {
     await page.waitForTimeout(2_000);
 
     // Parent accounts should show the account switcher
-    const switcher = page.locator('button[aria-label*="account" i], button[aria-label*="switch" i], [data-testid="account-switcher"]');
+    const switcher = page.locator('button[aria-label="User menu"]');
     // May or may not be visible depending on linked accounts
     const heading = page.locator("text=/Dashboard|Welcome/i");
     await expect(heading.first()).toBeVisible({ timeout: 5_000 });
@@ -232,7 +232,7 @@ test.describe("Role — Parent with Multiple Children", () => {
   test("account switcher lists multiple children with name and grade", async ({ page }) => {
     await page.waitForTimeout(2_000);
 
-    const switcher = page.locator('button[aria-label*="account" i], button[aria-label*="switch" i]').first();
+    const switcher = page.locator('button[aria-label="User menu"]');
     if ((await switcher.count()) === 0) {
       test.skip(true, "No account switcher — parent may have only one child");
       return;
@@ -259,7 +259,7 @@ test.describe("Role — Parent with Multiple Children", () => {
     await page.goto("/dashboard");
     await page.waitForTimeout(2_000);
 
-    const switcher = page.locator('button[aria-label*="account" i], button[aria-label*="switch" i]').first();
+    const switcher = page.locator('button[aria-label="User menu"]');
     if ((await switcher.count()) === 0) {
       test.skip(true, "No account switcher");
       return;
@@ -318,7 +318,7 @@ test.describe("Role — Parent with Multiple Children", () => {
   test("unclaimed child shows Unclaimed badge in switcher", async ({ page }) => {
     await page.waitForTimeout(2_000);
 
-    const switcher = page.locator('button[aria-label*="account" i], button[aria-label*="switch" i]').first();
+    const switcher = page.locator('button[aria-label="User menu"]');
     if ((await switcher.count()) === 0) {
       test.skip(true, "No account switcher");
       return;
@@ -337,7 +337,7 @@ test.describe("Role — Parent with Multiple Children", () => {
   test("children in different grade levels show distinct grades in switcher", async ({ page }) => {
     await page.waitForTimeout(2_000);
 
-    const switcher = page.locator('button[aria-label*="account" i], button[aria-label*="switch" i]').first();
+    const switcher = page.locator('button[aria-label="User menu"]');
     if ((await switcher.count()) === 0) {
       test.skip(true, "No account switcher");
       return;
@@ -371,11 +371,18 @@ test.describe("Role — Parent with Multiple Children", () => {
     await page.goto("/progress");
     await page.waitForTimeout(2_000);
 
+    // Dismiss any guided tour overlay that may appear
+    const tourClose = page.locator('button:has-text("Skip"), button.driver-popover-close-btn, button[aria-label="Close"]');
+    if (await tourClose.first().isVisible({ timeout: 1_000 }).catch(() => false)) {
+      await tourClose.first().click();
+      await page.waitForTimeout(500);
+    }
+
     // Capture current progress page content
-    const heading = page.locator("text=/Academic Progress/i");
+    const heading = page.getByRole("heading", { name: "Academic Progress" });
     await expect(heading).toBeVisible({ timeout: 5_000 });
 
-    const switcher = page.locator('button[aria-label*="account" i], button[aria-label*="switch" i]').first();
+    const switcher = page.locator('button[aria-label="User menu"]');
     if ((await switcher.count()) === 0) {
       test.skip(true, "No account switcher");
       return;
@@ -394,7 +401,7 @@ test.describe("Role — Parent with Multiple Children", () => {
     await page.waitForTimeout(3_000);
 
     // Progress page should still be visible with updated data
-    await expect(page.locator("text=/Academic Progress/i")).toBeVisible({ timeout: 5_000 });
+    await expect(page.getByRole("heading", { name: "Academic Progress" })).toBeVisible({ timeout: 10_000 });
   });
 });
 

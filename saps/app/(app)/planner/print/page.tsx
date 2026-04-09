@@ -291,8 +291,9 @@ export default function PrintPlanPage() {
         {/* Grade tables */}
         {[9, 10, 11, 12].map((grade) => {
           const gradeCourses = courses.filter((c) => c.gradeLevel === grade && c.status !== "dropped");
-          const sem1 = sortCourses(gradeCourses.filter((c) => c.semester === 1));
-          const sem2 = sortCourses(gradeCourses.filter((c) => c.semester === 2));
+          const semGroups = [1, 2, -2, -1]
+            .map((sem) => ({ sem, courses: sortCourses(gradeCourses.filter((c) => c.semester === sem)) }))
+            .filter((g) => g.sem === 1 || g.sem === 2 || g.courses.length > 0); // always show S1/S2, only show summer if has courses
           const gradeCredits = gradeCourses.reduce((sum, c) => sum + creditPerRow(c), 0);
           const gradeEarned = gradeCourses.filter((c) => c.status === "completed").reduce((sum, c) => sum + creditPerRow(c), 0);
           const gradeGpaInput = gradeCourses.map((c) => ({
@@ -321,74 +322,69 @@ export default function PrintPlanPage() {
               </div>
 
               <div className="mt-1 grid grid-cols-2 gap-4">
-                {/* Semester 1 */}
-                <div>
-                  <p className="mb-1 text-xs font-semibold text-gray-500 uppercase">Semester 1</p>
-                  <table className="w-full text-xs">
-                    <thead>
-                      <tr className="border-b border-gray-300">
-                        <th className="py-0.5 text-left font-semibold">Course</th>
-                        <th className="py-0.5 text-left font-semibold w-16">Code</th>
-                        <th className="py-0.5 text-center font-semibold w-10">Type</th>
-                        <th className="py-0.5 text-center font-semibold w-12">Status</th>
-                        <th className="py-0.5 text-center font-semibold w-10">Grade</th>
-                        <th className="py-0.5 text-center font-semibold w-10">Cr</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {sem1.length === 0 ? (
-                        <tr><td colSpan={6} className="py-1 text-gray-400 italic">No courses</td></tr>
-                      ) : sem1.map((c) => (
-                        <tr key={c.id} className="border-b border-gray-300">
-                          <td className="py-0.5 truncate max-w-[200px]" title={c.name}>
-                            {c.name}
-                            {c.gpaWaiverApplied && <span className="ml-1 text-[9px] text-gray-400">(W)</span>}
-                          </td>
-                          <td className="py-0.5 text-gray-500">{c.code.split("/")[0]}</td>
-                          <td className="py-0.5 text-center">{c.creditType}</td>
-                          <td className="py-0.5 text-center">{STATUS_LABELS[c.status] ?? c.status}</td>
-                          <td className="py-0.5 text-center font-semibold">{c.plannedGrade ?? "—"}</td>
-                          <td className="py-0.5 text-center">{creditPerRow(c)}</td>
+                {semGroups.filter((g) => g.sem > 0).map((g) => (
+                  <div key={g.sem}>
+                    <p className="mb-1 text-xs font-semibold text-gray-500 uppercase">Semester {g.sem}</p>
+                    <table className="w-full text-xs">
+                      <thead>
+                        <tr className="border-b border-gray-300">
+                          <th className="py-0.5 text-left font-semibold">Course</th>
+                          <th className="py-0.5 text-left font-semibold w-16">Code</th>
+                          <th className="py-0.5 text-center font-semibold w-10">Type</th>
+                          <th className="py-0.5 text-center font-semibold w-12">Status</th>
+                          <th className="py-0.5 text-center font-semibold w-10">Grade</th>
+                          <th className="py-0.5 text-center font-semibold w-10">Cr</th>
                         </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-
-                {/* Semester 2 */}
-                <div>
-                  <p className="mb-1 text-xs font-semibold text-gray-500 uppercase">Semester 2</p>
-                  <table className="w-full text-xs">
-                    <thead>
-                      <tr className="border-b border-gray-300">
-                        <th className="py-0.5 text-left font-semibold">Course</th>
-                        <th className="py-0.5 text-left font-semibold w-16">Code</th>
-                        <th className="py-0.5 text-center font-semibold w-10">Type</th>
-                        <th className="py-0.5 text-center font-semibold w-12">Status</th>
-                        <th className="py-0.5 text-center font-semibold w-10">Grade</th>
-                        <th className="py-0.5 text-center font-semibold w-10">Cr</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {sem2.length === 0 ? (
-                        <tr><td colSpan={6} className="py-1 text-gray-400 italic">No courses</td></tr>
-                      ) : sem2.map((c) => (
-                        <tr key={c.id} className="border-b border-gray-300">
-                          <td className="py-0.5 truncate max-w-[200px]" title={c.name}>
-                            {c.name}
-                            {c.gpaWaiverApplied && <span className="ml-1 text-[9px] text-gray-400">(W)</span>}
-                          </td>
-                          <td className="py-0.5 text-gray-500">{c.code.split("/")[1] ?? c.code}</td>
-                          <td className="py-0.5 text-center">{c.creditType}</td>
-                          <td className="py-0.5 text-center">{STATUS_LABELS[c.status] ?? c.status}</td>
-                          <td className="py-0.5 text-center font-semibold">{c.plannedGrade ?? "—"}</td>
-                          <td className="py-0.5 text-center">{creditPerRow(c)}</td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
+                      </thead>
+                      <tbody>
+                        {g.courses.length === 0 ? (
+                          <tr><td colSpan={6} className="py-1 text-gray-400 italic">No courses</td></tr>
+                        ) : g.courses.map((c) => (
+                          <tr key={c.id} className="border-b border-gray-300">
+                            <td className="py-0.5 truncate max-w-[200px]" title={c.name}>
+                              {c.name}
+                              {c.gpaWaiverApplied && <span className="ml-1 text-[9px] text-gray-400">(W)</span>}
+                            </td>
+                            <td className="py-0.5 text-gray-500">{c.code}</td>
+                            <td className="py-0.5 text-center">{c.creditType}</td>
+                            <td className="py-0.5 text-center">{STATUS_LABELS[c.status] ?? c.status}</td>
+                            <td className="py-0.5 text-center font-semibold">{c.plannedGrade ?? "—"}</td>
+                            <td className="py-0.5 text-center">{creditPerRow(c)}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                ))}
               </div>
+
+              {/* Summer courses (only if present) */}
+              {semGroups.some((g) => g.sem < 0 && g.courses.length > 0) && (
+                <div className="mt-2 rounded border border-gray-200 bg-amber-50/30 p-2">
+                  <p className="mb-1 text-[10px] font-semibold text-amber-700 uppercase">Summer Courses</p>
+                  <div className="grid grid-cols-2 gap-4">
+                    {semGroups.filter((g) => g.sem < 0).map((g) => (
+                      <div key={g.sem}>
+                        <p className="mb-0.5 text-[9px] font-medium text-amber-600">
+                          {g.sem === -2 ? "Session 1" : "Session 2"}
+                        </p>
+                        <table className="w-full text-xs">
+                          <tbody>
+                            {g.courses.map((c) => (
+                              <tr key={c.id} className="border-b border-amber-200/50">
+                                <td className="py-0.5 truncate max-w-[180px]" title={c.name}>{c.name}</td>
+                                <td className="py-0.5 text-gray-500">{c.code}</td>
+                                <td className="py-0.5 text-center font-semibold">{c.plannedGrade ?? "—"}</td>
+                                <td className="py-0.5 text-center">{creditPerRow(c)}</td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
           );
         })}

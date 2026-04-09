@@ -57,10 +57,24 @@ interface PlanCourseRow {
 // ─── Helpers ───────────────────────────────────────────────────────────────
 
 /**
+ * Convert semester to sort order: S1(1) → S2(2) → Summer1(3) → Summer2(4).
+ * Summer semesters (-2, -1) come AFTER the school year, so they sort higher.
+ */
+function semesterSortOrder(sem: number | null): number {
+  switch (sem) {
+    case 1: return 1;
+    case 2: return 2;
+    case -2: return 3; // Summer Session 1
+    case -1: return 4; // Summer Session 2
+    default: return 1; // null/full-year → treat as S1 for prereq ordering
+  }
+}
+
+/**
  * Returns true if slotA is earlier than slotB.
  * Ordering: grade_level is the primary key, semester is secondary.
- * semester=null means full-year (spans both), so it counts as being present
- * at semester 1 for prerequisite purposes.
+ * Within a grade: S1 → S2 → Summer S1 → Summer S2.
+ * semester=null means full-year (spans both), counts as S1 for prereq purposes.
  */
 function isEarlierSlot(
   gradeLevelA: number,
@@ -70,10 +84,7 @@ function isEarlierSlot(
 ): boolean {
   if (gradeLevelA < gradeLevelB) return true;
   if (gradeLevelA > gradeLevelB) return false;
-  // Same grade level — compare semesters
-  const semA = semesterA ?? 1;
-  const semB = semesterB ?? 1;
-  return semA < semB;
+  return semesterSortOrder(semesterA) < semesterSortOrder(semesterB);
 }
 
 /**
@@ -87,10 +98,7 @@ function isSameOrEarlierSlot(
 ): boolean {
   if (gradeLevelA < gradeLevelB) return true;
   if (gradeLevelA > gradeLevelB) return false;
-  // Same grade level
-  const semA = semesterA ?? 1;
-  const semB = semesterB ?? 1;
-  return semA <= semB;
+  return semesterSortOrder(semesterA) <= semesterSortOrder(semesterB);
 }
 
 /**

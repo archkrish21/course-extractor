@@ -23,7 +23,7 @@ import {
 } from "@/lib/gpa/snapshot";
 
 const patchCourseSchema = z.object({
-  semester: z.number().int().min(1).max(2).nullable().optional(),
+  semester: z.number().int().min(-2).max(2).nullable().optional(),
   planned_grade: z
     .enum(ALL_GRADES)
     .nullable()

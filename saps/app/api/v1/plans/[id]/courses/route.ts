@@ -21,7 +21,7 @@ import { ALL_GRADES } from "@/config/grade-scale";
 const addCourseSchema = z.object({
   course_id: z.string().uuid(),
   grade_level: z.number().int().min(9).max(12),
-  semester: z.number().int().min(1).max(2).nullable(),
+  semester: z.number().int().min(-2).max(2).nullable(),
   planned_grade: z
     .enum(ALL_GRADES)
     .nullable()

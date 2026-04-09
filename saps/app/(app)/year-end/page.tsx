@@ -221,12 +221,14 @@ export default function YearEndPage() {
               <p className="py-4 text-center text-sm text-muted-foreground">No courses found for Grade {gradeLevel}.</p>
             ) : (
               <div className="space-y-4">
-                {[1, 2].map((sem) => {
+                {[-2, -1, 1, 2].map((sem) => {
                   const semCourses = activeCourses.filter((c) => c.semester === sem);
                   if (semCourses.length === 0) return null;
+                  const isSummer = sem < 0;
+                  const label = sem === -2 ? "Summer Session 1" : sem === -1 ? "Summer Session 2" : `Semester ${sem}`;
                   return (
                     <div key={sem}>
-                      <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">Semester {sem}</p>
+                      <p className={`mb-2 text-xs font-semibold uppercase tracking-wider ${isSummer ? "text-amber-700 dark:text-amber-400" : "text-muted-foreground"}`}>{label}</p>
                       <div className="overflow-hidden rounded-lg border border-border">
                         <table className="w-full text-sm">
                           <thead>

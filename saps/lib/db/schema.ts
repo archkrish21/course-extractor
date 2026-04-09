@@ -683,7 +683,7 @@ export const planCourses = pgTable(
     ),
     check(
       "semester_values",
-      sql`${table.semester} IN (1, 2) OR ${table.semester} IS NULL`
+      sql`${table.semester} IN (-2, -1, 1, 2) OR ${table.semester} IS NULL`
     ),
   ]
 );
@@ -801,7 +801,7 @@ export const gradeEntries = pgTable(
     index("idx_grade_entries_student_id").on(table.studentId),
     check(
       "semester_values",
-      sql`${table.semester} IN (1, 2)`
+      sql`${table.semester} IN (-2, -1, 1, 2)`
     ),
   ]
 );

@@ -30,7 +30,7 @@ const querySchema = z.object({
     .enum(["true", "false"])
     .transform((v) => v === "true")
     .optional(),
-  semester_offered: z.coerce.number().int().min(1).max(2).optional(),
+  semester_offered: z.coerce.number().int().min(-2).max(2).optional(),
   semester_both: z
     .enum(["true", "false"])
     .transform((v) => v === "true")

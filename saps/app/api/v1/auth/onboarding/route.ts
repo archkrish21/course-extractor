@@ -22,7 +22,7 @@ const courseCompletedSchema = z.object({
   code: z.string().min(1),
   grade: z.enum(ALL_GRADES),
   academic_year: z.string().min(1),
-  semester: z.number().int().min(1).max(2),
+  semester: z.number().int().min(-2).max(2),
 });
 
 const collegeTargetSchema = z.object({

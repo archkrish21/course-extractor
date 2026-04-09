@@ -390,15 +390,17 @@ export default function GradesPage() {
                 </button>
 
                 <div className={`print-expand border-t border-border ${isExpanded ? "" : "hidden"}`}>
-                    {[1, 2].map((sem) => {
+                    {[-2, -1, 1, 2].map((sem) => {
                       const semCourses = semMap?.get(sem) ?? [];
                       if (semCourses.length === 0) return null;
                       const semGpa = calcGPA(semCourses);
+                      const isSummer = sem < 0;
+                      const label = sem === -2 ? "Summer Session 1" : sem === -1 ? "Summer Session 2" : `Semester ${sem}`;
 
                       return (
                         <div key={sem} className="border-b border-border last:border-b-0">
-                          <div className="bg-muted/30 px-4 py-2.5 sm:px-5">
-                            <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Semester {sem}</h3>
+                          <div className={`px-4 py-2.5 sm:px-5 ${isSummer ? "bg-amber-50/50 dark:bg-amber-950/20" : "bg-muted/30"}`}>
+                            <h3 className={`text-xs font-semibold uppercase tracking-wider ${isSummer ? "text-amber-700 dark:text-amber-400" : "text-muted-foreground"}`}>{label}</h3>
                           </div>
 
                           {/* Table header */}

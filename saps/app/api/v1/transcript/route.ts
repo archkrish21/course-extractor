@@ -22,7 +22,7 @@ const gradeEntrySchema = z.object({
   academic_year: z
     .string()
     .regex(/^\d{4}-\d{4}$/, "academic_year must be in format YYYY-YYYY"),
-  semester: z.number().int().min(1).max(2),
+  semester: z.number().int().min(-2).max(2),
   grade: gradeEnum.optional().nullable(),
   credit_earned: z
     .union([z.string(), z.number()])

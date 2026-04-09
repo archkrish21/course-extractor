@@ -117,7 +117,7 @@ export async function GET(request: NextRequest) {
     }
     if (semesterFilter) {
       const sem = parseInt(semesterFilter, 10);
-      if (sem === 1 || sem === 2) {
+      if ([-2, -1, 1, 2].includes(sem)) {
         conditions.push(eq(gradeEntries.semester, sem));
       }
     }

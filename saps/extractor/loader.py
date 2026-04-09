@@ -393,7 +393,7 @@ def load_courses(conn, courses_data: dict, diff: dict, force: bool = False, forc
             if stale_codes:
                 stale_ids = [existing_by_code[code] for code in stale_codes]
                 cur.execute(
-                    "UPDATE courses SET is_active = FALSE, updated_at = %s WHERE id = ANY(%s)",
+                    "UPDATE courses SET is_active = FALSE, updated_at = %s WHERE id = ANY(%s::uuid[])",
                     (now, stale_ids),
                 )
                 print(f"  Deactivated {len(stale_ids)} stale courses")

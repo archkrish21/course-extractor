@@ -239,7 +239,7 @@ export async function validateCourseAddition(
   // 5. Check enrollment rule: full_year courses must exist in both semesters
   // (Each semester is stored as a separate row; both must be present)
   if (targetCourse.duration === "full_year" && semester !== null) {
-    const otherSemester = semester === 1 ? 2 : 1;
+    const otherSemester = semester === 1 ? 2 : semester === 2 ? 1 : semester === -2 ? -1 : -2;
     const hasOtherSemester = existingPlanCourses.some(
       (pc) =>
         pc.courseId === courseId &&
@@ -469,7 +469,8 @@ export async function validatePlanIntegrity(
 
     // Check enrollment rules: full-year courses must have both semesters present
     if (pc.course.duration === "full_year" && pc.semester !== null) {
-      const otherSem = pc.semester === 1 ? 2 : 1;
+      // Pair semesters: 1↔2 for regular, -2↔-1 for summer
+      const otherSem = pc.semester === 1 ? 2 : pc.semester === 2 ? 1 : pc.semester === -2 ? -1 : -2;
       const hasOther = allPlanCourses.some(
         (other) =>
           other.courseId === pc.courseId &&
@@ -478,12 +479,13 @@ export async function validatePlanIntegrity(
           other.status !== "dropped"
       );
       if (!hasOther) {
+        const isSummer = pc.semester < 0;
         violations.push({
           type: "enrollment_rule",
           courseId: pc.course.id,
           courseName: pc.course.name,
           courseCode: pc.course.code,
-          message: `${pc.course.code} is a full-year course and must span both semesters.`,
+          message: `${pc.course.code} is a full-year course and must span both ${isSummer ? "summer sessions" : "semesters"}.`,
         });
       }
     }
@@ -493,7 +495,7 @@ export async function validatePlanIntegrity(
         courseId: pc.course.id,
         courseName: pc.course.name,
         courseCode: pc.course.code,
-        message: `${pc.course.code} is a semester course and must be placed in semester 1 or 2.`,
+        message: `${pc.course.code} is a semester course and must be placed in a specific semester.`,
       });
     }
 

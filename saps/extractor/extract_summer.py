@@ -1,420 +1,104 @@
 #!/usr/bin/env python3
 """
-Stevenson High School Summer School PDF Extractor
+Stevenson High School Summer School Course Data Generator
 
-Reads the summer school course catalog PDF and produces:
-  - data/YYYY-summer-courses.json  (structured course data)
+Produces data/YYYY-summer-courses.json from manually curated course data
+in summer_courses_YYYY.py. The summer school PDF uses a two-column layout
+that is unreliable for automated extraction, so courses are curated manually
+from the PDF each year.
 
 Usage:
-    python extract_summer.py <path-to-pdf> [--year YYYY] [--out-dir DIR]
+    python extract_summer.py [--year YYYY] [--out-dir DIR]
 
-The summer school PDF uses a simpler layout than the main coursebook:
-  - Course content is on pages 8-19 (single column, not two-column)
-  - Each course has: title, code pattern (e.g., "BUS71S"), dates, times,
-    open-to grades, credit info, cost, prerequisites, and description
-  - Semester codes end in "S" (e.g., "MTH15S" for summer Algebra 1)
+To update for a new year:
+    1. Read the new summer school PDF
+    2. Update summer_courses_YYYY.py with the new course data
+    3. Run this script to generate the JSON
 """
 
 import argparse
 import json
 import os
-import re
 import sys
 from datetime import datetime, timezone
 
-import pdfplumber
+from summer_courses_2026 import SUMMER_COURSES_2026
 
-# ---------------------------------------------------------------------------
-# Constants
-# ---------------------------------------------------------------------------
-
-DIVISION_MAP = {
-    "BUS": ("Applied Arts", "Business Education"),
-    "D/E": ("Applied Arts", "Driver Education"),
-    "ENG": ("Communication Arts", "English"),
-    "CSC": ("Computer Science, Engineering and Technology", "Computer Science"),
-    "TEC": ("Computer Science, Engineering and Technology", "Engineering and Technology"),
-    "ART": ("Fine Arts", "Visual Arts"),
-    "THR": ("Fine Arts", "Theatre"),
-    "MTH": ("Mathematics", "Mathematics"),
-    "ELD": ("Multilingual Learning", "ELD"),
-    "ELL": ("Multilingual Learning", "ELD"),
-    "PED": ("Physical Welfare", "Physical Education"),
-    "SCI": ("Science", "Science"),
-    "SOC": ("Social Studies", "Social Studies"),
-    "IEN": ("Special Education", "Special Education"),
-    "IJOB": ("Special Education", "Special Education"),
-    "TCH": ("Student Services", "Student Services"),
-    "CAR": ("Student Learning Programs", "Career Exploration"),
-    "ACT": ("Student Learning Programs", "ACT Prep"),
+# Map year to curated data
+CURATED_DATA = {
+    2026: SUMMER_COURSES_2026,
 }
 
-# Manual name overrides — the two-column PDF layout causes name extraction
-# errors. Since there are only ~35 summer courses, manual names are reliable.
-MANUAL_NAMES: dict[str, str] = {
-    "D/E21S": "Driver Education",
-    "D/E22S": "Driver Education",
-    "BUS71S": "Introduction to Business",
-    "BUS72S": "Introduction to Business",
-    "BUS12S": "Business Applications and Technology 1",
-    "CAR53S": "Careers in Business",
-    "CAR35S": "Careers in Law",
-    "CAR31S": "Careers in Healthcare and Medicine",
-    "CAR33S": "Careers in Healthcare and Medicine",
-    "CAR62S": "Careers in STEM",
-    "ENG25S": "English Failure Credit Recovery",
-    "ENG51S": "College Essay Workshop",
-    "ENG53S": "College Essay Workshop",
-    "ENG55S": "College Essay Workshop",
-    "ENG54S": "College Essay Workshop",
-    "ENG56S": "College Essay Workshop",
-    "ENG71S": "Reading for College",
-    "ENG57S": "Creative Writing",
-    "CSC61S": "Computer Programming 1",
-    "CSC82S": "Computer Programming 2",
-    "ART11S": "Art and Design",
-    "ART12S": "Art and Design",
-    "ART31S": "Photography 1",
-    "ART32S": "Photography 1",
-    "ART51S": "Digital Art and Design 1",
-    "ART52S": "Digital Art and Design 1",
-    "THR11S": "Theatre Arts",
-    "MTH15S": "Algebra 1",
-    "MTH16S": "Algebra 1",
-    "MTH25S": "Geometry",
-    "MTH26S": "Geometry",
-    "MTH51S": "Algebra 2",
-    "MTH52S": "Algebra 2",
-    "MTH37S": "Algebra 2 AB/BC",
-    "MTH38S": "Algebra 2 AB/BC",
-    "ELD11S": "ELD Skills in Focus: Oracy and Literacy",
-    "ELD21S": "ELD English Enrichment",
-    "ELD32S": "ELD Study Skills",
-    "PED21S": "Health Education",
-    "PED22S": "Health Education",
-    "SCI21S": "Astronomy",
-    "SCI31S": "Introduction to Biotechnology",
-    "SCI33S": "Introduction to Biotechnology",
-    "SOC13S": "World History and Geography",
-    "SOC14S": "World History and Geography",
-    "SOC41S": "U.S. History",
-    "SOC42S": "U.S. History",
-    "SOC33S": "U.S. Government",
-    "SOC34S": "U.S. Government",
-    "SOC43S": "Economics",
-    "SOC44S": "Economics",
-    "IEN51S": "Reading and Writing for Stevenson",
-    "IEN52S": "Reading and Writing for Stevenson",
-    "IJOB2S": "Preparing for Life",
-    "TCH91S": "Keys to Success",
-    "TCH92S": "Keys to Success",
-    "ACTPREPS": "ACT Preparatory Course",
-    "ACTPREPS2": "ACT Preparatory Course",
+# Descriptions extracted from PDF (too long for the data file)
+DESCRIPTIONS = {
+    "D/E21S": "This course is a two-phase program consisting of classroom and behind-the-wheel instruction. The course prepares students for safe motor vehicle operation in a suburban driving environment. Among the topics taught are: the rules of the road, defensive driving, natural laws and their effects on vehicle control, driver responsibility and impaired and distracted driving.",
+    "BUS71S": "Introduction to Business provides students with a foundational understanding of the business world. This course explores key topics including marketing, accounting, international business and entrepreneurship, giving students insight into how businesses operate locally and globally.",
+    "BUS12S": "This course focuses on developing essential technology skills needed for success in the business world, emphasizing proficiency in widely-used business applications including spreadsheets, presentations and word processing.",
+    "CAR53S": "Careers in Business is a two-week course designed for students interested in learning more about careers in business through classroom visits by professionals, activities and field trips.",
+    "CAR35S": "Careers in Law is a two-week course for students wishing to explore careers in law through classroom visits by professionals, activities and field trips.",
+    "CAR31S": "Careers in Healthcare and Medicine is a two-week course designed for students who want to explore careers in healthcare through classroom visits by professionals, activities and field trips.",
+    "CAR62S": "Careers in STEM is a two-week course designed for students wishing to explore careers in Science, Technology, Engineering and Math through classroom visits by professionals, activities and field trips.",
+    "ENG51S": "Students will write college essays/personal statements for multiple college applications. Students will examine model essays, respond to various prompts and discover their writing voices as they develop content and style.",
+    "ENG25S": "This writing-intensive course is for students who need to earn English credit due to a failure of either first or second semester. Students will perform a well-rounded set of skills in various activities or remediate particular weaknesses.",
+    "ENG71S": "This course emphasizes close analytical reading. Students will read a variety of fiction and nonfiction texts and prepare to discuss, analyze and write about those texts for college-level coursework.",
+    "ENG57S": "Creative Writing is designed for students wanting to develop their creative writing skills. Students will write in multiple genres including poetry, fiction, creative nonfiction and screenwriting.",
+    "CSC61S": "This course introduces students to the foundations of computer programming using Python. Python's syntax is easy to read and write, making it an ideal language for an introduction to computer science.",
+    "CSC82S": "This course is intended for students who possess some programming experience and seek a deeper understanding of computer programming concepts using the Java language.",
+    "ART11S": "Students will explore a variety of tools, techniques and media which provides them with the foundation necessary to expand into more specialized areas. Studio activities focus on developing skills in drawing, painting, sculpture and ceramics.",
+    "ART31S": "Photography 1 covers basic concepts and practice of digital photography, including understanding and use of the camera, lenses and other basic photographic equipment.",
+    "ART51S": "This course introduces students to Adobe Photoshop and Procreate as drawing and graphic design tools and as a means of producing finished artwork.",
+    "THR11S": "Theatre Arts introduces students to the fundamentals of theatre including acting, improvisation, movement, voice and basic stagecraft through performance-based activities.",
+    "MTH15S": "Algebra 1 helps students develop proficiency in algebraic thinking. Students will explore overarching ideas of patterns of change, mathematical representations, models and solutions.",
+    "MTH25S": "Geometry helps students develop proficiency in deductive reasoning and geometric thinking. Students will rely on exploration, conjecture, deduction, justification and abstraction to strengthen their reasoning skills.",
+    "MTH51S": "Algebra 2 builds upon students' prior experiences in geometric relationships and deductive reasoning to deepen students' fluency with algebraic thinking.",
+    "MTH37S": "Algebra 2 AB/BC attends to all the learning outcomes of Algebra 2. All topics will be substantially extended and students will be introduced to additional mathematical concepts.",
+    "ELD11S": "This course is designed to strengthen the literacy and oracy skills of students who are taking or have taken more advanced ELD coursework through an exploration of various texts.",
+    "ELD21S": "This course is designed to enrich the academic English skills of incoming students in the ELD program. Students will focus on becoming stronger readers and writers through explorations of supported texts.",
+    "ELD32S": "This course for incoming students in the ELD program is designed to build and enrich English skills applicable across content areas and reinforce essential study skills and work habits.",
+    "PED21S": "Health Education covers wellness and mental health, adult CPR and AED, fitness and personal health, reality of drugs, and social health. This course is required for graduation.",
+    "SCI21S": "Astronomy is the scientific study of the origin, structure and evolution of the universe and the objects in it. Topics include patterns and motions in the sky, gravity and orbits, telescopes and light, planetary systems, and the birth and death of stars.",
+    "SCI31S": "Introduction to Biotechnology is a two-week course where students will conduct a variety of labs including the use of PCR, gel electrophoresis, bacterial transformation and CRISPR.",
+    "SOC13S": "World History and Geography focuses on disciplinary skills of comprehension, analysis and argumentation while exploring historical and geographic patterns, themes and concepts.",
+    "SOC41S": "U.S. History explores the political, social, cultural and economic development of the United States through critical analysis of primary and secondary sources.",
+    "SOC33S": "U.S. Government examines the concepts and structure of federal, state and local government. Students develop critical thinking skills for understanding government processes.",
+    "SOC43S": "Economics is designed to acquaint students with the economic knowledge and decision-making skills they will need to make rational decisions as informed citizens, responsible consumers and productive workers.",
+    "IEN51S": "This survey course will familiarize and instruct special education students in the many reading and writing assignments they will encounter in their coursework at Stevenson.",
+    "IJOB2S": "Preparing for Life is designed to provide students with a variety of hands-on learning opportunities to help them acquire the necessary life skills to be as independent as possible.",
+    "TCH91S": "Keys to Success will prepare students to cope with the academic expectations of high school and beyond. Specific study skills and strategies for test taking, note taking, research, organization and time management will be applied.",
+    "ACTPREPS": "This five-day course will be taught by subject-area instructors and focus on essential skills assessed on the ACT. Students will take two practice ACT tests with immediate feedback.",
 }
 
-# Regex to match summer course codes (end with S, optionally followed by digits)
-# Examples: BUS71S, D/E21S, MTH15S, CAR53S, ENG51S, ACTPREPS
-SUMMER_CODE_RE = re.compile(
-    r"([A-Z/]{2,5}\d{0,4}S\d?)\s*:"
-)
-
-# Alternate pattern for codes like "ACTPREPS:" or "ACTPREPS2:"
-ALT_CODE_RE = re.compile(
-    r"([A-Z]{3,}S\d?)\s*:"
-)
-
-# Open-to pattern: "Open to: 9-10-11-12" or "OPEN TO: 10-11-12"
-OPEN_TO_RE = re.compile(
-    r"(?:open\s+to|OPEN\s+TO)\s*:\s*([\d\-]+)",
-    re.IGNORECASE
-)
-
-# Credit pattern
-CREDIT_RE = re.compile(
-    r"([\d.]+)\s+(?:semester\s+)?credit",
-    re.IGNORECASE
-)
-
-# GPA waiver
-GPA_WAIVER_RE = re.compile(r"gpa\s+waiver", re.IGNORECASE)
-
-# Pass/fail
-PASS_FAIL_RE = re.compile(r"pass/fail", re.IGNORECASE)
-
-# Prerequisite
-PREREQ_RE = re.compile(r"prerequisite\s*:\s*(.+?)(?:\n|$)", re.IGNORECASE)
-
-# Cost
-COST_RE = re.compile(r"cost\s*:\s*\$?([\d,]+)", re.IGNORECASE)
-
-# Course pages in the summer PDF (0-indexed)
-COURSE_PAGE_START = 7  # Page 8
-COURSE_PAGE_END = 19   # Through page 19
-
-
-# ---------------------------------------------------------------------------
-# Extraction
-# ---------------------------------------------------------------------------
-
-def extract_division(code: str) -> tuple[str, str]:
-    """Map a course code prefix to (division, department)."""
-    # Try exact prefix matches, longest first
-    for prefix_len in (4, 3, 2):
-        prefix = code[:prefix_len].rstrip("0123456789")
-        if prefix in DIVISION_MAP:
-            return DIVISION_MAP[prefix]
-    return ("Other", "Other")
-
-
-def parse_grade_levels(text: str) -> list[int]:
-    """Parse grade levels from 'Open to: 9-10-11-12' text."""
-    match = OPEN_TO_RE.search(text)
-    if not match:
-        return [9, 10, 11, 12]  # Default: all grades
-    raw = match.group(1)
-    grades = []
-    for part in raw.split("-"):
-        part = part.strip()
-        if part.isdigit():
-            g = int(part)
-            if 9 <= g <= 12:
-                grades.append(g)
-    return grades or [9, 10, 11, 12]
-
-
-def parse_credit_value(text: str) -> float:
-    """Parse credit value from course text."""
-    match = CREDIT_RE.search(text)
-    if match:
-        try:
-            return float(match.group(1))
-        except ValueError:
-            pass
-    return 1.0  # Default: 1 semester credit
-
-
-def determine_semesters_offered(text: str, codes: list[str]) -> list[int]:
-    """
-    Determine which summer semesters the course is offered in.
-    -2 = Summer Session 1 (June), -1 = Summer Session 2 (July)
-    """
-    text_lower = text.lower()
-
-    # Check for "either semester" — both sessions
-    if "either semester" in text_lower or "offered either" in text_lower:
-        return [-2, -1]
-
-    # Check for explicit first/second semester mentions
-    has_first = "first semester" in text_lower or "june 2" in text_lower
-    has_second = "second semester" in text_lower or "june 29" in text_lower or "july" in text_lower
-
-    # Check code suffixes: odd number = S1, even number = S2
-    for code in codes:
-        # Strip the trailing S and check the digit before it
-        base = code.rstrip("S").rstrip("0123456789")
-        num_part = code[len(base):].rstrip("S")
-        if num_part:
-            last_digit = int(num_part[-1])
-            if last_digit % 2 == 1:  # Odd = S1 (e.g., BUS71S)
-                has_first = True
-            else:  # Even = S2 (e.g., BUS72S)
-                has_second = True
-
-    if has_first and has_second:
-        return [-2, -1]
-    elif has_first:
-        return [-2]
-    elif has_second:
-        return [-1]
-    return [-2, -1]  # Default: both
-
-
-def extract_courses_from_page(text: str) -> list[dict]:
-    """Extract course entries from a single page's text."""
-    courses = []
-
-    # Find all course code occurrences to split the text into blocks
-    code_positions = []
-    for match in SUMMER_CODE_RE.finditer(text):
-        code_positions.append((match.start(), match.group(1)))
-
-    # Also try alternate pattern
-    for match in ALT_CODE_RE.finditer(text):
-        code = match.group(1)
-        pos = match.start()
-        # Avoid duplicates
-        if not any(abs(pos - p) < 5 for p, _ in code_positions):
-            code_positions.append((pos, code))
-
-    code_positions.sort(key=lambda x: x[0])
-
-    if not code_positions:
-        return courses
-
-    # Group codes that are close together (same course, multiple semester codes)
-    course_blocks = []
-    current_codes = [code_positions[0][1]]
-    current_start = code_positions[0][0]
-
-    for i in range(1, len(code_positions)):
-        pos, code = code_positions[i]
-        prev_pos = code_positions[i-1][0]
-
-        # If codes are within 100 chars, they're likely the same course (e.g., BUS71S/BUS72S)
-        if pos - prev_pos < 100:
-            current_codes.append(code)
-        else:
-            # New course block — save previous
-            # Find the end of this block (start of next block or end of text)
-            end = pos
-            course_blocks.append((current_start, end, current_codes))
-            current_codes = [code]
-            current_start = pos
-
-    # Don't forget the last block
-    course_blocks.append((current_start, len(text), current_codes))
-
-    for start, end, codes in course_blocks:
-        block_text = text[max(0, start - 200):end]  # Include some context before codes
-
-        # Determine credit type
-        is_pass_fail = bool(PASS_FAIL_RE.search(block_text))
-        has_gpa_waiver = bool(GPA_WAIVER_RE.search(block_text))
-        credit_type = "Pass/Fail" if is_pass_fail else "CP"
-
-        # Parse fields
-        grade_levels = parse_grade_levels(block_text)
-        credit_value = parse_credit_value(block_text)
-        semesters = determine_semesters_offered(block_text, codes)
-
-        # Extract prerequisite
-        prereq_match = PREREQ_RE.search(block_text)
-        prereq_text = prereq_match.group(1).strip() if prereq_match else None
-        if prereq_text and prereq_text.lower() == "none":
-            prereq_text = None
-
-        # Extract cost
-        cost_match = COST_RE.search(block_text)
-        cost = cost_match.group(1) if cost_match else None
-
-        # Use the first code as primary
-        primary_code = codes[0]
-
-        # Use manual name override if available, else extract from text
-        name = MANUAL_NAMES.get(primary_code) or extract_course_name(text, start, codes)
-
-        courses.append({
-            "codes": codes,
-            "primary_code": primary_code,
-            "name": name,
-            "grade_levels": grade_levels,
-            "credit_value": credit_value,
-            "credit_type": credit_type,
-            "gpa_waiver": has_gpa_waiver,
-            "semesters_offered": semesters,
-            "prerequisite_text": prereq_text,
-            "cost": cost,
-            "description": block_text.strip()[:500],
-            "is_summer": True,
-        })
-
-    return courses
-
-
-def extract_course_name(full_text: str, code_pos: int, codes: list[str]) -> str:
-    """Try to extract the course name from text near the code position."""
-    # Look backwards from the code position for a title-like line
-    # Summer PDF titles are typically ALL CAPS or Title Case on their own line
-    preceding = full_text[max(0, code_pos - 300):code_pos]
-    lines = preceding.strip().split("\n")
-
-    # Walk backwards through lines looking for a title
-    for line in reversed(lines):
-        line = line.strip()
-        if not line:
-            continue
-        # Skip lines that look like metadata
-        if any(kw in line.lower() for kw in [
-            "open to", "credit", "cost:", "prerequisite", "offered",
-            "semester", "a.m.", "p.m.", "june", "july", "gpa waiver"
-        ]):
-            continue
-        # Skip lines that are just codes
-        if all(c in "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789/: " for c in line) and len(line) < 15:
-            continue
-        # This might be the title
-        if len(line) > 3:
-            return line.upper()
-
-    # Fallback: use the code itself
-    return codes[0]
-
-
-# ---------------------------------------------------------------------------
-# Main
-# ---------------------------------------------------------------------------
 
 def main():
-    parser = argparse.ArgumentParser(description="Extract summer school courses from PDF")
-    parser.add_argument("pdf_path", help="Path to summer school PDF")
+    parser = argparse.ArgumentParser(description="Generate summer school course JSON from curated data")
     parser.add_argument("--year", type=int, default=2026, help="Catalog year (default: 2026)")
     parser.add_argument("--out-dir", default=None, help="Output directory (default: data/)")
     args = parser.parse_args()
 
+    if args.year not in CURATED_DATA:
+        print(f"ERROR: No curated data for year {args.year}. Available: {list(CURATED_DATA.keys())}")
+        sys.exit(1)
+
+    courses = CURATED_DATA[args.year]
     out_dir = args.out_dir or os.path.join(os.path.dirname(__file__), "data")
     os.makedirs(out_dir, exist_ok=True)
 
-    print(f"Extracting summer courses from: {args.pdf_path}")
-
-    pdf = pdfplumber.open(args.pdf_path)
-    print(f"PDF has {len(pdf.pages)} pages")
-
-    all_courses = []
-
-    for page_idx in range(COURSE_PAGE_START, min(COURSE_PAGE_END, len(pdf.pages))):
-        text = pdf.pages[page_idx].extract_text() or ""
-        page_courses = extract_courses_from_page(text)
-        if page_courses:
-            print(f"  Page {page_idx + 1}: {len(page_courses)} course(s)")
-            all_courses.extend(page_courses)
-
-    pdf.close()
-
-    # Filter out false positives (non-course codes)
-    FALSE_CODES = {"FOCUS", "TPREPS", "NOTES"}
-    all_courses = [c for c in all_courses if c["primary_code"] not in FALSE_CODES]
-
-    # Deduplicate by primary code
-    seen = set()
-    unique_courses = []
-    for course in all_courses:
-        key = course["primary_code"]
-        if key not in seen:
-            seen.add(key)
-            # Resolve division/department
-            div, dept = extract_division(key)
-            course["division"] = div
-            course["department"] = dept
-            course["duration"] = "semester"  # All summer courses are semester-length
-            unique_courses.append(course)
-
-    # Build output structure matching main extractor format
     output = {
         "metadata": {
-            "source": os.path.basename(args.pdf_path),
+            "source": f"summer_courses_{args.year}.py (manually curated)",
             "extracted_at": datetime.now(timezone.utc).isoformat(),
             "year": args.year,
             "type": "summer",
-            "total_courses": len(unique_courses),
+            "total_courses": len(courses),
         },
         "courses": [
             {
-                "code": c["primary_code"],
-                "all_codes": c["codes"],
+                "code": c["code"],
+                "all_codes": c["all_codes"],
                 "name": c["name"],
                 "division": c["division"],
                 "department": c["department"],
-                "description": c["description"],
+                "description": DESCRIPTIONS.get(c["code"], ""),
                 "credit_value": c["credit_value"],
                 "duration": c["duration"],
                 "credit_type": c["credit_type"],
@@ -423,10 +107,10 @@ def main():
                 "gpa_waiver": c["gpa_waiver"],
                 "is_summer": True,
                 "prerequisite_text": c["prerequisite_text"],
-                "prerequisite_groups": [],  # Summer courses don't have complex prereq chains
-                "cost": c["cost"],
+                "prerequisite_groups": [],
+                "cost": c.get("cost"),
             }
-            for c in unique_courses
+            for c in courses
         ],
     }
 
@@ -434,20 +118,16 @@ def main():
     with open(out_path, "w") as f:
         json.dump(output, f, indent=2)
 
-    print(f"\n✅ Extracted {len(unique_courses)} summer courses → {out_path}")
+    print(f"✅ Generated {len(courses)} summer courses → {out_path}")
+    print()
 
-    # Print summary by division
     by_div = {}
-    for c in unique_courses:
-        div = c["division"]
-        by_div.setdefault(div, []).append(c)
-
-    print("\nBy division:")
+    for c in courses:
+        by_div.setdefault(c["division"], []).append(c)
     for div in sorted(by_div):
-        courses = by_div[div]
-        print(f"  {div}: {len(courses)} courses")
-        for c in courses:
-            print(f"    {c['primary_code']:10s} {c['name'][:50]}")
+        print(f"  {div}: {len(by_div[div])} courses")
+        for c in by_div[div]:
+            print(f"    {c['code']:10s} {c['name']}")
 
 
 if __name__ == "__main__":

@@ -2100,7 +2100,7 @@ export default function PlannerPage() {
 
       {/* Course Picker */}
       {pickerTarget && selectedPlanId && (() => {
-        const otherSem = pickerTarget.semester === 1 ? 2 : 1;
+        const otherSem = pickerTarget.semester === 1 ? 2 : pickerTarget.semester === 2 ? 1 : pickerTarget.semester === -2 ? -1 : -2;
         const fullYearCount = courses.filter(
           (c) => c.gradeLevel === pickerTarget.gradeLevel && c.semester === null
         ).length;

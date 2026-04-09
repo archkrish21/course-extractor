@@ -548,6 +548,9 @@ export default function CourseBrowserPage() {
                           <Badge variant={creditTypeBadgeVariant(course.creditType)}>
                             {course.creditType}
                           </Badge>
+                          {course.semestersOffered?.some((s: number) => s < 0) && (
+                            <Badge className="bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400">Summer</Badge>
+                          )}
                           {course.isAp && course.creditType !== "AP" && <Badge variant="ap">AP</Badge>}
                           {course.isDualCredit && <Badge variant="dual-credit">Dual Credit</Badge>}
                           {course.gpaWaiver && <Badge variant="warning">GPA Waiver</Badge>}
@@ -556,9 +559,11 @@ export default function CourseBrowserPage() {
                           <span>{
                             course.duration === "full_year"
                               ? "Full Year"
-                              : course.semestersOffered?.length === 1
-                                ? `Sem ${course.semestersOffered[0]} only`
-                                : "Sem 1 & 2"
+                              : course.semestersOffered?.some((s: number) => s < 0)
+                                ? "Summer"
+                                : course.semestersOffered?.length === 1
+                                  ? `Sem ${course.semestersOffered[0]} only`
+                                  : "Sem 1 & 2"
                           }</span>
                           <span className="text-border">|</span>
                           <span className="flex items-center gap-0.5">
@@ -796,6 +801,9 @@ export default function CourseBrowserPage() {
                   <Badge variant={creditTypeBadgeVariant(selectedCourse.creditType)}>
                     {selectedCourse.creditType}
                   </Badge>
+                  {selectedCourse.semestersOffered?.some((s: number) => s < 0) && (
+                    <Badge className="bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400">Summer</Badge>
+                  )}
                   {selectedCourse.isAp && selectedCourse.creditType !== "AP" && (
                     <Badge variant="ap">Advanced Placement</Badge>
                   )}

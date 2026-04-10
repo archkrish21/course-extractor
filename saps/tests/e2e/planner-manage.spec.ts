@@ -1,11 +1,13 @@
 import { test, expect, type Page } from "@playwright/test";
+import { waitForHydration } from "./helpers";
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
 
 async function login(page: Page) {
   await page.goto("/login");
-  await page.getByLabel("Email address").fill("student@test.com");
-  await page.getByLabel("Password").first().fill("Test1234!");
+  await waitForHydration(page);
+  await page.locator('input[type="email"]').fill("student@test.com");
+  await page.locator('input[type="password"]').first().fill("Test1234!");
   await page.locator('form button[type="submit"]').click();
   await page.waitForURL(/\/(dashboard|planner|courses)/, { timeout: 15_000 });
 }
@@ -109,17 +111,44 @@ test.describe("Planner — Plan Management", () => {
   test("delete a plan with confirmation", async ({ page }) => {
     await navigateToPlanner(page);
 
-    // Need multiple plans and a non-primary plan selected
+    // The delete button is only enabled for non-primary plans. If we're on the
+    // primary plan, switch to a non-primary plan first.
     const deleteButton = page.locator('button[aria-label^="Delete plan:"]');
-
     if (!(await deleteButton.isVisible())) {
       test.skip();
       return;
     }
 
+    if (await deleteButton.isDisabled()) {
+      // Switch to a non-primary plan via the plan selector
+      const planSelector = page.locator('[aria-label="Select a plan"]');
+      if (!(await planSelector.isVisible())) {
+        test.skip(); // Only one plan; can't switch
+        return;
+      }
+      const options = planSelector.locator("option");
+      const count = await options.count();
+      let switched = false;
+      for (let i = 0; i < count; i++) {
+        const text = await options.nth(i).textContent();
+        if (text && !text.includes("★")) {
+          const value = await options.nth(i).getAttribute("value");
+          if (value) {
+            await planSelector.selectOption(value);
+            await page.waitForTimeout(1000);
+            switched = true;
+            break;
+          }
+        }
+      }
+      if (!switched || (await deleteButton.isDisabled())) {
+        test.skip();
+        return;
+      }
+    }
+
     await deleteButton.click();
 
-    // Confirmation dialog should appear
     const confirmDialog = page.locator(
       '[role="alertdialog"][aria-label="Delete plan confirmation"]'
     );
@@ -314,8 +343,10 @@ test.describe("Planner — Set Primary", () => {
       return;
     }
 
-    // Record current primary plan name
-    const currentOption = planSelector.locator("option[selected], option:checked").first();
+    // Record current primary plan name — React-controlled selects don't add a
+    // `selected` attribute, so use the inputValue() to find the active option.
+    const currentValue = await planSelector.inputValue();
+    const currentOption = planSelector.locator(`option[value="${currentValue}"]`);
     const currentPrimaryName = (await currentOption.textContent())?.replace(" ★", "").trim();
 
     // Find a non-primary plan and switch to it

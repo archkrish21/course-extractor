@@ -1,11 +1,13 @@
 import { test, expect, type Page } from "@playwright/test";
+import { waitForHydration } from "./helpers";
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
 
 async function login(page: Page) {
   await page.goto("/login");
-  await page.getByLabel("Email address").fill("student@test.com");
-  await page.getByLabel("Password").first().fill("Test1234!");
+  await waitForHydration(page);
+  await page.locator('input[type="email"]').fill("student@test.com");
+  await page.locator('input[type="password"]').first().fill("Test1234!");
   await page.locator('form button[type="submit"]').click();
   await page.waitForURL(/\/(dashboard|planner|courses)/, { timeout: 15_000 });
 }
@@ -22,7 +24,7 @@ test.describe("GPA Trend — Page Load", () => {
   test("progress page loads successfully", async ({ page }) => {
     await navigateToProgress(page);
     await expect(
-      page.getByRole("heading", { name: "Graduation Progress" })
+      page.getByRole("heading", { name: "Academic Progress" })
     ).toBeVisible({ timeout: 10_000 });
   });
 });
@@ -70,7 +72,8 @@ test.describe("GPA Trend — Chart Visibility", () => {
       return;
     }
 
-    const weightedLegend = page.locator("text=Weighted");
+    // "Weighted" also appears in the transcript GPA cards; narrow to the trend card
+    const weightedLegend = page.locator("text=Weighted").first();
     await expect(weightedLegend).toBeVisible({ timeout: 5_000 });
   });
 
@@ -86,8 +89,8 @@ test.describe("GPA Trend — Chart Visibility", () => {
 
     if (hasTrend) {
       // Chart is visible — verify it rendered properly with both legend items
-      await expect(page.locator("text=Unweighted")).toBeVisible({ timeout: 5_000 });
-      await expect(page.locator("text=Weighted")).toBeVisible({ timeout: 5_000 });
+      await expect(page.locator("text=Unweighted").first()).toBeVisible({ timeout: 5_000 });
+      await expect(page.locator("text=Weighted").first()).toBeVisible({ timeout: 5_000 });
     } else {
       // No chart — confirm it is truly absent (not just slow to load)
       await page.waitForTimeout(2000);
@@ -178,12 +181,12 @@ test.describe("GPA Trend — Snapshot API", () => {
     // Verify the GPA Trend chart now appears
     const trendHeading = page.locator("text=GPA Trend");
     if (existingCount + createdIds.length >= 2) {
-      await expect(trendHeading).toBeVisible({ timeout: 10_000 });
-      await expect(page.locator("text=Unweighted")).toBeVisible({ timeout: 5_000 });
-      await expect(page.locator("text=Weighted")).toBeVisible({ timeout: 5_000 });
+      await expect(trendHeading.first()).toBeVisible({ timeout: 10_000 });
+      await expect(page.locator("text=Unweighted").first()).toBeVisible({ timeout: 5_000 });
+      await expect(page.locator("text=Weighted").first()).toBeVisible({ timeout: 5_000 });
     } else {
       // Not enough data to produce a chart (e.g., no grade entries)
-      const heading = page.getByRole("heading", { name: "Graduation Progress" });
+      const heading = page.getByRole("heading", { name: "Academic Progress" });
       await expect(heading).toBeVisible({ timeout: 10_000 });
     }
   });

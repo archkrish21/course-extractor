@@ -1,4 +1,11 @@
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, vi } from "vitest";
+
+// `@/lib/auth/plan-permissions` imports `@/lib/db`, which throws at module load
+// time if DATABASE_URL is unset. `hasPermission` itself is pure and doesn't
+// touch the db, so stub the db module before importing.
+vi.mock("@/lib/db", () => ({ db: {} }));
+vi.mock("@/lib/db/schema", () => ({ planShares: {}, accountMembers: {} }));
+
 import { hasPermission, type PlanPermission } from "@/lib/auth/plan-permissions";
 
 describe("hasPermission", () => {

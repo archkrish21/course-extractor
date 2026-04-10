@@ -365,8 +365,9 @@ test.describe("Course Browser — Pagination", () => {
     await page.goto("/courses");
     await waitForCoursesLoaded(page);
 
-    // Check we're on page 1
-    await expect(page.locator("text=Page 1")).toBeVisible();
+    // Pagination uses aria-current="page" on the active page button rather than
+    // a "Page N" text label. Verify the active page is "1" initially.
+    await expect(page.locator('button[aria-current="page"]', { hasText: "1" })).toBeVisible();
 
     // Next button should be visible if there are more than 20 courses
     const nextButton = page.getByLabel("Next page");
@@ -375,7 +376,7 @@ test.describe("Course Browser — Pagination", () => {
     if (!isDisabled) {
       await nextButton.click();
       await waitForCoursesLoaded(page);
-      await expect(page.locator("text=Page 2")).toBeVisible();
+      await expect(page.locator('button[aria-current="page"]', { hasText: "2" })).toBeVisible();
 
       // Previous button should now be enabled
       const prevButton = page.getByLabel("Previous page");
@@ -558,8 +559,9 @@ test.describe("Course Browser — Add to Plan", () => {
   test("full-year course shows 'added to both semesters' message", async ({
     page,
   }) => {
-    // Search for a known full-year course
-    await page.locator('input[type="search"], input[placeholder*="Search"]').fill("Algebra 1");
+    // Search for a known full-year course (debounced — wait afterwards)
+    await page.locator('input[type="search"]').first().fill("Algebra 1");
+    await page.waitForTimeout(2_000);
     await waitForCoursesLoaded(page);
 
     const firstCard = page
@@ -573,16 +575,16 @@ test.describe("Course Browser — Add to Plan", () => {
     }
     await firstCard.click();
 
-    const modal = page.locator('[role="dialog"][aria-modal="true"]');
+    const modal = page.locator('[role="dialog"][aria-modal="true"]').last();
     await expect(modal).toBeVisible({ timeout: 5000 });
     await page.waitForTimeout(1000);
 
     // Open add form
-    await modal.getByRole("button", { name: "Add to Plan" }).click();
+    await modal.getByRole("button", { name: "Add to Plan" }).first().click();
     await page.waitForTimeout(1000);
 
     // Should show "Full-year course" note
-    await expect(modal.locator("text=Full-year course")).toBeVisible();
+    await expect(modal.locator("text=Full-year course").first()).toBeVisible();
 
     // Should NOT show semester selector buttons
     const semButtons = modal.locator('button[aria-pressed]:has-text("Sem")');

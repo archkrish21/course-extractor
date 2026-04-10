@@ -1,11 +1,13 @@
 import { test, expect, type Page } from "@playwright/test";
+import { waitForHydration } from "./helpers";
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
 
 async function login(page: Page) {
   await page.goto("/login");
-  await page.getByLabel("Email address").fill("student@test.com");
-  await page.getByLabel("Password").first().fill("Test1234!");
+  await waitForHydration(page);
+  await page.locator('input[type="email"]').fill("student@test.com");
+  await page.locator('input[type="password"]').first().fill("Test1234!");
   await page.locator('form button[type="submit"]').click();
   await page.waitForURL(/\/(dashboard|planner|courses)/, { timeout: 15_000 });
 }
@@ -50,8 +52,8 @@ test.describe("Plans — Tabs", () => {
     await navigateToPlans(page);
     const myTab = page.locator("button", { hasText: /^My Plans/ });
     await expect(myTab).toBeVisible();
-    // Active tab has shadow-sm class (bg-card)
-    await expect(myTab).toHaveClass(/bg-card/);
+    // Active tab has text-primary class (with an after:bg-primary underline)
+    await expect(myTab).toHaveClass(/text-primary/);
   });
 
   test("can switch to Shared with Me tab", async ({ page }) => {
@@ -59,11 +61,11 @@ test.describe("Plans — Tabs", () => {
     const sharedTab = page.locator("button", { hasText: /^Shared with Me/ });
     await expect(sharedTab).toBeVisible();
     await sharedTab.click();
-    await expect(sharedTab).toHaveClass(/bg-card/);
+    await expect(sharedTab).toHaveClass(/text-primary/);
 
     // My Plans tab should no longer be active
     const myTab = page.locator("button", { hasText: /^My Plans/ });
-    await expect(myTab).not.toHaveClass(/bg-card/);
+    await expect(myTab).not.toHaveClass(/text-primary/);
   });
 
   test("tabs show plan counts", async ({ page }) => {
@@ -86,18 +88,13 @@ test.describe("Plans — Plan Cards", () => {
     await navigateToPlans(page);
     await skipIfNoPlans(page);
 
-    // At least one card should be visible
-    const cards = page.locator('[class*="CardContent"], [data-slot="card-content"]');
-    const cardCount = await cards.count();
-    expect(cardCount).toBeGreaterThan(0);
-
-    // Check for status badge (draft, active, or archived)
+    // Status badges render the status label with the first letter capitalized
     const statusBadge = page
-      .locator("text=/^(draft|active|archived)$/i")
+      .locator("text=/^(Draft|Active|Archived)$/")
       .first();
     await expect(statusBadge).toBeVisible({ timeout: 5_000 });
 
-    // Check for permission badge (Owner, Can edit, View only, Full access)
+    // Permission badge (Owner, Can edit, View only, Full access)
     const permBadge = page
       .locator("text=/^(Owner|Can edit|View only|Full access)$/")
       .first();
@@ -116,22 +113,22 @@ test.describe("Plans — Plan Cards", () => {
     await navigateToPlans(page);
     await skipIfNoPlans(page);
 
+    // Edit / Open in planner: Link wrapping a "Edit" button
+    const editBtn = page.getByRole("button", { name: /^(Edit|View)$/ }).first();
+    await expect(editBtn).toBeVisible({ timeout: 5_000 });
+
+    // Share button
+    const shareBtn = page.locator('button[title="Share plan"]').first();
+    await expect(shareBtn).toBeVisible({ timeout: 5_000 });
+
     // Show/hide toggle
     const visibilityBtn = page
       .locator('button[title="Hide from planner"], button[title="Show in planner"]')
       .first();
     await expect(visibilityBtn).toBeVisible({ timeout: 5_000 });
 
-    // Share button
-    const shareBtn = page.locator('button[title="Share plan"]').first();
-    await expect(shareBtn).toBeVisible({ timeout: 5_000 });
-
-    // Open in planner link
-    const openLink = page.locator('a[title="Open in planner"]').first();
-    await expect(openLink).toBeVisible({ timeout: 5_000 });
-
-    // Delete button
-    const deleteBtn = page.locator('button[title="Delete plan"]').first();
+    // Delete button (wrapped in a span with title; button itself has destructive class)
+    const deleteBtn = page.getByRole("button", { name: "Delete", exact: true }).first();
     await expect(deleteBtn).toBeVisible({ timeout: 5_000 });
   });
 });

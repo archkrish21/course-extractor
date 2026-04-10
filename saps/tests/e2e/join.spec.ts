@@ -1,11 +1,13 @@
 import { test, expect, type Page } from "@playwright/test";
+import { waitForHydration } from "./helpers";
 
 // ─── Helpers ───────────────────────────────────────────────────────────────
 
 async function login(page: Page) {
   await page.goto("/login");
-  await page.getByLabel("Email address").fill("student@test.com");
-  await page.getByLabel("Password").first().fill("Test1234!");
+  await waitForHydration(page);
+  await page.locator('input[type="email"]').fill("student@test.com");
+  await page.locator('input[type="password"]').first().fill("Test1234!");
   await page.locator('form button[type="submit"]').click();
   await page.waitForURL(/\/(dashboard|planner|courses)/, { timeout: 15_000 });
 }
@@ -122,7 +124,8 @@ test.describe("Join — Success State", () => {
     const heading = page.getByRole("heading", { name: /Join Account/i });
     await expect(heading).toBeVisible({ timeout: 5_000 });
 
-    const subheading = page.locator("text=/invite code/i");
+    // "invite code" appears in multiple places (subtitle, input label, button text)
+    const subheading = page.locator("text=/invite code/i").first();
     await expect(subheading).toBeVisible();
   });
 });

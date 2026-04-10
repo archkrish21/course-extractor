@@ -15,8 +15,8 @@ test.describe("Auth — Page Load", () => {
     await expect(page.locator('input[type="password"]').first()).toBeVisible();
     await expect(page.locator('input[type="date"]')).toBeVisible();
 
-    // Role selection should be present
-    await expect(page.locator('[role="radio"]')).toHaveCount(3);
+    // Role selection should be present (student, parent, guardian, counselor)
+    await expect(page.locator('[role="radio"]')).toHaveCount(4);
 
     // Submit button
     await expect(page.locator('form button[type="submit"]')).toBeVisible();
@@ -56,8 +56,12 @@ test.describe("Auth — Login Flow", () => {
   }) => {
     await page.goto("/login");
 
-    await page.getByLabel("Email address").fill("student@test.com");
-    await page.getByLabel("Password").first().fill("Test1234!");
+    // Wait for the Suspense fallback to clear before filling — mobile hydration
+    // is slow enough that fill() can fire before the form mounts.
+    await expect(page.locator('input[type="email"]')).toBeVisible({ timeout: 10_000 });
+
+    await page.locator('input[type="email"]').fill("student@test.com");
+    await page.locator('input[type="password"]').first().fill("Test1234!");
     await page.locator('form button[type="submit"]').click();
 
     // Should redirect to dashboard (or other authenticated page)
@@ -69,12 +73,15 @@ test.describe("Auth — Login Flow", () => {
   test("login with invalid credentials shows error", async ({ page }) => {
     await page.goto("/login");
 
-    await page.getByLabel("Email address").fill("wrong@test.com");
-    await page.getByLabel("Password").first().fill("WrongPassword123!");
+    await expect(page.locator('input[type="email"]')).toBeVisible({ timeout: 10_000 });
+
+    await page.locator('input[type="email"]').fill("wrong@test.com");
+    await page.locator('input[type="password"]').first().fill("WrongPassword123!");
     await page.locator('form button[type="submit"]').click();
 
-    // Should show an error message (role="alert")
-    const errorAlert = page.locator('[role="alert"]');
+    // The form-error banner is the destructive-styled div containing the API error message.
+    // Filter out Next.js's __next-route-announcer__ which also has role="alert".
+    const errorAlert = page.locator('[role="alert"]').filter({ hasText: /Invalid|Email|Password|wrong/i }).first();
     await expect(errorAlert).toBeVisible({ timeout: 10_000 });
   });
 });

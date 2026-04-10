@@ -1,15 +1,29 @@
-import { test, expect } from "@playwright/test";
+import { test, expect, type Page } from "@playwright/test";
+import { waitForHydration } from "./helpers";
+
+// ─── Helper ────────────────────────────────────────────────────────────────
+
+/**
+ * Navigate to /signup and wait for React hydration to complete. Without this,
+ * pre-hydration the form's onSubmit and button onClick handlers are not yet
+ * attached, so clicks fall through to native form submission and toggles silently
+ * fail. Especially flaky on mobile.
+ */
+async function gotoSignup(page: Page) {
+  await page.goto("/signup");
+  await waitForHydration(page);
+}
 
 // ─── Signup Page Layout ────────────────────────────────────────────────────
 
 test.describe("Signup — Page Layout", () => {
   test("signup page renders heading", async ({ page }) => {
-    await page.goto("/signup");
+    await gotoSignup(page);
     await expect(page.getByRole("heading", { name: "Create your account" })).toBeVisible();
   });
 
   test("subtitle text is visible", async ({ page }) => {
-    await page.goto("/signup");
+    await gotoSignup(page);
     await expect(page.locator("text=Start planning your academic path today")).toBeVisible();
   });
 });
@@ -17,33 +31,32 @@ test.describe("Signup — Page Layout", () => {
 // ─── Role Selector ─────────────────────────────────────────────────────────
 
 test.describe("Signup — Role Selector", () => {
-  test("three role buttons exist (Student, Parent, Counselor)", async ({ page }) => {
-    await page.goto("/signup");
+  test("four role buttons exist (Student, Parent, Guardian, Counselor)", async ({ page }) => {
+    await gotoSignup(page);
 
-    const studentBtn = page.locator('button[role="radio"]', { hasText: "Student" });
-    const parentBtn = page.locator('button[role="radio"]', { hasText: "Parent" });
-    const counselorBtn = page.locator('button[role="radio"]', { hasText: "Counselor" });
-
-    await expect(studentBtn).toBeVisible();
-    await expect(parentBtn).toBeVisible();
-    await expect(counselorBtn).toBeVisible();
+    // The Guardian role was added between Parent and Counselor
+    await expect(page.locator('button[role="radio"]', { hasText: "Student" }).first()).toBeVisible();
+    await expect(page.locator('button[role="radio"]', { hasText: "Parent" }).first()).toBeVisible();
+    await expect(page.locator('button[role="radio"]', { hasText: "Guardian" }).first()).toBeVisible();
+    await expect(page.locator('button[role="radio"]', { hasText: "Counselor" }).first()).toBeVisible();
+    await expect(page.locator('button[role="radio"]')).toHaveCount(4);
   });
 
   test("Student role is selected by default", async ({ page }) => {
-    await page.goto("/signup");
+    await gotoSignup(page);
 
-    const studentBtn = page.locator('button[role="radio"]', { hasText: "Student" });
+    const studentBtn = page.locator('button[role="radio"]', { hasText: "Student" }).first();
     await expect(studentBtn).toHaveAttribute("aria-checked", "true");
   });
 
   test("clicking a different role selects it", async ({ page }) => {
-    await page.goto("/signup");
+    await gotoSignup(page);
 
-    const parentBtn = page.locator('button[role="radio"]', { hasText: "Parent" });
+    const parentBtn = page.locator('button[role="radio"]', { hasText: "Parent" }).first();
     await parentBtn.click();
     await expect(parentBtn).toHaveAttribute("aria-checked", "true");
 
-    const studentBtn = page.locator('button[role="radio"]', { hasText: "Student" });
+    const studentBtn = page.locator('button[role="radio"]', { hasText: "Student" }).first();
     await expect(studentBtn).toHaveAttribute("aria-checked", "false");
   });
 });
@@ -52,18 +65,20 @@ test.describe("Signup — Role Selector", () => {
 
 test.describe("Signup — Email and Password Fields", () => {
   test("email input exists", async ({ page }) => {
-    await page.goto("/signup");
-    await expect(page.getByLabel("Email")).toBeVisible();
+    await gotoSignup(page);
+    await expect(page.locator('input[type="email"]')).toBeVisible();
   });
 
   test("password input exists", async ({ page }) => {
-    await page.goto("/signup");
-    await expect(page.getByLabel("Password", { exact: true })).toBeVisible();
+    await gotoSignup(page);
+    // Required-asterisk in label breaks getByLabel exact match; use the input directly
+    await expect(page.locator('input[type="password"]').first()).toBeVisible();
   });
 
   test("confirm password input exists", async ({ page }) => {
-    await page.goto("/signup");
-    await expect(page.getByLabel("Confirm password")).toBeVisible();
+    await gotoSignup(page);
+    // The form has TWO type=password inputs (Password + Confirm password)
+    await expect(page.locator('input[type="password"]')).toHaveCount(2);
   });
 });
 
@@ -71,16 +86,14 @@ test.describe("Signup — Email and Password Fields", () => {
 
 test.describe("Signup — Password Show/Hide", () => {
   test("password fields have show/hide toggle buttons", async ({ page }) => {
-    await page.goto("/signup");
+    await gotoSignup(page);
 
-    // Password fields should start as type="password"
-    const passwordInput = page.getByLabel("Password", { exact: true });
-    const confirmInput = page.getByLabel("Confirm password");
-    await expect(passwordInput).toHaveAttribute("type", "password");
-    await expect(confirmInput).toHaveAttribute("type", "password");
+    // Both password inputs start as type="password"
+    const passwordInputs = page.locator('input[type="password"]');
+    await expect(passwordInputs).toHaveCount(2);
 
-    // Look for toggle buttons near password fields
-    const toggleButtons = page.locator('button[aria-label*="password" i], button[aria-label*="show" i], button[aria-label*="hide" i]');
+    // Each password Input renders a Show/Hide toggle button
+    const toggleButtons = page.locator('button[aria-label="Show password"], button[aria-label="Hide password"]');
     expect(await toggleButtons.count()).toBeGreaterThanOrEqual(1);
   });
 });
@@ -89,8 +102,8 @@ test.describe("Signup — Password Show/Hide", () => {
 
 test.describe("Signup — Date of Birth", () => {
   test("date of birth input exists", async ({ page }) => {
-    await page.goto("/signup");
-    await expect(page.getByLabel("Date of birth")).toBeVisible();
+    await gotoSignup(page);
+    await expect(page.locator('input[type="date"]')).toBeVisible();
   });
 });
 
@@ -98,24 +111,29 @@ test.describe("Signup — Date of Birth", () => {
 
 test.describe("Signup — Frozen State and School", () => {
   test("Illinois is shown as read-only state", async ({ page }) => {
-    await page.goto("/signup");
+    await gotoSignup(page);
     await expect(page.locator("text=Illinois")).toBeVisible();
   });
 
   test("Adlai E. Stevenson High School is shown as read-only school", async ({ page }) => {
-    await page.goto("/signup");
+    await gotoSignup(page);
     await expect(page.locator("text=Adlai E. Stevenson High School")).toBeVisible();
   });
 
   test("state and school fields are not editable inputs", async ({ page }) => {
-    await page.goto("/signup");
+    await gotoSignup(page);
 
-    // They should be rendered as divs, not input elements
-    const stateContainer = page.locator("div", { hasText: "Illinois" }).locator("input");
-    const schoolContainer = page.locator("div", { hasText: "Adlai E. Stevenson High School" }).locator("input");
+    // The "Illinois" and "Adlai..." values are rendered as readonly divs with a
+    // cursor-not-allowed class, not <input> elements. Verify there is no input
+    // with those values anywhere on the page.
+    const illinoisInput = page.locator('input[value="Illinois"]');
+    const schoolInput = page.locator('input[value="Adlai E. Stevenson High School"]');
+    expect(await illinoisInput.count()).toBe(0);
+    expect(await schoolInput.count()).toBe(0);
 
-    expect(await stateContainer.count()).toBe(0);
-    expect(await schoolContainer.count()).toBe(0);
+    // Sanity check the readonly display divs are present
+    await expect(page.locator("text=Illinois").first()).toBeVisible();
+    await expect(page.locator("text=Adlai E. Stevenson High School").first()).toBeVisible();
   });
 });
 
@@ -123,12 +141,12 @@ test.describe("Signup — Frozen State and School", () => {
 
 test.describe("Signup — School Request", () => {
   test("Request yours link exists", async ({ page }) => {
-    await page.goto("/signup");
+    await gotoSignup(page);
     await expect(page.locator("button", { hasText: "Request yours" })).toBeVisible();
   });
 
   test("clicking Request yours shows request form", async ({ page }) => {
-    await page.goto("/signup");
+    await gotoSignup(page);
 
     await page.locator("button", { hasText: "Request yours" }).click();
 
@@ -143,7 +161,7 @@ test.describe("Signup — School Request", () => {
   });
 
   test("Notify Me button is disabled when fields are empty", async ({ page }) => {
-    await page.goto("/signup");
+    await gotoSignup(page);
 
     await page.locator("button", { hasText: "Request yours" }).click();
     const notifyBtn = page.locator("button", { hasText: "Notify Me" });
@@ -155,13 +173,15 @@ test.describe("Signup — School Request", () => {
 
 test.describe("Signup — ToS Checkbox", () => {
   test("ToS checkbox with Terms of Service and Privacy Policy links exists", async ({ page }) => {
-    await page.goto("/signup");
+    await gotoSignup(page);
 
-    const tosCheckbox = page.locator("#tos-checkbox");
-    await expect(tosCheckbox).toBeVisible();
+    // The checkbox itself can be hidden behind its label wrapper depending on layout;
+    // assert presence rather than visibility, then check the wrapping label text.
+    await expect(page.locator("#tos-checkbox")).toHaveCount(1);
+    await expect(page.locator("text=I agree to the").first()).toBeVisible();
 
-    const tosLink = page.locator('a[href="/terms"]', { hasText: "Terms of Service" });
-    const privacyLink = page.locator('a[href="/privacy"]', { hasText: "Privacy Policy" });
+    const tosLink = page.locator('a[href="/terms"]', { hasText: "Terms of Service" }).first();
+    const privacyLink = page.locator('a[href="/privacy"]', { hasText: "Privacy Policy" }).first();
 
     await expect(tosLink).toBeVisible();
     await expect(privacyLink).toBeVisible();
@@ -172,17 +192,18 @@ test.describe("Signup — ToS Checkbox", () => {
 
 test.describe("Signup — Submit Button", () => {
   test("Create account button is disabled when ToS unchecked", async ({ page }) => {
-    await page.goto("/signup");
+    await gotoSignup(page);
 
     const submitBtn = page.locator('button[type="submit"]', { hasText: "Create account" });
     await expect(submitBtn).toBeDisabled();
   });
 
   test("Create account button becomes enabled when ToS is checked", async ({ page }) => {
-    await page.goto("/signup");
+    await gotoSignup(page);
 
-    const tosCheckbox = page.locator("#tos-checkbox");
-    await tosCheckbox.click();
+    // Use .check() on the input directly. On mobile, clicking the label text can
+    // hit one of the Terms/Privacy links inside the label and navigate away.
+    await page.locator("#tos-checkbox").check({ force: true });
 
     const submitBtn = page.locator('button[type="submit"]', { hasText: "Create account" });
     await expect(submitBtn).toBeEnabled();
@@ -193,29 +214,28 @@ test.describe("Signup — Submit Button", () => {
 
 test.describe("Signup — COPPA Block", () => {
   test("entering DOB making user under 13 shows COPPA block message", async ({ page }) => {
-    await page.goto("/signup");
+    await gotoSignup(page);
 
-    const dobInput = page.getByLabel("Date of birth");
+    const dobInput = page.locator('input[type="date"]');
 
-    // Enter a date that makes the user under 13 (e.g., 2 years ago)
+    // Enter a date that makes the user under 13 (e.g., 10 years ago)
     const today = new Date();
     const under13 = new Date(today.getFullYear() - 10, today.getMonth(), today.getDate());
     const dobValue = under13.toISOString().split("T")[0];
 
     await dobInput.fill(dobValue);
 
-    await expect(page.locator("text=Account creation unavailable")).toBeVisible();
+    await expect(page.locator("text=Account creation unavailable")).toBeVisible({ timeout: 5_000 });
   });
 
   test("COPPA block disables submit button even with ToS checked", async ({ page }) => {
-    await page.goto("/signup");
+    await gotoSignup(page);
 
-    // Check ToS first
-    const tosCheckbox = page.locator("#tos-checkbox");
-    await tosCheckbox.click();
+    // Check ToS first via the input (label clicks can navigate to Terms/Privacy links on mobile)
+    await page.locator("#tos-checkbox").check({ force: true });
 
     // Enter under-13 DOB
-    const dobInput = page.getByLabel("Date of birth");
+    const dobInput = page.locator('input[type="date"]');
     const today = new Date();
     const under13 = new Date(today.getFullYear() - 10, today.getMonth(), today.getDate());
     await dobInput.fill(under13.toISOString().split("T")[0]);
@@ -229,15 +249,19 @@ test.describe("Signup — COPPA Block", () => {
 
 test.describe("Signup — Sign In Link", () => {
   test("Already have an account? Sign in link exists and navigates to /login", async ({ page }) => {
-    await page.goto("/signup");
+    await gotoSignup(page);
 
     await expect(page.locator("text=Already have an account?")).toBeVisible();
 
-    const signInLink = page.locator('a[href="/login"]', { hasText: "Sign in" });
+    // Use .first() to handle any duplicate matches; href is what we really care about
+    const signInLink = page.locator('a[href="/login"]').filter({ hasText: "Sign in" }).first();
     await expect(signInLink).toBeVisible();
+    await expect(signInLink).toHaveAttribute("href", "/login");
 
+    // Scroll into view explicitly — chromium can leave the link below the fold
+    await signInLink.scrollIntoViewIfNeeded();
     await signInLink.click();
-    await page.waitForURL(/\/login/, { timeout: 10_000 });
+    await page.waitForURL(/\/login(\?|$)/, { timeout: 10_000 });
     expect(page.url()).toContain("/login");
   });
 });
@@ -246,7 +270,7 @@ test.describe("Signup — Sign In Link", () => {
 
 test.describe("Signup — Auth Layout Footer", () => {
   test("footer contains Terms of Service link", async ({ page }) => {
-    await page.goto("/signup");
+    await gotoSignup(page);
 
     // The footer links are outside the card, in the auth layout
     const footerTos = page.locator('a[href="/terms"]').last();
@@ -255,7 +279,7 @@ test.describe("Signup — Auth Layout Footer", () => {
   });
 
   test("footer contains Privacy Policy link", async ({ page }) => {
-    await page.goto("/signup");
+    await gotoSignup(page);
 
     const footerPrivacy = page.locator('a[href="/privacy"]').last();
     await expect(footerPrivacy).toBeVisible();

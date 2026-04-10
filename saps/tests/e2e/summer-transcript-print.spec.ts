@@ -1,11 +1,13 @@
 import { test, expect, type Page } from "@playwright/test";
+import { waitForHydration } from "./helpers";
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
 
 async function login(page: Page) {
   await page.goto("/login");
-  await page.getByLabel("Email address").fill("student@test.com");
-  await page.getByLabel("Password").first().fill("Test1234!");
+  await waitForHydration(page);
+  await page.locator('input[type="email"]').fill("student@test.com");
+  await page.locator('input[type="password"]').first().fill("Test1234!");
   await page.locator('form button[type="submit"]').click();
   await page.waitForURL(/\/(dashboard|planner|courses)/, { timeout: 15_000 });
 }
@@ -85,7 +87,9 @@ test.describe("Summer — Print View", () => {
   });
 
   test("E104: print page shows Semester 1 and Semester 2 columns", async ({ page }) => {
-    // Verify the standard print layout structure exists
+    // Wait for the print page to fully render the SAPS header
+    await expect(page.locator("text=Student Academic Planning System").first()).toBeVisible({ timeout: 10_000 });
+
     const sem1Labels = page.locator("text=Semester 1");
     const sem2Labels = page.locator("text=Semester 2");
 

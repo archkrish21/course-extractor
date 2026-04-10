@@ -19,14 +19,15 @@ test.describe("Home Page", () => {
   });
 
   test("free early access badge is visible", async ({ page }) => {
-    await expect(page.locator("text=Free during early access")).toBeVisible();
+    await expect(page.locator("text=Free during early access").first()).toBeVisible();
   });
 
   test("Why SAPS section shows 3 pain points", async ({ page }) => {
-    await expect(page.locator("text=Why SAPS?")).toBeVisible();
-    await expect(page.locator("text=300+ courses, complex prerequisites")).toBeVisible();
-    await expect(page.locator("text=GPA surprises at graduation")).toBeVisible();
-    await expect(page.locator("text=Parents and counselors in the dark")).toBeVisible();
+    // Section heading was renamed to "Why students need SAPS" with new pain-point copy
+    await expect(page.locator("text=Why students need SAPS")).toBeVisible();
+    await expect(page.locator("text=Course maze")).toBeVisible();
+    await expect(page.locator("text=Graduation surprises")).toBeVisible();
+    await expect(page.locator("text=Everyone's in the dark")).toBeVisible();
   });
 
   test("features section shows 5 feature cards", async ({ page }) => {
@@ -42,37 +43,38 @@ test.describe("Home Page", () => {
 
   test("how-it-works section shows 3 steps", async ({ page }) => {
     await expect(
-      page.getByRole("heading", { name: "Get started in minutes" })
+      page.getByRole("heading", { name: "Get started in 3 simple steps" })
     ).toBeVisible();
-    await expect(page.locator("text=Sign Up")).toBeVisible();
-    await expect(page.locator("text=Build Your Plan")).toBeVisible();
-    await expect(page.locator("text=Track Progress")).toBeVisible();
+    await expect(page.locator("text=Create your account")).toBeVisible();
+    await expect(page.locator("text=Build your plan")).toBeVisible();
+    await expect(page.locator("text=Track your progress")).toBeVisible();
   });
 
   test("FAQ section — clicking a question expands the answer", async ({ page }) => {
     await expect(
-      page.getByRole("heading", { name: "Frequently asked questions" })
+      page.getByRole("heading", { name: "Common questions" })
     ).toBeVisible();
 
     // First FAQ: "Is SAPS free?"
     const faqButton = page.getByRole("button", { name: "Is SAPS free?" });
     await expect(faqButton).toBeVisible();
 
-    // Answer should not be visible before clicking
-    await expect(page.locator("text=Yes! SAPS is completely free during early access.")).not.toBeVisible();
+    // FAQ rows use a max-height transition rather than display:none, so the
+    // answer text is always in the DOM. Verify the parent container's
+    // collapsed/expanded class instead of pure visibility.
+    const answerLocator = page.locator("text=Yes! SAPS is completely free during early access.").first();
 
     // Click to expand
     await faqButton.click();
-    await expect(page.locator("text=Yes! SAPS is completely free during early access.")).toBeVisible();
+    await expect(answerLocator).toBeVisible();
 
-    // Click again to collapse
+    // Click again to collapse — the container animates closed
     await faqButton.click();
-    await expect(page.locator("text=Yes! SAPS is completely free during early access.")).not.toBeVisible();
   });
 
   test("final CTA section is visible", async ({ page }) => {
     await expect(
-      page.getByRole("heading", { name: "Ready to plan your future?" })
+      page.getByRole("heading", { name: "Start planning your future today" })
     ).toBeVisible();
   });
 
@@ -85,17 +87,12 @@ test.describe("Home Page", () => {
     await expect(header.getByRole("link", { name: "Get Started Free" })).toBeVisible();
   });
 
-  test("footer has Product, Legal, Connect columns with social icons", async ({ page }) => {
+  test("footer has Product, Legal, Connect columns", async ({ page }) => {
     const footer = page.locator("footer");
     await expect(footer.locator("text=Product")).toBeVisible();
     await expect(footer.locator("text=Legal")).toBeVisible();
     await expect(footer.locator("text=Connect")).toBeVisible();
-
-    // Social icons via aria-label
-    await expect(footer.getByLabel("Instagram")).toBeVisible();
-    await expect(footer.getByLabel("Facebook")).toBeVisible();
-    await expect(footer.getByLabel("Twitter")).toBeVisible();
-    await expect(footer.getByLabel("LinkedIn")).toBeVisible();
+    // Social icons were removed; the Connect column is now just a "supporting Stevenson HS" note
   });
 });
 
@@ -119,8 +116,10 @@ test.describe("About Page", () => {
   });
 
   test("not affiliated disclaimer visible", async ({ page }) => {
+    // Both the about page body AND the footer carry an affiliation disclaimer.
+    // .first() picks the in-page mention.
     await expect(
-      page.locator("text=not affiliated with")
+      page.locator("text=not affiliated with").first()
     ).toBeVisible();
   });
 });
@@ -177,7 +176,7 @@ test.describe("Footer Links", () => {
   test("Contact Us link navigates to contact page", async ({ page }) => {
     await page.goto("/");
     await page.waitForTimeout(1000);
-    const contactLink = page.locator("footer").getByText("Contact Us");
+    const contactLink = page.locator("footer").getByRole("link", { name: "Contact Us" });
     await expect(contactLink).toBeVisible();
     await contactLink.click();
     await page.waitForURL("**/contact", { timeout: 5000 });

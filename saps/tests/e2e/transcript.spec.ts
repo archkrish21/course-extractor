@@ -1,11 +1,13 @@
 import { test, expect, type Page } from "@playwright/test";
+import { waitForHydration } from "./helpers";
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
 
 async function login(page: Page) {
   await page.goto("/login");
-  await page.getByLabel("Email address").fill("student@test.com");
-  await page.getByLabel("Password").first().fill("Test1234!");
+  await waitForHydration(page);
+  await page.locator('input[type="email"]').fill("student@test.com");
+  await page.locator('input[type="password"]').first().fill("Test1234!");
   await page.locator('form button[type="submit"]').click();
   await page.waitForURL(/\/(dashboard|planner|courses)/, { timeout: 15_000 });
 }
@@ -21,9 +23,10 @@ async function navigateToTranscript(page: Page) {
 test.describe("Transcript — Navigation", () => {
   test("transcript page is accessible via URL", async ({ page }) => {
     await navigateToTranscript(page);
-    // Should show the transcript page heading or content
-    const heading = page.locator("text=/Transcript|Academic Record/i");
-    await expect(heading).toBeVisible({ timeout: 10_000 });
+    // Use the page heading specifically (the nav also has a "Transcript" link → strict mode)
+    await expect(
+      page.getByRole("heading", { name: "Transcript", exact: true })
+    ).toBeVisible({ timeout: 10_000 });
   });
 
   test("transcript is accessible from navigation menu", async ({ page }) => {
@@ -72,9 +75,10 @@ test.describe("Transcript — Grade Level Sections", () => {
   test("shows grade level sections for completed courses", async ({ page }) => {
     await navigateToTranscript(page);
 
-    // Either grade level sections or empty state
-    const gradeSections = page.locator("text=/Grade 9|Grade 10|Grade 11|Grade 12|Freshman|Sophomore|Junior|Senior/i");
-    const emptyState = page.locator("text=/no completed courses|no grades/i");
+    // Grade section headings render as `<h2>Grade N</h2>` inside the section button.
+    // Empty state copy was changed to "No transcript data yet".
+    const gradeSections = page.locator("text=/Grade 9|Grade 10|Grade 11|Grade 12/");
+    const emptyState = page.locator("text=/No transcript data yet|no completed courses/i");
 
     const hasGrades = (await gradeSections.count()) > 0;
     const isEmpty = (await emptyState.count()) > 0;
@@ -103,9 +107,15 @@ test.describe("Transcript — Course Table", () => {
   test("shows course details in semester tables", async ({ page }) => {
     await navigateToTranscript(page);
 
-    // Check for semester labels within grade sections
-    const semesterLabels = page.locator("text=/Semester 1|Semester 2|Fall|Spring/i");
-    const emptyState = page.locator("text=/no completed courses|no grades/i");
+    // Grade sections start collapsed; expand the first one if present
+    const firstGradeBtn = page.locator("button", { hasText: /^Grade \d+/ }).first();
+    if ((await firstGradeBtn.count()) > 0) {
+      await firstGradeBtn.click();
+      await page.waitForTimeout(300);
+    }
+
+    const semesterLabels = page.locator("text=/Semester 1|Semester 2|Pre-Summer Session/");
+    const emptyState = page.locator("text=/No transcript data yet|no completed courses/i");
 
     const hasSemesters = (await semesterLabels.count()) > 0;
     const isEmpty = (await emptyState.count()) > 0;
@@ -129,11 +139,10 @@ test.describe("Transcript — Course Table", () => {
   test("GPA waiver indicator shown for waivered courses", async ({ page }) => {
     await navigateToTranscript(page);
 
-    // The waiver indicator "(W)" may or may not be present depending on data
-    const waiverIndicator = page.locator("text=(W)");
-    // Just verify the page loads without errors — waiver presence is data-dependent
-    const heading = page.locator("text=/Transcript|Academic Record/i");
-    await expect(heading).toBeVisible({ timeout: 10_000 });
+    // Waiver presence is data-dependent — just verify the page heading rendered
+    await expect(
+      page.getByRole("heading", { name: "Transcript", exact: true })
+    ).toBeVisible({ timeout: 10_000 });
   });
 });
 
@@ -147,14 +156,15 @@ test.describe("Transcript — Disclaimer", () => {
   test("shows disclaimer banner when courses exist", async ({ page }) => {
     await navigateToTranscript(page);
 
-    const emptyState = page.locator("text=/no completed courses|no grades/i");
+    const emptyState = page.locator("text=/No transcript data yet|no completed courses/i");
     if ((await emptyState.count()) > 0) {
       test.skip(); // No courses to show disclaimer for
       return;
     }
 
-    await expect(page.locator("text=Disclaimer")).toBeVisible({ timeout: 5_000 });
-    await expect(page.locator("text=This is not an official school document")).toBeVisible();
+    // Disclaimer text appears multiple times (page banner + print footer); use .first()
+    await expect(page.locator("text=Disclaimer").first()).toBeVisible({ timeout: 5_000 });
+    await expect(page.locator("text=This is not an official school document").first()).toBeVisible();
   });
 
   test("disclaimer is not shown when no courses exist", async ({ page }) => {

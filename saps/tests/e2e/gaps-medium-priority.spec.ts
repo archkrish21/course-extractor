@@ -1,11 +1,13 @@
 import { test, expect, type Page } from "@playwright/test";
+import { waitForHydration } from "./helpers";
 
 // ─── Helpers ───────────────────────────────────────────────────────────────
 
 async function login(page: Page) {
   await page.goto("/login");
-  await page.getByLabel("Email address").fill("student@test.com");
-  await page.getByLabel("Password").first().fill("Test1234!");
+  await waitForHydration(page);
+  await page.locator('input[type="email"]').fill("student@test.com");
+  await page.locator('input[type="password"]').first().fill("Test1234!");
   await page.locator('form button[type="submit"]').click();
   await page.waitForURL(/\/(dashboard|planner|courses)/, { timeout: 15_000 });
 }
@@ -61,23 +63,22 @@ test.describe("Transcript — Grade Sections", () => {
     await page.goto("/transcript");
     await page.waitForTimeout(3_000);
 
-    const emptyState = page.locator("text=/no completed courses|no grades/i");
+    const emptyState = page.locator("text=/No transcript data yet|no completed courses/i");
     if ((await emptyState.count()) > 0) {
       test.skip(true, "No completed courses");
       return;
     }
 
-    // Click a grade header to collapse
-    const gradeHeader = page.locator("button", { hasText: /Grade \d+/i }).first();
+    // Click a grade header to expand/collapse
+    const gradeHeader = page.locator("button", { hasText: /^Grade \d+/ }).first();
     await expect(gradeHeader).toBeVisible({ timeout: 5_000 });
     await gradeHeader.click();
     await page.waitForTimeout(300);
 
-    // Click again to expand
+    // Click again to toggle
     await gradeHeader.click();
     await page.waitForTimeout(300);
 
-    // Content should be visible
     await expect(gradeHeader).toBeVisible();
   });
 
@@ -102,9 +103,10 @@ test.describe("Transcript — Grade Sections", () => {
     await page.goto("/transcript");
     await page.waitForTimeout(3_000);
 
-    // GPA waiver presence is data-dependent
-    const heading = page.locator("text=/Transcript|Academic Record/i");
-    await expect(heading).toBeVisible({ timeout: 5_000 });
+    // Anchor on the page heading specifically (nav also has "Transcript" link)
+    await expect(
+      page.getByRole("heading", { name: "Transcript", exact: true })
+    ).toBeVisible({ timeout: 5_000 });
 
     // Just verify page loaded — waiver badge is data-dependent
     const waiverBadge = page.locator("text=/(W)|GPA Waiver/i");

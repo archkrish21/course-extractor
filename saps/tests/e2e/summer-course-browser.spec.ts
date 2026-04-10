@@ -1,11 +1,13 @@
 import { test, expect, type Page } from "@playwright/test";
+import { waitForHydration } from "./helpers";
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
 
 async function login(page: Page) {
   await page.goto("/login");
-  await page.getByLabel("Email address").fill("student@test.com");
-  await page.getByLabel("Password").first().fill("Test1234!");
+  await waitForHydration(page);
+  await page.locator('input[type="email"]').fill("student@test.com");
+  await page.locator('input[type="password"]').first().fill("Test1234!");
   await page.locator('form button[type="submit"]').click();
   await page.waitForURL(/\/(dashboard|planner|courses)/, { timeout: 15_000 });
 }
@@ -118,7 +120,7 @@ test.describe("Course Browser — Summer Detail Modal", () => {
 
   test("E96: summer course detail modal shows Summer badge", async ({ page }) => {
     // Filter to summer
-    const summerBtn = page.locator('button[role="radio"]:has-text("☀ Summer")');
+    const summerBtn = page.locator('button[role="radio"]:has-text("☀ Summer")').first();
     await summerBtn.click();
     await waitForCoursesLoaded(page);
 
@@ -127,13 +129,13 @@ test.describe("Course Browser — Summer Detail Modal", () => {
       return;
     }
 
-    // Click the first course card to open detail modal
+    // Click the first course card BUTTON to open detail modal
     const courseList = page.getByRole("list", { name: "Course results" });
-    const firstCard = courseList.getByRole("listitem").first();
+    const firstCard = courseList.getByRole("listitem").first().getByRole("button");
     await firstCard.click();
 
     // Wait for modal
-    const modal = page.locator('[role="dialog"][aria-modal="true"]').filter({ hasText: "Course" });
+    const modal = page.locator('[role="dialog"][aria-modal="true"]').last();
     await expect(modal).toBeVisible({ timeout: 5_000 });
 
     // Modal header should contain "Summer" badge

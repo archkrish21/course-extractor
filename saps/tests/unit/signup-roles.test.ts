@@ -94,7 +94,7 @@ describe("Signup — role handling", () => {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         email: "guardian@test.com",
-        password: "password123",
+        password: "Password123!",
         date_of_birth: "1980-01-01",
         role: "guardian",
         tos_accepted: true,
@@ -113,7 +113,7 @@ describe("Signup — role handling", () => {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         email: "guardian@test.com",
-        password: "password123",
+        password: "Password123!",
         date_of_birth: "1980-01-01",
         role: "guardian",
         tos_accepted: true,
@@ -136,7 +136,7 @@ describe("Signup — role handling", () => {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         email: "counselor@test.com",
-        password: "password123",
+        password: "Password123!",
         date_of_birth: "1980-01-01",
         role: "counselor",
         tos_accepted: true,
@@ -166,7 +166,7 @@ describe("Signup — role handling", () => {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         email: "student@test.com",
-        password: "password123",
+        password: "Password123!",
         date_of_birth: "2008-01-01",
         role: "student",
         tos_accepted: true,
@@ -191,7 +191,7 @@ describe("Signup — role handling", () => {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         email: "kid@test.com",
-        password: "password123",
+        password: "Password123!",
         date_of_birth: under13,
         role: "student",
         tos_accepted: true,

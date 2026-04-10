@@ -1,11 +1,13 @@
 import { test, expect, type Page } from "@playwright/test";
+import { waitForHydration } from "./helpers";
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
 
 async function login(page: Page) {
   await page.goto("/login");
-  await page.getByLabel("Email address").fill("student@test.com");
-  await page.getByLabel("Password").first().fill("Test1234!");
+  await waitForHydration(page);
+  await page.locator('input[type="email"]').fill("student@test.com");
+  await page.locator('input[type="password"]').first().fill("Test1234!");
   await page.locator('form button[type="submit"]').click();
   await page.waitForURL(/\/(dashboard|planner|courses)/, { timeout: 15_000 });
 }
@@ -112,9 +114,9 @@ test.describe("Planner — Validation Report Side Panel", () => {
     const summary = page.locator("button", { hasText: "Summary" });
     await expect(summary).toBeVisible({ timeout: 5_000 });
 
-    // Grouped stat labels
-    await expect(page.locator("text=CREDITS")).toBeVisible();
-    await expect(page.locator("text=GRADUATION REQUIREMENTS")).toBeVisible();
+    // Grouped stat labels (case-insensitive — visual uppercase is from CSS, text is mixed case)
+    await expect(page.locator("text=/^Credits$/").first()).toBeVisible();
+    await expect(page.locator("text=/^Graduation Requirements$/").first()).toBeVisible();
   });
 
   test("summary can be collapsed to single line", async ({ page }) => {
@@ -397,55 +399,50 @@ test.describe("Planner — Plan Selection Persistence", () => {
 
 // ─── Dashboard Validation Report Card ───────────────────────────────────────
 
-test.describe("Dashboard — Validation Report Card", () => {
-  test("dashboard shows validation report card", async ({ page }) => {
+test.describe("Dashboard — Attention Required Card", () => {
+  test("dashboard shows attention required card", async ({ page }) => {
     await login(page);
     await page.goto("/dashboard");
     await page.waitForTimeout(3000);
 
-    await expect(page.locator("text=Validation Report")).toBeVisible({
+    // Card was renamed from "Validation Report" to "Attention Required"
+    await expect(page.locator("text=Attention Required").first()).toBeVisible({
       timeout: 10_000,
     });
   });
 
-  test("validation report card shows Valid or Issues found badge", async ({ page }) => {
+  test("attention required card shows status (no issues or category headers)", async ({ page }) => {
     await login(page);
     await page.goto("/dashboard");
     await page.waitForTimeout(5000);
 
-    // The card should show either the "Valid" badge or "Issues found" badge
-    const validBadge = page.locator("text=Valid");
-    const issuesBadge = page.locator("text=Issues found");
+    // Card now shows either "No issues found" OR one of the category headers
+    const noIssues = page.locator("text=/No issues found/");
+    const categoryHeader = page.locator("text=/Graduation Requirement Gaps|Semester Requirement Gaps|Prerequisite Violations/");
 
-    const hasValid = (await validBadge.count()) > 0;
-    const hasIssues = (await issuesBadge.count()) > 0;
-
-    expect(hasValid || hasIssues).toBeTruthy();
+    expect((await noIssues.count()) + (await categoryHeader.count())).toBeGreaterThanOrEqual(1);
   });
 
-  test("validation report card shows categorized sections when issues exist", async ({ page }) => {
+  test("attention required card shows categorized sections when issues exist", async ({ page }) => {
     await login(page);
     await page.goto("/dashboard");
     await page.waitForTimeout(5000);
 
-    const issuesBadge = page.locator("text=Issues found");
-    if ((await issuesBadge.count()) === 0) {
-      // No issues — should show success message
-      await expect(
-        page.locator("text=/All graduation requirements are covered/")
-      ).toBeVisible({ timeout: 3_000 });
+    const noIssues = page.locator("text=/No issues found/");
+    if ((await noIssues.count()) > 0) {
+      // No issues path — verify the all-clear message rendered
+      await expect(noIssues.first()).toBeVisible();
       return;
     }
 
-    // If issues exist, check for categorized sections
+    // Otherwise verify at least one category header is present
     const gapsSection = page.locator("text=/Graduation Requirement Gaps/");
-    const warningsSection = page.locator("text=/Plan Warnings/");
+    const semSection = page.locator("text=/Semester Requirement Gaps/");
+    const prereqsSection = page.locator("text=/Prerequisite Violations/");
 
-    const hasGaps = (await gapsSection.count()) > 0;
-    const hasWarnings = (await warningsSection.count()) > 0;
-
-    // At least one should be present since we have issues
-    expect(hasGaps || hasWarnings).toBeTruthy();
+    expect(
+      (await gapsSection.count()) + (await semSection.count()) + (await prereqsSection.count()),
+    ).toBeGreaterThanOrEqual(1);
   });
 });
 
@@ -456,8 +453,9 @@ test.describe("Progress Page", () => {
     await login(page);
     await page.goto("/progress");
 
+    // Heading was renamed from "Graduation Progress" to "Academic Progress"
     await expect(
-      page.getByRole("heading", { name: "Graduation Progress" })
+      page.getByRole("heading", { name: "Academic Progress" })
     ).toBeVisible({ timeout: 10_000 });
   });
 
@@ -466,10 +464,10 @@ test.describe("Progress Page", () => {
     await page.goto("/progress");
     await page.waitForTimeout(3000);
 
-    await expect(page.locator("text=Total Credits")).toBeVisible({ timeout: 10_000 });
-    await expect(page.locator("text=Earned")).toBeVisible();
-    await expect(page.locator("text=Planned")).toBeVisible();
-    await expect(page.locator("text=Requirements Met")).toBeVisible();
+    // Summary card was redesigned — sidebar now shows Overall + earned/planned
+    await expect(page.locator("text=Overall").first()).toBeVisible({ timeout: 10_000 });
+    await expect(page.locator("text=Earned").first()).toBeVisible();
+    await expect(page.locator("text=Planned").first()).toBeVisible();
   });
 
   test("progress page shows per-requirement cards", async ({ page }) => {

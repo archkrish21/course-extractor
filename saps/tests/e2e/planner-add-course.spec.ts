@@ -1,11 +1,13 @@
 import { test, expect, type Page } from "@playwright/test";
+import { waitForHydration } from "./helpers";
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
 
 async function login(page: Page) {
   await page.goto("/login");
-  await page.getByLabel("Email address").fill("student@test.com");
-  await page.getByLabel("Password").first().fill("Test1234!");
+  await waitForHydration(page);
+  await page.locator('input[type="email"]').fill("student@test.com");
+  await page.locator('input[type="password"]').first().fill("Test1234!");
   await page.locator('form button[type="submit"]').click();
   await page.waitForURL(/\/(dashboard|planner|courses)/, { timeout: 15_000 });
 }
@@ -124,11 +126,12 @@ test.describe("Planner — Add Course", () => {
     );
 
     await searchInput.fill("Math");
-    // Wait for debounced search + API response
+    // Wait for debounced search + API response, then for loading spinner to clear
     await page.waitForTimeout(2000);
+    await expect(picker.locator("text=Searching courses")).toBeHidden({ timeout: 10_000 });
 
     // Should show results (course cards) or "No courses found"
-    const hasResults = await picker.locator('[role="list"] li').count();
+    const hasResults = await picker.locator('ul[role="list"] > li').count();
     const hasNoResults = await picker.locator("text=No courses found").isVisible().catch(() => false);
     expect(hasResults > 0 || hasNoResults).toBeTruthy();
   });

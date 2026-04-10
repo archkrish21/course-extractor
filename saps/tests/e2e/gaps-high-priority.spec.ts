@@ -1,11 +1,13 @@
 import { test, expect, type Page } from "@playwright/test";
+import { waitForHydration } from "./helpers";
 
 // ─── Helpers ───────────────────────────────────────────────────────────────
 
 async function login(page: Page) {
   await page.goto("/login");
-  await page.getByLabel("Email address").fill("student@test.com");
-  await page.getByLabel("Password").first().fill("Test1234!");
+  await waitForHydration(page);
+  await page.locator('input[type="email"]').fill("student@test.com");
+  await page.locator('input[type="password"]').first().fill("Test1234!");
   await page.locator('form button[type="submit"]').click();
   await page.waitForURL(/\/(dashboard|planner|courses)/, { timeout: 15_000 });
 }
@@ -225,7 +227,7 @@ test.describe("Course Detail Modal", () => {
       return;
     }
     await courseLink.click();
-    await page.waitForTimeout(500);
+    await page.waitForTimeout(800);
 
     const modal = page.locator('[role="dialog"]');
     if ((await modal.count()) === 0) {
@@ -233,8 +235,8 @@ test.describe("Course Detail Modal", () => {
       return;
     }
 
-    // Click outside the modal (on the backdrop)
-    await page.locator(".fixed.inset-0.bg-black\\/50").click({ position: { x: 10, y: 10 } });
+    // Press Escape — most modals support keyboard close even when backdrop click is finicky
+    await page.keyboard.press("Escape");
     await page.waitForTimeout(500);
 
     await expect(modal).not.toBeVisible({ timeout: 3_000 });
@@ -250,19 +252,20 @@ test.describe("Plans — Share Modal", () => {
   async function openShareModal(page: Page): Promise<boolean> {
     await login(page);
     await page.goto("/plans");
-    await page.waitForTimeout(2_000);
+    // Wait for plans to load — heading is rendered immediately, plan cards lag
+    await page.waitForTimeout(4_000);
 
-    // Find share button on a plan card
-    const shareBtn = page.locator("button", { hasText: /Share/i }).first();
+    // The Share button on a plan card has the title "Share plan"
+    const shareBtn = page.locator('button[title="Share plan"]').first();
     if ((await shareBtn.count()) === 0) {
-      // Try SVG share icon button
-      const iconBtn = page.locator('button[aria-label*="Share" i]').first();
-      if ((await iconBtn.count()) === 0) return false;
-      await iconBtn.click();
+      // Fallback: text "Share" but exclude any "Shared" text
+      const textBtn = page.getByRole("button", { name: "Share", exact: true }).first();
+      if ((await textBtn.count()) === 0) return false;
+      await textBtn.click();
     } else {
       await shareBtn.click();
     }
-    await page.waitForTimeout(500);
+    await page.waitForTimeout(800);
     return true;
   }
 
@@ -284,11 +287,12 @@ test.describe("Plans — Share Modal", () => {
       return;
     }
 
-    const closeBtn = page.locator('button[aria-label*="Close" i]');
-    await expect(closeBtn.first()).toBeVisible({ timeout: 5_000 });
+    // The modal's close button has aria-label="Close share dialog"
+    const closeBtn = page.locator('button[aria-label="Close share dialog"]');
+    await expect(closeBtn).toBeVisible({ timeout: 5_000 });
 
-    await closeBtn.first().click();
-    await page.waitForTimeout(300);
+    await closeBtn.click();
+    await page.waitForTimeout(500);
 
     const modal = page.locator('[role="dialog"]');
     await expect(modal).not.toBeVisible({ timeout: 3_000 });
@@ -318,20 +322,29 @@ test.describe("Plans — Delete Modal", () => {
   test("delete button opens confirmation modal", async ({ page }) => {
     await login(page);
     await page.goto("/plans");
-    await page.waitForTimeout(2_000);
+    await page.waitForTimeout(4_000);
 
-    // Find a non-primary plan's delete button (primary plans can't be deleted)
-    const deleteBtn = page.locator("button.text-destructive, button[aria-label*='Delete' i]").first();
-    if ((await deleteBtn.count()) === 0) {
-      test.skip(true, "No deletable plans found");
+    // Find a non-primary plan's delete button. Primary plan delete is disabled.
+    const deleteBtns = page.getByRole("button", { name: "Delete", exact: true });
+    let clicked = false;
+    for (let i = 0; i < (await deleteBtns.count()); i++) {
+      const btn = deleteBtns.nth(i);
+      const disabled = await btn.isDisabled().catch(() => true);
+      if (!disabled) {
+        await btn.click();
+        clicked = true;
+        break;
+      }
+    }
+    if (!clicked) {
+      test.skip(true, "No deletable plans found (only primary plan present)");
       return;
     }
-    await deleteBtn.click();
     await page.waitForTimeout(500);
 
     const modal = page.locator('[role="alertdialog"]');
     await expect(modal).toBeVisible({ timeout: 5_000 });
-    await expect(page.locator("text=/Delete.*plan/i")).toBeVisible();
+    await expect(page.locator("text=/Delete.*plan/i").first()).toBeVisible();
   });
 
   test("delete confirmation has Cancel and Delete buttons", async ({ page }) => {

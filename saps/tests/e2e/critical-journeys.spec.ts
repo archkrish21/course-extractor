@@ -8,13 +8,15 @@
  *   npx tsx scripts/cleanup-test-users.ts
  */
 import { test, expect, type Page } from "@playwright/test";
+import { waitForHydration } from "./helpers";
 
 // ─── Helpers ───────────────────────────────────────────────────────────────
 
 async function login(page: Page, email = "student@test.com", password = "Test1234!") {
   await page.goto("/login");
-  await page.getByLabel("Email address").fill(email);
-  await page.getByLabel("Password").first().fill(password);
+  await waitForHydration(page);
+  await page.locator('input[type="email"]').fill(email);
+  await page.locator('input[type="password"]').first().fill(password);
   await page.locator('form button[type="submit"]').click();
   await page.waitForURL(/\/(dashboard|planner|courses|consent)/, { timeout: 15_000 });
 }
@@ -82,7 +84,8 @@ test.describe("Critical Journey: Course Grading and GPA", () => {
     await page.goto("/transcript");
     await page.waitForTimeout(3_000);
 
-    const emptyState = page.locator("text=/no completed courses|no grades/i");
+    // Empty-state copy was changed to "No transcript data yet"
+    const emptyState = page.locator("text=/No transcript data yet|no completed courses/i");
     if ((await emptyState.count()) > 0) {
       test.skip(true, "No completed courses — GPA verification requires graded courses");
       return;
@@ -104,7 +107,7 @@ test.describe("Critical Journey: Course Grading and GPA", () => {
     await page.goto("/transcript");
     await page.waitForTimeout(3_000);
 
-    const emptyState = page.locator("text=/no completed courses|no grades/i");
+    const emptyState = page.locator("text=/No transcript data yet|no completed courses/i");
     if ((await emptyState.count()) > 0) {
       test.skip(true, "No completed courses for GPA comparison");
       return;
@@ -249,8 +252,9 @@ test.describe("Critical Journey: Invite Flow", () => {
 test.describe("Critical Journey: Parent Views Child Plan", () => {
   test.beforeEach(async ({ page }) => {
     await page.goto("/login");
-    await page.getByLabel("Email address").fill("parent@test.com");
-    await page.getByLabel("Password").first().fill("Test1234!");
+  await waitForHydration(page);
+    await page.locator('input[type="email"]').fill("parent@test.com");
+    await page.locator('input[type="password"]').first().fill("Test1234!");
     await page.locator('form button[type="submit"]').click();
 
     try {
@@ -295,8 +299,10 @@ test.describe("Critical Journey: Parent Views Child Plan", () => {
     await page.goto("/transcript");
     await page.waitForTimeout(3_000);
 
-    const heading = page.locator("text=/Transcript|Academic Record/i");
-    await expect(heading).toBeVisible({ timeout: 5_000 });
+    // Anchor on the page heading specifically (nav also has "Transcript" link → strict mode)
+    await expect(
+      page.getByRole("heading", { name: "Transcript", exact: true })
+    ).toBeVisible({ timeout: 5_000 });
   });
 
   test("parent can view child's progress", async ({ page }) => {

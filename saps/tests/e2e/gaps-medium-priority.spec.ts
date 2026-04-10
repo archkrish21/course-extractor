@@ -172,7 +172,9 @@ test.describe("Dashboard — Navigation Links", () => {
     await page.goto("/dashboard");
     await page.waitForTimeout(2_000);
 
-    const progressLink = page.locator("a[href='/progress'], a", { hasText: /View Progress|Progress/i }).first();
+    // Use :visible — the desktop sidebar nav has an /progress link that is
+    // `hidden md:flex` and matches first on mobile, causing click() to time out.
+    const progressLink = page.locator("a[href='/progress']:visible").first();
     if ((await progressLink.count()) === 0) {
       test.skip(true, "Progress link not visible");
       return;
@@ -187,7 +189,9 @@ test.describe("Dashboard — Navigation Links", () => {
     await page.goto("/dashboard");
     await page.waitForTimeout(2_000);
 
-    const transcriptLink = page.locator("a[href='/transcript'], a", { hasText: /Transcript/i }).first();
+    // Same fix as Progress: prefer the visible body link over the hidden
+    // sidebar nav link on mobile.
+    const transcriptLink = page.locator("a[href='/transcript']:visible").first();
     if ((await transcriptLink.count()) === 0) {
       test.skip(true, "Transcript link not visible");
       return;
@@ -257,9 +261,12 @@ test.describe("Homepage — Links & CTAs", () => {
     await page.goto("/");
     await page.waitForTimeout(1_000);
 
-    const aboutLink = page.locator("a[href='/about']").first();
+    // Public site header nav (About/FAQ) is `hidden md:flex` and collapses
+    // into a hamburger menu on mobile. Match only visible /about links so
+    // click() doesn't try to interact with the hidden desktop nav link.
+    const aboutLink = page.locator("a[href='/about']:visible").first();
     if ((await aboutLink.count()) === 0) {
-      test.skip(true, "About link not found in nav");
+      test.skip(true, "About link not visible (mobile may collapse it into a menu)");
       return;
     }
 

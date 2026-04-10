@@ -115,16 +115,27 @@ interface Cli {
   noVitest: boolean;
   noReport: boolean;
   list: boolean;
+  noMobile: boolean;
+  retries?: number;
 }
 
 function parseCli(): Cli {
   const args = process.argv.slice(2);
-  const cli: Cli = { noVitest: false, noReport: false, list: false };
+  const cli: Cli = { noVitest: false, noReport: false, list: false, noMobile: false };
   for (const arg of args) {
     if (arg === "--no-vitest") cli.noVitest = true;
     else if (arg === "--no-report") cli.noReport = true;
     else if (arg === "--list") cli.list = true;
+    else if (arg === "--no-mobile") cli.noMobile = true;
     else if (arg.startsWith("--agent=")) cli.agent = arg.slice("--agent=".length);
+    else if (arg.startsWith("--retries=")) {
+      const n = parseInt(arg.slice("--retries=".length), 10);
+      if (Number.isNaN(n) || n < 0) {
+        console.error(`Invalid --retries value: ${arg}. Must be a non-negative integer.`);
+        process.exit(2);
+      }
+      cli.retries = n;
+    }
     else if (arg === "--help" || arg === "-h") {
       printHelp();
       process.exit(0);
@@ -147,6 +158,8 @@ Options:
   --agent=<name>   Run a single sub-agent (e.g. Auth-Tester). Skips vitest.
   --no-vitest      Skip the vitest unit/API run.
   --no-report      Skip writing the HTML deployment report.
+  --no-mobile      Skip the Playwright mobile project (run desktop chromium only).
+  --retries=<n>    Override Playwright retry count (e.g. --retries=0 to disable).
   --list           List sub-agents and exit.
   -h, --help       Show this help.`);
 }
@@ -202,16 +215,19 @@ async function runVitest(): Promise<VitestResult> {
 
 // ─── Playwright sub-agent runner ────────────────────────────────────────────
 
-async function runAgent(agent: SubAgent): Promise<AgentResult> {
+async function runAgent(agent: SubAgent, opts: { noMobile?: boolean; retries?: number } = {}): Promise<AgentResult> {
   const jsonPath = join(RESULTS_DIR, `${agent.name}.json`);
 
+  const retriesNote = opts.retries !== undefined ? `  [retries=${opts.retries}]` : "";
   console.log("\n────────────────────────────────────────");
   console.log(`▶ ${agent.name}`);
-  console.log(`  specs: ${agent.specs.join(", ")}${agent.workers ? `  (workers=${agent.workers})` : ""}`);
+  console.log(`  specs: ${agent.specs.join(", ")}${agent.workers ? `  (workers=${agent.workers})` : ""}${opts.noMobile ? "  [chromium only]" : ""}${retriesNote}`);
   console.log("────────────────────────────────────────\n");
 
   const args = ["playwright", "test", ...agent.specs, "--reporter=line,json"];
   if (agent.workers) args.push(`--workers=${agent.workers}`);
+  if (opts.noMobile) args.push("--project=chromium");
+  if (opts.retries !== undefined) args.push(`--retries=${opts.retries}`);
 
   const start = Date.now();
   const { code } = await runCommand("npx", args, {
@@ -542,7 +558,7 @@ async function main(): Promise<void> {
   // 2. Run each sub-agent sequentially
   const agentResults: AgentResult[] = [];
   for (const agent of agentsToRun) {
-    const result = await runAgent(agent);
+    const result = await runAgent(agent, { noMobile: cli.noMobile, retries: cli.retries });
     agentResults.push(result);
   }
 

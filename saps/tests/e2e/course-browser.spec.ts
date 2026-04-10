@@ -1,9 +1,11 @@
 import { test, expect, type Page } from "@playwright/test";
+import { waitForHydration } from "./helpers";
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
 
 async function login(page: Page) {
   await page.goto("/login");
+  await waitForHydration(page);
   await page.locator('input[type="email"]').fill("student@test.com");
   await page.locator('input[type="password"]').fill("Test1234!");
   await page.locator('form button[type="submit"]').click();
@@ -383,7 +385,7 @@ test.describe("Course Browser — Pagination", () => {
       await expect(prevButton).toBeEnabled();
       await prevButton.click();
       await waitForCoursesLoaded(page);
-      await expect(page.locator("text=Page 1")).toBeVisible();
+      await expect(page.locator('button[aria-current="page"]', { hasText: "1" })).toBeVisible();
     }
   });
 });

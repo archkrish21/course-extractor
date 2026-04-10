@@ -100,6 +100,15 @@ python extract.py <pdf-path> --year 2026 --out-dir ./data
 python -m pytest tests/
 ```
 
+## Skill Commands
+
+Before starting new frontend or backend implementation work, run the corresponding skill command to load detailed patterns and conventions:
+
+- **`/frontend`** — Run before building new UI pages, components, forms, or doing visual work. Covers component APIs (Button, Badge, Card, Input, Toast), design tokens, responsive patterns, accessibility requirements, state management, and form patterns.
+- **`/backend`** — Run before adding API routes, DB queries, or business logic. Covers route handler anatomy, auth/permissions, Drizzle ORM query patterns, Zod validation, subscription tier checking, rate limiting, and Stripe/email integration.
+
+These are not needed for small bug fixes or config changes — CLAUDE.md provides enough context for those.
+
 ## Architecture Notes
 
 ### Auth & Authorization

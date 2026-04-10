@@ -15,7 +15,14 @@ async function login(page: Page) {
 async function loginAndGoToDashboard(page: Page) {
   await login(page);
   await page.goto("/dashboard");
-  await waitForHydration(page);
+  // The user menu button only mounts after AccountContext finishes loading
+  // (the layout shows a placeholder with no aria-label="User menu" until then),
+  // so we can't use waitForHydration with that selector. Wait for the
+  // dashboard's "Welcome, ..." heading instead — it's rendered by the page
+  // body once hydration and the initial data fetch complete.
+  await expect(page.getByRole("heading", { name: /^Welcome/i })).toBeVisible({
+    timeout: 15_000,
+  });
 }
 
 // ─── User Menu Visibility ───────────────────────────────────────────────────
@@ -130,25 +137,22 @@ test.describe("User Menu — Navigation", () => {
 // ─── Sign Out Flow ──────────────────────────────────────────────────────────
 
 test.describe("User Menu — Sign Out", () => {
-  test("clicking Sign out redirects to /login", async ({ page }) => {
+  test("clicking Sign out redirects to home", async ({ page }) => {
     test.skip(test.info().project.name === "mobile", "Desktop test");
     await loginAndGoToDashboard(page);
 
     const userMenuBtn = page.locator('button[aria-label="User menu"]');
-    const switchAccountBtn = page.locator('button[aria-label="Switch account"]');
-
-    if ((await userMenuBtn.count()) > 0) {
-      await userMenuBtn.click();
-    } else if ((await switchAccountBtn.count()) > 0) {
-      await switchAccountBtn.click();
-    } else {
+    if ((await userMenuBtn.count()) === 0) {
       test.skip();
       return;
     }
+    await userMenuBtn.click();
 
+    // The app's handleSignOut clears the session then sets
+    // window.location.href = "/" — it does NOT go directly to /login.
     await page.locator('button', { hasText: "Sign out" }).first().click();
-    await page.waitForURL(/\/login/, { timeout: 15_000 });
-    expect(page.url()).toContain("/login");
+    await page.waitForURL((url) => url.pathname === "/", { timeout: 15_000 });
+    expect(new URL(page.url()).pathname).toBe("/");
   });
 
   test("after sign out, navigating to /dashboard redirects to /login (auth guard)", async ({ page }) => {
@@ -157,21 +161,17 @@ test.describe("User Menu — Sign Out", () => {
 
     // Sign out via user menu
     const userMenuBtn = page.locator('button[aria-label="User menu"]');
-    const switchAccountBtn = page.locator('button[aria-label="Switch account"]');
-
-    if ((await userMenuBtn.count()) > 0) {
-      await userMenuBtn.click();
-    } else if ((await switchAccountBtn.count()) > 0) {
-      await switchAccountBtn.click();
-    } else {
+    if ((await userMenuBtn.count()) === 0) {
       test.skip();
       return;
     }
+    await userMenuBtn.click();
 
+    // Sign out lands on the public home page, not /login.
     await page.locator('button', { hasText: "Sign out" }).first().click();
-    await page.waitForURL(/\/login/, { timeout: 15_000 });
+    await page.waitForURL((url) => url.pathname === "/", { timeout: 15_000 });
 
-    // Try navigating to a protected route
+    // Try navigating to a protected route — auth middleware should redirect to /login
     await page.goto("/dashboard");
     await page.waitForURL(/\/login/, { timeout: 15_000 });
     expect(page.url()).toContain("/login");
@@ -181,7 +181,7 @@ test.describe("User Menu — Sign Out", () => {
 // ─── Mobile Sign Out ────────────────────────────────────────────────────────
 
 test.describe("User Menu — Mobile Sign Out", () => {
-  test("mobile hamburger menu has a Sign out button that redirects to /login", async ({ page }) => {
+  test("mobile hamburger menu has a Sign out button that redirects to home", async ({ page }) => {
     test.skip(test.info().project.name !== "mobile", "Mobile-only test");
     await loginAndGoToDashboard(page);
 
@@ -194,10 +194,11 @@ test.describe("User Menu — Mobile Sign Out", () => {
     const signOutBtn = page.locator('nav[aria-label="Main navigation"] button', { hasText: "Sign out" });
     await expect(signOutBtn).toBeVisible({ timeout: 3_000 });
 
-    // Click sign out
+    // Click sign out — handleSignOut sets window.location.href = "/" then the
+    // user can navigate to a protected route to be bounced to /login.
     await signOutBtn.click();
-    await page.waitForURL(/\/login/, { timeout: 15_000 });
-    expect(page.url()).toContain("/login");
+    await page.waitForURL((url) => url.pathname === "/", { timeout: 15_000 });
+    expect(new URL(page.url()).pathname).toBe("/");
   });
 });
 

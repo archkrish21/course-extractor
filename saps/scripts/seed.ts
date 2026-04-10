@@ -22,6 +22,12 @@ import { SUBSCRIPTION_PLANS } from "../config/subscription-plans";
 import { PLAN_TEMPLATES } from "../config/seeds/plan-templates";
 import { logger } from "../lib/logger";
 
+// Safety: block production execution
+if (process.env.NODE_ENV === "production") {
+  console.error("ERROR: seed cannot run in production (NODE_ENV=production). Aborting.");
+  process.exit(1);
+}
+
 async function seed() {
   const pool = new Pool({
     connectionString: process.env.DATABASE_URL!,

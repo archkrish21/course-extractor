@@ -15,6 +15,12 @@ import { eq, and, ne, sql } from "drizzle-orm";
  * Usage: npx tsx scripts/migrate-plan-shares.ts
  */
 
+// Safety: block production execution
+if (process.env.NODE_ENV === "production") {
+  console.error("ERROR: migrate-plan-shares cannot run in production (NODE_ENV=production). Aborting.");
+  process.exit(1);
+}
+
 const pool = new Pool({ connectionString: process.env.DATABASE_URL! });
 const db = drizzle(pool);
 

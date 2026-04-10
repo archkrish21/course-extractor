@@ -201,6 +201,16 @@ def get_connection():
         print("ERROR: psycopg2 is not installed. Run: pip install psycopg2-binary",
               file=sys.stderr)
         sys.exit(1)
+    # Safety: warn if this looks like a production database
+    if url and ("supabase.co" in url or "neon.tech" in url or "rds.amazonaws.com" in url):
+        confirm = input(
+            "WARNING: DATABASE_URL appears to point to a production database.\n"
+            f"  URL: {url[:60]}...\n"
+            "  Type 'yes' to continue: "
+        )
+        if confirm.strip().lower() != "yes":
+            print("Aborted.", file=sys.stderr)
+            sys.exit(1)
     return psycopg2.connect(url)
 
 

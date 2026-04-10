@@ -6,6 +6,12 @@ import { Pool } from "pg";
 import { legalDocuments } from "../lib/db/schema";
 import { sql } from "drizzle-orm";
 
+// Safety: block production execution
+if (process.env.NODE_ENV === "production") {
+  console.error("ERROR: seed-legal-documents cannot run in production (NODE_ENV=production). Aborting.");
+  process.exit(1);
+}
+
 const pool = new Pool({ connectionString: process.env.DATABASE_URL! });
 const db = drizzle(pool);
 

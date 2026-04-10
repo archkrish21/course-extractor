@@ -1,4 +1,5 @@
 import { test, expect } from "@playwright/test";
+import { waitForHydration } from "./helpers";
 
 // ─── Home Page (/) ─────────────────────────────────────────────────────────
 
@@ -87,14 +88,17 @@ test.describe("Home Page", () => {
   test("navigation has SAPS logo, About, FAQ, Sign in, Get Started Free", async ({ page, isMobile }) => {
     const header = page.locator("header");
     await expect(header.locator("text=SAPS")).toBeVisible();
-    // On mobile, About/FAQ collapse into a hamburger menu — assert on the
-    // always-visible items only.
-    if (!isMobile) {
+    // The entire desktop nav (About / FAQ / Sign in / Get Started Free) is
+    // `hidden md:flex` and collapses behind a hamburger on mobile. On mobile
+    // assert the hamburger button instead; on desktop assert each link.
+    if (isMobile) {
+      await expect(header.getByRole("button", { name: "Toggle menu" })).toBeVisible();
+    } else {
       await expect(header.getByRole("link", { name: "About" })).toBeVisible();
       await expect(header.getByRole("link", { name: "FAQ" })).toBeVisible();
+      await expect(header.getByRole("link", { name: "Sign in" })).toBeVisible();
+      await expect(header.getByRole("link", { name: "Get Started Free" })).toBeVisible();
     }
-    await expect(header.getByRole("link", { name: "Sign in" })).toBeVisible();
-    await expect(header.getByRole("link", { name: "Get Started Free" })).toBeVisible();
   });
 
   test("footer has Product, Legal, Connect columns", async ({ page }) => {
@@ -139,6 +143,11 @@ test.describe("About Page", () => {
 test.describe("Contact Page", () => {
   test.beforeEach(async ({ page }) => {
     await page.goto("/contact");
+    // ContactForm is a client component — wait for hydration so React's
+    // onChange handlers are attached. Otherwise fill() updates the DOM
+    // value but the React state stays empty and the Send button remains
+    // disabled (`disabled={!name.trim() || !email.trim() || !message.trim()}`).
+    await waitForHydration(page, 'form button[type="submit"]');
   });
 
   test("page loads with Contact Us heading", async ({ page }) => {

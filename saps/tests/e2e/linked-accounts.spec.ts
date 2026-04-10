@@ -97,17 +97,18 @@ test.describe("Settings — Linked Accounts", () => {
 
   test("invite form is hidden for counselor role", async ({ page }) => {
     test.skip(test.info().project.name === "mobile", "Desktop test");
-    await navigateToSettings(page);
 
-    // Determine current role from the profile section
-    const counselorBadge = page.locator("text=counselor").first();
-    if ((await counselorBadge.count()) === 0) {
-      // Not logged in as counselor — skip
-      test.skip();
-      return;
-    }
+    // Log in as the dedicated counselor test account (created by global-setup).
+    // The previous version logged in as student@test.com and then tried to
+    // detect the role via `text=counselor`, but that matched the literal
+    // "Counselor" option in the role-select dropdown — a false positive that
+    // let the test proceed against the wrong account.
+    await login(page, "counselor@test.com", "Test1234!");
+    await page.goto("/settings");
+    await page.waitForTimeout(2_000);
 
-    // Invite form should not be present for counselors
+    // Invite form should not be present for counselors (per the
+    // `currentAccount?.role !== "counselor"` guard in app/(app)/settings/page.tsx).
     const emailInput = page.locator('input[type="email"][placeholder*="Invite"]');
     expect(await emailInput.count()).toBe(0);
   });
@@ -516,6 +517,14 @@ test.describe("Feedback Widget", () => {
 // ─── Guided Tours ─────────────────────────────────────────────────────────
 
 test.describe("Guided Tours", () => {
+  // The tour button (components/tour-button.tsx) is `hidden ... sm:flex`,
+  // i.e. invisible below the `sm` (640px) breakpoint. iPhone 13 viewport is
+  // 390px wide, so the button never renders on mobile. There is no mobile
+  // equivalent — the entire tour feature is desktop-only by design.
+  test.beforeEach(async () => {
+    test.skip(test.info().project.name === "mobile", "Tour button is desktop-only (sm:flex)");
+  });
+
   test("tour button is visible in nav", async ({ page }) => {
     await login(page);
 

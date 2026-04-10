@@ -130,9 +130,11 @@ test.describe("Role — Parent", () => {
 
     // Parent accounts should show the account switcher
     const switcher = page.locator('button[aria-label="User menu"]');
-    // May or may not be visible depending on linked accounts
-    const heading = page.locator("text=/Dashboard|Welcome/i");
-    await expect(heading.first()).toBeVisible({ timeout: 5_000 });
+    // Wait for the dashboard "Welcome, ..." heading. text=/Dashboard|Welcome/i
+    // also matches the hidden sidebar nav link to /dashboard, which on mobile
+    // makes .first() resolve to a hidden element.
+    const heading = page.getByRole("heading", { name: /^Welcome/i });
+    await expect(heading).toBeVisible({ timeout: 5_000 });
   });
 
   test("parent can view shared plans", async ({ page }) => {
@@ -294,8 +296,10 @@ test.describe("Role — Parent with Multiple Children", () => {
     await nonSelected.click();
     await page.waitForTimeout(2_000);
 
-    // Page should have reloaded/updated with different account data
-    const heading = page.locator("text=/Welcome|Dashboard/i").first();
+    // Page should have reloaded/updated with different account data. Use the
+    // role-based heading locator — text=/Welcome|Dashboard/i would also match
+    // the hidden sidebar nav link to /dashboard on mobile.
+    const heading = page.getByRole("heading", { name: /^Welcome/i });
     await expect(heading).toBeVisible({ timeout: 5_000 });
   });
 
@@ -484,7 +488,10 @@ test.describe("Role — Cross-Role Consistency", () => {
     await page.goto("/about");
     await page.waitForTimeout(1_000);
 
-    const heading = page.locator("text=/About/i");
-    await expect(heading.first()).toBeVisible({ timeout: 5_000 });
+    // text=/About/i also matches the public-site header nav <a>About</a>
+    // link, which on mobile is `hidden md:flex` and collapsed into the
+    // hamburger menu. Use the page's <h1>About SAPS</h1> heading instead.
+    const heading = page.getByRole("heading", { name: /About SAPS/i });
+    await expect(heading).toBeVisible({ timeout: 5_000 });
   });
 });

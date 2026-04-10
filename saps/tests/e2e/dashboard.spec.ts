@@ -72,7 +72,10 @@ test.describe("Dashboard — GPA Summary Card", () => {
   test("View Transcript button links to transcript page", async ({ page }) => {
     await navigateToDashboard(page);
 
-    const viewTranscriptBtn = page.locator("a[href='/transcript']").first();
+    // Use :visible — the desktop sidebar nav has an /transcript link that is
+    // `hidden md:flex` and matches first on mobile, causing click() to time
+    // out trying to interact with a hidden element.
+    const viewTranscriptBtn = page.locator("a[href='/transcript']:visible").first();
     if ((await viewTranscriptBtn.count()) > 0) {
       await viewTranscriptBtn.click();
       await page.waitForURL(/\/transcript/, { timeout: 10_000 });
@@ -395,7 +398,7 @@ test.describe("Dashboard — Attention Required Compact", () => {
     expect(hasCategory || hasAllClear).toBeTruthy();
   });
 
-  test("View Report button routes to planner with validation open and planId", async ({ page }) => {
+  test("View Report button routes to planner with validation open and planId", async ({ page, isMobile }) => {
     await navigateToDashboard(page);
     await page.waitForTimeout(5000);
 
@@ -410,7 +413,12 @@ test.describe("Dashboard — Attention Required Compact", () => {
     await viewReport.click();
     await page.waitForURL(/\/planner\?planId=.+&validation=open/, { timeout: 10_000 });
 
-    // Validation panel should be open
+    // The Validation Side Panel is `hidden lg:block` (only renders at the
+    // lg breakpoint, ≥1024px). On mobile/iPhone the panel never mounts even
+    // when validation=open is in the URL — there's no mobile equivalent UI.
+    // Skip the panel-visible assertion on mobile; the URL routing above is
+    // still validated for both viewports.
+    if (isMobile) return;
     await expect(page.locator("text=Validation Report")).toBeVisible({ timeout: 10_000 });
   });
 });

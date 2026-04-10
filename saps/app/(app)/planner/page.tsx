@@ -1651,6 +1651,11 @@ export default function PlannerPage() {
         </div>{/* end main planner area */}
 
         {/* Validation Side Panel */}
+        {/* TODO(mobile): Validation Side Panel is `hidden lg:block` (≥1024px only).
+            On mobile/tablet (<lg) the panel never mounts even when the URL has
+            ?validation=open (set by the dashboard "View Report" button), so
+            mobile users have no way to see the validation report. Add a mobile
+            equivalent — drawer, modal, or full-screen route. */}
         {showProgressPanel && selectedPlanId && (
           <div className="hidden lg:block w-[380px] shrink-0">
             <div className="sticky top-4 flex max-h-[calc(100vh-6rem)] flex-col">

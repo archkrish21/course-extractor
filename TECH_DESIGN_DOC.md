@@ -3,7 +3,7 @@
 
 **Audience:** Engineering team
 **Status:** Phase 3 In Progress — Active Development
-**Last updated:** 2026-04-07
+**Last updated:** 2026-04-09
 
 ---
 
@@ -111,21 +111,21 @@ User → Next.js frontend → API routes → PostgreSQL (Supabase + RLS)
 
 | Layer | Choice | Version | Rationale |
 |---|---|---|---|
-| Frontend framework | Next.js (App Router) | 15.x | SSR + API routes in one; strong ecosystem |
+| Frontend framework | Next.js (App Router) | 16.x | SSR + API routes in one; strong ecosystem; Turbopack dev server |
 | UI components | shadcn/ui + Tailwind CSS v4 | latest | Accessible, unstyled-first; Tailwind v4 with `@theme` CSS variables for design tokens; critical for planner grid and DAG |
 | State management | Zustand | 5.x | Lightweight; well-suited for planner/simulator ephemeral state |
 | Auth | Supabase Auth | — | Same instance as app DB; RLS handles multi-tenant isolation; Google OAuth built-in |
 | Database | PostgreSQL via Supabase | 15+ | Managed; RLS; recursive CTEs for DAG traversal |
-| ORM | Drizzle ORM | 0.3x | Type-safe SQL; schema-first; Supabase-compatible; avoids raw Supabase client for complex joins |
+| ORM | Drizzle ORM | 0.45.x | Type-safe SQL; schema-first; Supabase-compatible; avoids raw Supabase client for complex joins |
 | Real-time | Supabase Realtime | — | Postgres change subscriptions → live in-app notifications, no polling |
 | Cache | Redis via Upstash (early) → AWS ElastiCache (scale) | — | Upstash at <~500 users (serverless, no VPC, ~$0); migrate to ElastiCache `cache.t4g.micro` when VPC cost is justified |
 | Background jobs | BullMQ (Node.js) | 5.x | Async alert eval, GPA recompute, notification dispatch; runs on AWS ECS Fargate |
 | AI | Claude API (`claude-sonnet-4-6`) | — | Best reasoning; structured tool use for DB-validated suggestions |
 | Email | Resend + React Email | — | Developer-friendly; React templates; generous free tier |
 | DAG visualization | React Flow | 11.x | Purpose-built for node/edge graphs; prerequisite DAG and course unlock trees |
-| Charts | Recharts | 2.x | Composable, Tailwind-friendly; GPA trend charts, credit progress rings |
+| Charts | Recharts | 3.x | Composable, Tailwind-friendly; GPA trend charts, credit progress rings |
 | PDF generation | React-pdf | 3.x | Renders plan export PDFs server-side from React components |
-| API validation | Zod + zod-to-openapi | — | Request/response validation; auto-generates OpenAPI spec |
+| API validation | Zod | 4.x | Request/response validation |
 | Error tracking | Sentry | — | Captures frontend, API, and BullMQ worker errors |
 | Product analytics | PostHog | — | Event tracking, funnel analysis, feature flags; generous free tier (1M events/mo); self-hostable; GDPR-friendly |
 | Guided tours | driver.js | 1.x | Lightweight (5KB) step-by-step feature walkthroughs; adaptive step counts; CSS-customizable popovers |
@@ -151,11 +151,19 @@ User → Next.js frontend → API routes → PostgreSQL (Supabase + RLS)
 │   │   └── contact/            # Contact page (feature-flagged, dormant for v1)
 │   ├── (auth)/                 # auth group
 │   │   ├── login/
-│   │   └── signup/
+│   │   ├── signup/
+│   │   ├── claim/              # Student claims account via code
+│   │   └── consent/            # Legal consent interstitial
 │   ├── (app)/                  # authenticated group
 │   │   ├── dashboard/
 │   │   ├── courses/
+│   │   ├── plans/              # Plan management page (My Plans / Shared with Me tabs)
+│   │   ├── planner/            # 4-year planner grid
+│   │   │   └── print/          # Print-optimized plan view with watermark
 │   │   ├── progress/           # Academic Progress page — two-column layout with filter bar, grouped sections, sticky sidebar (print button in header, Plus+ gated)
+│   │   ├── year-end/           # Year-end transition wizard
+│   │   ├── join/               # Join account via invite code
+│   │   ├── settings/           # User settings + billing
 │   │   └── transcript/         # read-only transcript page (print button in header, Plus+ gated)
 │   └── api/v1/                 # API routes
 │       ├── auth/
@@ -169,8 +177,8 @@ User → Next.js frontend → API routes → PostgreSQL (Supabase + RLS)
 │   ├── trial-banner/
 │   ├── planner/  # planner-grid.tsx, course-picker.tsx, plan-course-card.tsx
 │   ├── tour-button.tsx          # Global "Tour" button for app header nav bar
-│   ├── prereq-graph/           # (empty — Phase 1b+)
-│   └── charts/                 # (empty — Phase 1b+)
+│   ├── prereq-graph/           # (empty — planned for Phase 3+)
+│   └── charts/                 # (empty — planned for Phase 3+)
 ├── lib/
 │   ├── db/                     # Drizzle ORM schema + client
 │   │   ├── schema.ts           # all table definitions
@@ -185,16 +193,18 @@ User → Next.js frontend → API routes → PostgreSQL (Supabase + RLS)
 │   ├── hooks/  # use-undo-stack.ts, use-tour.ts (guided tour state + driver.js orchestration)
 │   ├── account-context.tsx  # React context for account switching
 │   ├── api-client.ts  # apiFetch with X-Account-Id header
-│   ├── alerts/                 # (empty — future phase)
-│   ├── ai/                     # (empty — future phase)
+│   ├── alerts/                 # (empty — planned for Phase 3+)
+│   ├── ai/                     # (empty — planned for Phase 4)
 │   └── stripe/                 # Stripe SDK singleton + price mapping
 │       ├── client.ts           # Stripe SDK singleton (initialized from STRIPE_SECRET_KEY)
 │       └── prices.ts           # Price ID mapping for all tier × interval combinations
 ├── worker/                     # BullMQ worker process (deployed separately)
 │   └── jobs/                   # BullMQ job definitions (Phase 2+)
 ├── extractor/                  # Python PDF extractor (independent)
-│   ├── extract.py
-│   ├── loader.py
+│   ├── extract.py              # Main catalog PDF extraction
+│   ├── extract_summer.py       # Summer course extraction
+│   ├── summer_courses_2026.py  # Curated summer course data (35+ courses)
+│   ├── loader.py               # Load extracted JSON to DB with UPSERT
 │   ├── tests/
 │   └── data/
 │       ├── 2025-courses.json
@@ -204,6 +214,8 @@ User → Next.js frontend → API routes → PostgreSQL (Supabase + RLS)
 │   ├── grade-scale.ts          # letter → GPA points mapping + isPassFailCourse() + PASS_FAIL_OPTIONS
 │   ├── homepage-features.ts    # Feature flags: showTestimonials (true), showContactPage (false), showPricing (false)
 │   ├── tours.ts                # Tour step definitions for Welcome (6 steps), Planner (2-5 adaptive), Progress (1-3 adaptive)
+│   ├── semesters.ts            # Semester values (-2, -1, 1, 2), labels, isSummerSemester()
+│   ├── summer-equivalents.ts   # 52 summer-to-regular course equivalency mappings
 │   └── subscription-plans.ts   # tier feature flags (mirrors DB seed)
 ├── scripts/
 │   └── seed.ts                 # Drizzle seed runner (npm run db:seed)
@@ -226,11 +238,25 @@ User → Next.js frontend → API routes → PostgreSQL (Supabase + RLS)
 
 All pages under the `(app)/` route group require authentication. The app layout checks the Supabase session on mount and redirects unauthenticated users to `/login?redirect=...`.
 
+**Consent gate (Phase 3 — implemented):** The `(app)/layout.tsx` checks `/api/v1/auth/consent` on every authenticated page load. If `consent_required === true` (user hasn't accepted current legal document versions), the layout redirects to `/consent?next=${currentPathname}`. The consent interstitial (`/(auth)/consent/page.tsx`) displays pending documents (Terms of Service and Privacy Policy) with "View" links to `/terms` and `/privacy`, a required checkbox, and Accept/Decline buttons. On acceptance, `POST /api/v1/auth/consent` records the acceptance with IP address and user agent in `consent_records`, then redirects to the `next` URL param. The app layout blocks rendering until consent is verified (`consentChecked` state). If the consent check shows `isUpdate` (document version changed, summary differs from "Initial version"), a "We've Updated Our Terms" header with change summary is shown instead of the initial "Review Our Terms" flow.
+
+**Terms of Service (`/terms`) and Privacy Policy (`/privacy`):** Static pages with versioned legal content (effective April 6, 2026, Version 1.0). Terms covers 12 sections: Acceptance, Description of Service, Accounts and Roles, User Responsibilities, Subscription and Payments, IP, Disclaimers, Limitation of Liability, Account Termination, Changes to Terms, Governing Law (Illinois, USA), and Contact (legal@saps.app). Privacy covers 11 sections: Information We Collect, How We Use It, Information Sharing (Stripe/Resend/Supabase), Children's Privacy (COPPA, 13+), FERPA Statement, Your Rights (access/correct/delete/export, CCPA/CPRA), Data Security, Data Retention, Cookies (essential only, no tracking), Changes to Policy, and Contact (privacy@saps.app). Both pages use a centered max-width prose container with a `BackButton` component at the bottom (closes tab if opened via `target="_blank"`, otherwise falls back to browser history). Each page cross-links to the other.
+
 **Public pages (Phase 3 — no auth required):** Pages under the `(public)/` route group are accessible without authentication. They share a public layout with a sticky navbar (glass blur effect, logo, nav links for About and FAQ section anchor, Sign in button, Get Started Free CTA) and a footer (Product/Legal/Connect columns, social media icons for Instagram/Facebook/Twitter/LinkedIn, feedback link pointing to /contact page, school request link, copyright with disclaimer). Mobile uses a hamburger menu. The homepage (`/`) includes a hero section with gradient text, animated stats bar, animated trial badge, "Why SAPS?" problem section, 5 feature cards with unique color accents, 3-step timeline how-it-works, FAQ accordion, and final CTA. Feature-flagged pricing section dormant for v1 (`showPricing: false`). Testimonials section enabled (`showTestimonials: true`) with three placeholder testimonials (student/parent/counselor personas with star ratings). The about page (`/about`) has story, mission, what-we-do (Plan/Track/Connect cards), looking ahead, and disclaimer sections. The contact page (`/contact`) has a form with name/email/subject/message fields, submitted to `POST /api/v1/contact` (no auth) and stored in `contact_messages` table; it is feature-flagged and dormant for v1.
 
 **SEO (Phase 3):** Root layout includes meta description, keywords, and Open Graph tags (og:title, og:description, og:type, og:url). Optimized for search terms: "Stevenson High School course planner", "high school academic planner", "4-year plan tool".
 
 **App header navigation:** The top navigation bar includes nav links (Dashboard, Courses, Planner, Progress, Transcript), a global "Tour" button (triggers the guided tour for the current page — detects page and adapts step count based on DOM state), and a user avatar dropdown (Settings, Billing, Sign out). Sign out calls `supabase.auth.signOut()`, clears the client session, and redirects to `/` (home page). The mobile hamburger menu also includes a Sign out option. Settings is no longer in the main navigation bar — it was moved into the avatar dropdown. The avatar and layout display the user's full name (from `firstName` + `lastName` columns) instead of the email prefix. For parent users: the avatar shows the parent's own name/email (not the student's), with a "Managing: StudentName · Gr X" subtitle below. "Add Another Child" removed from the dropdown.
+
+**Settings page (Phase 3 — implemented):** Client component at `/(app)/settings/page.tsx` using `useAccount()` context. Layout uses flat sections with uppercase headers (no collapsible cards):
+- **Profile section** — 3×3 grid: Name (inline editable) / Email / Password (show/hide toggle) / Role / Grade Level / Graduation Year / State (read-only, frozen to IL) / School (read-only, frozen to Stevenson). Inline name editing via `PATCH /api/v1/auth/me`.
+- **Linked Accounts section** — renamed from "Family Members". Shows member list with roles and a usage counter ("2/5 linked accounts used"). Invite form for students (Parent/Guardian/Counselor) and parents (Child/Parent/Guardian/Counselor); hidden for counselors. Plan sharing selection during invite. Tier limits enforced: Starter/Trial 3, Plus 5, Elite 8 (402 UPGRADE_REQUIRED).
+- **Subscription section** — current plan display, billing cycle, next payment date. Hidden for counselors.
+- **Legal section** — links to Terms of Service and Privacy Policy with accepted version timestamps.
+- **Danger Zone section** — account deletion with typed confirmation. Full cleanup: Stripe customer/subscription deleted, Supabase auth user deleted, Redis cache cleared, PostHog data removed, consent records anonymized.
+Fetches data from: `/api/v1/accounts/{id}/members`, `/api/v1/subscriptions`, `/api/v1/plans`, `/api/v1/auth/consent`. For non-student roles: shows "Student Information" section instead of subscription/billing.
+
+**User avatar dropdown (top nav):** Contains Settings, Billing (hidden for counselors), and Sign out. Displays user's full name (`firstName` + `lastName`). For parent users: shows parent's own name/email with "Managing: StudentName · Gr X" subtitle. Sign out calls `supabase.auth.signOut()` and redirects to `/` (home page). Mobile hamburger menu mirrors the same options.
 
 **Signup page redesign (Phase 3):** Wider layout (max-w-lg), 2-column grids for credentials and personal info. Role selector with description cards (Student/Parent/Guardian/Counselor — 4 roles). Guardian maps to "parent" in DB for identical behavior. Frozen state (IL) and school (Stevenson) fields with "Request yours" link for unsupported schools. School request form submits to `POST /api/v1/school-request` (no auth) and stores in `school_requests` table. "Claim your account" link removed from signup page. Non-student roles skip onboarding and go directly to dashboard. Onboarding shows welcome banner ("Account created successfully!") with auto-dismiss. "Skip setup" link on onboarding page. Smart routing after onboarding: dashboard if plans exist, planner otherwise.
 
@@ -854,7 +880,7 @@ CREATE TABLE plan_courses (
   plan_id       UUID NOT NULL REFERENCES four_year_plans(id) ON DELETE CASCADE,
   course_id     UUID NOT NULL REFERENCES courses(id) ON DELETE RESTRICT,
   grade_level   SMALLINT NOT NULL CHECK (grade_level BETWEEN 9 AND 12),
-  semester      SMALLINT CHECK (semester IN (1, 2)),   -- NULL = full year
+  semester      SMALLINT CHECK (semester IN (-2, -1, 1, 2)),   -- NULL = full year; -2/-1 = summer sessions
   status        TEXT DEFAULT 'planned'
                   CHECK (status IN ('planned','enrolled','completed','dropped')),
   planned_grade TEXT CHECK (planned_grade IN ('A', 'B', 'C', 'D', 'F', 'P', 'I')
@@ -1303,6 +1329,19 @@ The extractor runs a 3-phase pipeline over the PDF:
 
 **Output:** 315 courses, 331 prerequisite links, 159 GPA waiver courses. Semester breakdown: 89 Sem 1 only, 90 Sem 2 only, 136 full year, 6 Sem 1 exclusive, 6 Sem 2 exclusive, 168 available in both semesters. Structured `prerequisite_groups` (list of {group, type, codes}) with AND/OR semantics extracted; semester-pair siblings grouped as single OR group. `semesters_offered` integer array ([1], [2], or null) parsed from PDF code line patterns (e.g., "BUS411–Semester 1", "Semester 1 ONLY"). `gpa_waiver` boolean detected from "GPA WAIVER" in description/notes.
 
+### Summer course support
+
+Summer courses are fully supported in the planner and grade tracking. Two pre-summer sessions (`-2` = Summer Session 1, `-1` = Summer Session 2) occur before each grade level's regular semesters. Migration `0008_summer_semesters.sql` extends the `plan_courses` and `grade_entries` semester constraints to allow `-2` and `-1` values.
+
+**Summer course equivalencies** (`config/summer-equivalents.ts`): 52 mappings link summer course codes (e.g., `SOC13S`, `MTH15S`) to their regular school-year equivalents (e.g., `SOC101/SOC102`, `MTH151/MTH152`). These mappings are used for:
+- Preventing duplicate enrollment (cannot add regular course if summer equivalent already in plan)
+- Showing "Also available as" in course detail views
+- Graduation requirement matching (summer course satisfies same requirement as regular equivalent)
+
+**Summer course extraction**: `extractor/extract_summer.py` parses summer catalogs, with curated overrides in `summer_courses_2026.py`. Summer courses cover Driver Education, Business, Computer Science, Fine Arts, Math, Sciences, Social Studies, Health/PE, and World Languages.
+
+**Semester config** (`config/semesters.ts`): Defines `ALL_SEMESTERS = [-2, -1, 1, 2]`, `isSummerSemester()` helper, and display labels (`Sum 1`, `Sum 2`, `S1`, `S2`). The planner print view displays summer courses with amber-colored indicators.
+
 ### Loader validation steps
 
 1. **Required fields**: every course must have `code`, `name`, `division`, `credit_value`, `duration`, `grade_levels` — abort and list violations on failure.
@@ -1383,6 +1422,8 @@ All routes: `/api/v1/...`. Version from day one.
 | GET | `/api/v1/auth/callback` | — | OAuth callback. Exchanges code for session. First-time users: provisions app records + redirects to /onboarding. Returning users: redirects to intended page. |
 | GET | `/api/v1/auth/me` | any authenticated | Returns logged-in user's email, role, first_name, last_name, and tourState. | Phase 3 |
 | PATCH | `/api/v1/auth/me` | any authenticated | Update first_name, last_name, and/or tourState on the logged-in user. tourState is a JSONB object tracking completed tours (e.g., `{"welcome":true,"planner":true}`). | Phase 3 |
+| GET | `/api/v1/auth/consent` | any authenticated | Returns pending legal documents requiring user consent (documents not yet accepted by user). | Phase 3 |
+| POST | `/api/v1/auth/consent` | any authenticated | Records user acceptance of a legal document version. Stores IP address and user agent in `consent_records`. Updates `users.tosAcceptedAt` / `ppAcceptedAt`. | Phase 3 |
 | GET | `/api/v1/plans` | member | List student's plans |
 | POST | `/api/v1/plans` | member (can_edit) | Create plan (check plan limit) |
 | PATCH | `/api/v1/plans/:id/set-primary` | student | Set plan as primary + active. Demotes old primary to draft. Student role only. Archived plans blocked (409). |
@@ -1401,22 +1442,22 @@ All routes: `/api/v1/...`. Version from day one.
 | GET | `/api/v1/requirements` | student | Graduation progress with matching rules (code_prefix, codes, division, multi_division, remainder). Returns both flat `requirements[]` (backwards compatible) and `groups[]` array with group key, label, isOptIn, enabled, requirements[], and totals. Also returns `gpaWaiverWarnings[]` (validates 4+ GPA-counted courses per semester when waiver applied; P/F-only courses excluded from GPA-counted course count) and `honorsStatus` (achievement badge, not requirement). Optional `?planId=` query parameter to validate any plan (defaults to primary plan). 4 evaluation types: course_match, manual_checkbox, auto_from_course, course_load_check. Course load checks count only academic courses (PW division, DNC-prefix, D/E-prefix excluded). Group order: graduation, course_load, il_public_university, non_course. | Phase 2 |
 | PUT | `/api/v1/requirements/status` | student | Toggle manual checkbox requirements (for non_course group). Body: `{ requirementId, isChecked }`. Updates `student_requirement_status`. | Phase 2 |
 | PUT | `/api/v1/requirements/opt-in` | student | Enable/disable tracking for opt-in requirement groups. Body: `{ requirementGroup, enabled }`. Updates `student_requirement_opt_ins`. | Phase 2 |
-| GET | `/api/v1/alerts` | student | Active alerts (unresolved) |
-| PATCH | `/api/v1/alerts/:id/dismiss` | student | Dismiss alert |
-| GET | `/api/v1/suggestions` | student (Elite) | Rule-based + AI course suggestions |
-| POST | `/api/v1/ai/chat` | student (Elite) | AI advisor chat |
-| POST | `/api/v1/ai/plan-review` | student (Elite) | AI review of active plan |
+| GET | `/api/v1/alerts` | student | Active alerts (unresolved) | **Not yet implemented** |
+| PATCH | `/api/v1/alerts/:id/dismiss` | student | Dismiss alert | **Not yet implemented** |
+| GET | `/api/v1/suggestions` | student (Elite) | Rule-based + AI course suggestions | **Not yet implemented** |
+| POST | `/api/v1/ai/chat` | student (Elite) | AI advisor chat | **Not yet implemented** (directory exists, empty) |
+| POST | `/api/v1/ai/plan-review` | student (Elite) | AI review of active plan | **Not yet implemented** |
 | GET | `/api/v1/courses` | any | Course browser (search + filter). Params: `department` (UUID or name), `gpa_waiver` (true/false), `semester_offered` (1 or 2 — exclusive to that semester, excludes same-name partners), `semester_both` (true — courses with a same-name partner in the other semester), `duration` (semester or full_year). Returns `gpaWaiver`, `departmentId`, `departmentName`, `semestersOffered` per course; `total` count in pagination meta. Results sorted by name ascending, then code ascending. Cursor encoding: base64(JSON {name, code, id}) for composite sort. Accepts comma-separated values for `credit_type` and `grade_level` query parameters (e.g., `credit_type=AP,CP&grade_level=9,10`). Builds SQL IN(...) clause for multiple values. |
 | GET | `/api/v1/courses/:id` | any | Course detail. Returns full course data plus `linkedCourses` array: other courses with the same name (semester partners), each with id, code, name, semesters_offered. |
 | GET | `/api/v1/courses/:id/prereqs` | any | Full prerequisite chain (recursive CTE) |
-| POST | `/api/v1/plans/:id/share` | student | Generate share link |
-| GET | `/api/v1/share/:token` | unauthenticated | View shared plan (read-only) |
+| POST | `/api/v1/plans/:id/share` | student | Generate share link | **Not yet implemented** |
+| GET | `/api/v1/share/:token` | unauthenticated | View shared plan (read-only) | **Not yet implemented** |
 | POST | `/api/v1/stripe/webhook` | Stripe signature | Handle Stripe events (5 event types: `customer.subscription.created`, `customer.subscription.updated`, `customer.subscription.deleted`, `invoice.payment_failed`, `invoice.paid`). Idempotent via `stripe_events` table UNIQUE on `stripe_event_id`. | Phase 2 |
 | POST | `/api/v1/stripe/checkout` | student | Create Stripe Checkout session. Subscription mode for monthly/annual; payment mode for 4-year. | Phase 2 |
 | POST | `/api/v1/stripe/portal` | student | Create Stripe Billing Portal session for subscription management. | Phase 2 |
 | GET | `/api/v1/subscriptions` | student | Current subscription state, tier, billing cycle, feature flags. | Phase 2 |
-| GET | `/api/v1/export/plan/:id` | student | Generate plan PDF |
-| GET | `/api/v1/percentile` | student (Elite) | Percentile stats |
+| GET | `/api/v1/export/plan/:id` | student | Generate plan PDF | **Not yet implemented** |
+| GET | `/api/v1/percentile` | student (Elite) | Percentile stats | **Not yet implemented** |
 | GET | `/api/v1/plans/:id` | student/parent/counselor | Get single plan detail | Phase 1b |
 | PATCH | `/api/v1/plans/:id` | student | Rename plan, set active/archived | Phase 1b |
 | DELETE | `/api/v1/plans/:id` | owner/delete permission | Delete a plan. Uses `getPlanAccess()` permissions — requires owner or delete permission; no student role override. Delete button shown on planner and manage plans pages, disabled for primary plans with tooltip. | Phase 1b |
@@ -1427,20 +1468,20 @@ All routes: `/api/v1/...`. Version from day one.
 | PATCH | `/api/v1/plans/:id/shares/:userId` | owner | Update permission level for an existing share. Body: `{ permission }`. | Phase 3 |
 | DELETE | `/api/v1/plans/:id/shares/:userId` | owner | Remove a share (revoke access). Cannot remove owner share. | Phase 3 |
 | PATCH | `/api/v1/plans/:id/visibility` | member | Toggle plan visibility (hide/show). Body: `{ isHidden }`. Updates `plan_shares.is_hidden`. | Phase 3 |
-| GET | `/api/v1/plans/:id/history` | student | Get plan change history (paginated) | Phase 3 |
+| GET | `/api/v1/plans/:id/history` | student | Get plan change history (paginated) | **Not yet implemented** |
 | PATCH | `/api/v1/users/me` | student | Update notification preferences | Phase 1a |
-| PATCH | `/api/v1/users/me/profile` | student | Update student profile (goals in Phase 2; test scores in Phase 4) | Phase 2 |
-| GET | `/api/v1/goals` | student | List student's goals | Phase 2 |
-| POST | `/api/v1/goals` | student | Create a goal | Phase 2 |
-| PATCH | `/api/v1/goals/:id` | student | Update goal progress/status | Phase 2 |
-| DELETE | `/api/v1/goals/:id` | student | Delete a goal | Phase 2 |
-| GET | `/api/v1/dual-credit` | student | List student's dual credit entries | Phase 3 |
-| POST | `/api/v1/links/parents/invite` | student | Generate parent invite code | Phase 2 |
-| POST | `/api/v1/links/parents/claim` | parent | Claim invite code (parent) | Phase 2 |
-| DELETE | `/api/v1/links/parents/:linkId` | student/parent | Remove parent link | Phase 2 |
-| POST | `/api/v1/links/counselors/claim` | student | Link to counselor via code | Phase 5 |
-| DELETE | `/api/v1/links/counselors/:linkId` | student/counselor | Remove counselor link | Phase 5 |
-| GET | `/api/v1/export/my-data` | any authenticated | GDPR data export (all user data as JSON) | Phase 2 |
+| PATCH | `/api/v1/users/me/profile` | student | Update student profile (goals in Phase 2; test scores in Phase 4) | **Not yet implemented** |
+| GET | `/api/v1/goals` | student | List student's goals | **Not yet implemented** |
+| POST | `/api/v1/goals` | student | Create a goal | **Not yet implemented** |
+| PATCH | `/api/v1/goals/:id` | student | Update goal progress/status | **Not yet implemented** |
+| DELETE | `/api/v1/goals/:id` | student | Delete a goal | **Not yet implemented** |
+| GET | `/api/v1/dual-credit` | student | List student's dual credit entries | **Not yet implemented** |
+| POST | `/api/v1/links/parents/invite` | student | Generate parent invite code | **Superseded by** `/api/v1/accounts/:id/members` |
+| POST | `/api/v1/links/parents/claim` | parent | Claim invite code (parent) | **Superseded by** `/api/v1/accounts/:id/members/join` |
+| DELETE | `/api/v1/links/parents/:linkId` | student/parent | Remove parent link | **Superseded by** `/api/v1/accounts/:id/members/:userId` |
+| POST | `/api/v1/links/counselors/claim` | student | Link to counselor via code | **Not yet implemented** |
+| DELETE | `/api/v1/links/counselors/:linkId` | student/counselor | Remove counselor link | **Not yet implemented** |
+| GET | `/api/v1/export/my-data` | any authenticated | GDPR data export (all user data as JSON) | **Implemented as** `GET /api/v1/users/me` |
 | POST | `/api/v1/accounts` | parent | Create account for a child (name, DOB, grade, year). COPPA check. Returns claim code. | 1b |
 | POST | `/api/v1/accounts/claim` | student | Student claims account with claim code. Sets student_user_id. Starts trial. | 1b |
 | GET | `/api/v1/accounts` | any | List accounts the user is a member of. Parents see multiple, students see one. | 1b |
@@ -1449,6 +1490,8 @@ All routes: `/api/v1/...`. Version from day one.
 | DELETE | `/api/v1/accounts/:id/members/:userId` | member | Remove a member. Any member can remove other members (except themselves). Students can be removed by non-student members. | 1b |
 | PATCH | `/api/v1/accounts/:id` | member | Update account fields (student_name). | Phase 3 |
 | POST | `/api/v1/school-request` | — (no auth) | Submit a school request (email, school_name, state, message). Stored in `school_requests` table for future outreach. | Phase 3 |
+| GET | `/api/v1/year-end` | student/parent | Retrieve current year courses and transition state for year-end wizard | Phase 2 |
+| POST | `/api/v1/year-end` | student | Complete year-end transition: lock grade, advance grade level, create GPA snapshot, promote next year courses from planned to enrolled | Phase 2 |
 | POST | `/api/v1/contact` | — (no auth) | Submit a contact form message (name, email, subject, message). Stored in `contact_messages` table. Feature-flagged via `showContactPage`. | Phase 3 |
 | POST | `/api/v1/feedback` | any authenticated | Submit feedback (rating 1-5, optional comment, page path). Stored in `feedback` table. | Phase 3 |
 | PATCH | `/api/v1/accounts/:id/billing` | member | Transfer billing contact to another member. | 2 |
@@ -1606,7 +1649,9 @@ async function handleWebhook(rawBody: Buffer, signature: string) {
 
 ## 10. Background Job Queue
 
-BullMQ runs on a **dedicated AWS ECS Fargate task** (not serverless). The task connects to the same Upstash Redis instance used for caching (migrate to AWS ElastiCache when user base exceeds ~500 active users). The Docker image is built by GitHub Actions and pushed to Amazon ECR on every merge to `main`.
+> **Implementation status:** The `worker/jobs/` directory exists but job definitions are **stubs only** — no BullMQ worker is deployed yet. The job definitions below describe the planned architecture. Currently, alert evaluation, GPA recalculation, and requirement progress refresh are handled inline in API routes. BullMQ implementation is planned for Phase 4+.
+
+BullMQ will run on a **dedicated AWS ECS Fargate task** (not serverless). The task connects to the same Upstash Redis instance used for caching (migrate to AWS ElastiCache when user base exceeds ~500 active users). The Docker image is built by GitHub Actions and pushed to Amazon ECR on every merge to `main`.
 
 **Important:** BullMQ requires a native Redis TCP connection (ioredis). Upstash offers a Redis-compatible TCP endpoint at `UPSTASH_REDIS_URL` (not the REST API). The BullMQ worker must be configured with the TCP endpoint. If TCP latency is unacceptable from ECS Fargate to Upstash, this becomes a trigger for early ElastiCache migration.
 
@@ -2114,7 +2159,7 @@ API routes using `Authorization: Bearer` headers are immune to CSRF. For Supabas
 
 ### Content Security Policy (CSP)
 
-Configure CSP headers in `next.config.js` to prevent XSS and data exfiltration:
+Configure CSP headers in `next.config.ts` to prevent XSS and data exfiltration:
 
 ```
 Content-Security-Policy:
@@ -2131,7 +2176,7 @@ Content-Security-Policy:
 
 `unsafe-inline` for scripts is required by Next.js SSR hydration. Stripe.js and PostHog require their respective script-src entries. Review and tighten CSP at each phase.
 
-**Future hardening:** Replace `'unsafe-inline'` in `script-src` with nonce-based CSP (supported in Next.js 13+ via `next.config.js` `experimental.serverActions.allowedOrigins` and `headers()` config). This eliminates inline script injection vectors.
+**Future hardening:** Replace `'unsafe-inline'` in `script-src` with nonce-based CSP (supported in Next.js via `next.config.ts` `headers()` config). This eliminates inline script injection vectors.
 
 ### RLS verification test (mandatory before launch)
 
@@ -2330,7 +2375,7 @@ Mobile (<640px):
   - Share modal: close (X) button, permission selection
   - Auth layout: logo links to home, footer "Home" link, sign out redirects to `/`
 
-**Current test count: 433 total** (7 new UI component test files: Button, Badge, Card, Input, Checkbox, Toast, plan-permissions. New test files: signup-roles, counselor-restrictions, share-modal, auth-layout. Tests for plan access gating (GPA/requirements APIs) and invite shared_plans parameter. E2E tests for homepage/about/contact, feedback widget, testimonials, consent/settings/legal pages, counselor invite/join, linked accounts UI, planner/progress/dashboard/transcript/billing/signup/auth/course-browser/grade-lock/plan-management/print-gating/accessibility. API tests for contact, feedback, consent, auth-me, accounts, counselor-join, GPA, grade-lock, health, plan-courses, plan-shares, plans, requirements, school-request. Unit tests for GPA calc, requirement matching, subscription middleware, undo stack, rate limiting).
+**Current test count: 63 test files** — 30 unit/API test files with 427 test cases (404 passing, 5 failing, 18 skipped), 33 E2E spec files. UI component test files: Button, Badge, Card, Input, Checkbox, Toast, plan-permissions. Additional test files: signup-roles, counselor-restrictions, share-modal, auth-layout. Tests for plan access gating (GPA/requirements APIs) and invite shared_plans parameter. E2E tests for homepage/about/contact, feedback widget, testimonials, consent/settings/legal pages, counselor invite/join, linked accounts UI, planner/progress/dashboard/transcript/billing/signup/auth/course-browser/grade-lock/plan-management/print-gating/accessibility. API tests for contact, feedback, consent, auth-me, accounts, counselor-join, GPA, grade-lock, health, plan-courses, plan-shares, plans, requirements, school-request. Unit tests for GPA calc, requirement matching, subscription middleware, undo stack, rate limiting.
 
 ### Test data
 

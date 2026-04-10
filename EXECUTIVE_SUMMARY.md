@@ -2,7 +2,7 @@
 ## Executive Summary
 
 **Prepared for:** Executive Leadership
-**Date:** March 2026
+**Date:** April 2026
 **Status:** Phase 3 In Progress — Active Development
 
 ---
@@ -108,7 +108,7 @@ The stack is selected for speed of development, managed infrastructure (minimal 
 
 | Layer | Choice | Rationale |
 |---|---|---|
-| Frontend | Next.js + shadcn/ui + Tailwind CSS v4 | Modern React framework; accessible components; Tailwind v4 with @theme CSS variables for design tokens |
+| Frontend | Next.js 16 + shadcn/ui + Tailwind CSS v4 | Modern React framework; accessible components; Tailwind v4 with @theme CSS variables for design tokens |
 | Database | PostgreSQL via Supabase | Managed service; row-level security enforces data isolation; no additional auth service needed |
 | AI | Claude API (Anthropic) | Best reasoning quality; structured tool use to validate AI suggestions against real course data |
 | Background jobs | BullMQ | Handles alert evaluation, GPA recalculation, nightly cron jobs — offloaded from the API request cycle |
@@ -168,7 +168,7 @@ The stack is selected for speed of development, managed infrastructure (minimal 
 **Current scope (personal/family tool — no school system integration):**
 - Not subject to FERPA. No connection to school systems or official records.
 - Standard data privacy: all data encrypted at rest and in transit; no sale of user data.
-- **Consent system implemented:** `legal_documents` + `consent_records` tables track versioned ToS/Privacy Policy acceptance. `/terms` and `/privacy` pages, `/consent` interstitial with consent gate in app layout, signup checkbox, OAuth redirect to consent. Account deletion with full cleanup (Stripe, Supabase, Redis, PostHog).
+- **Consent system implemented:** `legal_documents` + `consent_records` tables track versioned ToS/Privacy Policy acceptance with IP address and user agent. `/terms` (12 sections, Illinois governing law) and `/privacy` (11 sections, COPPA/FERPA/CCPA, essential cookies only) pages — both Version 1.0, effective April 6, 2026. `/consent` interstitial with consent gate in `(app)/layout.tsx` that blocks app access until current terms are accepted; shows "We've Updated Our Terms" header with change summary on version updates. Signup checkbox, OAuth redirect to consent. Account deletion with full cleanup (Stripe, Supabase, Redis, PostHog).
 - Row-level security at the database layer ensures one student's data is never accessible to another student.
 
 **COPPA:** Date-of-birth check at signup. Users under 13 are blocked pending a parent-verified consent flow. High school students are typically 14+, but 8th-grade early planners may be younger. When a parent creates an account on behalf of a student, the student's date of birth is required at account creation and the COPPA age check is enforced.
@@ -212,23 +212,25 @@ Frozen and suspended accounts are never silently degraded — users always see a
 
 | Item | Owner | Priority |
 |---|---|---|
-| Official GPA weight table from Stevenson | Product / School contact | **Critical** — blocks GPA calculator |
+| ~~Official GPA weight table from Stevenson~~ | ~~Product / School contact~~ | ✅ Done — GPA weights implemented in `config/gpa-weights.ts` (CP +0.0, Accelerated +0.5, Honors +0.5, AP +1.0). Grade scale (A/B/C/D/F, no +/-) in `config/grade-scale.ts`. Values are configurable — confirm exact values with school before public launch. |
 | ~~Exact subscription pricing~~ | ~~Business~~ | ✅ Done — 3 tiers finalized: Starter (free), Plus ($9.99/mo), Elite ($19.99/mo) with annual and 4-year billing |
 | Career path initial data (Pre-Med, CS, Engineering, etc.) | Product | High — needed for Phase 4 AI features |
 | ~~COPPA consent flow legal review~~ | ~~Legal~~ | ✅ Consent system implemented — `legal_documents` + `consent_records` tables, `/terms` + `/privacy` pages, `/consent` interstitial, consent gate in app layout, signup checkbox, OAuth redirect. Legal content review still needed before public launch. |
 | Dual credit partner college course codes (Harper College, etc.) | Product | Medium — needed for Phase 3 |
-| Illinois state graduation requirements | Product | Medium — needed for requirement validator |
-| Plan template content (track definitions) | Product / Counselor input | Medium — needed for Phase 1 seeding |
+| ~~Illinois state graduation requirements~~ | ~~Product~~ | ✅ Done — 37 requirements across 4 groups seeded (graduation, course_load, il_public_university, non_course). IL public university requirements are opt-in. |
+| ~~Plan template content (track definitions)~~ | ~~Product / Counselor input~~ | ✅ Done — 6 templates seeded (College Prep, STEM, Pre-Med, CS, Humanities, Business/Economics). All pass validation with zero violations. |
 
 ---
 
 ## Recommended Next Steps
 
-1. **Confirm GPA weight table and grade scale** with Stevenson — this single piece of data is the foundation of the GPA calculator and must be correct before any code is written.
+1. ~~**Confirm GPA weight table and grade scale**~~ — ✅ Done. Implemented in `config/gpa-weights.ts` and `config/grade-scale.ts`. Confirm exact values with school before public launch.
 2. ~~**Finalize subscription pricing**~~ — ✅ Done. Stripe integration complete with 3 tiers, 3 billing intervals, and billing page at `/settings/billing`.
 3. **Engage legal counsel** on COPPA date-of-birth gating and data retention policy before public launch.
-4. **Identify 3–5 students** for Phase 1 user testing (ideally a freshman, a sophomore, a junior, and a senior).
-5. **Begin Phase 1 development** once GPA weights and pricing are confirmed.
+4. **Identify 3–5 students** for user testing before Phase 4 begins.
+5. **Complete remaining Phase 3 features**: plan history/undo, prerequisite graph visualization, dual credit tracking, plan comparison, PDF export, share links.
+6. **Obtain dual credit partner college course codes** (Harper College, etc.) for dual credit tracking implementation.
+7. **Curate career path initial data** (Pre-Med, CS, Engineering, etc.) for Phase 4 AI features.
 
 ---
 
@@ -236,18 +238,20 @@ Frozen and suspended accounts are never silently degraded — users always see a
 
 **Phase 1a is complete.** The following deliverables have been built and are functional:
 
-- **PDF Extractor** (Python/pdfplumber): Extracts 315 courses from the Stevenson 2026-27 catalog PDF using a 3-phase pipeline (appendix name resolution, body extraction, name cleanup + prerequisite resolution). 331 prerequisite links resolved. 159 GPA waiver courses detected. Semester offering parsed per course: 89 Sem 1 only, 90 Sem 2 only, 136 full year, 6 Sem 1 exclusive, 6 Sem 2 exclusive, 168 available in both semesters. Structured prerequisite groups extracted with AND/OR semantics. Grade level parsing from above-lines for Early Bird courses. Manual grade overrides (AP Music Theory). Credit values corrected to 1 credit per semester / 2 per full year.
-- **Database**: 35 tables in PostgreSQL via Drizzle ORM on Supabase (local dev). All tables from the tech design doc are implemented. `semesters_offered` integer array column added to courses table. `state` and `schoolName` columns on accounts table. New `school_requests`, `contact_messages`, and `feedback` tables.
+- **PDF Extractor** (Python/pdfplumber): Extracts 315 regular courses and 35+ summer courses from the Stevenson 2026-27 catalog PDF using a 3-phase pipeline (appendix name resolution, body extraction, name cleanup + prerequisite resolution). 331 prerequisite links resolved. 159 GPA waiver courses detected. Semester offering parsed per course: 89 Sem 1 only, 90 Sem 2 only, 136 full year, 6 Sem 1 exclusive, 6 Sem 2 exclusive, 168 available in both semesters. Structured prerequisite groups extracted with AND/OR semantics. Grade level parsing from above-lines for Early Bird courses. Manual grade overrides (AP Music Theory). Credit values corrected to 1 credit per semester / 2 per full year.
+- **Database**: 37+ tables in PostgreSQL via Drizzle ORM on Supabase (local dev). All tables from the tech design doc are implemented including `plan_shares`, `plan_share_links`, `account_invite_codes`, `school_requests`, `contact_messages`, `feedback`, `legal_documents`, `consent_records`, and `account_events`. 9 migration files (0000–0008). `semesters_offered` integer array column added to courses table. `state` and `schoolName` columns on accounts table.
 - **Auth**: Supabase Auth with email/password + Google OAuth, COPPA age check, 14-day Plus trial auto-activation (trialing status). New `GET /api/v1/auth/me` endpoint returns the logged-in user's email and role. Google OAuth callback auto-provisions first-time users (creates users, accounts, profiles, subscriptions) and redirects to onboarding. Signup page redesigned: wider layout (max-w-lg), 2-column grids, role selector with description cards, frozen state/school fields.
 - **Course Browser**: Search, filter by division/department/credit type/grade level/AP/dual credit/GPA waiver/semester offered/duration, cursor-based pagination with total counts. Results sorted alphabetically by name then code. Semester info displayed on cards ("Sem 1 only", "Sem 2 only", "Sem 1 & 2", "Full Year"). GPA Waiver badge (yellow) on course cards.
 - **Course Detail**: Centered modal (max-w-5xl) with 3-column info grid, badges in modal header. Prerequisites grouped by requirement_group with OR badges; semester pairs merged (e.g., "INTRODUCTION TO BUSINESS (BUS171 / BUS172)"). "What This Unlocks" also merges semester pairs. "Also available as" section showing clickable linked semester-partner courses. Division/Department names are clickable (sets filter and closes modal). Prerequisite and unlock course codes are clickable (navigates to that course). GPA waiver info, dual credit info.
 - **Subscription Middleware**: Redis-cached tier lookup with fail-open.
-- **API**: 8 endpoints (health, signup, login, OAuth callback, course list, course detail, course prereqs, user profile). Course list supports `semester_offered`, `semester_both`, and `duration` filter params; returns `semestersOffered` field; sorted by name then code with composite cursor encoding. Course detail returns `linkedCourses` array (semester partners).
+- **API**: 22 resource groups under `/api/v1/` (accounts, ai, alerts, auth, catalog-versions, contact, courses, dual-credit, export, feedback, gpa, health, notifications, plans, requirements, school-request, stripe, subscriptions, suggestions, transcript, users, year-end) with 40+ endpoints total. Course list supports `semester_offered`, `semester_both`, and `duration` filter params; returns `semestersOffered` field; sorted by name then code with composite cursor encoding. Course detail returns `linkedCourses` array (semester partners).
 - **Frontend**: Responsive horizontal top-nav layout, login/signup pages, course browser with 2-column grid, course detail modal, trial banner. Semester Offered radio filter (All/Sem 1/Sem 2/Sem 1 & 2/Full Year). Division filter values corrected to match actual Stevenson divisions.
 - **Infrastructure**: Supabase local dev, Drizzle migrations, pino structured logging, PostHog analytics helpers, CSP headers, rate limiting.
-- **Seed Data**: 3 subscription tiers (Starter/Plus/Elite), 15 divisions, 49 departments, 315 courses with prerequisites and semester offerings, 37 requirement definitions across 4 requirement groups.
+- **Seed Data**: 3 subscription tiers (Starter/Plus/Elite), 15 divisions, 49 departments, 315 courses with prerequisites and semester offerings, 37 requirement definitions across 4 requirement groups, 6 plan templates, legal documents (ToS + Privacy Policy).
 
 - **Account model redesigned:** introducing an `accounts` table that separates person identity (users) from academic data context (accounts). Parents can create accounts for children, create plans, and manage billing. Students claim accounts via invite codes. Subscription, authorization, and RLS all operate on account_id for a consistent access pattern.
+
+**Summer semester support (Phase 3).** Summer courses are fully supported in the planner and grade tracking system. Two pre-summer sessions (Summer Session 1 = semester -2, Summer Session 2 = semester -1) are available before each grade level's regular semesters. A curated set of 52 summer course equivalency mappings (e.g., SOC13S ↔ SOC101) prevents duplicate enrollment and enables graduation requirement matching. Summer courses extracted via `extract_summer.py` and curated in `summer_courses_2026.py`. DB migration `0008_summer_semesters.sql` extends `plan_courses` and `grade_entries` semester constraints to allow -2 and -1 values. Print view displays summer courses with amber indicators.
 
 **Phase 1b is complete.** The following deliverables have been built and are functional. Course detail modal accessible from planner and course picker. Redis performance fix (50ms response, down from 4.8s). Course loader uses UPSERT to preserve course IDs. All 6 templates pass validation with zero violations (Driver Education added to Grade 10, correct grade-level placements, Applied Health after Health prerequisite in Pre-Med, Economics added to STEM/CS, electives for Grade 10 underloads, PW coverage via Choice PE for Gr 11/12). Set Primary plan with merged active status (primary = active, non-primary = draft). Multi-select credit type and grade level filters. Semester partner exclusion in course picker. E2E test global teardown for automatic cleanup.
 
@@ -317,10 +321,10 @@ Frozen and suspended accounts are never silently degraded — users always see a
 - **New tables**: `contact_messages` (name, email, subject, message, created_at). `feedback` (id, user_id FK users SET NULL on delete, rating 1-5, comment, page, created_at).
 - **In-app feedback widget**: Floating "Feedback" button on all app pages (bottom-right). Opens panel with 5-star rating + optional comment. Captures current page path. Stores in `feedback` table via `POST /api/v1/feedback` (auth required). Success animation, auto-closes.
 - **Guided tour system**: driver.js integration (5KB) for step-by-step feature walkthroughs. Three tours: Welcome (dashboard, 6 steps), Planner (2-5 steps adaptive), Progress (1-3 steps adaptive). Auto-starts on first visit per page. Adaptive tours: Planner shows 2 steps (intro + create) when no plans exist, 5 steps when plans are present; Progress shows 1 step when no plan data, 3 steps when data exists. Global "Tour" button in app header nav bar on every page — detects current page and triggers appropriate tour with correct steps (checks DOM for plan elements). Tour state persisted in `tourState` JSONB column on users table via `PATCH /api/v1/auth/me`. Custom driver.js CSS overrides in `globals.css` matching SAPS brand (rounded popovers, primary color buttons, custom progress text). Infrastructure: `useTour` hook (`lib/hooks/use-tour.ts`), tour config file (`config/tours.ts`), `data-tour` attributes on key elements, `TourButton` component.
-- **Tests**: **Total: 659 tests.**
+- **Tests**: **63 test files** (30 unit/API test files with 427 test cases, 33 E2E spec files). 9 migration files.
 
-**Next up (Phase 3 remaining):** Plan history/undo, prerequisite graph visualization, dual credit tracking, plan comparison, PDF export, share links.
+**Next up (Phase 3 remaining):** Plan history/undo, prerequisite graph visualization, dual credit tracking, plan comparison, PDF export, share links, template intensity levels, goal setting, NCAA eligibility tracking, Seal of Biliteracy, P.E. waiver rules.
 
 ---
 
-*This document summarizes the full feature specification in FEATURE_ANALYSIS.md (rev 12, April 2026). For technical schema, API design, acceptance criteria, and testing strategy, refer to the full specification.*
+*This document summarizes the full feature specification in FEATURE_ANALYSIS.md (rev 13, April 2026). For technical schema, API design, acceptance criteria, and testing strategy, refer to the full specification.*

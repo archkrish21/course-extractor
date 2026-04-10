@@ -1,9 +1,9 @@
 # Student Academic Planning System (SAPS)
 ## Product Requirements Document
 
-**Version:** 1.0
-**Date:** March 2026
-**Status:** Approved for development
+**Version:** 1.1
+**Date:** April 2026
+**Status:** Phase 3 In Progress — Active Development
 
 ---
 
@@ -309,6 +309,7 @@ Account Switcher (parent with multiple children):
 | US-17d | As a parent, I want per-plan permission enforcement so I can only edit plans I have been granted edit access to. **Implemented:** All mutation endpoints use `getPlanAccess()` instead of `accountCtx.canEdit`. Backward-compatible: plans without `plan_shares` rows fall back to `account_members.canEdit`. | Must | 3 |
 | US-17e | As a student, I want to select which plans to share (with view/edit permission) when inviting a linked account member, so they have immediate access to the right plans when they join. **Implemented:** `shared_plans` JSONB column on `account_invite_codes`. Join endpoint creates `plan_shares` rows when invite is claimed. GPA and Requirements APIs gated behind plan access (return empty data if user has no `plan_shares`). | Must | 3 |
 | US-18 | As a student, I want to complete a year-end transition wizard each summer that locks my final grades, advances my grade level, and prompts me to review my upcoming year plan so my plan never becomes stale. | Must | 2 |
+| US-18a | As a student, I want to add summer courses to my plan (Summer Session 1 and Summer Session 2 before each grade level) so I can plan summer school enrollment and have those courses count toward graduation requirements. **Implemented (Phase 3):** Two summer sessions (semester -2 and -1) supported in planner. 52 summer-to-regular course equivalency mappings prevent duplicate enrollment. Summer courses satisfy the same graduation requirements as their regular equivalents. Print view shows summer courses with amber indicators. | Must | 3 |
 
 ### Grade Tracking & GPA
 
@@ -453,7 +454,7 @@ The rigor score is recomputed nightly by the percentile stats job (Elite tier). 
 | F-ON-06b | **Welcome banner (Phase 3 — implemented):** Onboarding shows "Account created successfully!" banner with auto-dismiss. | Should |
 | F-ON-06c | **Smart routing after onboarding (Phase 3 — implemented):** After onboarding completion, redirect to dashboard if plans exist, planner otherwise. | Must |
 | F-ON-07 | 14-day Plus trial (trialing status) activated automatically at signup. No credit card required. Accounts API returns "trial" as the plan name when status is trialing. TierBadge shows "Trial" (amber). Billing page shows "Free Trial" with "X days left" badge. Pricing cards do not show "Current Plan" for trialing users. | Must |
-| F-ON-08 | **Consent system (Phase 3 — implemented):** Terms of Service and Privacy Policy acceptance required at signup (checkbox) and enforced via `/consent` interstitial for existing users. `legal_documents` table stores versioned legal documents; `consent_records` table tracks user acceptance with timestamps. `/terms` and `/privacy` pages display legal content. Consent gate in app layout redirects users who haven't accepted current terms. OAuth users redirected to `/consent` after first login. | Must |
+| F-ON-08 | **Consent system (Phase 3 — implemented):** Terms of Service and Privacy Policy acceptance required at signup (checkbox) and enforced via `/consent` interstitial for existing users. `legal_documents` table stores versioned legal documents; `consent_records` table tracks user acceptance with IP address and user agent. `/terms` page (12 sections, Illinois governing law, legal@saps.app) and `/privacy` page (11 sections, COPPA/FERPA/CCPA, essential cookies only, privacy@saps.app) display legal content — both Version 1.0, effective April 6, 2026. **Consent gate** in `(app)/layout.tsx` calls `GET /api/v1/auth/consent` on every authenticated page load; if `consent_required === true`, redirects to `/consent?next=${currentPathname}` and blocks app rendering until resolved. The consent interstitial shows pending documents with View links, a required checkbox, and Accept/Decline buttons. On document version updates, shows "We've Updated Our Terms" header with change summary. OAuth users redirected to `/consent` after first login. | Must |
 | F-ON-09 | **Guided tour system (Phase 3 — implemented):** driver.js integration for step-by-step feature walkthroughs. Three adaptive tours: Welcome (dashboard, 6 steps), Planner (2-5 steps — 2 when no plans, 5 when plans exist), Progress (1-3 steps — 1 when no plan data, 3 when data exists). Auto-starts on first visit per page. Tour state persisted in `tourState` JSONB on users table via `PATCH /api/v1/auth/me`. Global "Tour" button in app header nav bar on every page — detects current page and triggers appropriate tour with correct steps. Custom driver.js CSS overrides in `globals.css` matching SAPS brand. `useTour` hook, `config/tours.ts`, `data-tour` attributes on key elements. | Should |
 
 **Plan Templates at Launch:**
@@ -1274,10 +1275,10 @@ The following are explicitly not in scope for the current product, and should no
 | Out of Scope Item | Reason |
 |---|---|
 | Official school system integration / transcript sync | FERPA complexity; requires formal district agreement |
-| NCAA eligibility tracking | Specialized; requires ongoing rule maintenance. Phase 3 |
-| Template intensity levels (Easy/Moderate/Challenging/Intensive/Rigorous) | Auto-selects CP/Accelerated/AP course variants and load per template. ~600 course placements to validate across 6 templates × 5 levels. Phase 3 |
-| Seal of Biliteracy | Requires exam score tracking. Phase 3 |
-| P.E. waiver rules | Complex per-semester logic with multiple waiver types. Phase 3 |
+| NCAA eligibility tracking | Specialized; requires ongoing rule maintenance. Deferred to Phase 3+ |
+| Template intensity levels (Easy/Moderate/Challenging/Intensive/Rigorous) | Auto-selects CP/Accelerated/AP course variants and load per template. ~600 course placements to validate across 6 templates × 5 levels. Deferred to Phase 3+ |
+| Seal of Biliteracy | Requires exam score tracking. Deferred to Phase 3+ |
+| P.E. waiver rules | Complex per-semester logic with multiple waiver types. Deferred to Phase 3+ |
 | College admission requirement validation | Too complex to maintain accurately; liability risk |
 | Mobile native app (iOS/Android) | Web responsive is sufficient for MVP; defer to Phase 6+ |
 | Multi-school support | Stevenson-specific for launch; architecture supports expansion later |
@@ -1290,4 +1291,4 @@ The following are explicitly not in scope for the current product, and should no
 
 ---
 
-*This document is the authoritative product specification. For technical schema, API design, and infrastructure details, see TECH_DESIGN_DOC.md. For executive-level summary and business context, see EXECUTIVE_SUMMARY.md.*
+*This document is the authoritative product specification (rev 13, April 2026). For technical schema, API design, and infrastructure details, see TECH_DESIGN_DOC.md. For executive-level summary and business context, see EXECUTIVE_SUMMARY.md. For feature-level implementation details and database schema, see FEATURE_ANALYSIS.md.*

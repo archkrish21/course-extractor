@@ -60,7 +60,7 @@ The platform uses a student-centric account model. Each `account` represents one
 - **Linked Accounts** (renamed from Family Members): Students can invite Parent/Guardian/Counselor; parents can invite Child/Parent/Guardian/Counselor; counselors cannot invite anyone (view-only, canEdit: false, invite form hidden). Tier limits: Starter/Trial 3, Plus 5, Elite 8 — enforced in invite API (402 UPGRADE_REQUIRED). `maxLinkedAccounts` added to SubscriptionContext and tier config.
 - **Counselor role (Phase 3):** Joins with canEdit: false (view-only). Can view plans, progress, grades but cannot modify. Cannot create plans, delete plans, share plans, invite others, or access billing. Sees "View" instead of "Edit" on plans, with "No Plans Shared Yet" empty states. Account switcher shows "Managing: Student Name · Gr X" like parents. Settings page hides subscription/billing for counselors, shows separate "Student Information" section for non-student roles. Future: will be able to add comments/suggestions on shared plans.
 - **Billing updates:** Pricing cards show linked accounts per tier and PDF/print for Plus. 4-year subscription display shows "Expires" instead of "Renews" (one-time payment).
-- **Consent system:** `legal_documents` + `consent_records` tables, `/terms` and `/privacy` pages, `/consent` interstitial, consent gate in app layout, signup checkbox, OAuth redirect to consent, account deletion with full cleanup (Stripe, Supabase, Redis, PostHog).
+- **Consent system:** `legal_documents` + `consent_records` tables (stores IP address, user agent, timestamps). `/terms` page (12 sections including Governing Law: Illinois, contact: legal@saps.app) and `/privacy` page (11 sections including COPPA, FERPA, CCPA/CPRA, essential cookies only, contact: privacy@saps.app) — both Version 1.0, effective April 6, 2026. `/consent` interstitial with pending document display, required checkbox, Accept/Decline buttons; shows "We've Updated Our Terms" with change summary when document version changes. **Consent gate** in `(app)/layout.tsx`: checks `GET /api/v1/auth/consent` on every authenticated page load, redirects to `/consent?next=${currentPathname}` if `consent_required === true`, blocks app rendering until resolved. Signup checkbox. OAuth users redirected to `/consent` after first login. Account deletion with full cleanup (Stripe, Supabase, Redis, PostHog).
 - **Parent user menu:** Parent sees their own name/email in the avatar (not the student's name). A "Managing: StudentName · Gr X" subtitle is shown below the parent's name. "Add Another Child" removed from the dropdown.
 - **Child invite flow:** Parents can invite a child (student) via email from Settings. When the student joins via the invite: (1) if the student already has an account, the parent is added to the student's existing account; (2) if no account exists, a new account is created with both student and parent as members. The active account auto-switches to the joined account.
 
@@ -234,6 +234,18 @@ CREATE TABLE career_path_courses (
   - A co-requisite course must be planned in the same semester
 
 > **Implementation status (Phase 1b):** Full-year courses are now stored as two `plan_courses` rows (semester 1 + semester 2) instead of one row with `semester=null`. This enables independent status and grade tracking per semester. Plan templates are seeded with split rows via the seed script. The prerequisite validator's enrollment rule check verifies both semesters are present for full-year courses instead of checking for `semester=null`. Semester-paired courses are excluded from the course picker when one variant is already in the plan (e.g., CSC162 hidden if CSC161 is planned). Matching is by course name across all 80 semester-paired courses. Bulk status and grade updates available per semester (dropdown in semester cell header). Trash icon for clearing a semester. Credits calculated correctly for full-year courses (per-row = creditValue/2 to avoid double-counting).
+
+### Summer Course Support (Phase 3 — implemented)
+
+Summer courses are fully supported in the planner and grade tracking system:
+- **Two pre-summer sessions**: Summer Session 1 (semester `-2`) and Summer Session 2 (semester `-1`) occur before each grade level's regular semesters.
+- **52 equivalency mappings** in `config/summer-equivalents.ts` link summer course codes (e.g., `SOC13S`, `MTH15S`) to regular school-year equivalents (e.g., `SOC101/SOC102`, `MTH151/MTH152`).
+- **Duplicate prevention**: Cannot add a regular course if the summer equivalent is already in the plan (and vice versa).
+- **Graduation requirement matching**: Summer courses satisfy the same requirements as their regular equivalents.
+- **Semester config** in `config/semesters.ts`: `ALL_SEMESTERS = [-2, -1, 1, 2]` with `isSummerSemester()` helper and display labels.
+- **Extraction**: `extractor/extract_summer.py` with curated data in `summer_courses_2026.py` covering Driver Ed, Business, CS, Fine Arts, Math, Sciences, Social Studies, Health/PE, and World Languages.
+- **DB migration** `0008_summer_semesters.sql` extends `plan_courses` and `grade_entries` semester constraints to allow `-2` and `-1` values.
+- **Print view**: Summer courses displayed with amber-colored indicators (☀).
 
 ### Credit System
 
@@ -1150,7 +1162,8 @@ CREATE INDEX idx_requirement_progress_student ON requirement_progress (student_i
 - **Phase 1b:** four_year_plans, plan_courses, plan_history, subscription_plans (seed only)
 - **Phase 2:** accounts, account_members, account_invite_codes, grade_entries, gpa_snapshots, subscriptions, account_events, requirement_progress, graduation_requirements, student_requirement_status, student_requirement_opt_ins, stripe_events. Schema changes: `priceFourYear` column on `subscription_plans`; `four_year` added to `billing_cycle` check constraint on `subscriptions`. Drizzle migrations in `lib/db/migrations/`.
 - **Phase 2 (deprecated):** ~~student_parent_links~~, ~~parent_invite_codes~~ — superseded by accounts model
-- **Phase 3:** alerts, notifications, dual_credit_log, plan_share_links, school_requests, contact_messages, feedback. Schema changes: `shared_plans` JSONB column added to `account_invite_codes` (plan sharing on invite). GPA and Requirements APIs gated behind plan access.
+- **Phase 3 (implemented):** plan_shares, plan_share_links, school_requests, contact_messages, feedback, legal_documents, consent_records. Schema changes: `shared_plans` JSONB column added to `account_invite_codes` (plan sharing on invite). `firstName`, `lastName`, `tourState` columns added to `users`. `state`, `schoolName` columns added to `accounts`. Summer semester support via migration `0008_summer_semesters.sql` (extends `plan_courses` and `grade_entries` semester constraints to allow `-2` and `-1`). GPA and Requirements APIs gated behind plan access. 9 migration files total (0000–0008).
+- **Phase 3 (schema exists, not yet populated/active):** alerts, notifications, dual_credit_log, goals. Tables are defined in `lib/db/schema.ts` but no API routes or background jobs populate them yet.
 - **Phase 4:** career_paths, career_path_courses, ai_recommendations (if persisted)
 - **Phase 5:** counselor_student_links, goals
 
@@ -1560,22 +1573,22 @@ Phase 5 includes a formal WCAG audit and remediation of any gaps, but the core p
 - ✅ Counselor restrictions: cannot create/delete/share plans, invite others, or access billing. "View" instead of "Edit" on plans. "No Plans Shared Yet" empty states. Settings hides subscription/billing for counselors.
 - ✅ Navigation/UX: sign out redirects to `/` not `/login`. Auth layout logo links home, footer "Home" link. Terms/Privacy back button closes tab or falls back. Share modal close (X) button. Dashboard banners contextual by role. Invite form toast messages. `maxLinkedAccounts` fallback fix.
 - ✅ UI orchestration (design system sweep): visual consistency across all 22 pages. Standardized components. Loading skeletons, empty states, error states. Responsive grids. Focus rings, touch targets, ARIA. Print styles. Design tokens replace hardcoded colors. `ui_orchestration_plan.md` playbook.
-- ✅ 433 total tests (7 new UI component test files: Button, Badge, Card, Input, Checkbox, Toast, plan-permissions. New test files: signup-roles, counselor-restrictions, share-modal, auth-layout. Tests for plan access gating and invite shared_plans.)
+- ✅ **63 test files** (30 unit/API test files with 427 test cases, 33 E2E spec files). UI component test files: Button, Badge, Card, Input, Checkbox, Toast, plan-permissions. Additional test files: signup-roles, counselor-restrictions, share-modal, auth-layout. Tests for plan access gating and invite shared_plans.
+**Phase 3 remaining (not yet implemented):**
 - Drag-and-drop planner grid upgrade
-- Plan history / undo (last 20 changes)
-- Prerequisite graph visualization (DAG view)
-- Dual credit tracking and summary screen
-- Rule-based course suggestions (graduation requirement gap filler)
-- Overload/underload alert engine (background job via BullMQ)
+- Plan history / undo (last 20 changes) — `plan_history` table exists in schema but no API endpoints yet
+- Prerequisite graph visualization (DAG view) — `components/prereq-graph/` directory exists but is empty
+- Dual credit tracking and summary screen — `dual_credit_log` table exists but no API endpoints yet
+- Rule-based course suggestions (graduation requirement gap filler) — no `/api/v1/suggestions` route yet
+- Overload/underload alert engine (background job via BullMQ) — `alerts` table exists but no `/api/v1/alerts` route and no BullMQ worker (worker/jobs/ is empty)
 - Alert center with actionable fix links
-- In-app notification center (Supabase Realtime subscriptions — no polling)
-- Email notifications via Resend
+- In-app notification center (Supabase Realtime subscriptions — no polling) — `notifications` table exists but no `/api/v1/notifications` route yet
+- Email notifications via Resend — email templates exist but notification dispatch not implemented
 - Course suggestion for GPA targeting (heuristic-based)
 - Multiple plan drafts + side-by-side plan comparison
-- Plan export to PDF + read-only share link
+- Plan export to PDF + read-only share link — `plan_share_links` table exists but no share token API
 - Template intensity levels (Easy/Moderate/Challenging/Intensive/Rigorous) — auto-selects CP/Accelerated/AP course variants and load per template
-- Goal setting (GPA targets, credit milestones, course goals — Plus+ gated)
-- User profile dropdown (Settings moved from main nav into top-right user avatar dropdown)
+- Goal setting (GPA targets, credit milestones, course goals — Plus+ gated) — `goals` table exists but no `/api/v1/goals` routes yet
 - NCAA eligibility tracking
 - Seal of Biliteracy
 - P.E. waiver rules (complex per-semester logic with multiple waiver types)
@@ -1606,7 +1619,7 @@ Phase 5 includes a formal WCAG audit and remediation of any gaps, but the core p
 
 | Decision | Choice | Reason |
 |---|---|---|
-| Frontend | Next.js (App Router) | SSR, API routes, strong ecosystem for grids/charts |
+| Frontend | Next.js 16 (App Router) | SSR, API routes, Turbopack dev server, strong ecosystem for grids/charts |
 | UI component library | shadcn/ui | Accessible, unstyled-first, integrates with Tailwind; critical for the complex grid and DAG UI |
 | State management | Zustand | Lightweight; well-suited for planner/simulator state without Redux boilerplate |
 | Auth | Supabase Auth | Same instance as App DB; RLS handles multi-tenant isolation; Google OAuth built-in |
@@ -1618,9 +1631,9 @@ Phase 5 includes a formal WCAG audit and remediation of any gaps, but the core p
 | AI | Claude API (claude-sonnet-4-6) | Best reasoning + natural language; structured tool use for DB-validated suggestions |
 | Email | Resend | Best-in-class DX; React Email for templates; generous free tier |
 | DAG visualization | React Flow | Purpose-built for node/edge graphs; handles the prerequisite DAG and course unlock trees |
-| Charts / GPA trends | Recharts | Composable, Tailwind-friendly; used for GPA trend charts and credit progress rings |
+| Charts / GPA trends | Recharts 3 | Composable, Tailwind-friendly; used for GPA trend charts and credit progress rings |
 | PDF generation | React-pdf | Renders plan export PDFs server-side from React components; matches the on-screen layout |
-| API documentation | OpenAPI / Swagger via Zod | Zod schemas for request/response validation; `zod-to-openapi` generates the spec |
+| API validation | Zod 4 | Request/response validation |
 | Error tracking | Sentry | Captures frontend, API, and BullMQ worker errors |
 | Analytics | PostHog | Product analytics, event tracking, feature flags; generous free tier; GDPR-friendly |
 | Guided tours | driver.js | Lightweight (5KB) step-by-step feature walkthroughs; adaptive step counts; CSS-customizable popovers |

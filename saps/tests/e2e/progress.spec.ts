@@ -32,7 +32,10 @@ test.describe("Progress — Navigation", () => {
     await login(page);
     await page.goto("/dashboard");
 
-    const progressLink = page.locator('a[href="/progress"]').first();
+    // Use :visible — the desktop sidebar nav has an /progress link that is
+    // `hidden md:flex` and matches first on mobile, causing click() to time
+    // out trying to interact with a hidden element.
+    const progressLink = page.locator('a[href="/progress"]:visible').first();
     await expect(progressLink).toBeVisible({ timeout: 5_000 });
     await progressLink.click();
     await page.waitForURL(/\/progress/, { timeout: 10_000 });
@@ -100,13 +103,18 @@ test.describe("Progress — Summary Card", () => {
   test("shows gaps count with warning icon when requirements are unmet", async ({ page }) => {
     await navigateToProgress(page);
 
-    // Either Gaps indicator or all requirements are met
-    const gapsLabel = page.locator("text=Gaps");
-    const hasGaps = (await gapsLabel.count()) > 0;
+    // The page renders multiple gap indicators: a "Gaps" filter chip button,
+    // an Overall summary span ("N gaps"), and per-requirement spans. The
+    // previous "text=Gaps" matched all of them and tripped strict mode. Use
+    // a regex that requires a leading digit + "gap" so we only match the
+    // count spans, then assert the first visible one (the Overall summary).
+    const gapsCount = page
+      .locator("text=/^\\d+\\s+gap(s)?$/")
+      .filter({ visible: true });
+    const hasGaps = (await gapsCount.count()) > 0;
 
     if (hasGaps) {
-      // The gaps count should be a number
-      await expect(gapsLabel).toBeVisible();
+      await expect(gapsCount.first()).toBeVisible();
     }
     // If no gaps, that's also valid — all requirements are covered
   });
@@ -187,14 +195,27 @@ test.describe("Progress — Requirement Cards", () => {
   test("gap requirements show credits needed message", async ({ page }) => {
     await navigateToProgress(page);
 
-    const gapMessage = page.locator("text=/\\d+ (more )?credits? needed/i");
-    const hasGaps = (await gapMessage.count()) > 0;
-
-    // If no gaps, verify all requirements show as Complete or In Progress
-    if (!hasGaps) {
-      const gapBadge = page.locator("text=Gap");
-      expect(await gapBadge.count()).toBe(0);
+    // The "credits needed" copy only renders for course_match requirements
+    // (app/(app)/progress/page.tsx:578 and :599). Other gap types render
+    // differently — manual_checkbox and auto_from_course show a StatusBadge,
+    // course_load_check / pw_dance_check show a "Missing"/"Underload"/
+    // "Overload" badge — none use the "needed" wording. So the existence of
+    // gap-count badges in the summary doesn't imply the "needed" copy must
+    // be present; it depends on which evaluation type the gap is in.
+    //
+    // This test only validates the course_match credits-needed message. If
+    // the seeded data has no course_match gaps, skip rather than asserting
+    // an inverse condition that doesn't follow.
+    const gapMessage = page.locator("text=/\\d+( more credits?)? needed/i");
+    const count = await gapMessage.count();
+    if (count === 0) {
+      test.skip(
+        true,
+        "No course_match-type gaps in the seeded data — credits-needed copy isn't applicable to other evaluation types"
+      );
+      return;
     }
+    await expect(gapMessage.first()).toBeVisible();
   });
 
   test("requirement cards show notes when available", async ({ page }) => {
@@ -452,13 +473,24 @@ test.describe("Progress — Semester Sub-categories", () => {
 
   test("shows Physical Welfare / Dance / Driver Ed sub-category", async ({ page }) => {
     await navigateToProgress(page);
-    // Expand the parent Semester Requirements group first; sub-categories live inside
-    const semGroup = page.locator("button", { hasText: "Semester Requirements" }).first();
+    // The "Semester Requirements" parent group (key=course_load) is expanded
+    // by default in app/(app)/progress/page.tsx:117. The previous version of
+    // this test always clicked the toggle, which COLLAPSED an already-open
+    // group and made the sub-category disappear. Only click if it's actually
+    // collapsed (aria-expanded="false").
+    const semGroup = page
+      .locator('button', { hasText: "Semester Requirements" })
+      .first();
     if ((await semGroup.count()) > 0) {
-      await semGroup.click();
-      await page.waitForTimeout(300);
+      const expanded = await semGroup.getAttribute("aria-expanded");
+      if (expanded === "false") {
+        await semGroup.click();
+        await page.waitForTimeout(300);
+      }
     }
-    await expect(page.locator("text=/Physical Welfare.*Dance.*Driver Ed/").first()).toBeVisible({ timeout: 10_000 });
+    await expect(
+      page.locator("text=/Physical Welfare.*Dance.*Driver Ed/").first()
+    ).toBeVisible({ timeout: 10_000 });
   });
 
   test("sub-categories are collapsible", async ({ page }) => {

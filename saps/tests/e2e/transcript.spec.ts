@@ -33,7 +33,10 @@ test.describe("Transcript — Navigation", () => {
     await login(page);
     await page.goto("/dashboard");
 
-    const transcriptLink = page.locator('a[href="/transcript"]').first();
+    // Use :visible — the desktop sidebar nav has an /transcript link that
+    // is `hidden md:flex` and matches first on mobile, causing click() to
+    // time out trying to interact with a hidden element.
+    const transcriptLink = page.locator('a[href="/transcript"]:visible').first();
     await expect(transcriptLink).toBeVisible({ timeout: 5_000 });
     await transcriptLink.click();
     await page.waitForURL(/\/transcript/, { timeout: 10_000 });
@@ -132,8 +135,25 @@ test.describe("Transcript — Course Table", () => {
       return;
     }
 
-    // At least one course code should be visible
-    await expect(courseCodes.first()).toBeVisible();
+    // The transcript page collapses grade-level sections by default and
+    // auto-expands only the *current* grade (transcript/page.tsx:155). For
+    // the seeded test student (Grade 10 current, completed courses in Grade
+    // 9), the auto-expanded section is empty and all course codes live in
+    // collapsed sections. Click any collapsed grade-level toggle to reveal
+    // its codes before asserting visibility.
+    const collapsedToggle = page
+      .locator('button[aria-expanded="false"]')
+      .filter({ hasText: /Grade \d/ })
+      .first();
+    if ((await collapsedToggle.count()) > 0) {
+      await collapsedToggle.click();
+    }
+
+    const visibleCode = page
+      .locator("text=/[A-Z]{2,4}\\d{3}/")
+      .filter({ visible: true })
+      .first();
+    await expect(visibleCode).toBeVisible();
   });
 
   test("GPA waiver indicator shown for waivered courses", async ({ page }) => {

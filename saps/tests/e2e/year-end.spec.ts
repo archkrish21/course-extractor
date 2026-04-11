@@ -1,16 +1,10 @@
 import { test, expect, type Page } from "@playwright/test";
-import { waitForHydration } from "./helpers";
+import { login } from "./helpers";
 
 // ─── Helpers ───────────────────────────────────────────────────────────────
-
-async function login(page: Page) {
-  await page.goto("/login");
-  await waitForHydration(page);
-  await page.locator('input[type="email"]').fill("student@test.com");
-  await page.locator('input[type="password"]').first().fill("Test1234!");
-  await page.locator('form button[type="submit"]').click();
-  await page.waitForURL(/\/(dashboard|planner|courses)/, { timeout: 15_000 });
-}
+// Use the canonical login() from helpers.ts — the previous local copy had a
+// narrow waitForURL regex (missing /consent and /onboarding) that hung when
+// the seeded student briefly redirected through those routes after login.
 
 async function navigateToYearEnd(page: Page) {
   await login(page);
@@ -18,15 +12,29 @@ async function navigateToYearEnd(page: Page) {
   await page.waitForTimeout(3_000);
 }
 
-/** Fill all ungraded course dropdowns with grade "A" so Next becomes enabled. */
+/** Fill all ungraded course dropdowns so Next becomes enabled.
+ * Tries "A" first (standard letter grade) and falls back to "P" for the
+ * Pass/Fail courses (e.g. Driver Education) whose dropdowns only have
+ * P/F options. Skips dropdowns that already have a value. */
 async function fillAllGrades(page: Page) {
   const selects = page.locator("select");
   const count = await selects.count();
   for (let i = 0; i < count; i++) {
-    const value = await selects.nth(i).inputValue();
-    if (!value) {
-      await selects.nth(i).selectOption("A");
-    }
+    const sel = selects.nth(i);
+    const value = await sel.inputValue();
+    if (value) continue;
+
+    // Determine which option to pick based on what this dropdown actually has.
+    const optionValues = await sel.locator("option").evaluateAll((opts) =>
+      opts.map((o) => (o as HTMLOptionElement).value).filter((v) => v),
+    );
+    const choice = optionValues.includes("A")
+      ? "A"
+      : optionValues.includes("P")
+        ? "P"
+        : optionValues[0];
+    if (!choice) continue;
+    await sel.selectOption(choice);
   }
   await page.waitForTimeout(500);
 }

@@ -1,16 +1,10 @@
 import { test, expect, type Page } from "@playwright/test";
-import { waitForHydration } from "./helpers";
+import { login } from "./helpers";
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
-
-async function login(page: Page) {
-  await page.goto("/login");
-  await waitForHydration(page);
-  await page.locator('input[type="email"]').fill("student@test.com");
-  await page.locator('input[type="password"]').first().fill("Test1234!");
-  await page.locator('form button[type="submit"]').click();
-  await page.waitForURL(/\/(dashboard|planner|courses)/, { timeout: 15_000 });
-}
+// Use the canonical login() from helpers.ts — the previous local copy had a
+// narrow waitForURL regex (missing /consent and /onboarding) that hung when
+// the seeded student briefly redirected through those routes after login.
 
 async function navigateToPlanner(page: Page) {
   await login(page);
@@ -109,20 +103,36 @@ test.describe("Planner — Plan Management", () => {
   });
 
   test("delete a plan with confirmation", async ({ page }) => {
+    // Bumped from the default 30s — navigateToPlanner alone can take up to
+    // 25s on a cold worker (15s loading + 10s heading), leaving very little
+    // budget for the multi-step switch + click + dialog flow below.
+    test.setTimeout(60_000);
     await navigateToPlanner(page);
 
-    // The delete button is only enabled for non-primary plans. If we're on the
-    // primary plan, switch to a non-primary plan first.
-    const deleteButton = page.locator('button[aria-label^="Delete plan:"]');
-    if (!(await deleteButton.isVisible())) {
+    // Read attributes via evaluate() so we never auto-wait on a locator that
+    // may temporarily detach during a plan switch (the toolbar re-renders).
+    // The previous version called `.isDisabled()`, which waits up to the
+    // test timeout for the element to attach — and if the new plan has no
+    // delete button (counselor permission) it would hang the entire test.
+    const getDeleteButtonState = async () => {
+      return await page.evaluate(() => {
+        const btn = document.querySelector('button[aria-label^="Delete plan:"]');
+        if (!btn) return { exists: false, disabled: false } as const;
+        const isDisabled = (btn as HTMLButtonElement).disabled;
+        return { exists: true, disabled: isDisabled } as const;
+      });
+    };
+
+    let state = await getDeleteButtonState();
+    if (!state.exists) {
       test.skip();
       return;
     }
 
-    if (await deleteButton.isDisabled()) {
+    if (state.disabled) {
       // Switch to a non-primary plan via the plan selector
       const planSelector = page.locator('[aria-label="Select a plan"]');
-      if (!(await planSelector.isVisible())) {
+      if ((await planSelector.count()) === 0 || !(await planSelector.isVisible())) {
         test.skip(); // Only one plan; can't switch
         return;
       }
@@ -141,12 +151,18 @@ test.describe("Planner — Plan Management", () => {
           }
         }
       }
-      if (!switched || (await deleteButton.isDisabled())) {
+      if (!switched) {
+        test.skip();
+        return;
+      }
+      state = await getDeleteButtonState();
+      if (!state.exists || state.disabled) {
         test.skip();
         return;
       }
     }
 
+    const deleteButton = page.locator('button[aria-label^="Delete plan:"]').first();
     await deleteButton.click();
 
     const confirmDialog = page.locator(
@@ -247,8 +263,29 @@ test.describe("Planner — Set Primary", () => {
   }) => {
     await navigateToPlanner(page);
 
-    // The primary plan should be auto-selected
-    // The "Set Primary" button should NOT be visible
+    // Don't rely on the planner auto-selecting the primary plan — earlier
+    // tests in the same worker can mutate which plan is primary in the DB,
+    // and the planner restores the last-selected plan from sessionStorage
+    // (per-context, but the seeded primary may have changed). Explicitly
+    // pick the option marked with ★ before asserting.
+    const planSelector = page.locator("select[aria-label='Select a plan']");
+    if (await planSelector.isVisible()) {
+      const options = planSelector.locator("option");
+      const count = await options.count();
+      for (let i = 0; i < count; i++) {
+        const text = (await options.nth(i).textContent()) ?? "";
+        if (text.includes("★")) {
+          const value = await options.nth(i).getAttribute("value");
+          if (value) {
+            await planSelector.selectOption(value);
+            await page.waitForTimeout(500);
+          }
+          break;
+        }
+      }
+    }
+
+    // The "Set Primary" button should NOT be visible for the primary plan
     const setPrimaryBtn = page.getByLabel(/Set.*as primary plan/i);
     await expect(setPrimaryBtn).toBeHidden();
 
@@ -343,11 +380,29 @@ test.describe("Planner — Set Primary", () => {
       return;
     }
 
-    // Record current primary plan name — React-controlled selects don't add a
-    // `selected` attribute, so use the inputValue() to find the active option.
-    const currentValue = await planSelector.inputValue();
-    const currentOption = planSelector.locator(`option[value="${currentValue}"]`);
-    const currentPrimaryName = (await currentOption.textContent())?.replace(" ★", "").trim();
+    // Don't trust the auto-selected plan to be the primary one — earlier
+    // tests in the same worker can mutate which plan is primary in the DB.
+    // Explicitly find the option marked with ★ and switch to it first so
+    // we have a known starting state.
+    const allOptions = planSelector.locator("option");
+    const allCount = await allOptions.count();
+    let primaryName: string | null = null;
+    let primaryValue: string | null = null;
+    for (let i = 0; i < allCount; i++) {
+      const text = (await allOptions.nth(i).textContent()) ?? "";
+      if (text.includes("★")) {
+        primaryName = text.replace(" ★", "").trim();
+        primaryValue = await allOptions.nth(i).getAttribute("value");
+        break;
+      }
+    }
+    if (!primaryName || !primaryValue) {
+      test.skip(true, "No primary plan found");
+      return;
+    }
+    await planSelector.selectOption(primaryValue);
+    await page.waitForTimeout(500);
+    const currentPrimaryName = primaryName;
 
     // Find a non-primary plan and switch to it
     const options = planSelector.locator("option");
@@ -389,8 +444,11 @@ test.describe("Planner — Set Primary", () => {
       }
     }
 
-    // Old primary should now show "draft" status (not "active")
-    const draftBadge = page.locator('[class*="badge"]').filter({ hasText: "draft" });
+    // Old primary should now show "draft" status (not "active"). The Badge
+    // component (components/ui/badge.tsx) doesn't include the literal string
+    // "badge" in its class names — it uses Tailwind utility classes like
+    // "bg-warning-light text-warning". Match the visible badge text directly.
+    const draftBadge = page.getByText("draft", { exact: true });
     await expect(draftBadge).toBeVisible({ timeout: 3000 });
 
     // Restore: set the old primary back
@@ -508,9 +566,13 @@ test.describe("Planner — Course Management", () => {
       return;
     }
 
-    // Look for a status indicator on a course card
+    // Look for the status indicator BUTTON on a course card. The previous
+    // version used `text=/Planned|Enrolled|Completed/` which on mobile also
+    // matched the filter dropdown's `<option value="planned">All → Planned</option>`
+    // — those options are inside a gridcell but are not actual status badges.
+    // Scope to the button whose accessible name starts with "Status:".
     const statusBadges = page.locator(
-      '[role="gridcell"] >> text=/Planned|Enrolled|Completed/'
+      '[role="gridcell"] button[aria-label^="Status:"]'
     );
 
     if ((await statusBadges.count()) === 0) {

@@ -1,16 +1,10 @@
 import { test, expect, type Page } from "@playwright/test";
-import { waitForHydration } from "./helpers";
+import { login } from "./helpers";
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
-
-async function login(page: Page) {
-  await page.goto("/login");
-  await waitForHydration(page);
-  await page.locator('input[type="email"]').fill("student@test.com");
-  await page.locator('input[type="password"]').first().fill("Test1234!");
-  await page.locator('form button[type="submit"]').click();
-  await page.waitForURL(/\/(dashboard|planner|courses)/, { timeout: 15_000 });
-}
+// Use the canonical login() from helpers.ts — the previous local copy had a
+// narrow waitForURL regex (missing /consent and /onboarding) that hung when
+// the seeded student briefly redirected through those routes after login.
 
 async function navigateToPlanner(page: Page) {
   await login(page);

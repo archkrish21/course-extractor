@@ -20,23 +20,20 @@ async function navigateToPlanner(page: Page) {
 
 /** Open the course picker by clicking an "Add Course" button in the grid. */
 async function openCoursePicker(page: Page) {
-  // Find any enabled "Add Course" button in the grid
+  // Use the cell-specific aria-label so we get a deterministic, scoped
+  // button. PlannerGrid renders BOTH a DesktopGrid (`hidden md:block`) and
+  // a MobileAccordion (`md:hidden`), so each cell button has a sibling in
+  // the inactive grid. `.first()` could flakily pick the wrong one whose
+  // viewport visibility racing with hydration. Filter to the visible
+  // instance to be deterministic across both viewports.
   const addButton = page
-    .locator('button:has-text("Add Course")')
-    .filter({ hasNot: page.locator("[disabled]") })
+    .locator('button[aria-label="Add course to Grade 10, Semester 1"]')
+    .filter({ visible: true })
     .first();
-
-  if (!(await addButton.isVisible())) {
-    // Might need to expand a grade first
-    const collapsedHeader = page
-      .locator('button[role="rowheader"][aria-expanded="false"]')
-      .first();
-    if (await collapsedHeader.isVisible()) {
-      await collapsedHeader.click();
-      await page.waitForTimeout(300);
-    }
-  }
-
+  await expect(addButton).toBeVisible({ timeout: 5_000 });
+  // Scroll into view explicitly so click() doesn't race with viewport
+  // adjustments / sticky elements.
+  await addButton.scrollIntoViewIfNeeded();
   await addButton.click();
 
   // Wait for picker dialog to appear

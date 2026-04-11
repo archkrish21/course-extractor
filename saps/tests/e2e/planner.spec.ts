@@ -1,16 +1,10 @@
 import { test, expect, type Page } from "@playwright/test";
-import { waitForHydration } from "./helpers";
+import { login } from "./helpers";
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
-
-async function login(page: Page) {
-  await page.goto("/login");
-  await waitForHydration(page);
-  await page.locator('input[type="email"]').fill("student@test.com");
-  await page.locator('input[type="password"]').first().fill("Test1234!");
-  await page.locator('form button[type="submit"]').click();
-  await page.waitForURL(/\/(dashboard|planner|courses)/, { timeout: 15_000 });
-}
+// Use the canonical login() from helpers.ts — the previous local copy had a
+// narrow waitForURL regex (missing /consent and /onboarding) that hung when
+// the seeded student briefly redirected through those routes after login.
 
 async function navigateToPlanner(page: Page) {
   await login(page);
@@ -310,7 +304,10 @@ test.describe("Planner — Print Plan", () => {
   test("print view shows plan header with student info", async ({ page }) => {
     await login(page);
     await page.goto("/planner/print");
-  await waitForHydration(page);
+    // No waitForHydration here — /planner/print has no `form button[type="submit"]`
+    // (the helper's default selector), so polling for that times out at 15s.
+    // The print view is static read-only content; the subsequent toBeVisible
+    // assertions with their own timeouts handle any rendering delay.
     await page.waitForTimeout(2000);
 
     // "Student Academic Planning System" appears both in the h1 and the footer note
@@ -326,7 +323,10 @@ test.describe("Planner — Print Plan", () => {
   }) => {
     await login(page);
     await page.goto("/planner/print");
-  await waitForHydration(page);
+    // No waitForHydration here — /planner/print has no `form button[type="submit"]`
+    // (the helper's default selector), so polling for that times out at 15s.
+    // The print view is static read-only content; the subsequent toBeVisible
+    // assertions with their own timeouts handle any rendering delay.
     await page.waitForTimeout(2000);
 
     // Should show Grade 9 through Grade 12 headers
@@ -340,14 +340,22 @@ test.describe("Planner — Print Plan", () => {
   test("print view shows summary with credits and GPA", async ({ page }) => {
     await login(page);
     await page.goto("/planner/print");
-  await waitForHydration(page);
+    // No waitForHydration here — /planner/print has no `form button[type="submit"]`
+    // (the helper's default selector), so polling for that times out at 15s.
+    // The print view is static read-only content; the subsequent toBeVisible
+    // assertions with their own timeouts handle any rendering delay.
     await page.waitForTimeout(2000);
 
-    // Should show credits info
-    await expect(page.locator("text=/credits/i").first()).toBeVisible({ timeout: 10000 });
+    // Should show credits info inside the print main area (not the nav).
+    // Scope to <main> so we don't accidentally match the sidebar nav link.
+    const main = page.locator("main").first();
+    await expect(main.locator("text=/credits/i").first()).toBeVisible({ timeout: 10000 });
 
-    // Should show courses count
-    await expect(page.locator("text=/Courses/i").first()).toBeVisible();
+    // The summary block renders "Courses:" inside a <strong> tag. Match the
+    // exact "Courses:" label to avoid the sidebar /courses navigation link
+    // (which doesn't have the colon and on mobile is hidden in a drawer
+    // but still in the DOM).
+    await expect(main.locator("text=Courses:").first()).toBeVisible();
   });
 
   test("print view shows back button and print button on screen", async ({
@@ -355,7 +363,10 @@ test.describe("Planner — Print Plan", () => {
   }) => {
     await login(page);
     await page.goto("/planner/print");
-  await waitForHydration(page);
+    // No waitForHydration here — /planner/print has no `form button[type="submit"]`
+    // (the helper's default selector), so polling for that times out at 15s.
+    // The print view is static read-only content; the subsequent toBeVisible
+    // assertions with their own timeouts handle any rendering delay.
     await page.waitForTimeout(2000);
 
     await expect(page.locator("text=Back to Planner")).toBeVisible({ timeout: 10000 });
@@ -365,7 +376,10 @@ test.describe("Planner — Print Plan", () => {
   test("print view shows footer with legend", async ({ page }) => {
     await login(page);
     await page.goto("/planner/print");
-  await waitForHydration(page);
+    // No waitForHydration here — /planner/print has no `form button[type="submit"]`
+    // (the helper's default selector), so polling for that times out at 15s.
+    // The print view is static read-only content; the subsequent toBeVisible
+    // assertions with their own timeouts handle any rendering delay.
     await page.waitForTimeout(2000);
 
     // Footer should show the legend

@@ -1,4 +1,5 @@
 import { test, expect } from "@playwright/test";
+import { waitForHydration } from "./helpers";
 
 // ─── Page load tests ────────────────────────────────────────────────────────
 
@@ -59,13 +60,19 @@ test.describe("Auth — Login Flow", () => {
     // Wait for the Suspense fallback to clear before filling — mobile hydration
     // is slow enough that fill() can fire before the form mounts.
     await expect(page.locator('input[type="email"]')).toBeVisible({ timeout: 10_000 });
+    // Wait for React event handlers to attach to the submit button. Without
+    // this, click() on mobile fires before hydration and the form submits
+    // natively, leaving us on /login with the email field blank.
+    await waitForHydration(page);
 
     await page.locator('input[type="email"]').fill("student@test.com");
     await page.locator('input[type="password"]').first().fill("Test1234!");
     await page.locator('form button[type="submit"]').click();
 
-    // Should redirect to dashboard (or other authenticated page)
-    await page.waitForURL(/\/(dashboard|planner|courses)/, {
+    // Should redirect to dashboard (or other authenticated page). Includes
+    // /consent and /onboarding because the seeded student may briefly hop
+    // through those routes before landing on /dashboard.
+    await page.waitForURL(/\/(dashboard|planner|courses|consent|onboarding)/, {
       timeout: 15_000,
     });
   });

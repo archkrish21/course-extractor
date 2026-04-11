@@ -1,16 +1,10 @@
 import { test, expect, type Page } from "@playwright/test";
-import { waitForHydration } from "./helpers";
+import { login } from "./helpers";
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
-
-async function login(page: Page) {
-  await page.goto("/login");
-  await waitForHydration(page);
-  await page.locator('input[type="email"]').fill("student@test.com");
-  await page.locator('input[type="password"]').first().fill("Test1234!");
-  await page.locator('form button[type="submit"]').click();
-  await page.waitForURL(/\/(dashboard|planner|courses)/, { timeout: 15_000 });
-}
+// Use the canonical login() from helpers.ts — the previous local copy had a
+// narrow waitForURL regex (missing /consent and /onboarding) that hung when
+// the seeded student briefly redirected through those routes after login.
 
 async function navigateToPlanner(page: Page) {
   await login(page);
@@ -443,8 +437,14 @@ test.describe("Planner — P/F Course Badge", () => {
       return;
     }
 
-    // The card with P/F should not have a GPA Waiver button
-    const pfCard = pfBadges.first().locator("xpath=ancestor::div[contains(@class, 'rounded')]");
+    // The card with P/F should not have a GPA Waiver button. Scope to the
+    // closest plan-course-card root (a `<div role="button">` with the
+    // course name in its aria-label) — the previous xpath ancestor walked
+    // to a wrapping container that contained MULTIPLE cards, so the
+    // assertion saw waiver buttons from sibling non-P/F courses.
+    const pfCard = pfBadges
+      .first()
+      .locator('xpath=ancestor::div[@role="button"][1]');
     const waiverBtn = pfCard.locator("text=GPA Waiver");
     expect(await waiverBtn.count()).toBe(0);
   });

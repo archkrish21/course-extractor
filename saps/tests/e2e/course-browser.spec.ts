@@ -20,6 +20,39 @@ async function waitForCoursesLoaded(page: Page) {
   ).toBeVisible({ timeout: 10_000 });
 }
 
+/**
+ * On mobile (<lg breakpoint, 1024px), the desktop filter sidebar is
+ * `hidden lg:block` and the filter UI lives in a slide-over drawer that
+ * opens via the "Open filters" button. Tests that interact with filter
+ * controls (#division-select, credit type chips, etc.) need the drawer
+ * open. This is a no-op on desktop where the sidebar is already visible.
+ */
+async function openFilterDrawerIfMobile(page: Page) {
+  const vp = page.viewportSize();
+  if (!vp || vp.width >= 1024) return;
+  const openFiltersBtn = page.locator('button[aria-label="Open filters"]');
+  if ((await openFiltersBtn.count()) > 0 && (await openFiltersBtn.isVisible())) {
+    await openFiltersBtn.click();
+    await expect(
+      page.locator('[role="dialog"][aria-label="Course filters"]')
+    ).toBeVisible({ timeout: 5_000 });
+  }
+}
+
+/**
+ * Returns the currently-visible filter container (desktop sidebar OR mobile
+ * drawer). Both render the same `filterPanel` component with duplicate IDs
+ * (`#division-select`, `#department-select`), so a bare `page.locator(...)`
+ * matches the first one in DOM order — which is the hidden sidebar on
+ * mobile. Scope filter-control locators to this container instead.
+ */
+function filterContainer(page: Page) {
+  return page
+    .locator('[aria-label="Course filters"]')
+    .filter({ visible: true })
+    .first();
+}
+
 // ─── Page load ──────────────────────────────────────────────────────────────
 
 test.describe("Course Browser — Page Load", () => {
@@ -86,6 +119,10 @@ test.describe("Course Browser — Filters", () => {
   test.beforeEach(async ({ page }) => {
     await page.goto("/courses");
     await waitForCoursesLoaded(page);
+    // On mobile, open the filter drawer so #division-select / credit chips
+    // are reachable. The desktop sidebar is `hidden lg:block` and would
+    // otherwise leave these controls present-but-not-interactable.
+    await openFilterDrawerIfMobile(page);
   });
 
   test("division filter shows only courses in that division", async ({
@@ -98,7 +135,7 @@ test.describe("Course Browser — Filters", () => {
     const initialCount = parseInt(initialCountText?.match(/\d+/)?.[0] ?? "0");
 
     // Select a specific division
-    await page.locator("#division-select").selectOption("Mathematics");
+    await filterContainer(page).locator("#division-select").selectOption("Mathematics");
     await waitForCoursesLoaded(page);
 
     const filteredCountText = await page
@@ -116,11 +153,11 @@ test.describe("Course Browser — Filters", () => {
     page,
   }) => {
     // Select a division with multiple departments
-    await page.locator("#division-select").selectOption("Fine Arts");
+    await filterContainer(page).locator("#division-select").selectOption("Fine Arts");
     await waitForCoursesLoaded(page);
 
     // Department select should now be visible
-    const deptSelect = page.locator("#department-select");
+    const deptSelect = filterContainer(page).locator("#department-select");
     await expect(deptSelect).toBeVisible();
 
     // Select a specific department
@@ -134,7 +171,7 @@ test.describe("Course Browser — Filters", () => {
 
   test("credit type filter works", async ({ page }) => {
     // Click the AP credit type filter chip (role="checkbox")
-    const apChip = page.locator(
+    const apChip = filterContainer(page).locator(
       'fieldset:has(legend:has-text("Credit Type")) button[role="checkbox"]:has-text("AP")'
     );
     await apChip.click();
@@ -147,8 +184,13 @@ test.describe("Course Browser — Filters", () => {
   });
 
   test("multiple credit type filters show combined results", async ({ page }) => {
+    // Scope chips to the visible filter container — both desktop sidebar and
+    // mobile drawer render the same filterPanel, so a bare locator may pick
+    // a hidden duplicate.
+    const filters = filterContainer(page);
+
     // Get AP-only count
-    const apChip = page.locator('button[role="checkbox"]').filter({ hasText: /^AP$/ });
+    const apChip = filters.locator('button[role="checkbox"]').filter({ hasText: /^AP$/ });
     await apChip.click();
     await waitForCoursesLoaded(page);
     await page.waitForTimeout(1000);
@@ -157,7 +199,7 @@ test.describe("Course Browser — Filters", () => {
     expect(apCount).toBeGreaterThan(0); // Sanity check: AP filter returned results
 
     // Now also select CP — should show more results than AP alone
-    const cpChip = page.locator('button[role="checkbox"]').filter({ hasText: /^CP$/ });
+    const cpChip = filters.locator('button[role="checkbox"]').filter({ hasText: /^CP$/ });
     await cpChip.click();
     await waitForCoursesLoaded(page);
     await page.waitForTimeout(1000);
@@ -170,7 +212,7 @@ test.describe("Course Browser — Filters", () => {
 
   test("grade level filter works", async ({ page }) => {
     // Click "Grade 9" filter chip
-    const grade9Chip = page.locator(
+    const grade9Chip = filterContainer(page).locator(
       'fieldset:has(legend:has-text("Grade Level")) button[role="checkbox"]:has-text("Grade 9")'
     );
     await grade9Chip.click();
@@ -182,8 +224,9 @@ test.describe("Course Browser — Filters", () => {
   });
 
   test("GPA waiver filter works", async ({ page }) => {
-    // Check the GPA waiver checkbox
-    const gpaCheckbox = page.getByLabel("GPA waiver available");
+    // Check the GPA waiver checkbox — scope to the visible filter container
+    // so we don't pick the hidden sidebar duplicate on mobile.
+    const gpaCheckbox = filterContainer(page).getByLabel("GPA waiver available");
     await gpaCheckbox.check();
     await waitForCoursesLoaded(page);
 
@@ -210,7 +253,7 @@ test.describe("Course Browser — Filters", () => {
       .textContent();
 
     // Apply a filter
-    await page.locator("#division-select").selectOption("Mathematics");
+    await filterContainer(page).locator("#division-select").selectOption("Mathematics");
     await waitForCoursesLoaded(page);
 
     // Clear filters

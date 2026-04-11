@@ -1,16 +1,10 @@
 import { test, expect, type Page } from "@playwright/test";
-import { waitForHydration } from "./helpers";
+import { login } from "./helpers";
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
-
-async function login(page: Page) {
-  await page.goto("/login");
-  await waitForHydration(page);
-  await page.locator('input[type="email"]').fill("student@test.com");
-  await page.locator('input[type="password"]').first().fill("Test1234!");
-  await page.locator('form button[type="submit"]').click();
-  await page.waitForURL(/\/(dashboard|planner|courses)/, { timeout: 15_000 });
-}
+// Use the canonical login() from helpers.ts — the previous local copy had a
+// narrow waitForURL regex (missing /consent and /onboarding) that hung when
+// the seeded student briefly redirected through those routes after login.
 
 async function waitForCoursesLoaded(page: Page) {
   await expect(
@@ -25,6 +19,57 @@ async function navigateToCourses(page: Page) {
   await login(page);
   await page.goto("/courses");
   await waitForCoursesLoaded(page);
+
+  // The desktop filter sidebar is `hidden lg:block` (≥1024px). On viewports
+  // smaller than that (e.g. iPhone 13 at 390px) the filter UI lives in a
+  // slide-over drawer that opens via the "Open filters" button. Open it so
+  // tests can interact with the filter radios uniformly across viewports.
+  const vp = page.viewportSize();
+  const isMobile = vp ? vp.width < 1024 : false;
+  if (isMobile) {
+    const openFiltersBtn = page.locator('button[aria-label="Open filters"]');
+    if ((await openFiltersBtn.count()) > 0 && (await openFiltersBtn.isVisible())) {
+      await openFiltersBtn.click();
+      // Wait for the drawer to mount
+      await expect(
+        page.locator('[role="dialog"][aria-label="Course filters"]')
+      ).toBeVisible({ timeout: 5_000 });
+    }
+  }
+}
+
+/**
+ * Returns the visible "☀ Summer" filter radio. The page renders the filter UI
+ * twice — once in the desktop sidebar (`hidden lg:block`) and once in the
+ * mobile drawer — so a naked locator can match both elements. This filters to
+ * the one currently rendered for the active viewport.
+ */
+function summerFilterButton(page: Page) {
+  return page
+    .locator('button[role="radio"]:has-text("☀ Summer")')
+    .filter({ visible: true })
+    .first();
+}
+
+/**
+ * On mobile, navigateToCourses leaves the filter drawer open so tests can
+ * interact with filter radios. Once filters are set (or if a test only needs
+ * to click a course card), the drawer must be dismissed — otherwise its
+ * backdrop intercepts pointer events and card clicks time out.
+ */
+async function closeMobileFilterDrawer(page: Page) {
+  const drawer = page.locator('[role="dialog"][aria-label="Course filters"]');
+  if ((await drawer.count()) === 0) return;
+  if (!(await drawer.isVisible())) return;
+  // The drawer's "Done" / "Apply" button closes it; fall back to Escape if
+  // neither button label exists.
+  const doneBtn = drawer.getByRole("button", { name: /^(Done|Apply|Close)$/i }).first();
+  if ((await doneBtn.count()) > 0 && (await doneBtn.isVisible())) {
+    await doneBtn.click();
+  } else {
+    await page.keyboard.press("Escape");
+  }
+  await expect(drawer).toBeHidden({ timeout: 5_000 });
 }
 
 // ─── E108: Summer Filter in Course Browser ──────────────────────────────────
@@ -36,13 +81,13 @@ test.describe("Course Browser — Summer Filter", () => {
 
   test("E108: summer filter button exists in Semester Offered", async ({ page }) => {
     // The "☀ Summer" radio button should be visible
-    const summerBtn = page.locator('button[role="radio"]:has-text("☀ Summer")');
+    const summerBtn = summerFilterButton(page);
     await expect(summerBtn).toBeVisible();
     await expect(summerBtn).toHaveAttribute("aria-checked", "false");
   });
 
   test("E108: clicking summer filter shows only summer courses", async ({ page }) => {
-    const summerBtn = page.locator('button[role="radio"]:has-text("☀ Summer")');
+    const summerBtn = summerFilterButton(page);
     await summerBtn.click();
     await waitForCoursesLoaded(page);
 
@@ -62,7 +107,7 @@ test.describe("Course Browser — Summer Filter", () => {
   });
 
   test("E108: summer courses show 'Summer' in duration text", async ({ page }) => {
-    const summerBtn = page.locator('button[role="radio"]:has-text("☀ Summer")');
+    const summerBtn = summerFilterButton(page);
     await summerBtn.click();
     await waitForCoursesLoaded(page);
 
@@ -92,7 +137,7 @@ test.describe("Course Browser — Summer Badge", () => {
 
   test("E95: summer courses display Summer badge on cards", async ({ page }) => {
     // Filter to summer courses
-    const summerBtn = page.locator('button[role="radio"]:has-text("☀ Summer")');
+    const summerBtn = summerFilterButton(page);
     await summerBtn.click();
     await waitForCoursesLoaded(page);
 
@@ -119,19 +164,29 @@ test.describe("Course Browser — Summer Detail Modal", () => {
   });
 
   test("E96: summer course detail modal shows Summer badge", async ({ page }) => {
-    // Filter to summer
-    const summerBtn = page.locator('button[role="radio"]:has-text("☀ Summer")').first();
-    await summerBtn.click();
+    // Search for a known summer course code instead of relying on the
+    // filter chip — the previous version filtered to summer courses and
+    // clicked the first card, but the filter could race with page render
+    // and pick a non-summer card whose modal then shows no Summer badge.
+    // SOC13S is a seeded summer course (see tests/e2e/global-setup.ts).
+    const searchInput = page.locator("#course-search");
+    await searchInput.fill("SOC13S");
+    await page.waitForTimeout(2_000);
     await waitForCoursesLoaded(page);
 
     if (await page.locator("text=No courses found").isVisible()) {
-      test.skip(true, "No summer courses in catalog");
+      test.skip(true, "Summer course SOC13S not in catalog");
       return;
     }
 
-    // Click the first course card BUTTON to open detail modal
+    // On mobile, the filter drawer left open by navigateToCourses intercepts
+    // pointer events on the underlying course card. Dismiss it before clicking.
+    await closeMobileFilterDrawer(page);
+
+    // Click the first matching course card
     const courseList = page.getByRole("list", { name: "Course results" });
     const firstCard = courseList.getByRole("listitem").first().getByRole("button");
+    await expect(firstCard).toContainText("SOC13S", { timeout: 5_000 });
     await firstCard.click();
 
     // Wait for modal
@@ -139,7 +194,7 @@ test.describe("Course Browser — Summer Detail Modal", () => {
     await expect(modal).toBeVisible({ timeout: 5_000 });
 
     // Modal header should contain "Summer" badge
-    await expect(modal.locator("text=Summer").first()).toBeVisible();
+    await expect(modal.locator("text=Summer").first()).toBeVisible({ timeout: 5_000 });
   });
 });
 
@@ -152,7 +207,7 @@ test.describe("Course Browser — Summer Equivalents", () => {
 
   test("E97: summer course detail shows regular equivalent in linked courses", async ({ page }) => {
     // Filter to summer and search for SOC13S
-    const summerBtn = page.locator('button[role="radio"]:has-text("☀ Summer")');
+    const summerBtn = summerFilterButton(page);
     await summerBtn.click();
     await waitForCoursesLoaded(page);
 
@@ -161,6 +216,10 @@ test.describe("Course Browser — Summer Equivalents", () => {
     // Wait for debounce + API response
     await page.waitForTimeout(2_000);
     await waitForCoursesLoaded(page);
+
+    // Dismiss the mobile filter drawer (left open by navigateToCourses) so
+    // its backdrop doesn't intercept the upcoming card click.
+    await closeMobileFilterDrawer(page);
 
     // Verify SOC13S appears in results
     const courseList = page.getByRole("list", { name: "Course results" });
@@ -184,6 +243,10 @@ test.describe("Course Browser — Summer Equivalents", () => {
     // Wait for debounce + API response
     await page.waitForTimeout(2_000);
     await waitForCoursesLoaded(page);
+
+    // Dismiss the mobile filter drawer (left open by navigateToCourses) so
+    // its backdrop doesn't intercept the upcoming card click.
+    await closeMobileFilterDrawer(page);
 
     // Verify SOC101 appears in results
     const courseList = page.getByRole("list", { name: "Course results" });

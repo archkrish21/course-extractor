@@ -212,20 +212,61 @@ async function globalSetup() {
     );
 
     // ── 7. Ensure primary plan exists ────────────────────────────────
-    const planResult = await client.query(
-      `SELECT id FROM four_year_plans WHERE account_id = $1 AND is_primary = true AND is_template = false LIMIT 1`,
-      [accountId],
+    // plan-management.spec.ts expects a ★ marker on the student's "My Plans"
+    // tab, which only shows plans where permission === "owner" — i.e., plans
+    // created by the student themselves. A plan created by a parent/counselor
+    // for the same account ends up in "Shared with Me" and never satisfies
+    // the test even if it's flagged is_primary in the DB.
+    //
+    // So the seeded primary plan MUST be owned (created_by) by the student.
+    // 1. Find a primary plan created by the student.
+    // 2. If a plan exists owned by the student but isn't primary, promote it
+    //    (and clear is_primary on any other plan in the account first).
+    // 3. Otherwise, create a fresh "E2E Test Plan" owned by the student.
+    const ownedPrimary = await client.query(
+      `SELECT id FROM four_year_plans
+       WHERE account_id = $1 AND is_primary = true AND is_template = false AND created_by = $2
+       LIMIT 1`,
+      [accountId, studentId],
     );
     let planId: string;
-    if (planResult.rows.length > 0) {
-      planId = planResult.rows[0].id;
+    if (ownedPrimary.rows.length > 0) {
+      planId = ownedPrimary.rows[0].id;
     } else {
-      const ins = await client.query(
-        `INSERT INTO four_year_plans (account_id, student_id, name, school_year, is_primary, is_template, status, activated_at, created_by)
-         VALUES ($1, $2, 'E2E Test Plan', '2024-2025', true, false, 'active', NOW(), $2) RETURNING id`,
+      // No student-owned primary plan. Try to promote an existing student-
+      // owned plan to primary.
+      const ownedAny = await client.query(
+        `SELECT id FROM four_year_plans
+         WHERE account_id = $1 AND is_template = false AND created_by = $2
+         ORDER BY created_at ASC LIMIT 1`,
         [accountId, studentId],
       );
-      planId = ins.rows[0].id;
+      if (ownedAny.rows.length > 0) {
+        planId = ownedAny.rows[0].id;
+        // Clear is_primary on any other plan in this account (only one plan
+        // can be primary at a time).
+        await client.query(
+          `UPDATE four_year_plans SET is_primary = false WHERE account_id = $1 AND id <> $2`,
+          [accountId, planId],
+        );
+        await client.query(
+          `UPDATE four_year_plans SET is_primary = true WHERE id = $1`,
+          [planId],
+        );
+      } else {
+        // Clear any existing primary on the account so the new plan becomes
+        // the sole primary without violating any uniqueness constraint.
+        await client.query(
+          `UPDATE four_year_plans SET is_primary = false WHERE account_id = $1`,
+          [accountId],
+        );
+        const ins = await client.query(
+          `INSERT INTO four_year_plans (account_id, student_id, name, school_year, is_primary, is_template, status, activated_at, created_by)
+           VALUES ($1, $2, 'E2E Test Plan', '2024-2025', true, false, 'active', NOW(), $2) RETURNING id`,
+          [accountId, studentId],
+        );
+        planId = ins.rows[0].id;
+      }
     }
     console.log(`[e2e-setup] Primary plan: ${planId}`);
 

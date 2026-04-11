@@ -330,6 +330,18 @@ export async function DELETE() {
 
     // Null out FK references before deleting accounts
     await db.execute(sql`UPDATE accounts SET billing_contact_id = NULL WHERE billing_contact_id = ${user.id}`);
+
+    // Delete plans this user created on OTHER students' accounts (orphan cleanup).
+    // Without this, plans stay in four_year_plans with created_by=NULL after the UPDATE
+    // below, and still count against the account's plan limit because the POST /plans
+    // count query counts by account_id. Plans on the user's OWN student account are
+    // cascade-deleted below via `DELETE FROM accounts WHERE studentUserId = user.id`.
+    await db.execute(sql`
+      DELETE FROM four_year_plans
+      WHERE created_by = ${user.id}
+        AND is_template = false
+        AND student_id IS DISTINCT FROM ${user.id}
+    `);
     await db.execute(sql`UPDATE four_year_plans SET created_by = NULL WHERE created_by = ${user.id}`);
     await db.execute(sql`UPDATE account_invite_codes SET created_by = NULL WHERE created_by = ${user.id}`);
     await db.execute(sql`UPDATE account_invite_codes SET claimed_by = NULL WHERE claimed_by = ${user.id}`);

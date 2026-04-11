@@ -1,7 +1,7 @@
 import { NextRequest } from "next/server";
 import { db } from "@/lib/db";
 import { accounts, accountMembers } from "@/lib/db/schema";
-import { eq, and } from "drizzle-orm";
+import { eq, and, sql } from "drizzle-orm";
 import { successResponse, errorResponse } from "@/lib/api/response";
 import { requireAuth, getAccountContext } from "@/lib/auth/get-user";
 
@@ -62,6 +62,19 @@ export async function DELETE(request: NextRequest, context: RouteContext) {
     if (!targetMember) {
       return errorResponse("NOT_FOUND", "Member not found.", 404);
     }
+
+    // Delete plans this member created on this account (orphan cleanup).
+    // Without this, the plans remain in four_year_plans and still count against
+    // the account's plan limit, blocking remaining members from creating new plans
+    // for slots freed up by the removal. Skip the student's own plans (they shouldn't
+    // be removable via this endpoint anyway — guarded above).
+    await db.execute(sql`
+      DELETE FROM four_year_plans
+      WHERE created_by = ${targetUserId}
+        AND account_id = ${accountId}
+        AND is_template = false
+        AND student_id IS DISTINCT FROM ${targetUserId}
+    `);
 
     // Remove the member
     await db

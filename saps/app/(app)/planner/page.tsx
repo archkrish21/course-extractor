@@ -55,6 +55,11 @@ export default function PlannerPage() {
   const { currentAccount, refetchAccounts } = useAccount();
   const isCounselor = currentAccount?.role === "counselor";
   const [plans, setPlans] = useState<Plan[]>([]);
+  const [planLimit, setPlanLimit] = useState<{
+    count: number;
+    maxPlans: number | null;
+    canCreate: boolean;
+  } | null>(null);
   const [selectedPlanId, setSelectedPlanIdState] = useState<string | null>(null);
 
   const setSelectedPlanId = useCallback((id: string | null) => {
@@ -176,6 +181,9 @@ export default function PlannerPage() {
           const data = await res.json();
           const planList: Plan[] = data.plans ?? data.data ?? data ?? [];
           setPlans(planList);
+          if (data.meta?.planLimit) {
+            setPlanLimit(data.meta.planLimit);
+          }
           // Restore from URL param or sessionStorage, else select primary plan or first plan
           const urlPlanId = new URLSearchParams(window.location.search).get("planId")
             || sessionStorage.getItem("planner:selectedPlanId");
@@ -701,6 +709,12 @@ export default function PlannerPage() {
       if (res.ok) {
         const remaining = plans.filter((p) => p.id !== selectedPlanId);
         setPlans(remaining);
+        setPlanLimit((prev) => {
+          if (!prev) return prev;
+          const nextCount = Math.max(0, prev.count - 1);
+          const canCreate = prev.maxPlans === null ? true : nextCount < prev.maxPlans;
+          return { ...prev, count: nextCount, canCreate };
+        });
         setSelectedPlanId(remaining[0]?.id ?? null);
         setCourses([]);
         setViolations({});
@@ -1009,6 +1023,12 @@ export default function PlannerPage() {
       if (res.ok) {
         const newPlan: Plan = json.data ?? json;
         setPlans((prev) => [...prev, newPlan]);
+        setPlanLimit((prev) => {
+          if (!prev) return prev;
+          const nextCount = prev.count + 1;
+          const canCreate = prev.maxPlans === null ? true : nextCount < prev.maxPlans;
+          return { ...prev, count: nextCount, canCreate };
+        });
         setSelectedPlanId(newPlan.id);
         await fetchPlanData(newPlan.id);
         setShowNewPlanModal(false);
@@ -1152,10 +1172,24 @@ export default function PlannerPage() {
           onClick={(e) => e.stopPropagation()}
         >
           <div className="border-b border-border px-6 py-4">
-            <h3 className="text-lg font-semibold text-foreground">Create New Plan</h3>
-            <p className="mt-0.5 text-sm text-muted-foreground">
-              Name your plan and optionally start from a template.
-            </p>
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <h3 className="text-lg font-semibold text-foreground">Create New Plan</h3>
+                <p className="mt-0.5 text-sm text-muted-foreground">
+                  Name your plan and optionally start from a template.
+                </p>
+              </div>
+              {planLimit && planLimit.maxPlans !== null && (
+                <Badge variant={planLimit.canCreate ? "default" : "destructive"}>
+                  {planLimit.count}/{planLimit.maxPlans} plans used
+                </Badge>
+              )}
+            </div>
+            {planLimit && !planLimit.canCreate && (
+              <p className="mt-2 text-xs text-destructive">
+                You&apos;ve reached your plan limit. Delete a plan or upgrade to create more.
+              </p>
+            )}
           </div>
 
           <div className="px-6 py-4 flex flex-col gap-4">
@@ -1236,7 +1270,7 @@ export default function PlannerPage() {
             <Button
               size="sm"
               onClick={handleCreatePlan}
-              disabled={!newPlanName.trim() || creatingPlan}
+              disabled={!newPlanName.trim() || creatingPlan || (planLimit ? !planLimit.canCreate : false)}
             >
               {creatingPlan ? "Creating..." : "Create Plan"}
             </Button>
@@ -1516,7 +1550,13 @@ export default function PlannerPage() {
               variant="outline"
               onClick={openNewPlanModal}
               aria-label="Create new plan"
-              title="New Plan"
+              title={
+                planLimit && !planLimit.canCreate
+                  ? `Plan limit reached (${planLimit.count}/${planLimit.maxPlans}). Delete a plan or upgrade to create more.`
+                  : planLimit && planLimit.maxPlans !== null
+                  ? `New Plan (${planLimit.count}/${planLimit.maxPlans} used)`
+                  : "New Plan"
+              }
             >
               <svg aria-hidden="true" className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />

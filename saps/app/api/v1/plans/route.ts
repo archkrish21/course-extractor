@@ -16,6 +16,37 @@ import { successResponse, errorResponse } from "@/lib/api/response";
 import { requireAuth, getAccountContext } from "@/lib/auth/get-user";
 import { getEffectiveTier } from "@/lib/subscription/middleware";
 
+/**
+ * Builds the meta block returned by GET /api/v1/plans.
+ * Count reflects the same scope as the POST /plans creation gate (account-wide,
+ * non-template) so the UI can honestly surface "X/Y plans used" without
+ * diverging from what the server will actually enforce on create.
+ */
+async function buildPlanLimitMeta(params: {
+  accountId: string | null;
+  userId: string;
+}): Promise<{
+  count: number;
+  maxPlans: number | null;
+  canCreate: boolean;
+  tier: string;
+}> {
+  const { accountId, userId } = params;
+  const tier = await getEffectiveTier({ accountId: accountId ?? undefined, userId });
+
+  const countCondition = accountId
+    ? and(eq(fourYearPlans.accountId, accountId), eq(fourYearPlans.isTemplate, false))
+    : and(eq(fourYearPlans.studentId, userId), eq(fourYearPlans.isTemplate, false));
+
+  const [row] = await db.select({ count: count() }).from(fourYearPlans).where(countCondition);
+  const currentCount = row?.count ?? 0;
+  // getEffectiveTier returns Infinity for unlimited tiers (e.g. Elite) — normalize to null for the wire
+  const maxPlans = Number.isFinite(tier.maxPlans) ? tier.maxPlans : null;
+  const canCreate = maxPlans === null ? true : currentCount < maxPlans;
+
+  return { count: currentCount, maxPlans, canCreate, tier: tier.tier };
+}
+
 const createPlanSchema = z.object({
   name: z.string().min(1).max(100),
   school_year: z
@@ -129,7 +160,8 @@ export async function GET(request: NextRequest) {
         .orderBy(fourYearPlans.createdAt);
 
       const filtered = includeHidden ? plans : plans.filter((p) => !p.isHidden);
-      return successResponse(filtered);
+      const planLimit = await buildPlanLimitMeta({ accountId, userId: user.id });
+      return successResponse(filtered, { planLimit });
     }
 
     // Backward compatibility: no account, fall back to studentId
@@ -188,7 +220,8 @@ export async function GET(request: NextRequest) {
       .orderBy(fourYearPlans.createdAt);
 
     const filtered = includeHidden ? plans : plans.filter((p) => !p.isHidden);
-    return successResponse(filtered);
+    const planLimit = await buildPlanLimitMeta({ accountId: null, userId: user.id });
+    return successResponse(filtered, { planLimit });
   } catch (error) {
     console.error("[plans] GET error:", error);
     return errorResponse(

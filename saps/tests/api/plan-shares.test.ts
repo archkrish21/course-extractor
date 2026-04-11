@@ -641,9 +641,10 @@ describe("POST /api/v1/accounts/:id/members — linked accounts limit", () => {
     let queryIndex = 0;
     dbChain.then = vi.fn().mockImplementation((resolve: (v: unknown) => unknown) => {
       queryIndex++;
-      if (queryIndex === 1) return Promise.resolve(resolve([{ count: 2 }])); // member count — under limit
-      if (queryIndex === 2) return Promise.resolve(resolve([{ studentName: "Test Student" }])); // account lookup for email
-      if (queryIndex === 3) return Promise.resolve(resolve([{ email: "owner@test.com" }])); // inviter lookup
+      if (queryIndex === 1) return Promise.resolve(resolve([])); // duplicate email check — none
+      if (queryIndex === 2) return Promise.resolve(resolve([{ count: 2 }])); // member count — under limit
+      if (queryIndex === 3) return Promise.resolve(resolve([{ studentName: "Test Student" }])); // account lookup for email
+      if (queryIndex === 4) return Promise.resolve(resolve([{ email: "owner@test.com" }])); // inviter lookup
       return Promise.resolve(resolve([]));
     });
     mockReturning.mockResolvedValue([{
@@ -681,9 +682,10 @@ describe("POST /api/v1/accounts/:id/members — linked accounts limit", () => {
     let queryIndex = 0;
     dbChain.then = vi.fn().mockImplementation((resolve: (v: unknown) => unknown) => {
       queryIndex++;
-      if (queryIndex === 1) return Promise.resolve(resolve([{ count: 1 }])); // member count — under limit
-      if (queryIndex === 2) return Promise.resolve(resolve([{ studentName: "Test Student" }])); // account lookup for email
-      if (queryIndex === 3) return Promise.resolve(resolve([{ email: "owner@test.com" }])); // inviter lookup
+      if (queryIndex === 1) return Promise.resolve(resolve([])); // duplicate email check — none
+      if (queryIndex === 2) return Promise.resolve(resolve([{ count: 1 }])); // member count — under limit
+      if (queryIndex === 3) return Promise.resolve(resolve([{ studentName: "Test Student" }])); // account lookup for email
+      if (queryIndex === 4) return Promise.resolve(resolve([{ email: "owner@test.com" }])); // inviter lookup
       return Promise.resolve(resolve([]));
     });
     mockReturning.mockResolvedValue([{
@@ -710,11 +712,12 @@ describe("POST /api/v1/accounts/:id/members — linked accounts limit", () => {
     let queryIndex = 0;
     dbChain.then = vi.fn().mockImplementation((resolve: (v: unknown) => unknown) => {
       queryIndex++;
+      if (queryIndex === 1) return Promise.resolve(resolve([])); // duplicate email check — none
       // Ownership check: return the plan as owned so the handler proceeds
-      if (queryIndex === 1) return Promise.resolve(resolve([{ planId: sharedPlanId }]));
-      if (queryIndex === 2) return Promise.resolve(resolve([{ count: 1 }]));
-      if (queryIndex === 3) return Promise.resolve(resolve([{ studentName: "Test Student" }]));
-      if (queryIndex === 4) return Promise.resolve(resolve([{ email: "owner@test.com" }]));
+      if (queryIndex === 2) return Promise.resolve(resolve([{ planId: sharedPlanId }]));
+      if (queryIndex === 3) return Promise.resolve(resolve([{ count: 1 }]));
+      if (queryIndex === 4) return Promise.resolve(resolve([{ studentName: "Test Student" }]));
+      if (queryIndex === 5) return Promise.resolve(resolve([{ email: "owner@test.com" }]));
       return Promise.resolve(resolve([]));
     });
     mockReturning.mockResolvedValue([{
@@ -737,6 +740,62 @@ describe("POST /api/v1/accounts/:id/members — linked accounts limit", () => {
 
     expect(response.status).toBe(201);
     expect(body.data.invite_code).toBe("PLAN1234");
+  });
+
+  it("rejects invite when email is already a linked member", async () => {
+    mockGetEffectiveTier.mockResolvedValue({ maxLinkedAccounts: 5 });
+
+    // Duplicate email check returns an existing member
+    dbChain.then = vi.fn().mockImplementation((resolve: (v: unknown) => unknown) =>
+      Promise.resolve(resolve([{
+        userId: "existing-user-id",
+        email: "parent@test.com",
+        firstName: "Alice",
+        lastName: "Smith",
+        role: "parent",
+      }]))
+    );
+
+    const request = makeJsonRequest(
+      `http://localhost:3000/api/v1/accounts/${TEST_ACCOUNT_ID}/members`,
+      { target_role: "parent", email: "parent@test.com" }
+    );
+    const response = await createMember(request, accountContext(TEST_ACCOUNT_ID));
+    const body = await response.json();
+
+    expect(response.status).toBe(409);
+    expect(body.error.code).toBe("ALREADY_LINKED");
+    expect(body.error.message).toContain("Alice Smith");
+    expect(body.error.message).toContain("parent");
+    expect(body.error.role).toBe("parent");
+  });
+
+  it("rejects self-invite when inviter enters their own email", async () => {
+    // owner@test.com is TEST_USER.email (see top of file)
+    const request = makeJsonRequest(
+      `http://localhost:3000/api/v1/accounts/${TEST_ACCOUNT_ID}/members`,
+      { target_role: "parent", email: "owner@test.com" }
+    );
+    const response = await createMember(request, accountContext(TEST_ACCOUNT_ID));
+    const body = await response.json();
+
+    expect(response.status).toBe(409);
+    expect(body.error.code).toBe("ALREADY_LINKED");
+    expect(body.error.message).toContain("yourself");
+    expect(body.error.self).toBe(true);
+  });
+
+  it("rejects self-invite regardless of email case", async () => {
+    const request = makeJsonRequest(
+      `http://localhost:3000/api/v1/accounts/${TEST_ACCOUNT_ID}/members`,
+      { target_role: "parent", email: "OWNER@test.com" }
+    );
+    const response = await createMember(request, accountContext(TEST_ACCOUNT_ID));
+    const body = await response.json();
+
+    expect(response.status).toBe(409);
+    expect(body.error.code).toBe("ALREADY_LINKED");
+    expect(body.error.self).toBe(true);
   });
 
   it("rejects shared_plans the inviter does not own", async () => {

@@ -109,6 +109,54 @@ export async function POST(request: NextRequest, context: RouteContext) {
 
     const { target_role, shared_plans } = parsed.data;
 
+    // If an email was provided, block inviting someone already linked to this
+    // account — including the inviter themselves. Invite codes don't store the
+    // target email, so we can only catch already-joined members; pending invite
+    // codes for the same email still pass through.
+    if (parsed.data.email) {
+      const normalizedEmail = parsed.data.email.trim().toLowerCase();
+
+      // Self-invite: friendlier dedicated message
+      if (normalizedEmail === user.email.toLowerCase()) {
+        return errorResponse(
+          "ALREADY_LINKED",
+          "You can't invite yourself to this account — you're already a member.",
+          409,
+          { self: true, email: user.email }
+        );
+      }
+
+      const [existing] = await db
+        .select({
+          userId: users.id,
+          email: users.email,
+          firstName: users.firstName,
+          lastName: users.lastName,
+          role: accountMembers.role,
+        })
+        .from(users)
+        .innerJoin(accountMembers, eq(accountMembers.userId, users.id))
+        .where(
+          and(
+            eq(users.email, normalizedEmail),
+            eq(accountMembers.accountId, accountId)
+          )
+        )
+        .limit(1);
+
+      if (existing) {
+        const displayName =
+          [existing.firstName, existing.lastName].filter(Boolean).join(" ").trim() ||
+          existing.email;
+        return errorResponse(
+          "ALREADY_LINKED",
+          `${displayName} is already linked to this account as ${existing.role === "student" ? "the student" : `a ${existing.role}`}.`,
+          409,
+          { role: existing.role, email: existing.email }
+        );
+      }
+    }
+
     // Ownership check: users can only grant shares on plans they own.
     // Without this, a malicious client could POST any plan_id and (via the
     // join flow) create plan_shares for plans they don't own.

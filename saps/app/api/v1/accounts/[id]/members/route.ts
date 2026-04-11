@@ -1,8 +1,8 @@
 import { NextRequest } from "next/server";
 import { z } from "zod";
 import { db } from "@/lib/db";
-import { accountMembers, accountInviteCodes, accounts, users } from "@/lib/db/schema";
-import { eq, and, count } from "drizzle-orm";
+import { accountMembers, accountInviteCodes, accounts, users, planShares } from "@/lib/db/schema";
+import { eq, and, count, inArray } from "drizzle-orm";
 import { getEffectiveTier, invalidateSubscriptionCache } from "@/lib/subscription/middleware";
 import { successResponse, errorResponse } from "@/lib/api/response";
 import { requireAuth, getAccountContext } from "@/lib/auth/get-user";
@@ -108,6 +108,33 @@ export async function POST(request: NextRequest, context: RouteContext) {
     }
 
     const { target_role, shared_plans } = parsed.data;
+
+    // Ownership check: users can only grant shares on plans they own.
+    // Without this, a malicious client could POST any plan_id and (via the
+    // join flow) create plan_shares for plans they don't own.
+    if (shared_plans && shared_plans.length > 0) {
+      const planIds = shared_plans.map((sp) => sp.plan_id);
+      const ownedRows = await db
+        .select({ planId: planShares.planId })
+        .from(planShares)
+        .where(
+          and(
+            inArray(planShares.planId, planIds),
+            eq(planShares.userId, user.id),
+            eq(planShares.permission, "owner")
+          )
+        );
+      const ownedSet = new Set(ownedRows.map((r) => r.planId));
+      const notOwned = planIds.filter((id) => !ownedSet.has(id));
+      if (notOwned.length > 0) {
+        return errorResponse(
+          "FORBIDDEN",
+          "You can only share plans you own.",
+          403,
+          { not_owned: notOwned }
+        );
+      }
+    }
 
     // Check linked accounts limit based on subscription tier
     // Invalidate cache first to ensure fresh tier data

@@ -90,7 +90,17 @@ export default function SettingsPage() {
     apiFetch("/api/v1/plans").then((r) => (r.ok ? r.json() : null)).then((json) => {
       const plans = json?.data ?? json?.plans ?? json ?? [];
       if (Array.isArray(plans)) {
-        setAccountPlans(plans.map((p: Record<string, unknown>) => ({ id: p.id as string, name: (p.name ?? "Untitled") as string, isPrimary: !!(p.isPrimary ?? p.is_primary) })));
+        // Only list plans the logged-in user owns — they can't grant shares
+        // on plans they merely have view/edit access to.
+        setAccountPlans(
+          plans
+            .filter((p: Record<string, unknown>) => p.permission === "owner")
+            .map((p: Record<string, unknown>) => ({
+              id: p.id as string,
+              name: (p.name ?? "Untitled") as string,
+              isPrimary: !!(p.isPrimary ?? p.is_primary),
+            }))
+        );
       }
     }).catch(() => {});
     apiFetch("/api/v1/auth/consent").then((r) => (r.ok ? r.json() : null)).then((json) => {

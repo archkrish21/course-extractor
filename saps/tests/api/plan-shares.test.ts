@@ -111,6 +111,7 @@ vi.mock("drizzle-orm", () => ({
   eq: vi.fn((...args: unknown[]) => ({ type: "eq", args })),
   and: vi.fn((...args: unknown[]) => ({ type: "and", args })),
   or: vi.fn((...args: unknown[]) => ({ type: "or", args })),
+  inArray: vi.fn((...args: unknown[]) => ({ type: "inArray", args })),
   count: vi.fn(() => ({ type: "count" })),
   sql: Object.assign(
     (strings: TemplateStringsArray, ..._values: unknown[]) => ({
@@ -705,12 +706,15 @@ describe("POST /api/v1/accounts/:id/members — linked accounts limit", () => {
   it("accepts shared_plans parameter in invite", async () => {
     mockGetEffectiveTier.mockResolvedValue({ maxLinkedAccounts: 5 });
 
+    const sharedPlanId = "aaaaaaaa-bbbb-4ccc-8ddd-eeeeeeeeeeee";
     let queryIndex = 0;
     dbChain.then = vi.fn().mockImplementation((resolve: (v: unknown) => unknown) => {
       queryIndex++;
-      if (queryIndex === 1) return Promise.resolve(resolve([{ count: 1 }]));
-      if (queryIndex === 2) return Promise.resolve(resolve([{ studentName: "Test Student" }]));
-      if (queryIndex === 3) return Promise.resolve(resolve([{ email: "owner@test.com" }]));
+      // Ownership check: return the plan as owned so the handler proceeds
+      if (queryIndex === 1) return Promise.resolve(resolve([{ planId: sharedPlanId }]));
+      if (queryIndex === 2) return Promise.resolve(resolve([{ count: 1 }]));
+      if (queryIndex === 3) return Promise.resolve(resolve([{ studentName: "Test Student" }]));
+      if (queryIndex === 4) return Promise.resolve(resolve([{ email: "owner@test.com" }]));
       return Promise.resolve(resolve([]));
     });
     mockReturning.mockResolvedValue([{
@@ -724,7 +728,7 @@ describe("POST /api/v1/accounts/:id/members — linked accounts limit", () => {
         target_role: "counselor",
         email: "counselor@school.edu",
         shared_plans: [
-          { plan_id: "aaaaaaaa-bbbb-4ccc-8ddd-eeeeeeeeeeee", permission: "view" },
+          { plan_id: sharedPlanId, permission: "view" },
         ],
       }
     );
@@ -733,6 +737,32 @@ describe("POST /api/v1/accounts/:id/members — linked accounts limit", () => {
 
     expect(response.status).toBe(201);
     expect(body.data.invite_code).toBe("PLAN1234");
+  });
+
+  it("rejects shared_plans the inviter does not own", async () => {
+    mockGetEffectiveTier.mockResolvedValue({ maxLinkedAccounts: 5 });
+
+    // Ownership check returns empty → plan is not owned by the inviter
+    dbChain.then = vi.fn().mockImplementation((resolve: (v: unknown) => unknown) =>
+      Promise.resolve(resolve([]))
+    );
+
+    const request = makeJsonRequest(
+      `http://localhost:3000/api/v1/accounts/${TEST_ACCOUNT_ID}/members`,
+      {
+        target_role: "parent",
+        email: "parent@test.com",
+        shared_plans: [
+          { plan_id: "aaaaaaaa-bbbb-4ccc-8ddd-eeeeeeeeeeee", permission: "view" },
+        ],
+      }
+    );
+    const response = await createMember(request, accountContext(TEST_ACCOUNT_ID));
+    const body = await response.json();
+
+    expect(response.status).toBe(403);
+    expect(body.error.code).toBe("FORBIDDEN");
+    expect(body.error.not_owned).toContain("aaaaaaaa-bbbb-4ccc-8ddd-eeeeeeeeeeee");
   });
 
   it("rejects invalid permission in shared_plans", async () => {

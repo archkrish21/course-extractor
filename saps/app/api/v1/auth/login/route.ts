@@ -5,6 +5,7 @@ import { db } from "@/lib/db";
 import { users } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
 import { successResponse, errorResponse } from "@/lib/api/response";
+import { requireSameOrigin } from "@/lib/api/require-same-origin";
 import { rateLimit } from "@/lib/api/rate-limit";
 
 const loginSchema = z.object({
@@ -14,6 +15,9 @@ const loginSchema = z.object({
 
 export async function POST(request: NextRequest) {
   try {
+    const csrf = requireSameOrigin(request);
+    if (csrf) return csrf;
+
     // Rate limit: 5 requests/minute per IP
     const ip = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? "unknown";
     const rateLimitResult = await rateLimit(`auth:login:${ip}`, 5, 60);

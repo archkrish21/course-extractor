@@ -17,6 +17,7 @@ import {
 import { eq, and, sql } from "drizzle-orm";
 import { requireAuth } from "@/lib/auth/get-user";
 import { successResponse, errorResponse } from "@/lib/api/response";
+import { requireSameOrigin } from "@/lib/api/require-same-origin";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 
 const notificationChannelSchema = z.object({
@@ -50,6 +51,9 @@ export async function PATCH(request: NextRequest) {
     const authResult = await requireAuth();
     if (authResult instanceof Response) return authResult;
     const user = authResult;
+
+    const csrf = requireSameOrigin(request);
+    if (csrf) return csrf;
 
     const body = await request.json();
     const parsed = updatePreferencesSchema.safeParse(body);
@@ -276,10 +280,13 @@ export async function GET() {
  * Permanently delete the user's account and all associated data.
  * Consent records are anonymized (userId set to null), not deleted.
  */
-export async function DELETE() {
+export async function DELETE(request: NextRequest) {
   try {
     const user = await requireAuth();
     if (user instanceof Response) return user;
+
+    const csrf = requireSameOrigin(request);
+    if (csrf) return csrf;
 
     // Cancel Stripe subscription and delete Stripe customer
     try {

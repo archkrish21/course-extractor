@@ -6,6 +6,7 @@ import { eq, and, count, inArray } from "drizzle-orm";
 import { getEffectiveTier, invalidateSubscriptionCache } from "@/lib/subscription/middleware";
 import { successResponse, errorResponse } from "@/lib/api/response";
 import { rateLimit } from "@/lib/api/rate-limit";
+import { requireSameOrigin } from "@/lib/api/require-same-origin";
 import { requireAuth, getAccountContext } from "@/lib/auth/get-user";
 import { sendEmail } from "@/lib/email/client";
 import { inviteEmail as inviteEmailTemplate } from "@/lib/email/templates";
@@ -88,6 +89,9 @@ export async function POST(request: NextRequest, context: RouteContext) {
   try {
     const user = await requireAuth();
     if (user instanceof Response) return user;
+
+    const csrf = requireSameOrigin(request);
+    if (csrf) return csrf;
 
     // Rate limit: 20 invites per hour per user. Prevents an invite-spam
     // abuse pattern where a compromised account blasts out invites.

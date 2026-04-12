@@ -5,6 +5,7 @@ import { db } from "@/lib/db";
 import { accounts, accountMembers, studentProfiles, users, subscriptions, subscriptionPlans } from "@/lib/db/schema";
 import { eq, and, sql } from "drizzle-orm";
 import { successResponse, errorResponse } from "@/lib/api/response";
+import { requireSameOrigin } from "@/lib/api/require-same-origin";
 import { requireAuth } from "@/lib/auth/get-user";
 
 function generateClaimCode(): string {
@@ -32,6 +33,9 @@ export async function POST(request: NextRequest) {
   try {
     const user = await requireAuth();
     if (user instanceof Response) return user;
+
+    const csrf = requireSameOrigin(request);
+    if (csrf) return csrf;
 
     // Verify user is a parent
     const [userData] = await db

@@ -3,6 +3,7 @@ import { db } from "@/lib/db";
 import { accounts, accountMembers } from "@/lib/db/schema";
 import { eq, and, sql } from "drizzle-orm";
 import { successResponse, errorResponse } from "@/lib/api/response";
+import { requireSameOrigin } from "@/lib/api/require-same-origin";
 import { requireAuth, getAccountContext } from "@/lib/auth/get-user";
 
 interface RouteContext {
@@ -18,6 +19,9 @@ export async function DELETE(request: NextRequest, context: RouteContext) {
   try {
     const user = await requireAuth();
     if (user instanceof Response) return user;
+
+    const csrf = requireSameOrigin(request);
+    if (csrf) return csrf;
 
     const { id: accountId, userId: targetUserId } = await context.params;
 

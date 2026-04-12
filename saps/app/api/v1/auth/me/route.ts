@@ -4,6 +4,7 @@ import { db } from "@/lib/db";
 import { users } from "@/lib/db/schema";
 import { eq, sql } from "drizzle-orm";
 import { successResponse, errorResponse } from "@/lib/api/response";
+import { requireSameOrigin } from "@/lib/api/require-same-origin";
 import { requireAuth } from "@/lib/auth/get-user";
 
 const updateNameSchema = z.object({
@@ -52,6 +53,9 @@ export async function PATCH(request: NextRequest) {
   try {
     const user = await requireAuth();
     if (user instanceof Response) return user;
+
+    const csrf = requireSameOrigin(request);
+    if (csrf) return csrf;
 
     const body = await request.json();
     const parsed = updateNameSchema.safeParse(body);

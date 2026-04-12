@@ -12,6 +12,7 @@ import {
 import { eq, and, isNull } from "drizzle-orm";
 import { successResponse, errorResponse } from "@/lib/api/response";
 import { rateLimit } from "@/lib/api/rate-limit";
+import { requireSameOrigin } from "@/lib/api/require-same-origin";
 import { requireAuth } from "@/lib/auth/get-user";
 
 const claimSchema = z.object({
@@ -26,6 +27,9 @@ export async function POST(request: NextRequest) {
   try {
     const user = await requireAuth();
     if (user instanceof Response) return user;
+
+    const csrf = requireSameOrigin(request);
+    if (csrf) return csrf;
 
     // Rate limit: 10 attempts per hour per IP. Claim codes are short and
     // brute-forceable — this limits guessing attacks. Keyed by IP since

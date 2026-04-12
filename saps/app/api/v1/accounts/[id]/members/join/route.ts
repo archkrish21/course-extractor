@@ -5,6 +5,7 @@ import { accountMembers, accountInviteCodes, accounts, studentProfiles, users, s
 import { eq, and, isNull, sql } from "drizzle-orm";
 import { successResponse, errorResponse } from "@/lib/api/response";
 import { rateLimit } from "@/lib/api/rate-limit";
+import { requireSameOrigin } from "@/lib/api/require-same-origin";
 import { requireAuth } from "@/lib/auth/get-user";
 
 const joinSchema = z.object({
@@ -23,6 +24,9 @@ export async function POST(request: NextRequest, context: RouteContext) {
   try {
     const user = await requireAuth();
     if (user instanceof Response) return user;
+
+    const csrf = requireSameOrigin(request);
+    if (csrf) return csrf;
 
     // Rate limit: 10 attempts per hour per IP. Invite codes are 8 chars,
     // so this is the main brute-force surface. Keyed by IP so an attacker

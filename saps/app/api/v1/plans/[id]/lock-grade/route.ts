@@ -4,6 +4,7 @@ import { db } from "@/lib/db";
 import { fourYearPlans, accounts } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
 import { successResponse, errorResponse } from "@/lib/api/response";
+import { requireSameOrigin } from "@/lib/api/require-same-origin";
 import { requireAuth } from "@/lib/auth/get-user";
 import { getPlanAccess, hasPermission } from "@/lib/auth/plan-permissions";
 import { maybeCreateSemesterSnapshot } from "@/lib/gpa/snapshot";
@@ -26,6 +27,9 @@ export async function POST(request: NextRequest, context: RouteContext) {
   try {
     const user = await requireAuth();
     if (user instanceof Response) return user;
+
+    const csrf = requireSameOrigin(request);
+    if (csrf) return csrf;
 
     const { id: planId } = await context.params;
 

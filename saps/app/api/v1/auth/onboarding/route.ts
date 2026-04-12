@@ -14,6 +14,7 @@ import {
 } from "@/lib/db/schema";
 import { eq, and, desc } from "drizzle-orm";
 import { successResponse, errorResponse } from "@/lib/api/response";
+import { requireSameOrigin } from "@/lib/api/require-same-origin";
 import { requireAuth } from "@/lib/auth/get-user";
 import { rateLimit } from "@/lib/api/rate-limit";
 import { ALL_GRADES } from "@/config/grade-scale";
@@ -47,6 +48,9 @@ export async function POST(request: NextRequest) {
     const authResult = await requireAuth();
     if (authResult instanceof Response) return authResult;
     const user = authResult;
+
+    const csrf = requireSameOrigin(request);
+    if (csrf) return csrf;
 
     // Rate limit: 10 requests/minute per user
     const rateLimitResult = await rateLimit(`auth:onboarding:${user.id}`, 10, 60);

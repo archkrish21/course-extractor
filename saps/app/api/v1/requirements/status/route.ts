@@ -7,6 +7,7 @@ import {
 } from "@/lib/db/schema";
 import { eq, and } from "drizzle-orm";
 import { successResponse, errorResponse } from "@/lib/api/response";
+import { requireSameOrigin } from "@/lib/api/require-same-origin";
 import { requireAuth, getAccountContext } from "@/lib/auth/get-user";
 import { rateLimit } from "@/lib/api/rate-limit";
 
@@ -35,6 +36,9 @@ export async function PUT(request: NextRequest) {
   try {
     const user = await requireAuth();
     if (user instanceof Response) return user;
+
+    const csrf = requireSameOrigin(request);
+    if (csrf) return csrf;
 
     const rl = await rateLimit(`requirements:status:${user.id}`, 30, 60);
     if (!rl.success) {

@@ -13,6 +13,7 @@ import {
 } from "@/lib/db/schema";
 import { eq, and, sql, count, or } from "drizzle-orm";
 import { successResponse, errorResponse } from "@/lib/api/response";
+import { requireSameOrigin } from "@/lib/api/require-same-origin";
 import { requireAuth, getAccountContext } from "@/lib/auth/get-user";
 import { getEffectiveTier } from "@/lib/subscription/middleware";
 
@@ -241,6 +242,9 @@ export async function POST(request: NextRequest) {
   try {
     const user = await requireAuth();
     if (user instanceof Response) return user;
+
+    const csrf = requireSameOrigin(request);
+    if (csrf) return csrf;
 
     // Parse body
     const body = await request.json();

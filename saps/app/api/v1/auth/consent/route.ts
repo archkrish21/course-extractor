@@ -3,6 +3,7 @@ import { db } from "@/lib/db";
 import { legalDocuments, consentRecords, users } from "@/lib/db/schema";
 import { eq, and } from "drizzle-orm";
 import { successResponse, errorResponse } from "@/lib/api/response";
+import { requireSameOrigin } from "@/lib/api/require-same-origin";
 import { requireAuth } from "@/lib/auth/get-user";
 
 /**
@@ -80,6 +81,9 @@ export async function POST(request: NextRequest) {
   try {
     const user = await requireAuth();
     if (user instanceof Response) return user;
+
+    const csrf = requireSameOrigin(request);
+    if (csrf) return csrf;
 
     // Verify user exists in our users table (not just Supabase auth)
     const [userRow] = await db

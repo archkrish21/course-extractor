@@ -443,47 +443,75 @@ Delete the file.
 
 ## Step 5 — Supabase dashboard auth configuration  *(launch blocker, configuration only)*
 
-**Goal:** Lock down the Supabase Auth platform before opening signups. Do this in the Supabase dashboard once the production project exists.
+**Goal:** Lock down the Supabase Auth platform before opening signups. Split into two parts: items that can be audited against the local stack now, and items that must happen during prod provisioning against the hosted Supabase project.
 
-### 5a. Authentication → URL Configuration
-- Site URL: `https://yourdomain.com`
-- Redirect URLs: `https://yourdomain.com/**`
-- Remove any stale `localhost` or `*.vercel.app` entries
+### 5a. Local audit — DONE during auth-hardening work
 
-### 5b. Authentication → Rate Limits
-- Emails per hour: **10** (default is higher; tighten)
-- Token verifications per 5 min: **30**
-- Signups per hour per IP: **10**
+Items verified now against the local stack ([saps/supabase/config.toml](saps/supabase/config.toml)):
 
-### 5c. Authentication → Providers → Email
-- Enable "Confirm email"
-- Customize the confirmation, invite, magic link, and recovery email templates with your branding
-- Set OTP expiry to 10 minutes (default is 1 hour — unnecessarily long)
+- **Service role key codebase audit** — ✓ Clean. Only 4 references, all server-side:
+  - [saps/lib/supabase/admin.ts](saps/lib/supabase/admin.ts) — factory, not a client
+  - [saps/app/api/v1/users/me/route.ts](saps/app/api/v1/users/me/route.ts) — API route (server only)
+  - [saps/app/api/v1/auth/signup/route.ts](saps/app/api/v1/auth/signup/route.ts) — API route (server only)
+  - [saps/tests/e2e/global-setup.ts](saps/tests/e2e/global-setup.ts) — e2e setup, never ships
+  - Env var lacks `NEXT_PUBLIC_` prefix → Next.js won't bundle it into client output even if accidentally imported
+- **Anonymous sign-ins disabled** — ✓ `enable_anonymous_sign_ins = false`
+- **Refresh token rotation enabled** — ✓ `enable_refresh_token_rotation = true`
+- **Rate limits already stricter than prod plan targets** — ✓ `email_sent = 2/hr`, `token_verifications = 30/5min`, `token_refresh = 150/5min`, `sign_in_sign_ups = 30/5min`
 
-### 5d. Authentication → Attack Protection
-- Enable **CAPTCHA** (hCaptcha or Cloudflare Turnstile) on sign-up and sign-in forms
-- Wire the captcha token through the frontend signup/login forms:
+### 5b. Local config changes deliberately NOT applied
+
+- **`enable_confirmations = true`** — not flipped locally because 9 e2e test files exercise the real signup flow and would break. Test users are created via `supabase.auth.admin.createUser({ email_confirm: true })` at [global-setup.ts:146](saps/tests/e2e/global-setup.ts#L146) which bypasses confirmation, but real-signup e2e tests would fail at the confirmation gate. Defer to prod provisioning.
+- **`minimum_password_length` / `password_requirements`** — leave loose locally for dev convenience. Tighten in prod config.
+- **CAPTCHA** — not worth local setup. Do during prod provisioning.
+
+### 5c. Prod provisioning checklist — TODO when creating the hosted Supabase project
+
+These items must be applied to the hosted Supabase project, not `config.toml`. `config.toml` only configures the local stack; the hosted project has its own dashboard settings.
+
+#### Authentication → URL Configuration
+- [ ] Site URL: `https://yourdomain.com`
+- [ ] Redirect URLs: `https://yourdomain.com/**`
+- [ ] Remove any stale `localhost` or `*.vercel.app` entries
+
+#### Authentication → Rate Limits
+- [ ] Emails per hour: **10**
+- [ ] Token verifications per 5 min: **30**
+- [ ] Signups per hour per IP: **10**
+
+#### Authentication → Providers → Email
+- [ ] Enable "Confirm email"
+- [ ] Customize the confirmation, invite, magic link, and recovery email templates with your branding
+- [ ] Set OTP expiry to 10 minutes (default is 1 hour — unnecessarily long)
+
+#### Authentication → Attack Protection
+- [ ] Enable **CAPTCHA** (hCaptcha or Cloudflare Turnstile) on sign-up and sign-in forms
+- [ ] Wire the captcha token through the frontend signup/login forms:
   ```ts
   supabase.auth.signUp({ email, password, options: { captchaToken } });
   ```
-- Test end-to-end before enabling in prod.
+- [ ] Test end-to-end before enabling in prod
 
-### 5e. Project Settings → API
-- Rotate the service role key if it has ever been committed or shared in chat history
-- Store the new key in Vercel env vars
-- **Never** expose the service role key to the browser — grep the codebase for accidental use in client code before launch
+#### Authentication → Password Policy
+- [ ] `minimum_password_length = 8`
+- [ ] `password_requirements = "letters_digits"` (or stricter)
 
-### 5f. Verify
+#### Project Settings → API
+- [ ] Rotate the service role key if it has ever been committed or shared in chat history
+- [ ] Store the new key in Vercel env vars (server-only, never `NEXT_PUBLIC_`)
+
+### 5d. Prod smoke test — TODO during prod launch verification
 
 - [ ] Sign up with throwaway email from incognito → CAPTCHA appears
 - [ ] Sign up 11 times quickly from the same IP → blocked after 10
 - [ ] Email confirmation arrives within 10 min
 - [ ] Attempting to use the old service role key (if rotated) fails
 
-### 5g. Exit criteria
+### 5e. Exit criteria
 
-- [ ] All settings in 5a–5e applied
-- [ ] Smoke test done
+- [x] 5a — local audit complete
+- [ ] 5c — prod provisioning checklist applied (done during launch)
+- [ ] 5d — prod smoke test passed (done during launch)
 
 ---
 
@@ -492,8 +520,11 @@ Delete the file.
 - [ ] Step 1 — RLS enabled on all user-data tables, policies in place, tests pass
 - [ ] Step 2 — Auth + invite endpoints rate-limited
 - [ ] Step 3 — Origin check on mutation routes (webhook + public forms exempt)
-- [ ] Step 4 — Session refresh middleware in place
-- [ ] Step 5 — Supabase dashboard hardened
+- [x] Step 4 — Session refresh middleware in place
+- [ ] Step 5 — Supabase hardening
+  - [x] 5a local audit (service role key, anon signups, refresh token rotation, rate limits)
+  - [ ] 5c prod provisioning checklist (done during launch)
+  - [ ] 5d prod smoke test (done during launch)
 
 ### Regression safety
 - [ ] `npm test` passes

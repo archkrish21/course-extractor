@@ -22,7 +22,7 @@ interface AccountMember {
 }
 
 export default function SettingsPage() {
-  const { currentAccount, refetchAccounts, userEmail, userFirstName, userLastName, refetchUser } = useAccount();
+  const { currentAccount, refetchAccounts, userEmail, userRole, userFirstName, userLastName, refetchUser } = useAccount();
   const { showToast } = useToast();
 
   // State
@@ -294,9 +294,9 @@ export default function SettingsPage() {
                 </div>
                 <div className="flex items-start justify-between sm:block">
                   <p className="text-xs text-muted-foreground">Role</p>
-                  <div className="mt-1"><Badge className={roleColor(currentAccount?.role ?? "student")}>{currentAccount?.role ?? "student"}</Badge></div>
+                  <div className="mt-1"><Badge className={roleColor(currentAccount?.role ?? userRole ?? "student")}>{currentAccount?.role ?? userRole ?? "student"}</Badge></div>
                 </div>
-                {currentAccount?.role === "student" && (
+                {(currentAccount?.role ?? userRole) === "student" && (
                   <>
                     <div className="flex items-start justify-between sm:block">
                       <p className="text-xs text-muted-foreground">Grade</p>

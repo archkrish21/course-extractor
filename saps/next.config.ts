@@ -11,7 +11,7 @@ const cspHeader = [
   "img-src 'self' data: https:",
   "font-src 'self'",
   isDev
-    ? "connect-src 'self' ws://localhost:* http://localhost:* http://127.0.0.1:*"
+    ? "connect-src 'self' ws://localhost:* http://localhost:* http://127.0.0.1:* https://*.supabase.co"
     : "connect-src 'self' https://*.supabase.co https://api.stripe.com https://*.i.posthog.com https://*.upstash.io",
   "frame-src https://js.stripe.com",
   "object-src 'none'",

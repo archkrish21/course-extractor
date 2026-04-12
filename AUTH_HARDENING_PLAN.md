@@ -35,33 +35,27 @@ Snapshot the production DB (when it exists) before any RLS work. For local dev t
 
 ### 1a. Audit the tables that need policies
 
-User-data tables from `saps/lib/db/schema.ts` that need RLS:
-- `users`
-- `accounts`
-- `account_members`
-- `account_invite_codes`
-- `four_year_plans`
-- `plan_courses`
-- `plan_shares`
-- `plan_share_links`
-- `plan_history`
-- `student_profiles`
-- `grade_entries`
-- `gpa_snapshots`
-- `subscriptions`
-- `consent_records`
-- `student_parent_links`
-- `counselor_student_links`
-- `subscription_plans`
-- `legal_documents`
-- Anything else holding a `user_id`, `account_id`, `student_id`, or `created_by` column
+User-data tables (25 tables — scoped by `auth.uid()` or account membership, `FOR ALL` policies):
+- `users`, `accounts`, `account_members`, `account_invite_codes`
+- `four_year_plans`, `plan_courses`, `plan_shares`, `plan_share_links`, `plan_history`
+- `student_profiles`, `grade_entries`, `gpa_snapshots`
+- `subscriptions`, `consent_records`
+- `student_parent_links`, `counselor_student_links`
+- `account_events`, `alerts`, `dual_credit_log`, `goals`, `notifications`
+- `parent_invite_codes`, `requirement_progress`
+- `student_requirement_opt_ins`, `student_requirement_status`
 
-Reference-data tables (read-only, safe to leave without RLS or grant `SELECT` to everyone):
+Reference-data tables (11 tables — `SELECT`-only for authenticated, no writes via RLS):
 - `courses`, `divisions`, `departments`, `course_catalog_versions`, `course_prerequisites`
+- `graduation_requirements`, `career_paths`, `career_path_courses`
+- `grade_cohort_stats`
+- `subscription_plans`, `legal_documents`
 
-Log tables (unauthenticated writes, no reads from app):
+Log tables (2 tables — `INSERT`-only, no reads from app):
 - `contact_messages`, `school_requests`
-- Enable RLS with `INSERT`-only policies so the anon role can write but not read
+
+System tables (1 table — RLS enabled, no policy = zero access for non-superuser):
+- `stripe_events`
 
 ### 1b. Decide how Drizzle will interact with RLS
 
@@ -183,7 +177,7 @@ CREATE POLICY legal_documents_read ON legal_documents
   FOR SELECT TO authenticated USING (true);
 
 -- Repeat similar policies for: plan_share_links, plan_history,
--- student_profiles, grades, gpa_snapshots, subscriptions, consent_records,
+-- student_profiles, grade_entries, gpa_snapshots, subscriptions, consent_records,
 -- account_invite_codes, student_parent_links, counselor_student_links.
 -- Each one scopes either by user_id = auth.uid() or via account membership.
 ```

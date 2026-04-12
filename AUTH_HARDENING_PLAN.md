@@ -1,0 +1,520 @@
+# Auth Hardening Implementation Plan
+
+Purpose: close the authentication and authorization gaps identified in the pre-prod audit before launch.
+
+Scope: four items, focused specifically on **authentication, session management, and authorization**. Non-auth operational/production hardening (audit logs, spam rate limiting, ops observability) is tracked separately in [PROD_HARDENING_PLAN.md](PROD_HARDENING_PLAN.md).
+
+Each step is self-contained with concrete files, code sketches, verification, and rollback notes.
+
+| Step | Category | Priority |
+|---|---|---|
+| 1. Enable RLS on user-data tables | Authorization backstop | Launch blocker |
+| 2. Rate-limit auth + invite endpoints | Auth abuse (brute force, invite spam) | Launch blocker |
+| 3. Origin/CSRF check on mutation routes | Session riding protection | Should-fix |
+| 4. Session refresh middleware | Session lifecycle | Should-fix |
+| 5. Supabase dashboard auth config | Auth platform config | Launch blocker |
+
+Work under `saps/` unless noted otherwise.
+
+---
+
+## Pre-work (once, before starting)
+
+Branch off `main`:
+```
+git checkout -b auth-hardening
+```
+
+Snapshot the production DB (when it exists) before any RLS work. For local dev the existing Supabase stack is enough.
+
+---
+
+## Step 1 — Enable Row Level Security on user-data tables  *(launch blocker)*
+
+**Goal:** Treat RLS as defense in depth. Every user-owned table gets RLS enabled with a policy that requires the session `auth.uid()` to match through a valid access path. Application code already enforces this, so RLS is a backstop against future mistakes.
+
+### 1a. Audit the tables that need policies
+
+User-data tables from `saps/lib/db/schema.ts` that need RLS:
+- `users`
+- `accounts`
+- `account_members`
+- `account_invite_codes`
+- `four_year_plans`
+- `plan_courses`
+- `plan_shares`
+- `plan_share_links`
+- `plan_history`
+- `student_profiles`
+- `grades`
+- `gpa_snapshots`
+- `subscriptions`
+- `consent_records`
+- `student_parent_links`
+- `counselor_student_links`
+- `subscription_plans`
+- `legal_documents`
+- Anything else holding a `user_id`, `account_id`, `student_id`, or `created_by` column
+
+Reference-data tables (read-only, safe to leave without RLS or grant `SELECT` to everyone):
+- `courses`, `divisions`, `departments`, `course_catalog_versions`, `course_prerequisites`
+
+Log tables (unauthenticated writes, no reads from app):
+- `contact_messages`, `school_requests`
+- Enable RLS with `INSERT`-only policies so the anon role can write but not read
+
+### 1b. Decide how Drizzle will interact with RLS
+
+The Drizzle pool at [saps/lib/db/index.ts](saps/lib/db/index.ts) currently connects via `DATABASE_URL` as the postgres superuser, which **bypasses RLS entirely**. Two options:
+
+**Option A (recommended):** Keep Drizzle on the superuser connection, use RLS only as a last-line backstop when someone queries via the Supabase client, PostgREST, or the dashboard. Application code remains the primary enforcement. This is the path of least disruption and what most Next.js + Drizzle + Supabase apps do.
+
+**Option B:** Create an `authenticated` DB role that respects RLS and set the role per-request via `SET LOCAL ROLE authenticated; SET LOCAL request.jwt.claims = ...;`. Higher safety bar but requires wrapping every Drizzle query in a transaction that sets the role — a significant refactor.
+
+**Pick Option A for launch.** Revisit Option B in Q3 once the app is stable.
+
+Under Option A, RLS matters for:
+- Any query that reaches the DB *without* going through Drizzle (Supabase dashboard, PostgREST, direct `psql`)
+- A future migration to a role-based connection
+- Protection if `DATABASE_URL` leaks to a non-superuser path
+
+### 1c. Write the migration
+
+Create `saps/lib/db/migrations/0009_enable_rls.sql`:
+
+```sql
+-- Enable RLS on all user-data tables
+ALTER TABLE users ENABLE ROW LEVEL SECURITY;
+ALTER TABLE accounts ENABLE ROW LEVEL SECURITY;
+ALTER TABLE account_members ENABLE ROW LEVEL SECURITY;
+ALTER TABLE account_invite_codes ENABLE ROW LEVEL SECURITY;
+ALTER TABLE four_year_plans ENABLE ROW LEVEL SECURITY;
+ALTER TABLE plan_courses ENABLE ROW LEVEL SECURITY;
+ALTER TABLE plan_shares ENABLE ROW LEVEL SECURITY;
+ALTER TABLE plan_share_links ENABLE ROW LEVEL SECURITY;
+ALTER TABLE plan_history ENABLE ROW LEVEL SECURITY;
+ALTER TABLE student_profiles ENABLE ROW LEVEL SECURITY;
+ALTER TABLE grades ENABLE ROW LEVEL SECURITY;
+ALTER TABLE gpa_snapshots ENABLE ROW LEVEL SECURITY;
+ALTER TABLE subscriptions ENABLE ROW LEVEL SECURITY;
+ALTER TABLE consent_records ENABLE ROW LEVEL SECURITY;
+ALTER TABLE student_parent_links ENABLE ROW LEVEL SECURITY;
+ALTER TABLE counselor_student_links ENABLE ROW LEVEL SECURITY;
+ALTER TABLE subscription_plans ENABLE ROW LEVEL SECURITY;
+ALTER TABLE legal_documents ENABLE ROW LEVEL SECURITY;
+
+-- users: a row is visible to itself only
+CREATE POLICY users_self ON users
+  FOR ALL TO authenticated
+  USING (id = auth.uid())
+  WITH CHECK (id = auth.uid());
+
+-- accounts: visible to any account_members row for the current user
+CREATE POLICY accounts_member ON accounts
+  FOR ALL TO authenticated
+  USING (
+    id IN (SELECT account_id FROM account_members WHERE user_id = auth.uid())
+  )
+  WITH CHECK (
+    id IN (SELECT account_id FROM account_members WHERE user_id = auth.uid())
+  );
+
+-- account_members: a user can see their own membership rows and rows on
+-- accounts they're a member of
+CREATE POLICY account_members_self ON account_members
+  FOR ALL TO authenticated
+  USING (
+    user_id = auth.uid()
+    OR account_id IN (SELECT account_id FROM account_members WHERE user_id = auth.uid())
+  )
+  WITH CHECK (user_id = auth.uid());
+
+-- four_year_plans: visible if the user is a member of the account OR has
+-- a plan_shares row
+CREATE POLICY four_year_plans_access ON four_year_plans
+  FOR ALL TO authenticated
+  USING (
+    account_id IN (SELECT account_id FROM account_members WHERE user_id = auth.uid())
+    OR id IN (SELECT plan_id FROM plan_shares WHERE user_id = auth.uid())
+  )
+  WITH CHECK (
+    account_id IN (SELECT account_id FROM account_members WHERE user_id = auth.uid())
+  );
+
+-- plan_courses: cascade access from four_year_plans
+CREATE POLICY plan_courses_via_plan ON plan_courses
+  FOR ALL TO authenticated
+  USING (
+    plan_id IN (
+      SELECT id FROM four_year_plans
+      WHERE account_id IN (SELECT account_id FROM account_members WHERE user_id = auth.uid())
+         OR id IN (SELECT plan_id FROM plan_shares WHERE user_id = auth.uid())
+    )
+  )
+  WITH CHECK (
+    plan_id IN (
+      SELECT id FROM four_year_plans
+      WHERE account_id IN (SELECT account_id FROM account_members WHERE user_id = auth.uid())
+    )
+  );
+
+-- plan_shares: visible if the share is for you or for a plan you own
+CREATE POLICY plan_shares_access ON plan_shares
+  FOR ALL TO authenticated
+  USING (
+    user_id = auth.uid()
+    OR plan_id IN (
+      SELECT id FROM four_year_plans
+      WHERE account_id IN (SELECT account_id FROM account_members WHERE user_id = auth.uid())
+    )
+  )
+  WITH CHECK (
+    plan_id IN (
+      SELECT id FROM four_year_plans
+      WHERE account_id IN (SELECT account_id FROM account_members WHERE user_id = auth.uid())
+    )
+  );
+
+-- subscription_plans and legal_documents: readable by all authenticated
+-- users, writable by none (catalog data managed via migrations)
+CREATE POLICY subscription_plans_read ON subscription_plans
+  FOR SELECT TO authenticated USING (true);
+CREATE POLICY legal_documents_read ON legal_documents
+  FOR SELECT TO authenticated USING (true);
+
+-- Repeat similar policies for: plan_share_links, plan_history,
+-- student_profiles, grades, gpa_snapshots, subscriptions, consent_records,
+-- account_invite_codes, student_parent_links, counselor_student_links.
+-- Each one scopes either by user_id = auth.uid() or via account membership.
+```
+
+This is a sketch — fill in the remaining tables following the same pattern. For every user-scoped table, the `USING` clause defines read visibility and `WITH CHECK` defines write acceptance.
+
+### 1d. Apply and verify
+
+1. Run `npm run db:migrate` locally against the Supabase dev stack.
+2. Open Supabase Studio → Table Editor → pick any table → verify RLS is enabled.
+3. Run the full unit + e2e suites: `npm test && npm run test:e2e`. They must still pass because Drizzle connects as superuser.
+4. Manually test the critical flows (planner create/edit, settings invite, plan delete) — again, Drizzle bypasses RLS so nothing should change behaviorally.
+5. From the Supabase SQL editor with a different role, try to `SELECT * FROM four_year_plans` — should return 0 rows (proves RLS is active).
+
+### 1e. Rollback
+
+```sql
+ALTER TABLE four_year_plans DISABLE ROW LEVEL SECURITY;
+-- etc
+```
+
+Keep all `DROP POLICY` and `DISABLE ROW LEVEL SECURITY` statements in a sibling file `0009_disable_rls.sql` ready to run if something breaks.
+
+### 1f. Exit criteria
+
+- [ ] All user-data tables have RLS enabled
+- [ ] All tables have at least one policy that scopes by `auth.uid()`
+- [ ] All tests pass
+- [ ] Manual smoke test of 5 core flows passes
+
+---
+
+## Step 2 — Rate limit auth and invite endpoints  *(launch blocker)*
+
+**Goal:** Make brute force, credential stuffing, and invite spam expensive. This step covers only endpoints where the *auth or identity* of the caller is being tested or changed — pure abuse protection on unauthenticated forms is in the prod plan.
+
+### 2a. Endpoints to cover
+
+| Route | Key | Limit | Window | Reason |
+|---|---|---|---|---|
+| `POST /api/v1/accounts/:id/members` | `invite:${userId}` | 20 | 3600s | Prevent invite-spam abuse |
+| `POST /api/v1/accounts/:id/members/join` | `join:${ip}` | 10 | 3600s | Prevent invite-code brute force |
+| `POST /api/v1/accounts/claim` | `claim:${ip}` | 10 | 3600s | Prevent claim-code brute force |
+
+Already rate-limited (verify still wired):
+- `auth/signup`, `auth/login`, `auth/onboarding`
+
+### 2b. For authenticated invite, key by userId
+
+```ts
+// saps/app/api/v1/accounts/[id]/members/route.ts, just after requireAuth
+const rl = await rateLimit(`invite:${user.id}`, 20, 3600);
+if (!rl.success) {
+  return errorResponse("RATE_LIMITED", "Too many invite attempts. Try again later.", 429);
+}
+```
+
+### 2c. For code-claiming routes, key by IP
+
+`join` and `claim` are effectively "try an invite/claim code" endpoints — they're brute-force targets. Even though the caller may be logged in, key by IP because an attacker with multiple accounts could otherwise cycle. Belt-and-suspenders: key by `userId` *and* `ip` if you want to be strict.
+
+```ts
+const ip = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim()
+  ?? request.headers.get("x-real-ip") ?? "unknown";
+const rl = await rateLimit(`join:${ip}`, 10, 3600);
+if (!rl.success) {
+  return errorResponse("RATE_LIMITED", "Too many attempts. Try again later.", 429);
+}
+```
+
+### 2d. Verify
+
+1. Hit the invite endpoint 21 times from a logged-in session → 21st returns 429.
+2. Hit `join` with a bogus code 11 times from the same IP → 11th returns 429.
+3. Add a Vitest test that mocks `rateLimit` to return `{success: false}` for the invite route and asserts 429.
+
+### 2e. Rollback
+
+Revert the commit. Rate limits are additive.
+
+### 2f. Exit criteria
+
+- [ ] `invite`, `join`, `claim` all have `rateLimit()` calls
+- [ ] `auth/signup`, `auth/login`, `auth/onboarding` still have their limits
+- [ ] New test covers 429 path for invite
+- [ ] Manual curl verification done
+
+---
+
+## Step 3 — Origin/CSRF protection on mutation routes  *(should-fix)*
+
+**Goal:** Block same-site-lax bypass vectors (form POSTs from other origins) on every mutation route. Cheap to add, real defensive value.
+
+### 3a. Create the helper
+
+New file `saps/lib/api/csrf.ts`:
+
+```ts
+import type { NextRequest } from "next/server";
+
+const ALLOWED_ORIGINS = new Set([
+  process.env.NEXT_PUBLIC_APP_URL,
+  "http://localhost:3000",
+].filter(Boolean));
+
+/**
+ * Verifies the request Origin header matches an allowed origin.
+ * Returns true if the request is safe to process, false otherwise.
+ *
+ * Apply to all mutation routes (POST/PATCH/PUT/DELETE). GET routes
+ * don't need this because they don't mutate state.
+ */
+export function verifyOrigin(request: NextRequest): boolean {
+  const origin = request.headers.get("origin");
+  // No origin = probably server-side fetch or curl, reject in prod
+  if (!origin) {
+    return process.env.NODE_ENV !== "production";
+  }
+  return ALLOWED_ORIGINS.has(origin);
+}
+```
+
+### 3b. Apply to mutation routes
+
+Create a small wrapper in `saps/lib/api/require-same-origin.ts`:
+
+```ts
+import type { NextRequest } from "next/server";
+import { verifyOrigin } from "./csrf";
+import { errorResponse } from "./response";
+
+export function requireSameOrigin(request: NextRequest): Response | null {
+  if (!verifyOrigin(request)) {
+    return errorResponse("FORBIDDEN", "Invalid request origin.", 403);
+  }
+  return null;
+}
+```
+
+Then in every mutation route, add one line right after `requireAuth`:
+
+```ts
+export async function POST(request: NextRequest) {
+  const user = await requireAuth();
+  if (user instanceof Response) return user;
+
+  const csrf = requireSameOrigin(request);
+  if (csrf) return csrf;
+
+  // ... existing handler
+}
+```
+
+Routes to update — every non-GET handler in `saps/app/api/v1/**`. Likely 40+ files. Don't bulk-edit blindly:
+
+1. Start with the highest-risk routes: `plans`, `plans/[id]`, `plans/[id]/courses`, `plans/[id]/shares`, `accounts/[id]/members`.
+2. Expand to everything else.
+3. **Skip `stripe/webhook`** — it comes from Stripe's servers, not a browser, and has its own signature verification.
+4. **Skip `contact` and `school-request`** — they're unauthenticated public forms that can legitimately be submitted from any origin. Spam protection for these lives in the prod plan.
+
+### 3c. Verify
+
+1. Run existing e2e tests — they should pass because they run in Playwright's Chromium which sends a valid Origin.
+2. Manual check with curl:
+   ```
+   curl -X POST http://localhost:3000/api/v1/plans \
+     -H "Content-Type: application/json" \
+     -H "Origin: https://evil.example" \
+     -d '{"name":"x"}' \
+     --cookie "sb-access-token=..."
+   ```
+   Should return 403.
+3. Without an Origin header but logged in → 403 in prod, 200 in dev (so you can still curl-test locally).
+
+### 3d. Rollback
+
+Revert commit. Nothing persisted.
+
+### 3e. Exit criteria
+
+- [ ] `verifyOrigin` helper + `requireSameOrigin` wrapper exist
+- [ ] All mutation routes call `requireSameOrigin`
+- [ ] `stripe/webhook`, `contact`, `school-request` explicitly documented as exempt
+- [ ] E2E tests still pass
+- [ ] Curl verification of 403 path done
+
+---
+
+## Step 4 — Session refresh middleware  *(should-fix)*
+
+**Goal:** Users' sessions should refresh transparently on every request so expired access tokens don't silently log them out.
+
+### 4a. Add `saps/middleware.ts`
+
+Straight from the Supabase SSR docs, adapted:
+
+```ts
+import { createServerClient } from "@supabase/ssr";
+import { NextResponse, type NextRequest } from "next/server";
+
+export async function middleware(request: NextRequest) {
+  let response = NextResponse.next({ request });
+
+  const supabase = createServerClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    {
+      cookies: {
+        getAll() {
+          return request.cookies.getAll();
+        },
+        setAll(cookiesToSet) {
+          cookiesToSet.forEach(({ name, value }) =>
+            request.cookies.set(name, value)
+          );
+          response = NextResponse.next({ request });
+          cookiesToSet.forEach(({ name, value, options }) =>
+            response.cookies.set(name, value, options)
+          );
+        },
+      },
+    }
+  );
+
+  // Triggers token refresh if needed
+  await supabase.auth.getUser();
+
+  return response;
+}
+
+export const config = {
+  matcher: [
+    // Skip static assets and Next internals
+    "/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
+  ],
+};
+```
+
+### 4b. Verify
+
+1. Log in locally.
+2. Manually set the access token cookie's expiry to the past in browser devtools.
+3. Reload a protected page → session should transparently refresh using the refresh token; no logout.
+4. Delete both access and refresh tokens → should redirect to login.
+
+### 4c. Rollback
+
+Delete the file.
+
+### 4d. Exit criteria
+
+- [ ] `saps/middleware.ts` exists
+- [ ] Manual verification of transparent refresh
+- [ ] E2E tests pass
+
+---
+
+## Step 5 — Supabase dashboard auth configuration  *(launch blocker, configuration only)*
+
+**Goal:** Lock down the Supabase Auth platform before opening signups. Do this in the Supabase dashboard once the production project exists.
+
+### 5a. Authentication → URL Configuration
+- Site URL: `https://yourdomain.com`
+- Redirect URLs: `https://yourdomain.com/**`
+- Remove any stale `localhost` or `*.vercel.app` entries
+
+### 5b. Authentication → Rate Limits
+- Emails per hour: **10** (default is higher; tighten)
+- Token verifications per 5 min: **30**
+- Signups per hour per IP: **10**
+
+### 5c. Authentication → Providers → Email
+- Enable "Confirm email"
+- Customize the confirmation, invite, magic link, and recovery email templates with your branding
+- Set OTP expiry to 10 minutes (default is 1 hour — unnecessarily long)
+
+### 5d. Authentication → Attack Protection
+- Enable **CAPTCHA** (hCaptcha or Cloudflare Turnstile) on sign-up and sign-in forms
+- Wire the captcha token through the frontend signup/login forms:
+  ```ts
+  supabase.auth.signUp({ email, password, options: { captchaToken } });
+  ```
+- Test end-to-end before enabling in prod.
+
+### 5e. Project Settings → API
+- Rotate the service role key if it has ever been committed or shared in chat history
+- Store the new key in Vercel env vars
+- **Never** expose the service role key to the browser — grep the codebase for accidental use in client code before launch
+
+### 5f. Verify
+
+- [ ] Sign up with throwaway email from incognito → CAPTCHA appears
+- [ ] Sign up 11 times quickly from the same IP → blocked after 10
+- [ ] Email confirmation arrives within 10 min
+- [ ] Attempting to use the old service role key (if rotated) fails
+
+### 5g. Exit criteria
+
+- [ ] All settings in 5a–5e applied
+- [ ] Smoke test done
+
+---
+
+## Checklist — auth work complete
+
+- [ ] Step 1 — RLS enabled on all user-data tables, policies in place, tests pass
+- [ ] Step 2 — Auth + invite endpoints rate-limited
+- [ ] Step 3 — Origin check on mutation routes (webhook + public forms exempt)
+- [ ] Step 4 — Session refresh middleware in place
+- [ ] Step 5 — Supabase dashboard hardened
+
+### Regression safety
+- [ ] `npm test` passes
+- [ ] `npm run test:e2e` passes
+- [ ] Rollback instructions for each step documented and tested
+
+---
+
+## Dependencies and sequencing with the prod plan
+
+These auth items and the prod hardening items can be worked independently, but some natural orderings help:
+
+- **Step 1 (RLS) migration** and **prod plan Step 3 (audit_log table)** both add schema — if doing them close together, generate a single migration to save one `npm run db:migrate` cycle. Otherwise, separate migrations are fine.
+- **Step 2 (rate limits)** shares infrastructure with **prod plan Step 1 (spam rate limits)** and **prod plan Step 2 (fail-loud Redis check)**. If you're touching rate limiting, it's efficient to do all three in the same branch.
+- **Step 3 (Origin check)** has no dependencies on the prod plan.
+- **Step 4 (middleware)** has no dependencies on the prod plan.
+- **Step 5 (Supabase dashboard)** is done during prod provisioning, alongside other env setup.
+
+## What this plan explicitly does NOT cover
+
+- Audit logging — moved to [PROD_HARDENING_PLAN.md](PROD_HARDENING_PLAN.md) Step 3
+- Rate limiting for spam on `contact`/`school-request`/`feedback` — moved to [PROD_HARDENING_PLAN.md](PROD_HARDENING_PLAN.md) Step 1
+- Redis fail-loud observability — moved to [PROD_HARDENING_PLAN.md](PROD_HARDENING_PLAN.md) Step 2
+- Penetration testing, SOC 2 compliance, WAF/DDoS — out of scope for this launch.

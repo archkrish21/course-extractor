@@ -11,6 +11,7 @@ import {
 } from "@/lib/db/schema";
 import { eq, and, isNull } from "drizzle-orm";
 import { successResponse, errorResponse } from "@/lib/api/response";
+import { rateLimit } from "@/lib/api/rate-limit";
 import { requireAuth } from "@/lib/auth/get-user";
 
 const claimSchema = z.object({
@@ -25,6 +26,21 @@ export async function POST(request: NextRequest) {
   try {
     const user = await requireAuth();
     if (user instanceof Response) return user;
+
+    // Rate limit: 10 attempts per hour per IP. Claim codes are short and
+    // brute-forceable — this limits guessing attacks. Keyed by IP since
+    // an attacker could rotate accounts otherwise.
+    const ip = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim()
+      ?? request.headers.get("x-real-ip") ?? "unknown";
+    const rl = await rateLimit(`claim:${ip}`, 10, 3600);
+    if (!rl.success) {
+      return errorResponse(
+        "RATE_LIMITED",
+        "Too many attempts. Try again later.",
+        429,
+        { retry_after: rl.resetAt - Math.floor(Date.now() / 1000) }
+      );
+    }
 
     // Verify user is a student
     const [userData] = await db

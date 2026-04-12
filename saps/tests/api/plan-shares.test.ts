@@ -75,6 +75,14 @@ vi.mock("@/lib/subscription/middleware", () => ({
   invalidateSubscriptionCache: vi.fn().mockResolvedValue(undefined),
 }));
 
+// Rate limiter mock — defaults to success. Individual tests can override
+// via mockRateLimit.mockResolvedValueOnce({ success: false, ... }) to
+// exercise the 429 path.
+const mockRateLimit = vi.fn().mockResolvedValue({ success: true, remaining: 20, resetAt: Math.floor(Date.now() / 1000) + 3600 });
+vi.mock("@/lib/api/rate-limit", () => ({
+  rateLimit: (...args: unknown[]) => mockRateLimit(...args),
+}));
+
 vi.mock("@/lib/email/client", () => ({
   sendEmail: vi.fn().mockResolvedValue(true),
 }));
@@ -611,6 +619,32 @@ describe("POST /api/v1/accounts/:id/members — linked accounts limit", () => {
       role: "student",
       canEdit: true,
     });
+  });
+
+  it("returns 429 when the invite rate limit is exceeded", async () => {
+    // First call (rate limit check in members/route.ts) returns failure
+    mockRateLimit.mockResolvedValueOnce({
+      success: false,
+      remaining: 0,
+      resetAt: Math.floor(Date.now() / 1000) + 1800,
+    });
+
+    const request = makeJsonRequest(
+      `http://localhost:3000/api/v1/accounts/${TEST_ACCOUNT_ID}/members`,
+      { target_role: "parent", email: "parent@test.com" }
+    );
+    const response = await createMember(request, accountContext(TEST_ACCOUNT_ID));
+    const body = await response.json();
+
+    expect(response.status).toBe(429);
+    expect(body.error.code).toBe("RATE_LIMITED");
+    expect(body.error.retry_after).toBeGreaterThan(0);
+    // Verify the rate-limit key uses the invite: prefix scoped to userId
+    expect(mockRateLimit).toHaveBeenCalledWith(
+      expect.stringMatching(/^invite:/),
+      20,
+      3600
+    );
   });
 
   it("returns 402 when at linked accounts limit", async () => {

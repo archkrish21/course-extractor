@@ -4,6 +4,7 @@ import { db } from "@/lib/db";
 import { accountMembers, accountInviteCodes, accounts, studentProfiles, users, subscriptions, subscriptionPlans, planShares } from "@/lib/db/schema";
 import { eq, and, isNull, sql } from "drizzle-orm";
 import { successResponse, errorResponse } from "@/lib/api/response";
+import { rateLimit } from "@/lib/api/rate-limit";
 import { requireAuth } from "@/lib/auth/get-user";
 
 const joinSchema = z.object({
@@ -22,6 +23,22 @@ export async function POST(request: NextRequest, context: RouteContext) {
   try {
     const user = await requireAuth();
     if (user instanceof Response) return user;
+
+    // Rate limit: 10 attempts per hour per IP. Invite codes are 8 chars,
+    // so this is the main brute-force surface. Keyed by IP so an attacker
+    // can't cycle accounts. Tightening via user.id as well would help but
+    // IP alone is the standard bar for code-guessing attacks.
+    const ip = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim()
+      ?? request.headers.get("x-real-ip") ?? "unknown";
+    const rl = await rateLimit(`join:${ip}`, 10, 3600);
+    if (!rl.success) {
+      return errorResponse(
+        "RATE_LIMITED",
+        "Too many attempts. Try again later.",
+        429,
+        { retry_after: rl.resetAt - Math.floor(Date.now() / 1000) }
+      );
+    }
 
     const { id: accountId } = await context.params;
 

@@ -517,9 +517,9 @@ These items must be applied to the hosted Supabase project, not `config.toml`. `
 
 ## Checklist — auth work complete
 
-- [ ] Step 1 — RLS enabled on all user-data tables, policies in place, tests pass
-- [ ] Step 2 — Auth + invite endpoints rate-limited
-- [ ] Step 3 — Origin check on mutation routes (webhook + public forms exempt)
+- [x] Step 1 — RLS enabled on all 37 tables, 36 policies in place, tests pass
+- [x] Step 2 — Auth + invite endpoints rate-limited
+- [x] Step 3 — Origin check on 30 route files (webhook + public forms exempt)
 - [x] Step 4 — Session refresh middleware in place
 - [ ] Step 5 — Supabase hardening
   - [x] 5a local audit (service role key, anon signups, refresh token rotation, rate limits)

@@ -108,10 +108,21 @@ async function main() {
       if (!dryRun) {
         const migrationsDir = path.join(__dirname, "..", "lib", "db", "migrations");
 
-        const rlsSql = fs.readFileSync(path.join(migrationsDir, "0009_enable_rls.sql"), "utf-8");
-        await pool.query(rlsSql);
-        log("1/7", "0009_enable_rls.sql applied.");
+        // Check if RLS is already applied (idempotent — safe to re-run)
+        const { rows: rlsCheck } = await pool.query(
+          "SELECT count(*) as c FROM pg_policies WHERE schemaname = 'public'"
+        );
+        const existingPolicies = parseInt(rlsCheck[0].c, 10);
 
+        if (existingPolicies >= 36) {
+          log("1/7", `RLS already applied (${existingPolicies} policies found). Skipping.`);
+        } else {
+          const rlsSql = fs.readFileSync(path.join(migrationsDir, "0009_enable_rls.sql"), "utf-8");
+          await pool.query(rlsSql);
+          log("1/7", "0009_enable_rls.sql applied.");
+        }
+
+        // 0010 uses IF NOT EXISTS so it's always safe to re-run
         const tablesSql = fs.readFileSync(path.join(migrationsDir, "0010_create_contact_school_tables.sql"), "utf-8");
         await pool.query(tablesSql);
         log("1/7", "0010_create_contact_school_tables.sql applied.");

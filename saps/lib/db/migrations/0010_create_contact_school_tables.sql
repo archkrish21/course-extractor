@@ -25,11 +25,17 @@ CREATE TABLE IF NOT EXISTS school_requests (
 -- Enable RLS: allow inserts from any role (including anon via PostgREST),
 -- but no SELECT/UPDATE/DELETE. Only superuser (Drizzle) can read these.
 ALTER TABLE contact_messages ENABLE ROW LEVEL SECURITY;
-CREATE POLICY contact_messages_insert ON contact_messages
-  FOR INSERT TO anon, authenticated
-  WITH CHECK (true);
+DO $$ BEGIN
+  CREATE POLICY contact_messages_insert ON contact_messages
+    FOR INSERT TO anon, authenticated
+    WITH CHECK (true);
+EXCEPTION WHEN duplicate_object THEN NULL;
+END $$;
 
 ALTER TABLE school_requests ENABLE ROW LEVEL SECURITY;
-CREATE POLICY school_requests_insert ON school_requests
-  FOR INSERT TO anon, authenticated
-  WITH CHECK (true);
+DO $$ BEGIN
+  CREATE POLICY school_requests_insert ON school_requests
+    FOR INSERT TO anon, authenticated
+    WITH CHECK (true);
+EXCEPTION WHEN duplicate_object THEN NULL;
+END $$;

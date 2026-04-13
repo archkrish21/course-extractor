@@ -291,12 +291,13 @@ function DesktopGrid({
         return (
           <div key={grade} role="row" className="mb-3 rounded-xl border border-border overflow-hidden">
             {/* Grade header — full width, clickable toggle */}
-            <button
+            <div
               ref={(el) => { gradeHeaderRefs.current[grade] = el; }}
-              type="button"
               role="rowheader"
               aria-expanded={!isCollapsed}
+              tabIndex={0}
               onClick={toggleCollapse}
+              onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); toggleCollapse(); } }}
               className={`flex w-full items-center gap-2 px-4 py-3 text-sm font-semibold text-left
                 min-h-[44px] cursor-pointer transition-colors duration-150
                 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring
@@ -404,7 +405,7 @@ function DesktopGrid({
                   </span>
                 )}
               </span>
-            </button>
+            </div>
 
             {/* Expanded content */}
             {!isCollapsed && (() => {

@@ -13,8 +13,9 @@ import { eq } from "drizzle-orm";
  * 2. Token hash flow: Direct ?token_hash=...&type=signup params for OTP
  *    verification.
  *
- * In both cases, marks the user's email as verified in our DB and redirects
- * to the login page with a success message.
+ * After verification:
+ * - Recovery (password reset): redirect to /update-password
+ * - Signup/email confirmation: mark email verified, redirect to /login
  */
 export async function GET(request: NextRequest) {
   const { searchParams, origin } = new URL(request.url);
@@ -31,16 +32,26 @@ export async function GET(request: NextRequest) {
       console.error("[auth/confirm] Code exchange failed:", error.message);
       return NextResponse.redirect(`${origin}/login?error=confirmation_failed`);
     }
+
+    // Recovery flow — redirect to update-password page (user has a session now)
+    if (type === "recovery") {
+      return NextResponse.redirect(`${origin}/update-password`);
+    }
   }
   // Flow 2: Direct token_hash verification
   else if (tokenHash && type) {
     const { error } = await supabase.auth.verifyOtp({
       token_hash: tokenHash,
-      type: type as "signup" | "email",
+      type: type as "signup" | "email" | "recovery",
     });
     if (error) {
       console.error("[auth/confirm] OTP verification failed:", error.message);
       return NextResponse.redirect(`${origin}/login?error=confirmation_failed`);
+    }
+
+    // Recovery flow — redirect to update-password page
+    if (type === "recovery") {
+      return NextResponse.redirect(`${origin}/update-password`);
     }
   }
   // No valid params
@@ -48,7 +59,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.redirect(`${origin}/login?error=invalid_confirmation_link`);
   }
 
-  // Mark email as verified in the app's users table
+  // Mark email as verified in the app's users table (signup/email flows only)
   const {
     data: { user: authUser },
   } = await supabase.auth.getUser();

@@ -42,6 +42,9 @@ function LoginPageInner() {
     if (searchParams.get("confirmed") === "true") {
       setSuccessMessage("Email confirmed! You can now sign in.");
     }
+    if (searchParams.get("password_updated") === "true") {
+      setSuccessMessage("Password updated successfully. Sign in with your new password.");
+    }
   }, [searchParams]);
 
   function validate(): FieldErrors {
@@ -171,16 +174,26 @@ function LoginPageInner() {
           placeholder="you@example.com"
         />
 
-        <Input
-          label="Password"
-          type="password"
-          autoComplete="current-password"
-          required
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          error={errors.password}
-          placeholder="Enter your password"
-        />
+        <div>
+          <Input
+            label="Password"
+            type="password"
+            autoComplete="current-password"
+            required
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            error={errors.password}
+            placeholder="Enter your password"
+          />
+          <div className="mt-1 text-right">
+            <Link
+              href="/forgot-password"
+              className="text-xs text-primary hover:text-primary-hover underline underline-offset-4"
+            >
+              Forgot password?
+            </Link>
+          </div>
+        </div>
 
         <Button type="submit" disabled={loading} className="mt-2 w-full">
           {loading ? "Signing in..." : "Sign in"}

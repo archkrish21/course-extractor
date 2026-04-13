@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
 import { US_STATES } from "@/config/us-states";
 import Link from "next/link";
 import { useAccount } from "@/lib/account-context";
@@ -188,14 +189,30 @@ export default function SettingsPage() {
     finally { setDeleting(false); }
   };
 
-  const handleResetPassword = async () => {
-    if (!userEmail) return;
+  const [showPasswordForm, setShowPasswordForm] = useState(false);
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmNewPassword, setConfirmNewPassword] = useState("");
+  const [passwordLoading, setPasswordLoading] = useState(false);
+
+  const handleChangePassword = async () => {
+    if (newPassword.length < 8) { showToast("Password must be at least 8 characters."); return; }
+    if (!/[a-z]/.test(newPassword) || !/[A-Z]/.test(newPassword) || !/\d/.test(newPassword) || !/[^a-zA-Z0-9]/.test(newPassword)) {
+      showToast("Password must include lowercase, uppercase, number, and special character."); return;
+    }
+    if (newPassword !== confirmNewPassword) { showToast("Passwords do not match."); return; }
+
+    setPasswordLoading(true);
     try {
-      const { createClient } = await import("@supabase/supabase-js");
-      const supabase = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!);
-      const { error } = await supabase.auth.resetPasswordForEmail(userEmail, { redirectTo: `${window.location.origin}/login?reset=true` });
-      showToast(error ? "Failed to send reset email." : "Password reset email sent. Check your inbox.");
-    } catch { showToast("Failed to send reset email."); }
+      const { createBrowserClient } = await import("@supabase/ssr");
+      const supabase = createBrowserClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!);
+      const { error } = await supabase.auth.updateUser({ password: newPassword });
+      if (error) { showToast(error.message || "Failed to update password."); return; }
+      showToast("Password updated successfully.");
+      setShowPasswordForm(false);
+      setNewPassword("");
+      setConfirmNewPassword("");
+    } catch { showToast("Failed to update password."); }
+    finally { setPasswordLoading(false); }
   };
 
   const roleColor = (role: string) => {
@@ -265,6 +282,30 @@ export default function SettingsPage() {
             </Card>
           ) : null}
 
+          {/* Password edit mode */}
+          {showPasswordForm ? (
+            <Card className="mb-4">
+              <CardContent>
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-end">
+                  <div className="flex-1">
+                    <Input label="New password" type="password" autoComplete="new-password" value={newPassword}
+                      onChange={(e) => setNewPassword(e.target.value)} placeholder="Enter new password" autoFocus />
+                  </div>
+                  <div className="flex-1">
+                    <Input label="Confirm password" type="password" autoComplete="new-password" value={confirmNewPassword}
+                      onChange={(e) => setConfirmNewPassword(e.target.value)} placeholder="Confirm new password" />
+                  </div>
+                  <div className="flex gap-2 shrink-0">
+                    <Button size="sm" variant="ghost" onClick={() => { setShowPasswordForm(false); setNewPassword(""); setConfirmNewPassword(""); }}>Cancel</Button>
+                    <Button size="sm" onClick={handleChangePassword} disabled={passwordLoading || !newPassword}>
+                      {passwordLoading ? "Saving..." : "Save"}
+                    </Button>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          ) : null}
+
           <Card>
             <CardContent>
               <div className="grid grid-cols-1 gap-x-8 gap-y-5 sm:grid-cols-3">
@@ -286,11 +327,15 @@ export default function SettingsPage() {
                 </div>
                 <div className="flex items-start justify-between sm:block">
                   <p className="text-xs text-muted-foreground">Password</p>
-                  <button type="button" onClick={handleResetPassword}
-                    className="mt-0.5 flex items-center gap-1.5 text-sm text-foreground hover:text-primary transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring rounded">
-                    --------
-                    <span className="text-[11px] font-medium text-primary">Reset</span>
-                  </button>
+                  {!showPasswordForm ? (
+                    <button type="button" onClick={() => setShowPasswordForm(true)}
+                      className="mt-0.5 flex items-center gap-1.5 text-sm text-foreground hover:text-primary transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring rounded">
+                      --------
+                      <svg aria-hidden="true" className="h-3.5 w-3.5 text-muted-foreground/50" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Z" />
+                      </svg>
+                    </button>
+                  ) : <p className="mt-0.5 text-sm text-muted-foreground/50">Editing...</p>}
                 </div>
                 <div className="flex items-start justify-between sm:block">
                   <p className="text-xs text-muted-foreground">Role</p>
@@ -434,6 +479,9 @@ export default function SettingsPage() {
                           placeholder="Invite by email..."
                           disabled={atLimit}
                           className={`min-h-[44px] flex-1 rounded-lg border border-border bg-background px-3 text-sm placeholder:text-muted-foreground focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring ${atLimit ? "opacity-50" : ""}`} />
+                        <Button size="sm" className="min-h-[44px] w-full shrink-0 sm:w-auto" onClick={handleSendInvite} disabled={generating || !inviteEmail.trim() || atLimit}>
+                          {generating ? "Sending..." : "Send Invite"}
+                        </Button>
                       </div>
 
                       {/* Plan sharing selector */}
@@ -477,12 +525,6 @@ export default function SettingsPage() {
                           </div>
                         </div>
                       )}
-
-                      <div className="mt-2">
-                        <Button size="sm" className="min-h-[44px] w-full sm:w-auto" onClick={handleSendInvite} disabled={generating || !inviteEmail.trim() || atLimit}>
-                          {generating ? "Sending..." : "Send Invite"}
-                        </Button>
-                      </div>
                       <div className="flex items-center gap-2 pt-1">
                         <Badge className="bg-muted text-muted-foreground text-[11px]">{totalMembers}/{memberLimit} used</Badge>
                         {atLimit && (

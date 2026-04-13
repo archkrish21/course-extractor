@@ -263,6 +263,106 @@ describe("Email confirmation — /auth/confirm", () => {
   });
 });
 
+// ── Tests: Recovery (password reset) flow via /auth/confirm ───────────────
+
+describe("Password reset — /auth/confirm recovery flow", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    dbChain = createQueryChain();
+  });
+
+  it("redirects to /update-password when PKCE code exchange succeeds with type=recovery", async () => {
+    mockExchangeCode.mockResolvedValue({ error: null });
+
+    const { GET } = await import("@/app/auth/confirm/route");
+
+    const request = new NextRequest(
+      new URL("http://localhost:3000/auth/confirm?code=recovery_code_123&type=recovery")
+    );
+
+    const response = await GET(request);
+
+    expect(response.status).toBe(307);
+    expect(response.headers.get("location")).toContain("/update-password");
+    expect(mockExchangeCode).toHaveBeenCalledWith("recovery_code_123");
+    // Should NOT mark email as verified (recovery is not email confirmation)
+    expect(dbChain.update).not.toHaveBeenCalled();
+  });
+
+  it("redirects to /update-password when token_hash verifyOtp succeeds with type=recovery", async () => {
+    mockVerifyOtp.mockResolvedValue({ error: null });
+
+    const { GET } = await import("@/app/auth/confirm/route");
+
+    const request = new NextRequest(
+      new URL("http://localhost:3000/auth/confirm?token_hash=recovery_hash&type=recovery")
+    );
+
+    const response = await GET(request);
+
+    expect(response.status).toBe(307);
+    expect(response.headers.get("location")).toContain("/update-password");
+    expect(mockVerifyOtp).toHaveBeenCalledWith({
+      token_hash: "recovery_hash",
+      type: "recovery",
+    });
+    // Should NOT mark email as verified
+    expect(dbChain.update).not.toHaveBeenCalled();
+  });
+
+  it("redirects to login with error when recovery PKCE code exchange fails", async () => {
+    mockExchangeCode.mockResolvedValue({ error: { message: "Expired recovery code" } });
+
+    const { GET } = await import("@/app/auth/confirm/route");
+
+    const request = new NextRequest(
+      new URL("http://localhost:3000/auth/confirm?code=bad_code&type=recovery")
+    );
+
+    const response = await GET(request);
+
+    expect(response.status).toBe(307);
+    expect(response.headers.get("location")).toContain("/login?error=confirmation_failed");
+  });
+
+  it("redirects to login with error when recovery token_hash verification fails", async () => {
+    mockVerifyOtp.mockResolvedValue({ error: { message: "Expired token" } });
+
+    const { GET } = await import("@/app/auth/confirm/route");
+
+    const request = new NextRequest(
+      new URL("http://localhost:3000/auth/confirm?token_hash=expired_hash&type=recovery")
+    );
+
+    const response = await GET(request);
+
+    expect(response.status).toBe(307);
+    expect(response.headers.get("location")).toContain("/login?error=confirmation_failed");
+  });
+
+  it("does not redirect to /update-password for PKCE code without type=recovery", async () => {
+    mockExchangeCode.mockResolvedValue({ error: null });
+    mockGetUser.mockResolvedValue({
+      data: { user: { id: "user-111" } },
+    });
+
+    const mockSet = vi.fn().mockImplementation(() => dbChain);
+    dbChain.set = mockSet;
+
+    const { GET } = await import("@/app/auth/confirm/route");
+
+    const request = new NextRequest(
+      new URL("http://localhost:3000/auth/confirm?code=signup_code&type=signup")
+    );
+
+    const response = await GET(request);
+
+    expect(response.status).toBe(307);
+    expect(response.headers.get("location")).toContain("/login?confirmed=true");
+    expect(response.headers.get("location")).not.toContain("/update-password");
+  });
+});
+
 // ── Tests: Signup email_confirmation_pending ────────────────────────────────
 
 describe("Signup — email confirmation pending flag", () => {

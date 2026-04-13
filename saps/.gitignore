@@ -53,3 +53,4 @@ supabase/.temp/
 .idea/
 .vscode/
 *.swp
+*.bak

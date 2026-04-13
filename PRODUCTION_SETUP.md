@@ -512,6 +512,35 @@ The browser can't reach the hosted Supabase URL. Two causes:
 
 ## Summary: Complete Setup Order
 
+### Quick path (recommended): unified setup script
+
+After running `npm run db:migrate` (Step 4a), the unified script handles **everything else** in one command — RLS, courses, subscriptions, requirements, templates, and legal documents:
+
+```
+1.  Create Supabase project (dashboard)
+2.  Collect 4 credentials
+3.  Configure .env.hosted / .env.local
+4a. npm run db:migrate                  ← creates all schema tables (Drizzle)
+4b. npm run db:setup                    ← everything else: RLS + courses + seeds + legal docs
+8.  Configure Supabase Auth (dashboard)
+9.  Configure Resend SMTP (dashboard, optional)
+10. Restart dev server and test
+11. Deploy to Vercel
+12. Post-deploy verification
+```
+
+The script prints a summary at the end showing counts for courses, templates, requirements, legal docs, and RLS status.
+
+**Flags:**
+- `npm run db:setup -- --skip-courses` — skip course catalog load (if already loaded)
+- `npm run db:setup -- --skip-rls` — skip RLS migration (if already applied)
+- `npm run db:setup -- --courses-only` — only load course catalog, skip everything else
+- `npm run db:setup -- --dry-run` — show what would be done without writing
+
+### Manual path (step-by-step)
+
+If you prefer to run each step individually, or need to debug a specific step:
+
 ```
 1.  Create Supabase project (dashboard)
 2.  Collect 4 credentials

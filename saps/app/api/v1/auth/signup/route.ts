@@ -109,6 +109,7 @@ export async function POST(request: NextRequest) {
     }
 
     const userId = authData.user.id;
+    const emailConfirmationPending = !authData.session;
 
     // Wrap all DB operations so we can clean up the Supabase auth user
     // if any insert fails — otherwise the user is stuck (email taken in
@@ -219,6 +220,7 @@ export async function POST(request: NextRequest) {
               id: newAccount.id,
               student_name: studentName,
             },
+            email_confirmation_pending: emailConfirmationPending,
           },
           undefined,
           201
@@ -235,6 +237,7 @@ export async function POST(request: NextRequest) {
             email,
             role,
           },
+          email_confirmation_pending: emailConfirmationPending,
         },
         undefined,
         201

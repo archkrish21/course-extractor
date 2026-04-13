@@ -27,12 +27,20 @@ function LoginPageInner() {
   const [password, setPassword] = useState("");
   const [errors, setErrors] = useState<FieldErrors>({});
   const [loading, setLoading] = useState(false);
+  const [successMessage, setSuccessMessage] = useState("");
 
-  // Show error from URL params (e.g., account_not_found)
+  // Show error/success from URL params
   useEffect(() => {
     const urlError = searchParams.get("error");
     if (urlError === "account_not_found") {
       setErrors({ form: "Account not found. Please sign up to create a new account." });
+    } else if (urlError === "confirmation_failed") {
+      setErrors({ form: "Email confirmation failed. The link may have expired. Please sign up again." });
+    } else if (urlError === "invalid_confirmation_link") {
+      setErrors({ form: "Invalid confirmation link. Please check your email and try again." });
+    }
+    if (searchParams.get("confirmed") === "true") {
+      setSuccessMessage("Email confirmed! You can now sign in.");
     }
   }, [searchParams]);
 
@@ -111,6 +119,20 @@ function LoginPageInner() {
       <p className="mb-6 text-sm text-muted-foreground">
         Welcome back. Enter your credentials to continue.
       </p>
+
+      {successMessage && (
+        <div
+          className="mb-4 rounded-lg border border-green-200 bg-green-50 p-3 text-sm text-green-800 dark:border-green-800 dark:bg-green-950 dark:text-green-200"
+          role="status"
+        >
+          <span className="flex items-center gap-2">
+            <svg aria-hidden="true" className="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            {successMessage}
+          </span>
+        </div>
+      )}
 
       {errors.form && (
         <div

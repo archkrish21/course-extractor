@@ -162,6 +162,8 @@ export const accountMembers = pgTable("account_members", {
   canEdit: boolean("can_edit").notNull().default(true),
   invitedBy: uuid("invited_by").references(() => users.id, { onDelete: "set null" }),
   joinedAt: timestamp("joined_at", { withTimezone: true }).defaultNow(),
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().$onUpdate(() => new Date()),
 }, (table) => [
   primaryKey({ columns: [table.accountId, table.userId] }),
   index("idx_account_members_user").on(table.userId),
@@ -245,6 +247,8 @@ export const subscriptionPlans = pgTable("subscription_plans", {
   priceFourYear: decimal("price_four_year", { precision: 7, scale: 2 }),
   maxPlans: smallint("max_plans"),
   features: jsonb("features").notNull(),
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().$onUpdate(() => new Date()),
 });
 
 // ─── SUBSCRIPTIONS ──────────────────────────────────────────────────────────
@@ -344,6 +348,7 @@ export const divisions = pgTable("divisions", {
   name: text("name").notNull().unique(),
   code: text("code").notNull().unique(),
   displayOrder: smallint("display_order").default(0),
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow(),
 });
 
 // ─── DEPARTMENTS ────────────────────────────────────────────────────────────
@@ -357,6 +362,7 @@ export const departments = pgTable(
       .references(() => divisions.id, { onDelete: "restrict" }),
     name: text("name").notNull(),
     displayOrder: smallint("display_order").default(0),
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow(),
   },
   (table) => [
     uniqueIndex("departments_division_name_unique").on(
@@ -459,6 +465,7 @@ export const coursePrerequisites = pgTable(
     catalogVersionId: uuid("catalog_version_id")
       .notNull()
       .references(() => courseCatalogVersions.id, { onDelete: "cascade" }),
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow(),
   },
   (table) => [
     uniqueIndex("course_prereqs_unique").on(
@@ -496,6 +503,8 @@ export const graduationRequirements = pgTable(
     evaluationType: text("evaluation_type").notNull().default("course_match"),
     displayOrder: smallint("display_order").default(0),
     isOptIn: boolean("is_opt_in").notNull().default(false),
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().$onUpdate(() => new Date()),
   },
   (table) => [
     uniqueIndex("grad_req_version_name_unique").on(
@@ -524,6 +533,7 @@ export const studentRequirementStatus = pgTable(
     completedAt: timestamp("completed_at", { withTimezone: true }),
     notes: text("notes"),
     metadata: jsonb("metadata"),
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow(),
     updatedAt: timestamp("updated_at", { withTimezone: true })
       .defaultNow()
       .$onUpdate(() => new Date()),
@@ -580,6 +590,7 @@ export const careerPathCourses = pgTable(
       .references(() => courseCatalogVersions.id),
     priority: smallint("priority").notNull(),
     notes: text("notes"),
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow(),
   },
   (table) => [
     primaryKey({ columns: [table.careerPathId, table.courseId] }),
@@ -668,6 +679,8 @@ export const planCourses = pgTable(
     gpaWaiverApplied: boolean("gpa_waiver_applied").default(false),
     displayOrder: smallint("display_order").default(0),
     notes: text("notes"),
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().$onUpdate(() => new Date()),
   },
   (table) => [
     uniqueIndex("plan_courses_unique").on(

@@ -188,7 +188,7 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
       const allDone = await allSemesterCoursesCompleted({
         planId,
         gradeLevel: updated.gradeLevel,
-        semester: updated.semester,
+        semester: updated.semester!,
       });
       if (allDone) {
         await maybeCreateSemesterSnapshot({

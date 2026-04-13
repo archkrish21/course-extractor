@@ -223,7 +223,7 @@ export async function POST(request: NextRequest, context: RouteContext) {
             planId: sp.planId,
             userId: user.id,
             grantedBy: invite.createdBy,
-            permission: sp.permission,
+            permission: sp.permission as "owner" | "view" | "edit" | "delete",
           })
           .onConflictDoNothing();
       }

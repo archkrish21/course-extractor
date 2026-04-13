@@ -169,7 +169,7 @@ Options:
 function runCommand(
   cmd: string,
   args: string[],
-  env: NodeJS.ProcessEnv = {},
+  env: Partial<NodeJS.ProcessEnv> = {},
 ): Promise<{ code: number; stdout: string; stderr: string }> {
   return new Promise((resolveFn) => {
     const child = spawn(cmd, args, {

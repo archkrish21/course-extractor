@@ -720,6 +720,22 @@ function OnboardingPageInner() {
   const isNewUser = searchParams.get("welcome") === "1";
   const [showWelcome, setShowWelcome] = useState(isNewUser);
 
+  // Block re-entry once onboarding is complete — /onboarding is a one-shot
+  // flow; returning users should be bounced to the main app.
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const res = await apiFetch("/api/v1/auth/me");
+        if (!res.ok || cancelled) return;
+        const json = await res.json();
+        const u = json.data ?? json;
+        if (u?.onboarding_completed) router.replace("/dashboard");
+      } catch { /* silent — let onboarding load */ }
+    })();
+    return () => { cancelled = true; };
+  }, [router]);
+
   // Auto-dismiss welcome banner after 6 seconds
   useEffect(() => {
     if (showWelcome) {

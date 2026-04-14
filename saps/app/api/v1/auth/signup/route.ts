@@ -27,7 +27,9 @@ const signupSchema = z.object({
     .regex(/[A-Z]/, "Password must contain at least 1 uppercase letter")
     .regex(/[0-9]/, "Password must contain at least 1 digit")
     .regex(/[^a-zA-Z0-9]/, "Password must contain at least 1 special character"),
-  date_of_birth: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Date must be YYYY-MM-DD format"),
+  age_confirmed: z.literal(true, {
+    message: "You must confirm that you are at least 13 years old.",
+  }),
   role: z.enum(["student", "parent", "guardian", "counselor"]),
   name: z.string().min(1).max(200).optional(),
   state: z.string().length(2).optional(),
@@ -38,17 +40,6 @@ const signupSchema = z.object({
   invite_code: z.string().max(8).optional(),
   invite_account: z.string().uuid().optional(),
 });
-
-function calculateAge(dateOfBirth: string): number {
-  const today = new Date();
-  const dob = new Date(dateOfBirth);
-  let age = today.getFullYear() - dob.getFullYear();
-  const monthDiff = today.getMonth() - dob.getMonth();
-  if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < dob.getDate())) {
-    age--;
-  }
-  return age;
-}
 
 export async function POST(request: NextRequest) {
   try {
@@ -77,20 +68,10 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const { email, password, date_of_birth, role: rawRole, name, state, school_name, invite_code, invite_account } = parsed.data;
+    const { email, password, role: rawRole, name, state, school_name, invite_code, invite_account } = parsed.data;
 
     // Map "guardian" to "parent" for storage — they have identical behavior
     const role = rawRole === "guardian" ? "parent" : rawRole;
-
-    // COPPA check: must be 13 or older
-    const age = calculateAge(date_of_birth);
-    if (age < 13) {
-      return errorResponse(
-        "COPPA_BLOCKED",
-        "Users must be at least 13 years old to create an account.",
-        403
-      );
-    }
 
     // Create user via Supabase Auth — store invite params in metadata
     // so the email confirmation callback can redirect to /join
@@ -148,7 +129,6 @@ export async function POST(request: NextRequest) {
         email,
         firstName: name ?? email.split("@")[0],
         role,
-        dateOfBirth: date_of_birth,
         isEmailVerified: false,
         tosAcceptedAt: now,
         ppAcceptedAt: now,
@@ -187,7 +167,6 @@ export async function POST(request: NextRequest) {
           .insert(accounts)
           .values({
             studentName,
-            studentDateOfBirth: date_of_birth,
             gradeLevel: 9,
             graduationYear: defaultGradYear,
             state: state ?? "IL",

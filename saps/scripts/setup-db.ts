@@ -42,7 +42,6 @@ import {
   courses,
   courseCatalogVersions,
   coursePrerequisites,
-  legalDocuments,
   users,
   accounts,
   accountMembers,
@@ -50,6 +49,7 @@ import {
 } from "../lib/db/schema";
 import { SUBSCRIPTION_PLANS } from "../config/subscription-plans";
 import { PLAN_TEMPLATES } from "../config/seeds/plan-templates";
+import { seedLegalDocuments, LEGAL_DOCUMENT_SEEDS } from "./seeds/legal-documents";
 
 // ─── Safety ─────────────────────────────────────────────────────────────────
 
@@ -577,35 +577,9 @@ async function main() {
     log("6/7", "Seeding legal documents...");
 
     if (!dryRun) {
-      const today = new Date().toISOString().split("T")[0];
-
-      await db
-        .insert(legalDocuments)
-        .values({
-          type: "terms_of_service",
-          version: "1.0",
-          effectiveDate: today,
-          contentHash: "placeholder-tos-v1.0",
-          summaryOfChanges: "Initial version",
-          isCurrent: true,
-          publishedAt: new Date(),
-        })
-        .onConflictDoNothing();
-
-      await db
-        .insert(legalDocuments)
-        .values({
-          type: "privacy_policy",
-          version: "1.0",
-          effectiveDate: today,
-          contentHash: "placeholder-pp-v1.0",
-          summaryOfChanges: "Initial version",
-          isCurrent: true,
-          publishedAt: new Date(),
-        })
-        .onConflictDoNothing();
-
-      log("6/7", "Seeded ToS v1.0 and Privacy Policy v1.0.");
+      await seedLegalDocuments(db);
+      const names = LEGAL_DOCUMENT_SEEDS.map((d) => `${d.type} v${d.version}`).join(", ");
+      log("6/7", `Seeded: ${names}.`);
     }
 
     // ═══════════════════════════════════════════════════════════════════════

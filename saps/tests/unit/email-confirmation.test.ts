@@ -387,7 +387,7 @@ describe("Signup — email confirmation pending flag", () => {
         body: JSON.stringify({
           email: "newuser@test.com",
           password: "Password123!",
-          date_of_birth: "1980-01-01",
+          age_confirmed: true,
           role: "parent",
           tos_accepted: true,
         }),
@@ -420,7 +420,7 @@ describe("Signup — email confirmation pending flag", () => {
         body: JSON.stringify({
           email: "newuser@test.com",
           password: "Password123!",
-          date_of_birth: "1980-01-01",
+          age_confirmed: true,
           role: "counselor",
           tos_accepted: true,
         }),
@@ -450,7 +450,7 @@ describe("Signup — email confirmation pending flag", () => {
         body: JSON.stringify({
           email: "student@test.com",
           password: "Password123!",
-          date_of_birth: "2008-01-01",
+          age_confirmed: true,
           role: "student",
           tos_accepted: true,
         }),

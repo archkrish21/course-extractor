@@ -13,7 +13,7 @@ interface FieldErrors {
   email?: string;
   password?: string;
   confirmPassword?: string;
-  dob?: string;
+  ageConfirmed?: string;
   role?: string;
   tos?: string;
   form?: string;
@@ -26,23 +26,12 @@ const ROLES: { value: Role; label: string; desc: string }[] = [
   { value: "counselor", label: "Counselor", desc: "Guide students" },
 ];
 
-function isUnder13(dob: string): boolean {
-  const birthDate = new Date(dob);
-  const today = new Date();
-  let age = today.getFullYear() - birthDate.getFullYear();
-  const monthDiff = today.getMonth() - birthDate.getMonth();
-  if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
-    age--;
-  }
-  return age < 13;
-}
-
 export default function SignupPage() {
   const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
-  const [dob, setDob] = useState("");
+  const [ageConfirmed, setAgeConfirmed] = useState(false);
   const [role, setRole] = useState<Role>("student");
   const [tosAccepted, setTosAccepted] = useState(false);
   const [showSchoolRequest, setShowSchoolRequest] = useState(false);
@@ -51,7 +40,6 @@ export default function SignupPage() {
   const [schoolRequestSent, setSchoolRequestSent] = useState(false);
   const [errors, setErrors] = useState<FieldErrors>({});
   const [loading, setLoading] = useState(false);
-  const [coppaBlocked, setCoppaBlocked] = useState(false);
   const [confirmationPending, setConfirmationPending] = useState(false);
   const [hasInvite, setHasInvite] = useState(false);
 
@@ -63,23 +51,16 @@ export default function SignupPage() {
     else if (password.length < 8) errs.password = "Must be at least 8 characters.";
     if (!confirmPassword) errs.confirmPassword = "Please confirm your password.";
     else if (password !== confirmPassword) errs.confirmPassword = "Passwords do not match.";
-    if (!dob) errs.dob = "Date of birth is required.";
-    else if (isUnder13(dob)) errs.dob = "You must be at least 13 years old.";
+    if (!ageConfirmed) errs.ageConfirmed = "You must be at least 13 years old to create an account.";
     if (!role) errs.role = "Please select a role.";
     if (!tosAccepted) errs.tos = "You must agree to continue.";
     return errs;
-  }
-
-  function handleDobChange(value: string) {
-    setDob(value);
-    setCoppaBlocked(value ? isUnder13(value) : false);
   }
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
     const fieldErrors = validate();
     if (Object.keys(fieldErrors).length > 0) { setErrors(fieldErrors); return; }
-    if (coppaBlocked) return;
     setErrors({}); setLoading(true);
 
     try {
@@ -91,7 +72,7 @@ export default function SignupPage() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          email, password, date_of_birth: dob, role,
+          email, password, role, age_confirmed: true,
           state: "IL", school_name: "Adlai E. Stevenson High School", tos_accepted: true,
           ...(inviteCode && { invite_code: inviteCode }),
           ...(inviteAccount && { invite_account: inviteAccount }),
@@ -189,14 +170,6 @@ export default function SignupPage() {
           </div>
         )}
 
-        {/* COPPA block */}
-        {coppaBlocked && (
-          <div className="mb-5 rounded-lg border border-warning/30 bg-warning-light px-4 py-3 text-sm text-warning" role="alert">
-            <p className="font-semibold">Account creation unavailable</p>
-            <p className="mt-1 text-xs">You must be at least 13 years old (COPPA). Please ask a parent for assistance.</p>
-          </div>
-        )}
-
         <form onSubmit={handleSubmit} noValidate className="space-y-5">
 
           {/* Step 1: Role */}
@@ -243,18 +216,15 @@ export default function SignupPage() {
               error={errors.confirmPassword} placeholder="Re-enter password" />
           </div>
 
-          {/* Step 3: Personal */}
+          {/* Step 3: School context */}
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-            <Input label="Date of birth" type="date" required
-              value={dob} onChange={(e) => handleDobChange(e.target.value)}
-              error={errors.dob} max={new Date().toISOString().split("T")[0]} />
             <div className="flex flex-col gap-1.5">
               <label className="text-sm font-medium text-foreground">State</label>
               <div className="flex h-11 min-h-[44px] items-center rounded-lg border border-border bg-muted px-3 text-sm text-muted-foreground cursor-not-allowed">
                 Illinois
               </div>
             </div>
-            <div className="sm:col-span-2 flex flex-col gap-1.5">
+            <div className="flex flex-col gap-1.5">
               <label className="text-sm font-medium text-foreground">School</label>
               <div className="flex h-11 min-h-[44px] items-center rounded-lg border border-border bg-muted px-3 text-sm text-muted-foreground cursor-not-allowed">
                 Adlai E. Stevenson High School
@@ -292,6 +262,15 @@ export default function SignupPage() {
             </div>
           )}
 
+          {/* Age confirmation (COPPA) */}
+          <Checkbox
+            id="age-confirm-checkbox"
+            checked={ageConfirmed}
+            onChange={(e) => setAgeConfirmed(e.target.checked)}
+            error={errors.ageConfirmed}
+            label={<span className="text-xs">I confirm that I am at least 13 years old.</span>}
+          />
+
           {/* Terms */}
           <Checkbox
             id="tos-checkbox"
@@ -314,7 +293,7 @@ export default function SignupPage() {
           />
 
           {/* Submit */}
-          <Button type="submit" disabled={loading || coppaBlocked || !tosAccepted} className="w-full">
+          <Button type="submit" disabled={loading || !tosAccepted || !ageConfirmed} className="w-full">
             {loading ? "Creating account..." : "Create account"}
           </Button>
         </form>

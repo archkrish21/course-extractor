@@ -88,7 +88,7 @@ export const legalDocuments = pgTable(
   {
     id: uuid("id").primaryKey().defaultRandom(),
     type: text("type", {
-      enum: ["terms_of_service", "privacy_policy"],
+      enum: ["terms_of_service", "privacy_policy", "age_attestation"],
     }).notNull(),
     version: text("version").notNull(),
     effectiveDate: date("effective_date").notNull(),

@@ -3,8 +3,7 @@ config({ path: ".env.local" });
 
 import { drizzle } from "drizzle-orm/node-postgres";
 import { Pool } from "pg";
-import { legalDocuments } from "../lib/db/schema";
-import { sql } from "drizzle-orm";
+import { seedLegalDocuments, LEGAL_DOCUMENT_SEEDS } from "./seeds/legal-documents";
 
 // Safety: block production execution
 if (process.env.NODE_ENV === "production") {
@@ -17,38 +16,9 @@ const db = drizzle(pool);
 
 async function seed() {
   console.log("Seeding initial legal document versions...");
-
-  const today = new Date().toISOString().split("T")[0];
-
-  // Upsert ToS v1.0
-  await db
-    .insert(legalDocuments)
-    .values({
-      type: "terms_of_service",
-      version: "1.0",
-      effectiveDate: today,
-      contentHash: "placeholder-tos-v1.0",
-      summaryOfChanges: "Initial version",
-      isCurrent: true,
-      publishedAt: new Date(),
-    })
-    .onConflictDoNothing();
-
-  // Upsert PP v1.0
-  await db
-    .insert(legalDocuments)
-    .values({
-      type: "privacy_policy",
-      version: "1.0",
-      effectiveDate: today,
-      contentHash: "placeholder-pp-v1.0",
-      summaryOfChanges: "Initial version",
-      isCurrent: true,
-      publishedAt: new Date(),
-    })
-    .onConflictDoNothing();
-
-  console.log("Done. ToS v1.0 and Privacy Policy v1.0 seeded.");
+  await seedLegalDocuments(db);
+  const names = LEGAL_DOCUMENT_SEEDS.map((d) => `${d.type} v${d.version}`).join(", ");
+  console.log(`Done. Seeded: ${names}.`);
   await pool.end();
 }
 

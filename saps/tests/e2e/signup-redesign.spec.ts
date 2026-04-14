@@ -98,12 +98,17 @@ test.describe("Signup — Password Show/Hide", () => {
   });
 });
 
-// ─── Date of Birth Field ───────────────────────────────────────────────────
+// ─── Age Confirmation (COPPA) ──────────────────────────────────────────────
 
-test.describe("Signup — Date of Birth", () => {
-  test("date of birth input exists", async ({ page }) => {
+test.describe("Signup — Age Confirmation", () => {
+  test("age confirmation checkbox exists", async ({ page }) => {
     await gotoSignup(page);
-    await expect(page.locator('input[type="date"]')).toBeVisible();
+    await expect(page.locator("#age-confirm-checkbox")).toBeVisible();
+  });
+
+  test("age confirmation label mentions 13 or older", async ({ page }) => {
+    await gotoSignup(page);
+    await expect(page.locator("text=at least 13 years old")).toBeVisible();
   });
 });
 
@@ -198,50 +203,43 @@ test.describe("Signup — Submit Button", () => {
     await expect(submitBtn).toBeDisabled();
   });
 
-  test("Create account button becomes enabled when ToS is checked", async ({ page }) => {
+  test("Create account button becomes enabled when ToS and age confirmation are both checked", async ({ page }) => {
     await gotoSignup(page);
 
-    // Use .check() on the input directly. On mobile, clicking the label text can
+    // Use .check() on the inputs directly. On mobile, clicking the label text can
     // hit one of the Terms/Privacy links inside the label and navigate away.
     await page.locator("#tos-checkbox").check({ force: true });
+    await page.locator("#age-confirm-checkbox").check({ force: true });
 
     const submitBtn = page.locator('button[type="submit"]', { hasText: "Create account" });
     await expect(submitBtn).toBeEnabled();
   });
 });
 
-// ─── COPPA Block ───────────────────────────────────────────────────────────
+// ─── COPPA Gate ────────────────────────────────────────────────────────────
 
-test.describe("Signup — COPPA Block", () => {
-  test("entering DOB making user under 13 shows COPPA block message", async ({ page }) => {
+test.describe("Signup — COPPA Gate", () => {
+  test("submit button is disabled when age confirmation is unchecked", async ({ page }) => {
     await gotoSignup(page);
 
-    const dobInput = page.locator('input[type="date"]');
-
-    // Enter a date that makes the user under 13 (e.g., 10 years ago)
-    const today = new Date();
-    const under13 = new Date(today.getFullYear() - 10, today.getMonth(), today.getDate());
-    const dobValue = under13.toISOString().split("T")[0];
-
-    await dobInput.fill(dobValue);
-
-    await expect(page.locator("text=Account creation unavailable")).toBeVisible({ timeout: 5_000 });
-  });
-
-  test("COPPA block disables submit button even with ToS checked", async ({ page }) => {
-    await gotoSignup(page);
-
-    // Check ToS first via the input (label clicks can navigate to Terms/Privacy links on mobile)
+    // Check ToS but NOT age confirmation
     await page.locator("#tos-checkbox").check({ force: true });
-
-    // Enter under-13 DOB
-    const dobInput = page.locator('input[type="date"]');
-    const today = new Date();
-    const under13 = new Date(today.getFullYear() - 10, today.getMonth(), today.getDate());
-    await dobInput.fill(under13.toISOString().split("T")[0]);
 
     const submitBtn = page.locator('button[type="submit"]', { hasText: "Create account" });
     await expect(submitBtn).toBeDisabled();
+  });
+
+  test("submit button becomes enabled only when both ToS and age checkboxes are checked", async ({ page }) => {
+    await gotoSignup(page);
+
+    const submitBtn = page.locator('button[type="submit"]', { hasText: "Create account" });
+    await expect(submitBtn).toBeDisabled();
+
+    await page.locator("#tos-checkbox").check({ force: true });
+    await expect(submitBtn).toBeDisabled();
+
+    await page.locator("#age-confirm-checkbox").check({ force: true });
+    await expect(submitBtn).toBeEnabled();
   });
 });
 

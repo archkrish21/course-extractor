@@ -199,9 +199,11 @@ test.describe("Role — Counselor", () => {
 
   test("counselor sees read-only planner view", async ({ page }) => {
     await page.goto("/planner");
-    await page.waitForTimeout(3_000);
+    // Wait for planner to fully load (plan fetch + grid render)
+    await page.waitForTimeout(5_000);
 
-    // Counselor should see "No Plans Shared Yet" or read-only plan view
+    // Counselor should see "No Plans Shared Yet" or read-only plan view with
+    // "Course Planner" heading, or the loading state may still be finishing.
     const readOnlyIndicator = page.locator("text=/No Plans Shared|shared with you/i");
     const planContent = page.locator("text=/Course Planner/i");
 

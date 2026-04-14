@@ -96,7 +96,9 @@ User → Next.js frontend → API routes → PostgreSQL (Supabase + RLS)
 │  Graduation detection       │ ← cron: nightly
 │  Payment lapse freeze       │ ← Stripe webhook (5-day delay)
 │  Percentile stats rebuild   │ ← cron: nightly
-│  Year-end state reset       │ ← cron: Aug 1
+│  Year-end state reset       │ ← handled inline at completion
+                                       (advancing students reset to 'pending',
+                                        graduating students stay 'completed')
 └─────────────────────────────┘
 
 ┌────────────────────┐
@@ -800,8 +802,14 @@ CREATE TABLE four_year_plans (
   updated_at               TIMESTAMPTZ DEFAULT NOW(),
   CHECK (is_template = TRUE OR student_id IS NOT NULL),
   locked_grade_levels      JSONB DEFAULT '[]'::jsonb,
-                             -- Array of integer grade levels (9-12) that are locked after year-end completion.
+                             -- Array of integer grade levels (9-12) that are locked.
+                             -- Seeded in three places: (1) onboarding for returning students locks
+                             -- all past grades up to currentGrade-1; (2) year-end completion adds
+                             -- the completed grade; (3) manual toggle via POST /plans/:id/lock-grade.
                              -- Locked grades block all course modifications except GPA waiver toggles.
+                             -- Lock is a pure UI/workflow gate — it does NOT trigger year-end and
+                             -- does NOT mutate accounts.gradeLevel. Year-end is a separate explicit
+                             -- flow surfaced via the dashboard banner.
                              -- Example: [9, 10] means grades 9 and 10 are locked.
   CHECK (is_primary = FALSE OR is_template = FALSE),
   CHECK (is_primary = FALSE OR activated_at IS NOT NULL)

@@ -131,6 +131,13 @@ export async function POST(request: NextRequest, context: RouteContext) {
               });
             }
           }
+
+          // Delete the parent-created shell account (the one the invite
+          // belongs to) since the student's own account is the canonical one.
+          // CASCADE cleans up account_members and invite codes on that account.
+          if (accountId !== existingAcct.id) {
+            await tx.delete(accounts).where(eq(accounts.id, accountId));
+          }
         } else {
           // No existing account — create a new one
           const [userData] = await tx

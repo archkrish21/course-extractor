@@ -64,6 +64,13 @@
       "when": 1776095416693,
       "tag": "0008_known_namorita",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1776120801943,
+      "tag": "0009_demonic_rogue",
+      "breakpoints": true
     }
   ]
 }

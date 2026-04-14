@@ -127,6 +127,9 @@ function YearEndPageInner() {
   const [currentYearCourses, setCurrentYearCourses] = useState<CourseEntry[]>([]);
   const [nextYearCourses, setNextYearCourses] = useState<CourseEntry[]>([]);
   const [grades, setGrades] = useState<Record<string, string>>({});
+  const [prereqIssues, setPrereqIssues] = useState<Array<{ code: string; message: string }>>([]);
+  const [gapIssues, setGapIssues] = useState<Array<{ semester: number | null; message: string }>>([]);
+  const [issuesExpanded, setIssuesExpanded] = useState(false);
 
   useEffect(() => {
     async function fetchData() {
@@ -136,17 +139,58 @@ function YearEndPageInner() {
         if (res.ok) {
           const json = await res.json();
           const data = json.data ?? json;
-          setGradeLevel(data.gradeLevel ?? 9);
+          const currentCourses: CourseEntry[] = data.currentYearCourses ?? [];
+          const gradeLevelVal: number = data.gradeLevel ?? 9;
+          setGradeLevel(gradeLevelVal);
           setIsGraduating(data.isGraduating ?? false);
-          setCurrentYearCourses(data.currentYearCourses ?? []);
+          setCurrentYearCourses(currentCourses);
           setNextYearCourses(data.nextYearCourses ?? []);
 
           // Pre-fill grades from existing data
           const existingGrades: Record<string, string> = {};
-          for (const c of data.currentYearCourses ?? []) {
+          for (const c of currentCourses) {
             if (c.plannedGrade) existingGrades[c.id] = c.plannedGrade;
           }
           setGrades(existingGrades);
+
+          // Fetch warnings scoped to current grade
+          if (data.planId) {
+            const currentCourseIds = new Set(currentCourses.map((c) => c.courseId));
+            try {
+              const [valRes, reqRes] = await Promise.all([
+                apiFetch(`/api/v1/plans/${data.planId}/validate`),
+                apiFetch("/api/v1/requirements"),
+              ]);
+              if (valRes.ok) {
+                const valJson = await valRes.json();
+                const valData = valJson.data ?? valJson;
+                const issues: Array<{ code: string; message: string }> = [];
+                for (const cv of valData.courseViolations ?? []) {
+                  if (!currentCourseIds.has(cv.courseId)) continue;
+                  for (const v of cv.violations ?? [cv]) {
+                    issues.push({ code: cv.courseCode ?? "", message: v.message ?? "Validation issue" });
+                  }
+                }
+                setPrereqIssues(issues);
+              }
+              if (reqRes.ok) {
+                const reqJson = await reqRes.json();
+                const reqData = reqJson.data ?? reqJson;
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                const courseLoad = (reqData.groups ?? []).find((g: any) => g.group === "course_load");
+                const gaps: Array<{ semester: number | null; message: string }> = [];
+                for (const r of courseLoad?.requirements ?? []) {
+                  if (r.status === "gap" && r.metadata?.gradeLevel === gradeLevelVal) {
+                    gaps.push({
+                      semester: r.metadata?.semester ?? null,
+                      message: r.notes ?? r.name ?? "Semester requirement gap",
+                    });
+                  }
+                }
+                setGapIssues(gaps);
+              }
+            } catch { /* silent — warnings optional */ }
+          }
         }
       } catch { /* silent */ }
       finally { setLoading(false); }
@@ -213,6 +257,76 @@ function YearEndPageInner() {
         Complete your Grade {gradeLevel} year-end review to advance to {isGraduating ? "graduation" : `Grade ${gradeLevel + 1}`}.
       </p>
 
+      {/* Warnings — prereq violations and semester gaps in current grade */}
+      {(prereqIssues.length > 0 || gapIssues.length > 0) && (
+        <div className="mb-6 rounded-xl border border-warning/40 bg-warning/10" role="alert">
+          <div className="flex items-center gap-2 px-4 py-3">
+            <button
+              type="button"
+              onClick={() => setIssuesExpanded((v) => !v)}
+              aria-expanded={issuesExpanded}
+              aria-controls="year-end-issues-list"
+              className="flex flex-1 items-center gap-3 text-left focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring rounded min-w-0"
+            >
+              <svg
+                aria-hidden="true"
+                className="h-5 w-5 shrink-0 text-warning"
+                fill="none"
+                viewBox="0 0 24 24"
+                strokeWidth={2}
+                stroke="currentColor"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126ZM12 15.75h.007v.008H12v-.008Z"
+                />
+              </svg>
+              <span className="font-semibold text-warning truncate">
+                {prereqIssues.length + gapIssues.length} issue{prereqIssues.length + gapIssues.length === 1 ? "" : "s"} to resolve in Grade {gradeLevel}
+              </span>
+              <svg
+                aria-hidden="true"
+                className={`h-4 w-4 shrink-0 text-warning transition-transform ${issuesExpanded ? "rotate-180" : ""}`}
+                fill="none"
+                viewBox="0 0 24 24"
+                strokeWidth={2.5}
+                stroke="currentColor"
+              >
+                <path strokeLinecap="round" strokeLinejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" />
+              </svg>
+            </button>
+            <Link
+              href="/planner"
+              className="inline-flex items-center gap-1 text-sm font-medium text-warning hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring rounded shrink-0"
+            >
+              Fix in planner
+              <svg aria-hidden="true" className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
+              </svg>
+            </Link>
+          </div>
+          {issuesExpanded && (
+            <ul id="year-end-issues-list" className="space-y-1 border-t border-warning/30 px-4 py-3 text-sm text-foreground">
+              {prereqIssues.map((i, idx) => (
+                <li key={`p-${idx}`} className="flex gap-2">
+                  <span className="font-mono font-semibold shrink-0">{i.code || "—"}</span>
+                  <span className="text-muted-foreground">— {i.message}</span>
+                </li>
+              ))}
+              {gapIssues.map((i, idx) => (
+                <li key={`g-${idx}`} className="flex gap-2">
+                  <span className="font-semibold shrink-0">
+                    {i.semester != null ? `Sem ${i.semester}` : "Semester"}
+                  </span>
+                  <span className="text-muted-foreground">— {i.message}</span>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+      )}
+
       <StepIndicator currentStep={step} isGraduating={isGraduating} />
 
       {/* Step 1: Confirm grades */}
@@ -256,8 +370,8 @@ function YearEndPageInner() {
                                     <p className="text-xs text-muted-foreground">{c.code}</p>
                                   </td>
                                   <td className="px-3 py-2.5 text-right">
-                                    {c.status === "completed" ? (
-                                      <Badge className="rounded-full bg-success/15 text-success">{c.plannedGrade ?? "—"}</Badge>
+                                    {c.status === "completed" && c.plannedGrade ? (
+                                      <Badge className="rounded-full bg-success/15 text-success">{c.plannedGrade}</Badge>
                                     ) : (
                                       <select
                                         value={grades[c.id] ?? c.plannedGrade ?? ""}

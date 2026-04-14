@@ -69,6 +69,16 @@ export async function GET(request: NextRequest) {
       .update(users)
       .set({ isEmailVerified: true })
       .where(eq(users.id, authUser.id));
+
+    // If the user signed up with an invite, redirect to /join so they get
+    // linked to the parent's account automatically after confirming email.
+    const inviteCode = authUser.user_metadata?.invite_code;
+    const inviteAccount = authUser.user_metadata?.invite_account;
+    if (inviteCode && inviteAccount) {
+      return NextResponse.redirect(
+        `${origin}/join?code=${encodeURIComponent(inviteCode)}&account=${encodeURIComponent(inviteAccount)}`
+      );
+    }
   }
 
   return NextResponse.redirect(`${origin}/login?confirmed=true`);

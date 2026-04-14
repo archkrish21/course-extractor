@@ -53,6 +53,7 @@ export default function SignupPage() {
   const [loading, setLoading] = useState(false);
   const [coppaBlocked, setCoppaBlocked] = useState(false);
   const [confirmationPending, setConfirmationPending] = useState(false);
+  const [hasInvite, setHasInvite] = useState(false);
 
   function validate(): FieldErrors {
     const errs: FieldErrors = {};
@@ -82,10 +83,19 @@ export default function SignupPage() {
     setErrors({}); setLoading(true);
 
     try {
+      const urlParams = typeof window !== "undefined" ? new URLSearchParams(window.location.search) : new URLSearchParams();
+      const inviteCode = urlParams.get("invite") ?? urlParams.get("code") ?? undefined;
+      const inviteAccount = urlParams.get("account") ?? undefined;
+
       const res = await fetch("/api/v1/auth/signup", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password, date_of_birth: dob, role, state: "IL", school_name: "Adlai E. Stevenson High School", tos_accepted: true }),
+        body: JSON.stringify({
+          email, password, date_of_birth: dob, role,
+          state: "IL", school_name: "Adlai E. Stevenson High School", tos_accepted: true,
+          ...(inviteCode && { invite_code: inviteCode }),
+          ...(inviteAccount && { invite_account: inviteAccount }),
+        }),
       });
 
       if (!res.ok) {
@@ -97,12 +107,10 @@ export default function SignupPage() {
       const data = await res.json().catch(() => ({}));
 
       if (data?.data?.email_confirmation_pending) {
+        setHasInvite(!!inviteCode);
         setConfirmationPending(true);
         return;
       }
-
-      const inviteCode = new URLSearchParams(window.location.search).get("invite") ?? new URLSearchParams(window.location.search).get("code");
-      const inviteAccount = new URLSearchParams(window.location.search).get("account");
 
       if (inviteCode && inviteAccount) {
         router.push(`/join?code=${inviteCode}&account=${inviteAccount}`);
@@ -132,8 +140,16 @@ export default function SignupPage() {
             </div>
             <h2 className="text-2xl font-bold text-foreground">Check your email</h2>
             <p className="mt-2 text-sm text-muted-foreground max-w-sm mx-auto">
-              We sent a confirmation link to <span className="font-medium text-foreground">{email}</span>. Click the link to verify your email and get started.
+              We sent a confirmation link to <span className="font-medium text-foreground">{email}</span>.
+              {hasInvite
+                ? " Click the link to verify your email and join the account."
+                : " Click the link to verify your email and get started."}
             </p>
+            {hasInvite && (
+              <p className="mt-2 text-xs text-primary max-w-sm mx-auto">
+                After confirming, you&apos;ll be automatically connected to the parent&apos;s account.
+              </p>
+            )}
             <p className="mt-4 text-xs text-muted-foreground">
               Didn&apos;t receive it? Check your spam folder or{" "}
               <button

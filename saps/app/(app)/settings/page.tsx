@@ -7,6 +7,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { US_STATES } from "@/config/us-states";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import { useAccount } from "@/lib/account-context";
 import { apiFetch } from "@/lib/api-client";
 import { useToast } from "@/components/ui/toast";
@@ -23,7 +24,7 @@ interface AccountMember {
 }
 
 export default function SettingsPage() {
-  const { currentAccount, refetchAccounts, userEmail, userRole, userFirstName, userLastName, refetchUser } = useAccount();
+  const { currentAccount, refetchAccounts, userEmail, userRole, userFirstName, userLastName, refetchUser, onboardingCompleted } = useAccount();
   const { showToast } = useToast();
 
   // State
@@ -46,9 +47,38 @@ export default function SettingsPage() {
   const [deleteText, setDeleteText] = useState("");
   const [exportOnDelete, setExportOnDelete] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [unlinkConfirm, setUnlinkConfirm] = useState<{ studentName: string } | null>(null);
+  const [unlinking, setUnlinking] = useState(false);
   const [memberLimit, setMemberLimit] = useState(3);
   const [accountPlans, setAccountPlans] = useState<Array<{ id: string; name: string; isPrimary: boolean }>>([]);
   const [invitePlanShares, setInvitePlanShares] = useState<Record<string, string>>({}); // planId -> permission
+
+  // Add Student form state (parent/guardian flow)
+  const [showAddStudent, setShowAddStudent] = useState(false);
+  const [addStudentName, setAddStudentName] = useState("");
+  const [addStudentEmail, setAddStudentEmail] = useState("");
+  const [addStudentLoading, setAddStudentLoading] = useState(false);
+
+  // Student invite status
+  const [studentInviteStatus, setStudentInviteStatus] = useState<{
+    status: "none" | "pending" | "accepted" | "expired";
+    invite_code?: string;
+    expires_at?: string;
+  } | null>(null);
+
+  const isParentLike = userRole === "parent" || userRole === "guardian";
+  const searchParams = useSearchParams();
+
+  // Auto-open "Add Student" form when navigated via ?add-student=1
+  useEffect(() => {
+    if (isParentLike && searchParams.get("add-student") === "1") {
+      setShowAddStudent(true);
+      // Remove the query param so refreshing doesn't re-open the modal
+      const url = new URL(window.location.href);
+      url.searchParams.delete("add-student");
+      window.history.replaceState({}, "", url.pathname + url.search);
+    }
+  }, [isParentLike, searchParams]);
 
   // Fetch data
   useEffect(() => {
@@ -107,6 +137,13 @@ export default function SettingsPage() {
     apiFetch("/api/v1/auth/consent").then((r) => (r.ok ? r.json() : null)).then((json) => {
       setConsentInfo(json?.data?.accepted_documents ?? json?.accepted_documents ?? []);
     }).catch(() => {});
+    // Fetch student invite status for parent/guardian
+    if (currentAccount?.id && currentAccount.role !== "student") {
+      apiFetch(`/api/v1/accounts/${currentAccount.id}/invites`).then((r) => (r.ok ? r.json() : null)).then((json) => {
+        const data = json?.data ?? json;
+        if (data?.status) setStudentInviteStatus(data);
+      }).catch(() => {});
+    }
   }, [currentAccount]);
 
   const otherMembers = members.filter((m) => m.email !== userEmail);
@@ -126,8 +163,36 @@ export default function SettingsPage() {
     finally { setSavingUserName(false); }
   };
 
-  const handleRemoveMember = async (userId: string, name: string) => {
-    if (!currentAccount?.id || !confirm(`Remove ${name} from this account?`)) return;
+  const handleUnlinkStudent = async () => {
+    if (!currentAccount?.id || !unlinkConfirm) return;
+    const selfMember = members.find((m) => m.email === userEmail);
+    if (!selfMember) return;
+    setUnlinking(true);
+    try {
+      const res = await apiFetch(`/api/v1/accounts/${currentAccount.id}/members/${selfMember.userId}`, { method: "DELETE" });
+      if (res.ok) {
+        showToast(`Unlinked from ${unlinkConfirm.studentName}'s account.`);
+        setUnlinkConfirm(null);
+        await refetchAccounts();
+        window.location.href = "/settings";
+      } else {
+        const json = await res.json().catch(() => null);
+        showToast(json?.error?.message ?? "Failed to unlink.");
+      }
+    } catch { /* silent */ }
+    finally { setUnlinking(false); }
+  };
+
+  const handleRemoveMember = async (userId: string, name: string, role: string) => {
+    if (!currentAccount?.id) return;
+
+    // When a parent/guardian unlinks a student, show confirmation modal
+    if (role === "student" && isParentLike) {
+      setUnlinkConfirm({ studentName: name });
+      return;
+    }
+
+    if (!confirm(`Remove ${name} from this account?`)) return;
     setRemovingMember(userId);
     try {
       const res = await apiFetch(`/api/v1/accounts/${currentAccount.id}/members/${userId}`, { method: "DELETE" });
@@ -164,6 +229,64 @@ export default function SettingsPage() {
       }
     } catch { showToast("Something went wrong. Please try again."); }
     finally { setGenerating(false); }
+  };
+
+  const handleAddStudent = async () => {
+    if (!addStudentName.trim() || !addStudentEmail.trim()) return;
+    setAddStudentLoading(true);
+    try {
+      const res = await apiFetch("/api/v1/accounts", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          student_name: addStudentName.trim(),
+          student_email: addStudentEmail.trim(),
+        }),
+      });
+      if (res.ok) {
+        const json = await res.json();
+        const data = json.data ?? json;
+        if (data.student_exists) {
+          showToast(`Invite sent to ${addStudentEmail.trim()}! You'll be connected once they accept.`);
+        } else {
+          showToast(`Signup invite sent to ${addStudentEmail.trim()}! They can create their account from the link.`);
+        }
+        setShowAddStudent(false);
+        setAddStudentName("");
+        setAddStudentEmail("");
+        setStudentInviteStatus({ status: "pending", invite_code: data.invite_code });
+        await refetchAccounts();
+      } else {
+        const json = await res.json().catch(() => ({}));
+        showToast(json?.error?.message || "Failed to create student account.");
+      }
+    } catch { showToast("Something went wrong. Please try again."); }
+    finally { setAddStudentLoading(false); }
+  };
+
+  const handleRevokeInvite = async () => {
+    if (!currentAccount?.id) return;
+    try {
+      const res = await apiFetch(`/api/v1/accounts/${currentAccount.id}/invites`, { method: "DELETE" });
+      if (res.ok) {
+        const json = await res.json().catch(() => ({}));
+        const data = json?.data ?? json;
+        if (data?.account_deleted) {
+          showToast("Invite revoked and student removed.");
+          // Refetch accounts — the deleted account will be gone and
+          // AccountContext will switch to the next available account.
+          await refetchAccounts();
+          // Reload to reset all page state for the new active account
+          window.location.href = "/settings";
+        } else {
+          setStudentInviteStatus({ status: "none" });
+          showToast("Invite revoked.");
+        }
+      } else {
+        const json = await res.json().catch(() => ({}));
+        showToast(json?.error?.message || "Failed to revoke invite.");
+      }
+    } catch { showToast("Something went wrong."); }
   };
 
   const handleDeleteAccount = async () => {
@@ -251,6 +374,27 @@ export default function SettingsPage() {
       </div>
 
       <div className="space-y-10">
+
+        {/* --- Onboarding banner for students ----------------------- */}
+        {!onboardingCompleted && (currentAccount?.role ?? userRole) === "student" && (
+          <div
+            className="flex flex-col gap-3 rounded-xl border border-primary/30 bg-primary-light p-4 sm:flex-row sm:items-center sm:justify-between"
+            role="status"
+          >
+            <div className="flex items-start gap-3">
+              <svg aria-hidden="true" className="mt-0.5 h-5 w-5 shrink-0 text-primary" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M4.26 10.147a60.438 60.438 0 0 0-.491 6.347A48.62 48.62 0 0 1 12 20.904a48.62 48.62 0 0 1 8.232-4.41 60.46 60.46 0 0 0-.491-6.347m-15.482 0a50.636 50.636 0 0 0-2.658-.813A59.906 59.906 0 0 1 12 3.493a59.903 59.903 0 0 1 10.399 5.84c-.896.248-1.783.52-2.658.814m-15.482 0A50.717 50.717 0 0 1 12 13.489a50.702 50.702 0 0 1 7.74-3.342M6.75 15a.75.75 0 1 0 0-1.5.75.75 0 0 0 0 1.5Zm0 0v-3.675A55.378 55.378 0 0 1 12 8.443m-7.007 11.55A5.981 5.981 0 0 0 6.75 15.75v-1.5" />
+              </svg>
+              <div>
+                <p className="font-semibold text-primary">Complete your onboarding</p>
+                <p className="text-sm text-muted-foreground">Set up your profile, add past courses, and create your first plan to get the most out of SAPS.</p>
+              </div>
+            </div>
+            <Link href="/onboarding" className="sm:shrink-0">
+              <Button size="sm">Start Onboarding</Button>
+            </Link>
+          </div>
+        )}
 
         {/* --- Profile & Academic ----------------------------------- */}
         <section>
@@ -345,11 +489,11 @@ export default function SettingsPage() {
                   <>
                     <div className="flex items-start justify-between sm:block">
                       <p className="text-xs text-muted-foreground">Grade</p>
-                      <p className="mt-0.5 text-sm font-medium text-foreground">{currentAccount?.gradeLevel ?? "---"}</p>
+                      <p className="mt-0.5 text-sm font-medium text-foreground">{onboardingCompleted ? (currentAccount?.gradeLevel ?? "---") : "---"}</p>
                     </div>
                     <div className="flex items-start justify-between sm:block">
                       <p className="text-xs text-muted-foreground">Graduation</p>
-                      <p className="mt-0.5 text-sm font-medium text-foreground">{currentAccount?.graduationYear ?? "---"}</p>
+                      <p className="mt-0.5 text-sm font-medium text-foreground">{onboardingCompleted ? (currentAccount?.graduationYear ?? "---") : "---"}</p>
                     </div>
                     <div className="flex items-start justify-between sm:block">
                       <p className="text-xs text-muted-foreground">State</p>
@@ -367,12 +511,13 @@ export default function SettingsPage() {
             </CardContent>
           </Card>
 
-          {/* Student info — shown for non-student roles */}
-          {currentAccount && currentAccount.role !== "student" && (
-            <>
-              <h2 className="mt-8 mb-4 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                Student Information
-              </h2>
+        </section>
+
+        {/* --- Student Info (parent/guardian/counselor — non-student roles) */}
+        {(isParentLike || currentAccount?.role === "counselor") && (
+          <section>
+            <h2 className="mb-4 text-xs font-semibold uppercase tracking-wider text-muted-foreground">Student Info</h2>
+            {currentAccount ? (
               <Card>
                 <CardContent>
                   <div className="grid grid-cols-1 gap-x-8 gap-y-4 sm:grid-cols-3">
@@ -381,6 +526,10 @@ export default function SettingsPage() {
                       <p className="mt-0.5 text-sm font-medium text-foreground">
                         {[currentAccount.studentFirstName, currentAccount.studentLastName].filter(Boolean).join(" ") || currentAccount.studentName || "---"}
                       </p>
+                    </div>
+                    <div>
+                      <p className="text-xs text-muted-foreground">Email</p>
+                      <p className="mt-0.5 text-sm font-medium text-foreground">{members.find((m) => m.role === "student")?.email ?? "---"}</p>
                     </div>
                     <div>
                       <p className="text-xs text-muted-foreground">Grade</p>
@@ -400,12 +549,72 @@ export default function SettingsPage() {
                       <p className="text-xs text-muted-foreground">School</p>
                       <p className="mt-0.5 text-sm font-medium text-foreground">{currentAccount.schoolName ?? "---"}</p>
                     </div>
+                    {!members.some((m) => m.role === "student") && (
+                    <div>
+                      <p className="text-xs text-muted-foreground">Invite Status</p>
+                      <div className="mt-1">
+                        {studentInviteStatus?.status === "pending" ? (
+                          <div className="flex items-center gap-2">
+                            <Badge className="bg-warning/15 text-warning text-[11px]">
+                              <svg aria-hidden="true" className="mr-1 h-3 w-3" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
+                              </svg>
+                              Invite Pending
+                            </Badge>
+                            {isParentLike && (
+                              <button type="button" onClick={handleRevokeInvite}
+                                className="text-[11px] text-destructive hover:text-destructive/80 hover:underline transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring rounded">
+                                Revoke
+                              </button>
+                            )}
+                          </div>
+                        ) : studentInviteStatus?.status === "expired" ? (
+                          <Badge className="bg-destructive/15 text-destructive text-[11px]">
+                            <svg aria-hidden="true" className="mr-1 h-3 w-3" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m9-.75a9 9 0 1 1-18 0 9 9 0 0 1 18 0Zm-9 3.75h.008v.008H12v-.008Z" />
+                            </svg>
+                            Invite Expired
+                          </Badge>
+                        ) : (
+                          <span className="text-sm text-muted-foreground">Not invited</span>
+                        )}
+                      </div>
+                    </div>
+                    )}
+                  </div>
+                  {isParentLike && (
+                    <div className="mt-4 border-t border-border pt-4">
+                      <button type="button" onClick={() => setShowAddStudent(true)}
+                        className="flex items-center gap-1.5 text-xs font-medium text-primary hover:text-primary/80 transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring rounded">
+                        <svg aria-hidden="true" className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+                        </svg>
+                        Add Another Student
+                      </button>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            ) : isParentLike ? (
+              <Card>
+                <CardContent>
+                  <div className="py-6 text-center">
+                    <p className="text-sm text-muted-foreground">No students added yet.</p>
+                    <Button size="sm" className="mt-4 min-h-[44px]" onClick={() => setShowAddStudent(true)}>
+                      Add Student
+                    </Button>
                   </div>
                 </CardContent>
               </Card>
-            </>
-          )}
-        </section>
+            ) : (
+              <Card>
+                <CardContent>
+                  <p className="py-6 text-center text-sm text-muted-foreground">No student information available yet.</p>
+                </CardContent>
+              </Card>
+            )}
+          </section>
+        )}
 
         {/* --- Linked Accounts ------------------------------------- */}
         <section>
@@ -443,10 +652,10 @@ export default function SettingsPage() {
                           <p className="truncate text-[11px] text-muted-foreground">{m.email}</p>
                         </div>
                       </div>
-                      <button type="button" onClick={() => handleRemoveMember(m.userId, [m.firstName, m.lastName].filter(Boolean).join(" ") || m.email)}
+                      <button type="button" onClick={() => handleRemoveMember(m.userId, [m.firstName, m.lastName].filter(Boolean).join(" ") || m.email, m.role)}
                         disabled={removingMember === m.userId}
                         className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-muted-foreground/40 hover:text-destructive hover:bg-destructive-light transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
-                        title="Remove">
+                        title={m.role === "student" ? "Unlink" : "Remove"}>
                         <svg aria-hidden="true" className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
                           <path strokeLinecap="round" strokeLinejoin="round" d="M6 18 18 6M6 6l12 12" />
                         </svg>
@@ -462,24 +671,26 @@ export default function SettingsPage() {
                   {currentAccount?.role !== "counselor" && (() => {
                     const totalMembers = members.length; // includes self
                     const atLimit = totalMembers >= memberLimit;
+                    const onboardingBlocked =
+                      (currentAccount?.role ?? userRole) === "student" && !onboardingCompleted;
+                    const inviteDisabled = atLimit || onboardingBlocked;
 
                     return (
                     <>
                       {otherMembers.length > 0 && <div className="my-2 border-t border-border" />}
                       <div className="flex flex-col gap-2 pt-2 sm:flex-row sm:items-center">
                         <select value={inviteRole} onChange={(e) => setInviteRole(e.target.value)}
-                          disabled={atLimit}
-                          className={`min-h-[44px] rounded-lg border border-border bg-background px-3 text-sm focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring ${atLimit ? "opacity-50" : ""}`}>
-                          {currentAccount?.role === "parent" && <option value="student">Child</option>}
+                          disabled={inviteDisabled}
+                          className={`min-h-[44px] rounded-lg border border-border bg-background px-3 text-sm focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring ${inviteDisabled ? "opacity-50" : ""}`}>
                           <option value="parent">Parent</option>
                           <option value="guardian">Guardian</option>
                           <option value="counselor">Counselor</option>
                         </select>
                         <input type="email" value={inviteEmail} onChange={(e) => setInviteEmail(e.target.value)}
                           placeholder="Invite by email..."
-                          disabled={atLimit}
-                          className={`min-h-[44px] flex-1 rounded-lg border border-border bg-background px-3 text-sm placeholder:text-muted-foreground focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring ${atLimit ? "opacity-50" : ""}`} />
-                        <Button size="sm" className="min-h-[44px] w-full shrink-0 sm:w-auto" onClick={handleSendInvite} disabled={generating || !inviteEmail.trim() || atLimit}>
+                          disabled={inviteDisabled}
+                          className={`min-h-[44px] flex-1 rounded-lg border border-border bg-background px-3 text-sm placeholder:text-muted-foreground focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring ${inviteDisabled ? "opacity-50" : ""}`} />
+                        <Button size="sm" className="min-h-[44px] w-full shrink-0 sm:w-auto" onClick={handleSendInvite} disabled={generating || !inviteEmail.trim() || inviteDisabled}>
                           {generating ? "Sending..." : "Send Invite"}
                         </Button>
                       </div>
@@ -668,6 +879,77 @@ export default function SettingsPage() {
                 <Button variant="ghost" size="sm" onClick={() => { setDeleteConfirm(false); setDeleteText(""); }}>Cancel</Button>
                 <Button variant="destructive" size="sm" onClick={handleDeleteAccount} disabled={deleteText !== "DELETE" || deleting}>
                   {deleting ? "Deleting..." : "Delete my account"}
+                </Button>
+              </div>
+            </div>
+          </div>
+        </>
+      )}
+
+      {/* --- Unlink Student Confirmation Modal ---------------------- */}
+      {unlinkConfirm && (
+        <>
+          <div className="fixed inset-0 z-40 bg-black/50" onClick={() => { if (!unlinking) setUnlinkConfirm(null); }} aria-hidden="true" />
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+            <div className="w-full max-w-md rounded-xl bg-card shadow-xl" role="alertdialog" aria-modal="true"
+              onClick={(e) => e.stopPropagation()}>
+              <div className="p-6">
+                <div className="flex items-start gap-3">
+                  <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-destructive-light">
+                    <svg aria-hidden="true" className="h-5 w-5 text-destructive" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126ZM12 15.75h.007v.008H12v-.008Z" />
+                    </svg>
+                  </span>
+                  <div>
+                    <h3 className="text-base font-semibold text-foreground">Unlink from {unlinkConfirm.studentName}?</h3>
+                    <p className="mt-1 text-sm text-muted-foreground">
+                      This will remove you from {unlinkConfirm.studentName}&apos;s account. You will lose access to their plans, grades, and data. This cannot be undone.
+                    </p>
+                  </div>
+                </div>
+              </div>
+              <div className="flex items-center justify-end gap-2 border-t border-border px-6 py-3">
+                <Button variant="ghost" size="sm" onClick={() => setUnlinkConfirm(null)} disabled={unlinking}>Cancel</Button>
+                <Button variant="destructive" size="sm" onClick={handleUnlinkStudent} disabled={unlinking}>
+                  {unlinking ? "Unlinking..." : "Unlink"}
+                </Button>
+              </div>
+            </div>
+          </div>
+        </>
+      )}
+
+      {/* --- Add Student Modal ------------------------------------- */}
+      {showAddStudent && (
+        <>
+          <div className="fixed inset-0 z-40 bg-black/50" onClick={() => setShowAddStudent(false)} aria-hidden="true" />
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+            <div className="w-full max-w-md rounded-xl bg-card shadow-xl" role="dialog" aria-modal="true" aria-label="Add Student"
+              onClick={(e) => e.stopPropagation()}>
+              <div className="p-6">
+                <h3 className="text-base font-semibold text-foreground">Add Student</h3>
+                <p className="mt-1 text-sm text-muted-foreground">Create a student profile. You can invite them to claim their account afterwards.</p>
+                <div className="mt-5 space-y-4">
+                  <div>
+                    <label className="mb-1 block text-xs font-medium text-muted-foreground">Student&apos;s full name</label>
+                    <input type="text" value={addStudentName} onChange={(e) => setAddStudentName(e.target.value)}
+                      placeholder="e.g. Jane Doe"
+                      className="min-h-[44px] w-full rounded-lg border border-border bg-background px-3 text-sm focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring" autoFocus />
+                  </div>
+                  <div>
+                    <label className="mb-1 block text-xs font-medium text-muted-foreground">Student&apos;s email</label>
+                    <input type="email" value={addStudentEmail} onChange={(e) => setAddStudentEmail(e.target.value)}
+                      placeholder="e.g. jane@example.com"
+                      className="min-h-[44px] w-full rounded-lg border border-border bg-background px-3 text-sm focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring" />
+                    <p className="mt-1 text-[11px] text-muted-foreground">An invite will be sent to this email so they can access their account.</p>
+                  </div>
+                </div>
+              </div>
+              <div className="flex items-center justify-end gap-2 border-t border-border px-6 py-3">
+                <Button variant="ghost" size="sm" onClick={() => setShowAddStudent(false)}>Cancel</Button>
+                <Button size="sm" onClick={handleAddStudent}
+                  disabled={addStudentLoading || !addStudentName.trim() || !addStudentEmail.trim()}>
+                  {addStudentLoading ? "Creating..." : "Add Student"}
                 </Button>
               </div>
             </div>

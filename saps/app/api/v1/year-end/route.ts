@@ -82,6 +82,7 @@ export async function GET(request: NextRequest) {
         transitionState,
         gradeLevel,
         isGraduating: gradeLevel >= 12,
+        planId: null,
         currentYearCourses: [],
         nextYearCourses: [],
         incompleteCount: 0,
@@ -134,15 +135,18 @@ export async function GET(request: NextRequest) {
       )
       .orderBy(planCourses.semester, courses.code);
 
-    // Count courses without grades (incomplete)
+    // Count courses without grades (incomplete). A "completed" status with no
+    // grade is still incomplete — the student finished the course but hasn't
+    // recorded the final grade yet.
     const incompleteCount = currentYearCourses.filter(
-      (c) => c.status !== "dropped" && c.status !== "completed" && !c.plannedGrade
+      (c) => c.status !== "dropped" && !c.plannedGrade
     ).length;
 
     return successResponse({
       transitionState,
       gradeLevel,
       isGraduating: gradeLevel >= 12,
+      planId: plan.id,
       currentYearCourses,
       nextYearCourses,
       incompleteCount,
@@ -291,13 +295,16 @@ export async function POST(request: NextRequest) {
       `);
     }
 
-    // Update transition state only if completing current grade
-    // Use account's studentUserId — the caller may be a parent
+    // Update transition state only if completing current grade.
+    // Use account's studentUserId — the caller may be a parent.
+    // If the student advanced to a new grade, reset the flag to "pending"
+    // so next year's banner/wizard eligibility works. For graduation there
+    // is no next transition — leave the flag "completed" as a terminal state.
     if (isCurrentGrade) {
       const profileUserId = account?.studentUserId ?? user.id;
       await db
         .update(studentProfiles)
-        .set({ yearEndTransitionState: "completed" })
+        .set({ yearEndTransitionState: isGraduating ? "completed" : "pending" })
         .where(eq(studentProfiles.userId, profileUserId));
     }
 

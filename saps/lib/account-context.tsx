@@ -33,6 +33,7 @@ export interface AccountContextType {
   userRole: string | null;
   userFirstName: string | null;
   userLastName: string | null;
+  onboardingCompleted: boolean;
   refetchUser: () => Promise<void>;
 }
 
@@ -48,6 +49,7 @@ const AccountContext = createContext<AccountContextType>({
   userRole: null,
   userFirstName: null,
   userLastName: null,
+  onboardingCompleted: true,
   refetchUser: async () => {},
 });
 
@@ -58,6 +60,7 @@ export function AccountProvider({ children }: { children: ReactNode }) {
   const [userRole, setUserRole] = useState<string | null>(null);
   const [userFirstName, setUserFirstName] = useState<string | null>(null);
   const [userLastName, setUserLastName] = useState<string | null>(null);
+  const [onboardingCompleted, setOnboardingCompleted] = useState(true);
   const [loading, setLoading] = useState(true);
 
   const fetchAccounts = useCallback(async () => {
@@ -118,6 +121,7 @@ export function AccountProvider({ children }: { children: ReactNode }) {
           setUserRole(u.role ?? null);
           setUserFirstName(u.first_name ?? null);
           setUserLastName(u.last_name ?? null);
+          setOnboardingCompleted(u.onboarding_completed ?? true);
         }
       }
     } catch { /* silent */ }
@@ -158,6 +162,7 @@ export function AccountProvider({ children }: { children: ReactNode }) {
         userRole,
         userFirstName,
         userLastName,
+        onboardingCompleted,
         refetchUser: fetchUser,
       }}
     >

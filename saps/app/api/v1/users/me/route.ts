@@ -338,6 +338,30 @@ export async function DELETE(request: NextRequest) {
     // Null out FK references before deleting accounts
     await db.execute(sql`UPDATE accounts SET billing_contact_id = NULL WHERE billing_contact_id = ${user.id}`);
 
+    // Delete accounts created by this user where no student has joined yet.
+    // These are parent-created shells with no student member — safe to remove.
+    await db.execute(sql`
+      DELETE FROM accounts
+      WHERE created_by = ${user.id}
+        AND id NOT IN (
+          SELECT account_id FROM account_members WHERE role = 'student'
+        )
+    `);
+    // For remaining accounts created by this user (student HAS joined),
+    // transfer created_by to the student so the parent user can be deleted
+    // (created_by has onDelete: restrict and is NOT NULL).
+    await db.execute(sql`
+      UPDATE accounts SET created_by = (
+        SELECT am.user_id FROM account_members am
+        WHERE am.account_id = accounts.id AND am.role = 'student'
+        LIMIT 1
+      )
+      WHERE created_by = ${user.id}
+        AND id IN (
+          SELECT account_id FROM account_members WHERE role = 'student'
+        )
+    `);
+
     // Delete plans this user created on OTHER students' accounts (orphan cleanup).
     // Without this, plans stay in four_year_plans with created_by=NULL after the UPDATE
     // below, and still count against the account's plan limit because the POST /plans

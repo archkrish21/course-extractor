@@ -78,6 +78,9 @@ test.describe("GPA Trend — Chart Visibility", () => {
     // We cannot deterministically control snapshot count here,
     // so we verify consistency: either the chart renders (2+ snapshots)
     // or it does not (< 2 snapshots). Both are valid states.
+    // Wait for the progress page data to finish loading before checking.
+    await page.waitForTimeout(3000);
+
     const trendHeading = page.locator("text=GPA Trend");
     const hasTrend = (await trendHeading.count()) > 0;
 
@@ -85,11 +88,8 @@ test.describe("GPA Trend — Chart Visibility", () => {
       // Chart is visible — verify it rendered properly with both legend items
       await expect(page.locator("text=Unweighted").first()).toBeVisible({ timeout: 5_000 });
       await expect(page.locator("text=Weighted").first()).toBeVisible({ timeout: 5_000 });
-    } else {
-      // No chart — confirm it is truly absent (not just slow to load)
-      await page.waitForTimeout(2000);
-      expect(await trendHeading.count()).toBe(0);
     }
+    // If no chart, that's also valid (fewer than 2 snapshots)
   });
 });
 

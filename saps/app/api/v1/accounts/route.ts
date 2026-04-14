@@ -2,13 +2,15 @@ import { NextRequest } from "next/server";
 import { z } from "zod";
 import { randomBytes } from "crypto";
 import { db } from "@/lib/db";
-import { accounts, accountMembers, studentProfiles, users, subscriptions, subscriptionPlans } from "@/lib/db/schema";
+import { accounts, accountMembers, accountInviteCodes, studentProfiles, users, subscriptions, subscriptionPlans } from "@/lib/db/schema";
 import { eq, and, sql } from "drizzle-orm";
 import { successResponse, errorResponse } from "@/lib/api/response";
 import { requireSameOrigin } from "@/lib/api/require-same-origin";
 import { requireAuth } from "@/lib/auth/get-user";
+import { sendEmail } from "@/lib/email/client";
+import { inviteEmail as inviteEmailTemplate } from "@/lib/email/templates";
 
-function generateClaimCode(): string {
+function generateCode(): string {
   const chars = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789";
   const bytes = randomBytes(8);
   let code = "";
@@ -20,9 +22,10 @@ function generateClaimCode(): string {
 
 const createAccountSchema = z.object({
   student_name: z.string().min(1).max(200),
-  student_date_of_birth: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Date must be YYYY-MM-DD"),
-  grade_level: z.number().int().min(9).max(12),
-  graduation_year: z.number().int().min(2024).max(2040),
+  student_email: z.string().email(),
+  student_date_of_birth: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Date must be YYYY-MM-DD").optional(),
+  grade_level: z.number().int().min(9).max(12).optional(),
+  graduation_year: z.number().int().min(2024).max(2040).optional(),
 });
 
 /**
@@ -51,49 +54,71 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const parsed = createAccountSchema.safeParse(body);
     if (!parsed.success) {
-      return errorResponse("VALIDATION_ERROR", "Invalid request body.", 400, {
-        details: parsed.error.flatten().fieldErrors,
+      const fieldErrors = parsed.error.flatten().fieldErrors;
+      const messages = Object.entries(fieldErrors)
+        .map(([field, errs]) => `${field}: ${(errs as string[]).join(", ")}`)
+        .join("; ");
+      return errorResponse("VALIDATION_ERROR", messages || "Invalid request body.", 400, {
+        details: fieldErrors,
       });
     }
 
-    const { student_name, student_date_of_birth, grade_level, graduation_year } = parsed.data;
+    const { student_name, student_email, student_date_of_birth, grade_level, graduation_year } = parsed.data;
+    const normalizedEmail = student_email.trim().toLowerCase();
 
-    // COPPA check: student must be at least 13 years old
-    const dob = new Date(student_date_of_birth);
-    const now = new Date();
-    let age = now.getFullYear() - dob.getFullYear();
-    const monthDiff = now.getMonth() - dob.getMonth();
-    if (monthDiff < 0 || (monthDiff === 0 && now.getDate() < dob.getDate())) {
-      age--;
-    }
-
-    if (age < 13) {
+    // Block self-invite
+    if (normalizedEmail === user.email.toLowerCase()) {
       return errorResponse(
-        "FORBIDDEN",
-        "Student must be at least 13 years old (COPPA compliance).",
-        403
+        "VALIDATION_ERROR",
+        "You cannot add yourself as a student.",
+        400
       );
     }
 
-    // Generate claim code and expiration (90 days from now)
-    const claimCode = generateClaimCode();
-    const claimExpiresAt = new Date();
-    claimExpiresAt.setDate(claimExpiresAt.getDate() + 90);
+    // COPPA check: student must be at least 13 years old (when DOB provided)
+    if (student_date_of_birth) {
+      const dob = new Date(student_date_of_birth);
+      const now = new Date();
+      let age = now.getFullYear() - dob.getFullYear();
+      const monthDiff = now.getMonth() - dob.getMonth();
+      if (monthDiff < 0 || (monthDiff === 0 && now.getDate() < dob.getDate())) {
+        age--;
+      }
 
-    // Create account, account member, and student profile in a transaction
+      if (age < 13) {
+        return errorResponse(
+          "FORBIDDEN",
+          "Student must be at least 13 years old (COPPA compliance).",
+          403
+        );
+      }
+    }
+
+    // Check if a user with this email already exists
+    const [existingStudent] = await db
+      .select({ id: users.id, role: users.role })
+      .from(users)
+      .where(eq(users.email, normalizedEmail))
+      .limit(1);
+
+    const studentExists = !!existingStudent;
+
+    // Create account, account member, and invite in a transaction
+    const inviteCode = generateCode();
+    const inviteExpiresAt = new Date();
+    inviteExpiresAt.setDate(inviteExpiresAt.getDate() + 7);
+
     const result = await db.transaction(async (tx) => {
       // Create the account
       const [account] = await tx
         .insert(accounts)
         .values({
           studentName: student_name,
-          studentDateOfBirth: student_date_of_birth,
-          gradeLevel: grade_level,
-          graduationYear: graduation_year,
+          ...(student_date_of_birth && { studentDateOfBirth: student_date_of_birth }),
+          ...(grade_level && { gradeLevel: grade_level }),
+          ...(graduation_year && { graduationYear: graduation_year }),
           createdBy: user.id,
           billingContactId: user.id,
-          claimCode,
-          claimExpiresAt,
         })
         .returning();
 
@@ -105,7 +130,37 @@ export async function POST(request: NextRequest) {
         canEdit: true,
       });
 
+      // Create invite code for the student
+      await tx.insert(accountInviteCodes).values({
+        accountId: account.id,
+        code: inviteCode,
+        targetRole: "student",
+        expiresAt: inviteExpiresAt,
+        createdBy: user.id,
+      });
+
       return account;
+    });
+
+    // Send invite email — always use signup link. The email template includes
+    // a secondary "join directly" link for users who already have an account.
+    // This prevents the wrong user from claiming the invite if someone else
+    // is logged in on the same browser.
+    const origin = request.nextUrl.origin;
+    const claimUrl = `${origin}/signup?invite=${inviteCode}&account=${result.id}&role=student`;
+
+    const template = inviteEmailTemplate({
+      inviterName: user.email,
+      studentName: student_name,
+      role: "student",
+      inviteCode,
+      claimUrl,
+    });
+
+    const emailSent = await sendEmail({
+      to: normalizedEmail,
+      subject: template.subject,
+      html: template.html,
     });
 
     return successResponse(
@@ -113,9 +168,10 @@ export async function POST(request: NextRequest) {
         account: {
           id: result.id,
           student_name: result.studentName,
-          claim_code: result.claimCode,
         },
-        message: "Share the claim code with your child",
+        invite_code: inviteCode,
+        student_exists: studentExists,
+        email_sent: emailSent,
       },
       undefined,
       201

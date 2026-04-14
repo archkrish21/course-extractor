@@ -35,6 +35,8 @@ const signupSchema = z.object({
   tos_accepted: z.literal(true, {
     message: "You must agree to the Terms of Service and Privacy Policy.",
   }),
+  invite_code: z.string().max(8).optional(),
+  invite_account: z.string().uuid().optional(),
 });
 
 function calculateAge(dateOfBirth: string): number {
@@ -75,7 +77,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const { email, password, date_of_birth, role: rawRole, name, state, school_name } = parsed.data;
+    const { email, password, date_of_birth, role: rawRole, name, state, school_name, invite_code, invite_account } = parsed.data;
 
     // Map "guardian" to "parent" for storage — they have identical behavior
     const role = rawRole === "guardian" ? "parent" : rawRole;
@@ -90,11 +92,17 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Create user via Supabase Auth
+    // Create user via Supabase Auth — store invite params in metadata
+    // so the email confirmation callback can redirect to /join
     const supabase = await createSupabaseServerClient();
+    const metadata: Record<string, string> = {};
+    if (invite_code) metadata.invite_code = invite_code;
+    if (invite_account) metadata.invite_account = invite_account;
+
     const { data: authData, error: authError } = await supabase.auth.signUp({
       email,
       password,
+      options: Object.keys(metadata).length > 0 ? { data: metadata } : undefined,
     });
 
     if (authError) {
@@ -109,7 +117,25 @@ export async function POST(request: NextRequest) {
     }
 
     const userId = authData.user.id;
-    const emailConfirmationPending = !authData.session;
+    let emailConfirmationPending = !authData.session;
+
+    // Invite-based signups: the student already proved email ownership by
+    // clicking the invite link, so skip the confirmation email and auto-confirm.
+    if (emailConfirmationPending && invite_code && invite_account) {
+      try {
+        const supabaseAdmin = createSupabaseAdminClient();
+        await supabaseAdmin.auth.admin.updateUserById(userId, {
+          email_confirm: true,
+        });
+        // Sign in to create a session — signUp doesn't return a session
+        // when enable_confirmations is true, even after admin-confirming.
+        await supabase.auth.signInWithPassword({ email, password });
+        emailConfirmationPending = false;
+      } catch (confirmError) {
+        console.error("[signup] Failed to auto-confirm invite user:", confirmError);
+        // Fall through — they'll get the confirmation email as fallback
+      }
+    }
 
     // Wrap all DB operations so we can clean up the Supabase auth user
     // if any insert fails — otherwise the user is stuck (email taken in

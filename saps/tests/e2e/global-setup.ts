@@ -164,11 +164,16 @@ async function globalSetup() {
       const id = userIds[user.email];
       if (!id) continue;
       const [first, last] = user.name.split(" ");
+      // Students get onboarding_completed_at set — their test data (plans,
+      // courses, grades) is already seeded, so they should be treated as
+      // having completed onboarding.
+      const onboardingAt = user.role === "student" ? "NOW()" : "NULL";
       await client.query(
-        `INSERT INTO users (id, email, first_name, last_name, role, date_of_birth, created_at)
-         VALUES ($1, $2, $3, $4, $5, $6, NOW())
+        `INSERT INTO users (id, email, first_name, last_name, role, date_of_birth, onboarding_completed_at, created_at)
+         VALUES ($1, $2, $3, $4, $5, $6, ${onboardingAt}, NOW())
          ON CONFLICT (id) DO UPDATE SET email = EXCLUDED.email, first_name = EXCLUDED.first_name,
-           last_name = EXCLUDED.last_name, role = EXCLUDED.role`,
+           last_name = EXCLUDED.last_name, role = EXCLUDED.role,
+           onboarding_completed_at = COALESCE(users.onboarding_completed_at, ${onboardingAt})`,
         [id, user.email, first, last || null, user.role, user.dob],
       );
     }
@@ -269,6 +274,26 @@ async function globalSetup() {
       }
     }
     console.log(`[e2e-setup] Primary plan: ${planId}`);
+
+    // ── 7b. Clean up excess plans from previous test runs ────────────
+    // The plan limit in launch mode is 3. Remove non-primary plans
+    // created by the student to leave room for test-created plans.
+    const excessPlans = await client.query(
+      `DELETE FROM plan_courses WHERE plan_id IN (
+         SELECT id FROM four_year_plans
+         WHERE account_id = $1 AND id <> $2 AND is_template = false AND created_by = $3
+       ) RETURNING plan_id`,
+      [accountId, planId, studentId],
+    );
+    const deletedPlans = await client.query(
+      `DELETE FROM four_year_plans
+       WHERE account_id = $1 AND id <> $2 AND is_template = false AND created_by = $3
+       RETURNING id`,
+      [accountId, planId, studentId],
+    );
+    if (deletedPlans.rows.length > 0) {
+      console.log(`[e2e-setup] Cleaned up ${deletedPlans.rows.length} excess plan(s) from previous runs`);
+    }
 
     // ── 8. Verify course catalog is seeded ─────────────────────────
     const catalogCheck = await client.query(

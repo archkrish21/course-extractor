@@ -116,6 +116,22 @@ export async function POST(request: NextRequest, context: RouteContext) {
       return errorResponse("FORBIDDEN", "Read-only access.", 403);
     }
 
+    // Block students from inviting until they've completed onboarding —
+    // ensures they can't share half-set-up plans or drag in parents/counselors
+    // before their own profile (grade, grad year, starting plan) is in place.
+    const [inviter] = await db
+      .select({ role: users.role, onboardingCompletedAt: users.onboardingCompletedAt })
+      .from(users)
+      .where(eq(users.id, user.id))
+      .limit(1);
+    if (inviter?.role === "student" && !inviter.onboardingCompletedAt) {
+      return errorResponse(
+        "ONBOARDING_REQUIRED",
+        "Complete onboarding before inviting others to your account.",
+        403
+      );
+    }
+
     const body = await request.json();
     const parsed = inviteSchema.safeParse(body);
     if (!parsed.success) {

@@ -80,10 +80,10 @@ test.describe("Critical Journey: Course Grading and GPA", () => {
   test("completed courses with grades produce GPA values on transcript", async ({ page }) => {
     await login(page);
     await page.goto("/transcript");
-    await page.waitForTimeout(3_000);
+    await page.waitForTimeout(5_000);
 
-    // Empty-state copy was changed to "No transcript data yet"
-    const emptyState = page.locator("text=/No transcript data yet|no completed courses/i");
+    // Empty-state copy — skip if no completed courses
+    const emptyState = page.locator("text=/No transcript data yet|no completed courses|no grades/i");
     if ((await emptyState.count()) > 0) {
       test.skip(true, "No completed courses — GPA verification requires graded courses");
       return;

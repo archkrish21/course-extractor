@@ -118,7 +118,7 @@ function DesktopGrid({
   readOnly,
 }: PlannerGridProps) {
   // Effective current grade = first unlocked grade level at or after account grade level
-  const effectiveGrade = GRADE_LEVELS.find((g) => !lockedGradeLevels.includes(g)) ?? currentGradeLevel;
+  const effectiveGrade = GRADE_LEVELS.find((g) => g >= currentGradeLevel && !lockedGradeLevels.includes(g)) ?? currentGradeLevel;
   const gridRef = useRef<HTMLDivElement>(null);
   const [collapsedGrades, setCollapsedGrades] = useState<Set<number>>(
     () => new Set(GRADE_LEVELS.filter((g) => g !== effectiveGrade))
@@ -722,7 +722,7 @@ function MobileAccordion({
   focusGrade: _focusGrade,
   readOnly,
 }: PlannerGridProps) {
-  const effectiveGrade = GRADE_LEVELS.find((g) => !lockedGradeLevels.includes(g)) ?? currentGradeLevel;
+  const effectiveGrade = GRADE_LEVELS.find((g) => g >= currentGradeLevel && !lockedGradeLevels.includes(g)) ?? currentGradeLevel;
   const [expandedGrades, setExpandedGrades] = useState<Set<number>>(
     new Set([effectiveGrade])
   );

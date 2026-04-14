@@ -76,10 +76,19 @@ vi.mock("@/lib/auth/get-user", () => ({
 vi.mock("@/lib/db/schema", () => ({
   accounts: { id: "a_id", studentName: "a_studentName", studentDateOfBirth: "a_studentDateOfBirth", gradeLevel: "a_gradeLevel", graduationYear: "a_graduationYear", createdBy: "a_createdBy", billingContactId: "a_billingContactId", claimCode: "a_claimCode", claimExpiresAt: "a_claimExpiresAt", claimedAt: "a_claimedAt", studentUserId: "a_studentUserId" },
   accountMembers: { accountId: "am_accountId", userId: "am_userId", role: "am_role", canEdit: "am_canEdit" },
+  accountInviteCodes: { id: "aic_id", accountId: "aic_accountId", code: "aic_code", targetRole: "aic_targetRole", expiresAt: "aic_expiresAt", createdBy: "aic_createdBy", claimedBy: "aic_claimedBy", claimedAt: "aic_claimedAt", createdAt: "aic_createdAt", sharedPlans: "aic_sharedPlans" },
   studentProfiles: { userId: "sp_userId", graduationYear: "sp_graduationYear", currentGradeLevel: "sp_currentGradeLevel" },
-  users: { id: "u_id", role: "u_role", accountStatus: "u_accountStatus", freezeReason: "u_freezeReason" },
+  users: { id: "u_id", email: "u_email", role: "u_role", accountStatus: "u_accountStatus", freezeReason: "u_freezeReason", onboardingCompletedAt: "u_onboardingCompletedAt" },
   subscriptions: { userId: "sub_userId", accountId: "sub_accountId", subscriptionPlanId: "sub_planId", status: "sub_status", trialEndsAt: "sub_trialEndsAt" },
   subscriptionPlans: { id: "sp_id", name: "sp_name" },
+}));
+
+vi.mock("@/lib/email/client", () => ({
+  sendEmail: vi.fn().mockResolvedValue(true),
+}));
+
+vi.mock("@/lib/email/templates", () => ({
+  inviteEmail: vi.fn().mockReturnValue({ subject: "Invite", html: "<p>Invite</p>" }),
 }));
 
 vi.mock("drizzle-orm", () => ({
@@ -122,30 +131,72 @@ describe("POST /api/v1/accounts", () => {
     (requireAuth as ReturnType<typeof vi.fn>).mockResolvedValue(PARENT_USER);
   });
 
-  it("parent creates account for child", async () => {
+  it("parent creates account with email invite (new student)", async () => {
     let queryIndex = 0;
     dbChain.then = vi.fn().mockImplementation((resolve: (v: unknown) => unknown) => {
       queryIndex++;
       if (queryIndex === 1) return Promise.resolve(resolve([{ role: "parent" }])); // user role check
+      if (queryIndex === 2) return Promise.resolve(resolve([])); // no existing student user
       return Promise.resolve(resolve([]));
     });
     mockReturning.mockResolvedValue([TEST_ACCOUNT]);
 
     const request = makeJsonRequest("http://localhost:3000/api/v1/accounts", {
       student_name: "Test Student",
-      student_date_of_birth: "2010-06-15",
-      grade_level: 9,
-      graduation_year: 2028,
+      student_email: "student@test.com",
     });
     const response = await POST(request);
     const body = await response.json();
 
     expect(response.status).toBe(201);
-    expect(body.data.account).toHaveProperty("claim_code");
-    expect(body.data.message).toContain("claim code");
+    expect(body.data.account).toHaveProperty("id");
+    expect(body.data).toHaveProperty("invite_code");
+    expect(body.data).toHaveProperty("student_exists", false);
+    expect(body.data).toHaveProperty("email_sent");
   });
 
-  it("rejects student under 13 (COPPA)", async () => {
+  it("parent creates account with email invite (existing student)", async () => {
+    let queryIndex = 0;
+    dbChain.then = vi.fn().mockImplementation((resolve: (v: unknown) => unknown) => {
+      queryIndex++;
+      if (queryIndex === 1) return Promise.resolve(resolve([{ role: "parent" }])); // user role check
+      if (queryIndex === 2) return Promise.resolve(resolve([{ id: "existing-student", role: "student" }])); // existing user
+      return Promise.resolve(resolve([]));
+    });
+    mockReturning.mockResolvedValue([TEST_ACCOUNT]);
+
+    const request = makeJsonRequest("http://localhost:3000/api/v1/accounts", {
+      student_name: "Test Student",
+      student_email: "existing@test.com",
+    });
+    const response = await POST(request);
+    const body = await response.json();
+
+    expect(response.status).toBe(201);
+    expect(body.data).toHaveProperty("student_exists", true);
+    expect(body.data).toHaveProperty("email_sent");
+  });
+
+  it("parent can create account without DOB, grade, or graduation year", async () => {
+    let queryIndex = 0;
+    dbChain.then = vi.fn().mockImplementation((resolve: (v: unknown) => unknown) => {
+      queryIndex++;
+      if (queryIndex === 1) return Promise.resolve(resolve([{ role: "parent" }]));
+      if (queryIndex === 2) return Promise.resolve(resolve([])); // no existing student
+      return Promise.resolve(resolve([]));
+    });
+    mockReturning.mockResolvedValue([TEST_ACCOUNT]);
+
+    const request = makeJsonRequest("http://localhost:3000/api/v1/accounts", {
+      student_name: "Test Student",
+      student_email: "student@test.com",
+    });
+    const response = await POST(request);
+
+    expect(response.status).toBe(201);
+  });
+
+  it("rejects COPPA when DOB provided and under 13", async () => {
     let queryIndex = 0;
     dbChain.then = vi.fn().mockImplementation((resolve: (v: unknown) => unknown) => {
       queryIndex++;
@@ -153,15 +204,13 @@ describe("POST /api/v1/accounts", () => {
       return Promise.resolve(resolve([]));
     });
 
-    // Student born less than 13 years ago
     const now = new Date();
     const underageDob = `${now.getFullYear() - 12}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
 
     const request = makeJsonRequest("http://localhost:3000/api/v1/accounts", {
       student_name: "Young Student",
+      student_email: "young@test.com",
       student_date_of_birth: underageDob,
-      grade_level: 9,
-      graduation_year: 2030,
     });
     const response = await POST(request);
     const body = await response.json();
@@ -171,19 +220,36 @@ describe("POST /api/v1/accounts", () => {
     expect(body.error.message).toContain("13");
   });
 
+  it("blocks self-invite", async () => {
+    let queryIndex = 0;
+    dbChain.then = vi.fn().mockImplementation((resolve: (v: unknown) => unknown) => {
+      queryIndex++;
+      if (queryIndex === 1) return Promise.resolve(resolve([{ role: "parent" }]));
+      return Promise.resolve(resolve([]));
+    });
+
+    const request = makeJsonRequest("http://localhost:3000/api/v1/accounts", {
+      student_name: "Self",
+      student_email: "parent@test.com", // same as PARENT_USER.email
+    });
+    const response = await POST(request);
+    const body = await response.json();
+
+    expect(response.status).toBe(400);
+    expect(body.error.message).toContain("yourself");
+  });
+
   it("rejects non-parent users", async () => {
     let queryIndex = 0;
     dbChain.then = vi.fn().mockImplementation((resolve: (v: unknown) => unknown) => {
       queryIndex++;
-      if (queryIndex === 1) return Promise.resolve(resolve([{ role: "student" }])); // not a parent
+      if (queryIndex === 1) return Promise.resolve(resolve([{ role: "student" }]));
       return Promise.resolve(resolve([]));
     });
 
     const request = makeJsonRequest("http://localhost:3000/api/v1/accounts", {
       student_name: "Test Student",
-      student_date_of_birth: "2010-06-15",
-      grade_level: 9,
-      graduation_year: 2028,
+      student_email: "student@test.com",
     });
     const response = await POST(request);
     const body = await response.json();
@@ -193,7 +259,7 @@ describe("POST /api/v1/accounts", () => {
     expect(body.error.message).toContain("parent");
   });
 
-  it("returns 400 for invalid body", async () => {
+  it("returns 400 for missing email", async () => {
     let queryIndex = 0;
     dbChain.then = vi.fn().mockImplementation((resolve: (v: unknown) => unknown) => {
       queryIndex++;
@@ -202,7 +268,26 @@ describe("POST /api/v1/accounts", () => {
     });
 
     const request = makeJsonRequest("http://localhost:3000/api/v1/accounts", {
-      student_name: "", // invalid: min 1
+      student_name: "Test Student",
+    });
+    const response = await POST(request);
+    const body = await response.json();
+
+    expect(response.status).toBe(400);
+    expect(body.error.code).toBe("VALIDATION_ERROR");
+  });
+
+  it("returns 400 for invalid email", async () => {
+    let queryIndex = 0;
+    dbChain.then = vi.fn().mockImplementation((resolve: (v: unknown) => unknown) => {
+      queryIndex++;
+      if (queryIndex === 1) return Promise.resolve(resolve([{ role: "parent" }]));
+      return Promise.resolve(resolve([]));
+    });
+
+    const request = makeJsonRequest("http://localhost:3000/api/v1/accounts", {
+      student_name: "Test Student",
+      student_email: "not-an-email",
     });
     const response = await POST(request);
     const body = await response.json();

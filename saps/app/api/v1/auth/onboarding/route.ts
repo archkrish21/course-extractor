@@ -11,6 +11,7 @@ import {
   courses,
   courseCatalogVersions,
   accountMembers,
+  accounts,
 } from "@/lib/db/schema";
 import { eq, and, desc } from "drizzle-orm";
 import { successResponse, errorResponse } from "@/lib/api/response";
@@ -112,6 +113,16 @@ export async function POST(request: NextRequest) {
       })
       .where(eq(studentProfiles.userId, user.id));
 
+    // Sync grade/graduation year to the student's own account(s) — settings
+    // and year-end logic read from accounts, so this keeps them authoritative.
+    await db
+      .update(accounts)
+      .set({
+        gradeLevel: grade_level,
+        graduationYear: graduation_year,
+      })
+      .where(eq(accounts.studentUserId, user.id));
+
     // Get latest catalog version
     const latestVersion = await db
       .select({ id: courseCatalogVersions.id, schoolYear: courseCatalogVersions.schoolYear })
@@ -171,6 +182,11 @@ export async function POST(request: NextRequest) {
     let planId: string | null = null;
     const shouldCreatePlan = (template_id || (courses_completed && courses_completed.length > 0)) && latestVersion;
 
+    // Lock all grades prior to the student's current grade. Past grades
+    // represent a finalized academic record — unlock is opt-in via the planner.
+    const pastGradeLevels: number[] = [];
+    for (let g = 9; g < grade_level; g++) pastGradeLevels.push(g);
+
     if (shouldCreatePlan && template_id && latestVersion) {
       // Verify template exists
       const template = await db
@@ -210,6 +226,7 @@ export async function POST(request: NextRequest) {
           status: "active",
           isPrimary: true,
           activatedAt: now,
+          lockedGradeLevels: pastGradeLevels,
         })
         .returning({ id: fourYearPlans.id });
 
@@ -263,6 +280,7 @@ export async function POST(request: NextRequest) {
           status: "active",
           isPrimary: true,
           activatedAt: now,
+          lockedGradeLevels: pastGradeLevels,
         })
         .returning({ id: fourYearPlans.id });
 

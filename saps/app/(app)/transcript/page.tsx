@@ -454,7 +454,7 @@ export default function GradesPage() {
 
                           {/* Semester GPA footer */}
                           <div className="flex items-center justify-end gap-4 bg-muted/30 px-4 py-2 sm:px-5 text-sm">
-                            <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Semester {sem} GPA</span>
+                            <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">{label} GPA</span>
                             <span className="text-muted-foreground">UW <span className="font-bold text-foreground">{formatGPA(semGpa.unweighted)}</span></span>
                             <span className="text-muted-foreground">W <span className="font-bold text-foreground">{formatGPA(semGpa.weighted)}</span></span>
                           </div>

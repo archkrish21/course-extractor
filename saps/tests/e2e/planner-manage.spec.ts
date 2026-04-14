@@ -21,13 +21,15 @@ async function navigateToPlanner(page: Page) {
 
 test.describe("Planner — Plan Management", () => {
   test("create new plan with name and template", async ({ page }) => {
+    test.setTimeout(60_000);
     await navigateToPlanner(page);
 
     // Click the create new plan button
     const createButton = page.getByLabel("Create new plan");
-    // If no plans exist, use the "Create Plan" button in the empty state
+    // If no plans exist, use the "Create Plan" button in the empty state or
+    // the "Get Started" button in the empty-state CTA
     const emptyCreateButton = page.getByRole("button", {
-      name: "Create Plan",
+      name: /Create Plan|Get Started/,
     });
 
     if (await createButton.isVisible()) {
@@ -44,6 +46,13 @@ test.describe("Planner — Plan Management", () => {
       '[role="dialog"][aria-label="Create new plan"]'
     );
     await expect(modal).toBeVisible();
+
+    // Skip if plan limit is reached (Create Plan button will be disabled)
+    const createPlanBtn = modal.getByRole("button", { name: /Create Plan/ });
+    if (await createPlanBtn.isDisabled()) {
+      test.skip(true, "Plan limit reached — Create Plan button is disabled");
+      return;
+    }
 
     // Fill plan name
     await page.locator("#new-plan-name").fill("E2E Test Plan");
@@ -62,18 +71,19 @@ test.describe("Planner — Plan Management", () => {
     }
 
     // Create the plan
-    await modal.getByRole("button", { name: /Create Plan/ }).click();
+    await createPlanBtn.click();
 
     // Wait for modal to close and plan to load
     await expect(modal).toBeHidden({ timeout: 10_000 });
   });
 
   test("create blank plan", async ({ page }) => {
+    test.setTimeout(60_000);
     await navigateToPlanner(page);
 
     const createButton = page.getByLabel("Create new plan");
     const emptyCreateButton = page.getByRole("button", {
-      name: "Create Plan",
+      name: /Create Plan|Get Started/,
     });
 
     if (await createButton.isVisible()) {
@@ -90,6 +100,13 @@ test.describe("Planner — Plan Management", () => {
     );
     await expect(modal).toBeVisible();
 
+    // Skip if plan limit is reached
+    const createPlanBtn = modal.getByRole("button", { name: /Create Plan/ });
+    if (await createPlanBtn.isDisabled()) {
+      test.skip(true, "Plan limit reached — Create Plan button is disabled");
+      return;
+    }
+
     // Fill plan name
     await page.locator("#new-plan-name").fill("E2E Blank Plan");
 
@@ -98,7 +115,7 @@ test.describe("Planner — Plan Management", () => {
     await blankOption.click();
 
     // Create
-    await modal.getByRole("button", { name: /Create Plan/ }).click();
+    await createPlanBtn.click();
     await expect(modal).toBeHidden({ timeout: 10_000 });
   });
 

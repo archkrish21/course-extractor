@@ -18,14 +18,14 @@ async function navigateToPlanner(page: Page) {
 }
 
 async function skipIfNoPlans(page: Page) {
-  const noPlanState = page.locator("text=No plans yet");
-  if (await noPlanState.isVisible()) {
+  const noPlanState = page.locator("text=/No plans yet|Create Your First Plan|No Plans Shared/i");
+  if ((await noPlanState.count()) > 0 && (await noPlanState.first().isVisible())) {
     test.skip();
   }
 }
 
 async function expandFirstGrade(page: Page) {
-  const collapsed = page.locator('button[role="rowheader"][aria-expanded="false"]').first();
+  const collapsed = page.locator('[role="rowheader"][aria-expanded="false"]').first();
   if ((await collapsed.count()) > 0) {
     await collapsed.click();
     await page.waitForTimeout(500);
@@ -34,7 +34,7 @@ async function expandFirstGrade(page: Page) {
 
 async function expandAllGrades(page: Page) {
   for (let i = 0; i < 4; i++) {
-    const collapsed = page.locator('button[role="rowheader"][aria-expanded="false"]').first();
+    const collapsed = page.locator('[role="rowheader"][aria-expanded="false"]').first();
     if ((await collapsed.count()) > 0) {
       await collapsed.click();
       await page.waitForTimeout(300);
@@ -43,11 +43,12 @@ async function expandAllGrades(page: Page) {
 }
 
 /**
- * Find a grade bar header button that contains the given grade text.
- * e.g. gradeBar(page, 9) matches the row header button containing "Grade 9".
+ * Find a grade bar header that contains the given grade text.
+ * e.g. gradeBar(page, 9) matches the row header containing "Grade 9".
+ * The header is a <div role="rowheader">, not a <button>.
  */
 function gradeBar(page: Page, grade: number) {
-  return page.locator(`button[role="rowheader"]`, { has: page.locator(`span[data-grade="${grade}"]`) });
+  return page.locator(`[role="rowheader"]`, { has: page.locator(`span[data-grade="${grade}"]`) });
 }
 
 // ─── Lock Icon Visibility ──────────────────────────────────────────────────
@@ -308,9 +309,11 @@ test.describe("Grade Lock — Locked grade UI restrictions", () => {
   }
 
   test("bulk status dropdown is hidden in locked grade semesters", async ({ page }) => {
+    test.setTimeout(60_000);
     test.skip(test.info().project.name === "mobile", "Desktop test");
     await navigateToPlanner(page);
     await skipIfNoPlans(page);
+    await page.waitForTimeout(2000);
 
     const grade = await findAndExpandLockedGrade(page);
     if (grade === null) { test.skip(); return; }

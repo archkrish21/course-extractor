@@ -52,8 +52,9 @@ type PickerTarget = {
 
 export default function PlannerPage() {
   const router = useRouter();
-  const { currentAccount, refetchAccounts } = useAccount();
+  const { currentAccount, refetchAccounts, userRole, onboardingCompleted } = useAccount();
   const isCounselor = currentAccount?.role === "counselor";
+  const isParentLike = userRole === "parent" || userRole === "guardian";
   const [plans, setPlans] = useState<Plan[]>([]);
   const [planLimit, setPlanLimit] = useState<{
     count: number;
@@ -886,8 +887,6 @@ export default function PlannerPage() {
               p.id === selectedPlanId ? { ...p, lockedGradeLevels: updatedLocked } : p
             )
           );
-          // Refresh account context so gradeLevel stays in sync
-          await refetchAccounts();
           showToast(locked ? `Grade ${gradeLevel} locked` : `Grade ${gradeLevel} unlocked`);
         }
       } catch {
@@ -1280,6 +1279,47 @@ export default function PlannerPage() {
     </>
   );
 
+  // Parent/guardian with no student accounts — redirect to add student first
+  if (isParentLike && !currentAccount) {
+    return (
+      <div className="mx-auto max-w-6xl">
+        <div className="mb-6">
+          <h1 className="text-2xl font-bold tracking-tight text-foreground">
+            Course Planner
+          </h1>
+          <p className="mt-1 text-sm text-muted-foreground">Plan your four-year academic path</p>
+        </div>
+        <Card>
+          <CardContent className="flex flex-col items-center px-6 py-16 text-center">
+            <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-primary-light">
+              <svg
+                aria-hidden="true"
+                className="h-8 w-8 text-primary"
+                fill="none"
+                viewBox="0 0 24 24"
+                strokeWidth={1.5}
+                stroke="currentColor"
+              >
+                <path strokeLinecap="round" strokeLinejoin="round" d="M18 7.5v3m0 0v3m0-3h3m-3 0h-3m-2.25-4.125a3.375 3.375 0 1 1-6.75 0 3.375 3.375 0 0 1 6.75 0ZM3 19.235v-.11a6.375 6.375 0 0 1 12.75 0v.109A12.318 12.318 0 0 1 9.374 21c-2.331 0-4.512-.645-6.374-1.766Z" />
+              </svg>
+            </div>
+            <h2 className="mt-4 text-xl font-semibold text-foreground">
+              Add a Student First
+            </h2>
+            <p className="mt-2 max-w-md text-sm text-muted-foreground">
+              Create a student profile before building a course plan. You can then manage their academic path from here.
+            </p>
+            <div className="mt-8">
+              <Link href="/settings?add-student=1">
+                <Button className="px-6 py-2.5 text-base">Add Student</Button>
+              </Link>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
   const hasNoPlans = plans.length === 0;
 
   if (hasNoPlans) {
@@ -1310,18 +1350,30 @@ export default function PlannerPage() {
               </svg>
             </div>
             <h2 className="mt-4 text-xl font-semibold text-foreground">
-              {isCounselor ? "No Plans Shared Yet" : "Create Your First Plan"}
+              {isCounselor
+                ? "No Plans Shared Yet"
+                : userRole === "student" && !onboardingCompleted
+                ? "Complete Your Onboarding"
+                : "Create Your First Plan"}
             </h2>
             <p className="mt-2 max-w-md text-sm text-muted-foreground">
               {isCounselor
                 ? "No plans have been shared with you yet. Plans will appear here once a student shares their plan with you."
+                : userRole === "student" && !onboardingCompleted
+                ? "Finish setting up your profile so we can build a personalized four-year plan for you."
                 : "Build a 4-year course plan to map out your academic path. Choose from templates or start from scratch."}
             </p>
             {!isCounselor && (
               <div className="mt-8">
-                <Button onClick={openNewPlanModal} data-tour="create-first-plan" className="px-6 py-2.5 text-base">
-                  Get Started
-                </Button>
+                {userRole === "student" && !onboardingCompleted ? (
+                  <Link href="/onboarding">
+                    <Button className="px-6 py-2.5 text-base">Complete Onboarding</Button>
+                  </Link>
+                ) : (
+                  <Button onClick={openNewPlanModal} data-tour="create-first-plan" className="px-6 py-2.5 text-base">
+                    Get Started
+                  </Button>
+                )}
               </div>
             )}
           </CardContent>
@@ -1679,8 +1731,8 @@ export default function PlannerPage() {
               setUnlockConfirm(gradeLevel);
               return;
             }
-            // Locking — redirect to year-end wizard to complete the grade
-            router.push(`/year-end?grade=${gradeLevel}`);
+            // Locking — pure UI gate; year-end is a separate, explicit flow
+            handleToggleGradeLock(gradeLevel, true);
           }}
           violations={violations}
           semesterGaps={semesterGapsMap}

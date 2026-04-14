@@ -794,18 +794,22 @@ export default function SettingsPage() {
           <Card>
             <CardContent>
               <div className="space-y-2">
-                {consentInfo.length > 0 ? consentInfo.map((c) => (
-                  <div key={c.type} className="flex items-center justify-between py-1.5">
-                    <Link href={c.type === "terms_of_service" ? "/terms" : "/privacy"} target="_blank"
-                      className="text-sm text-primary hover:underline">
-                      {c.type === "terms_of_service" ? "Terms of Service" : "Privacy Policy"}
-                      <span className="ml-1 text-xs text-muted-foreground">v{c.version}</span>
-                    </Link>
-                    <Badge className="bg-success/10 text-success text-[11px]">
-                      Accepted {new Date(c.accepted_at).toLocaleDateString()}
-                    </Badge>
-                  </div>
-                )) : (
+                {(() => {
+                  const reviewable = consentInfo.filter(
+                    (c) => c.type === "terms_of_service" || c.type === "privacy_policy"
+                  );
+                  return reviewable.length > 0 ? reviewable.map((c) => (
+                    <div key={c.type} className="flex items-center justify-between py-1.5">
+                      <Link href={c.type === "terms_of_service" ? "/terms" : "/privacy"} target="_blank"
+                        className="text-sm text-primary hover:underline">
+                        {c.type === "terms_of_service" ? "Terms of Service" : "Privacy Policy"}
+                        <span className="ml-1 text-xs text-muted-foreground">v{c.version}</span>
+                      </Link>
+                      <Badge className="bg-success/10 text-success text-[11px]">
+                        Accepted {new Date(c.accepted_at).toLocaleDateString()}
+                      </Badge>
+                    </div>
+                  )) : (
                   <div className="space-y-2">
                     <div className="flex items-center justify-between py-1.5">
                       <Link href="/terms" target="_blank" className="text-sm text-primary hover:underline">Terms of Service</Link>
@@ -816,7 +820,8 @@ export default function SettingsPage() {
                       <span className="text-xs text-muted-foreground">Not yet accepted</span>
                     </div>
                   </div>
-                )}
+                );
+                })()}
               </div>
             </CardContent>
           </Card>

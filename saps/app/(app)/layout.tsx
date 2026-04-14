@@ -13,6 +13,8 @@ import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 import { FREE_LAUNCH_MODE } from "@/config/subscription-plans";
 import { SapsLogo } from "@/components/ui/saps-logo";
 import { Spinner } from "@/components/ui/spinner";
+import { SupportLink } from "@/components/ui/support-link";
+import { SUPPORT_URL } from "@/config/support";
 
 const NAV_ITEMS = [
   {
@@ -442,7 +444,7 @@ function AppLayoutInner({ children }: { children: React.ReactNode }) {
   }
 
   return (
-    <div className="min-h-screen">
+    <div className="flex min-h-screen flex-col">
       {/* Top navigation bar */}
       <header className="sticky top-0 z-40 border-b border-border bg-card">
         <div className="mx-auto flex h-14 max-w-7xl items-center px-4 sm:px-6 lg:px-8">
@@ -557,9 +559,18 @@ function AppLayoutInner({ children }: { children: React.ReactNode }) {
       <TrialBanner />
 
       {/* Main content */}
-      <main className="mx-auto max-w-7xl flex-1 p-4 sm:p-6 lg:p-8">
-        {children}
+      <main className="w-full flex-1 p-4 sm:p-6 lg:p-8">
+        <div className="mx-auto max-w-7xl">{children}</div>
       </main>
+
+      <footer className="border-t border-border bg-muted/30">
+        <div className="mx-auto flex max-w-7xl flex-col items-center gap-3 px-4 py-4 text-xs text-muted-foreground sm:flex-row sm:justify-between sm:px-6 lg:px-8">
+          <span className="text-center sm:text-left">
+            &copy; {new Date().getFullYear()} SAPS. All rights reserved. Not affiliated with Adlai E. Stevenson High School.
+          </span>
+          {SUPPORT_URL && <SupportLink />}
+        </div>
+      </footer>
 
       {/* Feedback widget */}
       <FeedbackWidget />

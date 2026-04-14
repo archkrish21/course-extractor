@@ -973,18 +973,6 @@ function OnboardingPageInner() {
         </div>
 
         <div className="flex items-center gap-3">
-          {/* Skip button (except on step 1 which is required) */}
-          {currentStep > 1 && currentStep < totalStepsFor(gradeLevel) && (
-            <Button
-              type="button"
-              variant="ghost"
-              onClick={goNext}
-              disabled={isSubmitting}
-            >
-              Skip
-            </Button>
-          )}
-
           {currentStep < totalStepsFor(gradeLevel) ? (
             <Button type="button" onClick={goNext} disabled={isSubmitting}>
               Next

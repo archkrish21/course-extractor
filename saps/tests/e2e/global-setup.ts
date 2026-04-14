@@ -31,6 +31,9 @@ export const TEST_STUDENT_B_EMAIL = "student-b@test.com";
 export const TEST_PARENT_EMAIL = "parent@test.com";
 export const TEST_COUNSELOR_EMAIL = "counselor@test.com";
 export const TEST_CONSENT_EMAIL = "consent-test@test.com";
+// Non-onboarded student — used by onboarding E2E tests so the /onboarding
+// layout guard (which redirects completed users to /dashboard) doesn't bounce us.
+export const TEST_STUDENT_ONBOARDING_EMAIL = "student-onboarding@test.com";
 export const EPHEMERAL_EMAILS = ["student2@test.com", "student3@test.com"];
 
 const TEST_STATE = "IL";
@@ -47,6 +50,10 @@ interface TestUser {
   role: "student" | "parent" | "counselor";
   name: string;
   dob: string;
+  // If true, seed the user with no onboarding_completed_at so the
+  // onboarding flow is reachable. Defaults to false (students otherwise
+  // get onboarding marked complete because they have seeded plan data).
+  preOnboarding?: boolean;
 }
 
 const TEST_USERS: TestUser[] = [
@@ -55,6 +62,7 @@ const TEST_USERS: TestUser[] = [
   { email: TEST_PARENT_EMAIL, role: "parent", name: "Test Parent", dob: "1980-06-01" },
   { email: TEST_COUNSELOR_EMAIL, role: "counselor", name: "Test Counselor", dob: "1985-09-20" },
   { email: TEST_CONSENT_EMAIL, role: "student", name: "Consent Tester", dob: "2010-01-01" },
+  { email: TEST_STUDENT_ONBOARDING_EMAIL, role: "student", name: "Fresh Student", dob: "2010-05-05", preOnboarding: true },
 ];
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
@@ -166,8 +174,9 @@ async function globalSetup() {
       const [first, last] = user.name.split(" ");
       // Students get onboarding_completed_at set — their test data (plans,
       // courses, grades) is already seeded, so they should be treated as
-      // having completed onboarding.
-      const onboardingAt = user.role === "student" ? "NOW()" : "NULL";
+      // having completed onboarding. A preOnboarding student is left null
+      // so onboarding E2E tests can reach the /onboarding page.
+      const onboardingAt = user.role === "student" && !user.preOnboarding ? "NOW()" : "NULL";
       await client.query(
         `INSERT INTO users (id, email, first_name, last_name, role, date_of_birth, onboarding_completed_at, created_at)
          VALUES ($1, $2, $3, $4, $5, $6, ${onboardingAt}, NOW())

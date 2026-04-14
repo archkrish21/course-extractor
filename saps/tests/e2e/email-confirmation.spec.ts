@@ -73,7 +73,8 @@ test.describe("Email Confirmation — Signup Flow", () => {
     await page.locator('input[type="email"]').fill(testEmail);
     await page.locator('input[type="password"]').first().fill("Password123!");
     await page.locator('input[type="password"]').last().fill("Password123!");
-    await page.locator('input[type="date"]').fill("1985-06-15");
+    // DOB input removed — 13+ self-attestation checkbox now.
+    await page.locator("#age-confirm-checkbox").click();
 
     // Accept ToS
     await page.locator("#tos-checkbox").click();
@@ -114,7 +115,7 @@ test.describe("Email Confirmation — Full Flow", () => {
     await page.locator('input[type="email"]').fill(testEmail);
     await page.locator('input[type="password"]').first().fill("Password123!");
     await page.locator('input[type="password"]').last().fill("Password123!");
-    await page.locator('input[type="date"]').fill("1985-06-15");
+    await page.locator("#age-confirm-checkbox").click();
     await page.locator("#tos-checkbox").click();
     await page.locator('form button[type="submit"]').click();
 

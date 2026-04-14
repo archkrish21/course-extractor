@@ -119,33 +119,31 @@ test.describe("Grade Lock — Lock icon visibility", () => {
   });
 });
 
-// ─── Locking a Grade (redirect to year-end) ────────────────────────────────
+// ─── Locking a Grade (pure UI gate — no year-end redirect) ──────────────────
 
-test.describe("Grade Lock — Locking redirects to year-end", () => {
-  test("clicking Lock on a grade bar navigates to /year-end?grade=X", async ({ page }) => {
+test.describe("Grade Lock — Locking is a pure UI operation", () => {
+  test("clicking Lock does NOT redirect to /year-end", async ({ page }) => {
+    // Lock/unlock used to redirect to /year-end?grade=X. That coupling was
+    // removed — year-end is now a separate explicit flow surfaced via the
+    // dashboard banner. Lock only mutates lockedGradeLevels on the plan.
     test.skip(test.info().project.name === "mobile", "Desktop test");
     await navigateToPlanner(page);
     await skipIfNoPlans(page);
     await page.waitForTimeout(2000);
 
-    // Find an unlocked grade to lock
     const lockButton = page.locator('button[aria-label^="Lock Grade"]').first();
     if ((await lockButton.count()) === 0) {
-      test.skip(); // All grades may already be locked or no lock buttons present
+      test.skip(); // All grades may already be locked
       return;
     }
 
-    // Extract the grade number from the aria-label "Lock Grade X"
-    const ariaLabel = await lockButton.getAttribute("aria-label");
-    const gradeMatch = ariaLabel?.match(/Lock Grade (\d+)/);
-    expect(gradeMatch).toBeTruthy();
-    const gradeNum = gradeMatch![1];
-
+    const beforeUrl = page.url();
     await lockButton.click();
-    await page.waitForURL(/\/year-end/, { timeout: 10_000 });
+    await page.waitForTimeout(1_500);
 
-    expect(page.url()).toContain(`/year-end`);
-    expect(page.url()).toContain(`grade=${gradeNum}`);
+    // Must remain on the planner — never navigate to /year-end.
+    expect(page.url()).not.toContain("/year-end");
+    expect(page.url()).toBe(beforeUrl);
   });
 });
 
@@ -283,13 +281,24 @@ test.describe("Grade Lock — Unlock flow", () => {
 test.describe("Grade Lock — Locked grade UI restrictions", () => {
   /**
    * Helper: find a locked grade number from the page, expand it, and return
-   * the grade number. Returns null if no locked grades exist.
+   * the grade number. Returns null only if the planner finished loading and
+   * no locked grade is present — avoids the previous "fixed 2s sleep then
+   * give up" race where slow plan-fetch caused every test to skip.
    */
   async function findAndExpandLockedGrade(page: Page): Promise<number | null> {
-    await page.waitForTimeout(2000);
+    // Planner grid is rendered — wait for at least one grade header.
+    await page.locator('[role="rowheader"]').first().waitFor({ state: "visible", timeout: 10_000 });
 
-    // Find all locked grade buttons
-    const lockedButtons = page.locator('button[aria-label^="Unlock Grade"]');
+    // Poll for the Unlock button up to 8s. The lockedGradeLevels prop lands
+    // asynchronously after the initial /api/v1/plans response is processed.
+    const unlockSelector = 'button[aria-label^="Unlock Grade"]';
+    const deadline = Date.now() + 8_000;
+    while (Date.now() < deadline) {
+      if ((await page.locator(unlockSelector).count()) > 0) break;
+      await page.waitForTimeout(250);
+    }
+
+    const lockedButtons = page.locator(unlockSelector);
     if ((await lockedButtons.count()) === 0) return null;
 
     const ariaLabel = await lockedButtons.first().getAttribute("aria-label");

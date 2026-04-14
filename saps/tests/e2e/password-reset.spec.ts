@@ -270,10 +270,13 @@ test.describe("Password Reset — Settings Inline Change", () => {
     await page.goto("/settings");
     await page.waitForTimeout(2_000);
 
-    // Open password form
+    // Open password form — the Password row has a button whose visible text
+    // is 8 dashes. Scope by the Password heading for robustness.
     const editButton = page
       .locator("button")
-      .filter({ hasText: "--------" });
+      .filter({ hasText: "--------" })
+      .first();
+    await expect(editButton).toBeVisible({ timeout: 5_000 });
     await editButton.click();
 
     // Fill in new password (same as current to keep test account working)
@@ -291,7 +294,7 @@ test.describe("Password Reset — Settings Inline Change", () => {
     // Form should close
     await expect(
       page.getByPlaceholder("Enter new password"),
-    ).not.toBeVisible();
+    ).not.toBeVisible({ timeout: 5_000 });
   });
 });
 

@@ -130,15 +130,19 @@ test.describe("Year-End — Step 1: Confirm Grades", () => {
   test("Next button is disabled when grades are incomplete", async ({ page }) => {
     await navigateToYearEnd(page);
 
+    // Wait for the grade table to render so state is stable before asserting.
+    await expect(page.locator("text=/Confirm Final Grades/i")).toBeVisible({ timeout: 10_000 });
+    await page.waitForTimeout(500);
+
     const ungraded = page.locator("text=/still need a grade/i");
     const nextBtn = page.getByRole("button", { name: "Next", exact: true });
 
     if ((await ungraded.count()) > 0) {
       // Ungraded courses exist — Next should be disabled
-      await expect(nextBtn).toBeDisabled();
+      await expect(nextBtn).toBeDisabled({ timeout: 5_000 });
     } else {
       // All graded — Next should be enabled
-      await expect(nextBtn).toBeEnabled();
+      await expect(nextBtn).toBeEnabled({ timeout: 5_000 });
     }
   });
 
@@ -159,14 +163,17 @@ test.describe("Year-End — Step Navigation", () => {
   test("Next button advances from Step 1 to Step 2", async ({ page }) => {
     await navigateToYearEnd(page);
 
-    // Fill any ungraded courses so Next becomes enabled
+    await expect(page.locator("text=/Confirm Final Grades/i")).toBeVisible({ timeout: 10_000 });
+
+    // Fill any ungraded courses so Next becomes enabled. The set expanded
+    // after the year-end fix that makes completed-without-grade rows editable.
     await fillAllGrades(page);
 
     const nextBtn = page.getByRole("button", { name: "Next", exact: true });
-    await expect(nextBtn).toBeEnabled({ timeout: 3_000 });
+    await expect(nextBtn).toBeEnabled({ timeout: 5_000 });
 
     await nextBtn.click();
-    await page.waitForTimeout(500);
+    await page.waitForTimeout(750);
 
     // Should show Step 2 content
     const step2Heading = page.locator("text=/Advance to Grade|Congratulations/i").first();
@@ -175,24 +182,25 @@ test.describe("Year-End — Step Navigation", () => {
 
   test("Back button returns from Step 2 to Step 1", async ({ page }) => {
     await navigateToYearEnd(page);
+    await expect(page.locator("text=/Confirm Final Grades/i")).toBeVisible({ timeout: 10_000 });
     await fillAllGrades(page);
 
     const nextBtn = page.getByRole("button", { name: "Next", exact: true });
-    await expect(nextBtn).toBeEnabled({ timeout: 3_000 });
+    await expect(nextBtn).toBeEnabled({ timeout: 5_000 });
 
     // Go to step 2
     await nextBtn.click();
-    await page.waitForTimeout(500);
+    await page.waitForTimeout(750);
 
     // Click Back
     const backBtn = page.getByRole("button", { name: "Back", exact: true });
     await expect(backBtn).toBeVisible({ timeout: 5_000 });
     await backBtn.click();
-    await page.waitForTimeout(500);
+    await page.waitForTimeout(750);
 
     // Should be back on Step 1
     const step1Heading = page.locator("text=/Confirm Final Grades/i");
-    await expect(step1Heading).toBeVisible();
+    await expect(step1Heading).toBeVisible({ timeout: 5_000 });
   });
 
   test("Step 2 shows grade advancement cards", async ({ page }) => {
@@ -212,14 +220,15 @@ test.describe("Year-End — Step Navigation", () => {
 
   test("can navigate from Step 2 to Step 3 (Review)", async ({ page }) => {
     await navigateToYearEnd(page);
+    await expect(page.locator("text=/Confirm Final Grades/i")).toBeVisible({ timeout: 10_000 });
     await fillAllGrades(page);
 
     const nextBtn = page.getByRole("button", { name: "Next", exact: true });
-    await expect(nextBtn).toBeEnabled({ timeout: 3_000 });
+    await expect(nextBtn).toBeEnabled({ timeout: 5_000 });
 
     // Step 1 → Step 2
     await nextBtn.click();
-    await page.waitForTimeout(500);
+    await page.waitForTimeout(750);
 
     // Step 2 → Step 3. On mobile the step-2 CardFooter sits exactly where the
     // FeedbackWidget's `fixed bottom-6 right-6` button is positioned. Both a

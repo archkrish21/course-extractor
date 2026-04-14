@@ -675,10 +675,11 @@ describe("POST /api/v1/accounts/:id/members — linked accounts limit", () => {
     let queryIndex = 0;
     dbChain.then = vi.fn().mockImplementation((resolve: (v: unknown) => unknown) => {
       queryIndex++;
-      if (queryIndex === 1) return Promise.resolve(resolve([])); // duplicate email check — none
-      if (queryIndex === 2) return Promise.resolve(resolve([{ count: 2 }])); // member count — under limit
-      if (queryIndex === 3) return Promise.resolve(resolve([{ studentName: "Test Student" }])); // account lookup for email
-      if (queryIndex === 4) return Promise.resolve(resolve([{ email: "owner@test.com" }])); // inviter lookup
+      if (queryIndex === 1) return Promise.resolve(resolve([{ role: "student", onboardingCompletedAt: new Date() }])); // inviter onboarding gate
+      if (queryIndex === 2) return Promise.resolve(resolve([])); // duplicate email check — none
+      if (queryIndex === 3) return Promise.resolve(resolve([{ count: 2 }])); // member count — under limit
+      if (queryIndex === 4) return Promise.resolve(resolve([{ studentName: "Test Student" }])); // account lookup for email
+      if (queryIndex === 5) return Promise.resolve(resolve([{ email: "owner@test.com" }])); // inviter lookup
       return Promise.resolve(resolve([]));
     });
     mockReturning.mockResolvedValue([{
@@ -716,10 +717,11 @@ describe("POST /api/v1/accounts/:id/members — linked accounts limit", () => {
     let queryIndex = 0;
     dbChain.then = vi.fn().mockImplementation((resolve: (v: unknown) => unknown) => {
       queryIndex++;
-      if (queryIndex === 1) return Promise.resolve(resolve([])); // duplicate email check — none
-      if (queryIndex === 2) return Promise.resolve(resolve([{ count: 1 }])); // member count — under limit
-      if (queryIndex === 3) return Promise.resolve(resolve([{ studentName: "Test Student" }])); // account lookup for email
-      if (queryIndex === 4) return Promise.resolve(resolve([{ email: "owner@test.com" }])); // inviter lookup
+      if (queryIndex === 1) return Promise.resolve(resolve([{ role: "student", onboardingCompletedAt: new Date() }])); // inviter onboarding gate
+      if (queryIndex === 2) return Promise.resolve(resolve([])); // duplicate email check — none
+      if (queryIndex === 3) return Promise.resolve(resolve([{ count: 1 }])); // member count — under limit
+      if (queryIndex === 4) return Promise.resolve(resolve([{ studentName: "Test Student" }])); // account lookup for email
+      if (queryIndex === 5) return Promise.resolve(resolve([{ email: "owner@test.com" }])); // inviter lookup
       return Promise.resolve(resolve([]));
     });
     mockReturning.mockResolvedValue([{
@@ -746,12 +748,13 @@ describe("POST /api/v1/accounts/:id/members — linked accounts limit", () => {
     let queryIndex = 0;
     dbChain.then = vi.fn().mockImplementation((resolve: (v: unknown) => unknown) => {
       queryIndex++;
-      if (queryIndex === 1) return Promise.resolve(resolve([])); // duplicate email check — none
+      if (queryIndex === 1) return Promise.resolve(resolve([{ role: "student", onboardingCompletedAt: new Date() }])); // inviter onboarding gate
+      if (queryIndex === 2) return Promise.resolve(resolve([])); // duplicate email check — none
       // Ownership check: return the plan as owned so the handler proceeds
-      if (queryIndex === 2) return Promise.resolve(resolve([{ planId: sharedPlanId }]));
-      if (queryIndex === 3) return Promise.resolve(resolve([{ count: 1 }]));
-      if (queryIndex === 4) return Promise.resolve(resolve([{ studentName: "Test Student" }]));
-      if (queryIndex === 5) return Promise.resolve(resolve([{ email: "owner@test.com" }]));
+      if (queryIndex === 3) return Promise.resolve(resolve([{ planId: sharedPlanId }]));
+      if (queryIndex === 4) return Promise.resolve(resolve([{ count: 1 }]));
+      if (queryIndex === 5) return Promise.resolve(resolve([{ studentName: "Test Student" }]));
+      if (queryIndex === 6) return Promise.resolve(resolve([{ email: "owner@test.com" }]));
       return Promise.resolve(resolve([]));
     });
     mockReturning.mockResolvedValue([{

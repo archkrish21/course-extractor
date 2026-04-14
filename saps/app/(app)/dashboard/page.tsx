@@ -134,6 +134,8 @@ export default function DashboardPage() {
           } else if (currentAccount?.role === "student" && !userFirstName) {
             setShowProfileBanner(true);
             setProfileBannerTarget("settings");
+          } else {
+            setShowProfileBanner(false);
           }
           if (primary) {
             try {
@@ -162,7 +164,10 @@ export default function DashboardPage() {
               // Silent — warnings not critical for dashboard
             }
           }
-        } else {
+        } else if (currentAccount?.role === "student" || currentAccount?.role === "counselor") {
+          // /plans fetch failed for a user who should have one — prompt setup.
+          // Skipped for parents/guardians with no linked student: their "Add Student"
+          // banner handles that case and we don't want two banners stacked.
           setShowProfileBanner(true);
           setProfileBannerTarget("planner");
         }
@@ -459,7 +464,7 @@ export default function DashboardPage() {
       )}
 
       {/* Complete your profile / setup banner */}
-      {showProfileBanner && currentAccount?.isClaimed !== false && (
+      {showProfileBanner && currentAccount?.isClaimed !== false && !(!currentAccount && (userRole === "parent" || userRole === "guardian")) && (
         <div
           className="mb-6 flex flex-col gap-3 rounded-xl border border-primary/30 bg-primary-light p-4 sm:flex-row sm:items-center sm:justify-between"
           role="status"
@@ -502,16 +507,19 @@ export default function DashboardPage() {
                 </Button>
               </Link>
             )}
-            <button
-              type="button"
-              onClick={() => setShowProfileBanner(false)}
-              aria-label="Dismiss banner"
-              className="flex h-8 w-8 items-center justify-center rounded-lg text-primary hover:bg-primary/10 transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
-            >
-              <svg aria-hidden="true" className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M6 18 18 6M6 6l12 12" />
-              </svg>
-            </button>
+            {/* Onboarding is mandatory — no dismiss. Other profile prompts remain dismissible. */}
+            {!(currentAccount?.role === "student" && profileBannerTarget === "planner" && !onboardingCompleted) && (
+              <button
+                type="button"
+                onClick={() => setShowProfileBanner(false)}
+                aria-label="Dismiss banner"
+                className="flex h-8 w-8 items-center justify-center rounded-lg text-primary hover:bg-primary/10 transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
+              >
+                <svg aria-hidden="true" className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M6 18 18 6M6 6l12 12" />
+                </svg>
+              </button>
+            )}
           </div>
         </div>
       )}

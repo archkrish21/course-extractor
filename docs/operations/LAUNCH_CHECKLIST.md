@@ -25,8 +25,8 @@ Each item links to the authoritative doc so details don't get duplicated here.
 - [ ] OTP expiry: **10 minutes**
 - [ ] Rate Limits → Emails/hour: **10**, Token verifications/5min: **30**, Signups/hour/IP: **10**
 - [ ] Password Policy → min length 8, `letters_digits` or stricter
-- [ ] Attack Protection → CAPTCHA (hCaptcha or Turnstile) enabled on sign-up and sign-in
-- [ ] CAPTCHA token wired through frontend signup/login forms and tested end-to-end
+- [x] Attack Protection → hCaptcha configured in Supabase dashboard with site key `7cc8cd46-…-0f70c1bcf266` (secret set 2026-04-15)
+- [x] CAPTCHA token wired through frontend signup/login forms — `@hcaptcha/react-hcaptcha` widget + token forwarded to Supabase; CSP allows `hcaptcha.com` origins. Still needs end-to-end prod smoke (checked in Phase 5).
 
 ### Secrets hygiene
 - [ ] Service role key rotated if it was ever committed or shared
@@ -72,6 +72,7 @@ Each item links to the authoritative doc so details don't get duplicated here.
 - [ ] All env vars from `saps/.env.local.example` set in Vercel (production environment)
 - [ ] `NEXT_PUBLIC_APP_URL` = `https://yourdomain.com`
 - [ ] `NEXT_PUBLIC_SUPPORT_URL` set (or intentionally blank)
+- [ ] `NEXT_PUBLIC_HCAPTCHA_SITE_KEY` = `7cc8cd46-ce44-47d6-a60c-0f70c1bcf266` (required for CAPTCHA widget to render on signup/login)
 - [ ] Custom domain added in Vercel, DNS pointing, SSL cert issued
 - [ ] First successful production deploy
 - [ ] CSP headers allow the hosted Supabase URL (see [`PRODUCTION_SETUP.md` §7 CSP note](./PRODUCTION_SETUP.md))

@@ -481,12 +481,9 @@ These items must be applied to the hosted Supabase project, not `config.toml`. `
 - [ ] Set OTP expiry to 10 minutes (default is 1 hour — unnecessarily long)
 
 #### Authentication → Attack Protection
-- [ ] Enable **CAPTCHA** (hCaptcha or Cloudflare Turnstile) on sign-up and sign-in forms
-- [ ] Wire the captcha token through the frontend signup/login forms:
-  ```ts
-  supabase.auth.signUp({ email, password, options: { captchaToken } });
-  ```
-- [ ] Test end-to-end before enabling in prod
+- [x] Enable **CAPTCHA** — hCaptcha provider configured in Supabase (secret set 2026-04-15)
+- [x] Frontend wiring done — `@hcaptcha/react-hcaptcha` widget renders on `/signup` + `/login` when `NEXT_PUBLIC_HCAPTCHA_SITE_KEY` is set; token forwarded via `signUp({ options: { captchaToken } })` on the server and `signInWithPassword({ options: { captchaToken } })` on the client. CSP updated to allow `hcaptcha.com` + `*.hcaptcha.com` origins.
+- [ ] Test end-to-end in prod (site key set in Vercel, signup in incognito → widget appears → account created)
 
 #### Authentication → Password Policy
 - [ ] `minimum_password_length = 8`

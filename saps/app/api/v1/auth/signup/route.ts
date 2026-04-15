@@ -15,6 +15,7 @@ import {
 } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
 import { successResponse, errorResponse } from "@/lib/api/response";
+import { requireSameOrigin } from "@/lib/api/require-same-origin";
 import { rateLimit } from "@/lib/api/rate-limit";
 
 const signupSchema = z.object({
@@ -26,7 +27,9 @@ const signupSchema = z.object({
     .regex(/[A-Z]/, "Password must contain at least 1 uppercase letter")
     .regex(/[0-9]/, "Password must contain at least 1 digit")
     .regex(/[^a-zA-Z0-9]/, "Password must contain at least 1 special character"),
-  date_of_birth: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Date must be YYYY-MM-DD format"),
+  age_confirmed: z.literal(true, {
+    message: "You must confirm that you are at least 13 years old.",
+  }),
   role: z.enum(["student", "parent", "guardian", "counselor"]),
   name: z.string().min(1).max(200).optional(),
   state: z.string().length(2).optional(),
@@ -34,21 +37,16 @@ const signupSchema = z.object({
   tos_accepted: z.literal(true, {
     message: "You must agree to the Terms of Service and Privacy Policy.",
   }),
+  invite_code: z.string().max(8).optional(),
+  invite_account: z.string().uuid().optional(),
+  captcha_token: z.string().optional(),
 });
-
-function calculateAge(dateOfBirth: string): number {
-  const today = new Date();
-  const dob = new Date(dateOfBirth);
-  let age = today.getFullYear() - dob.getFullYear();
-  const monthDiff = today.getMonth() - dob.getMonth();
-  if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < dob.getDate())) {
-    age--;
-  }
-  return age;
-}
 
 export async function POST(request: NextRequest) {
   try {
+    const csrf = requireSameOrigin(request);
+    if (csrf) return csrf;
+
     // Rate limit: 5 requests/minute per IP
     const ip = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? "unknown";
     const rateLimitResult = await rateLimit(`auth:signup:${ip}`, 5, 60);
@@ -71,26 +69,30 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const { email, password, date_of_birth, role: rawRole, name, state, school_name } = parsed.data;
+    const { email, password, role: rawRole, name, state, school_name, invite_code, invite_account, captcha_token } = parsed.data;
 
     // Map "guardian" to "parent" for storage — they have identical behavior
     const role = rawRole === "guardian" ? "parent" : rawRole;
 
-    // COPPA check: must be 13 or older
-    const age = calculateAge(date_of_birth);
-    if (age < 13) {
-      return errorResponse(
-        "COPPA_BLOCKED",
-        "Users must be at least 13 years old to create an account.",
-        403
-      );
-    }
-
-    // Create user via Supabase Auth
+    // Create user via Supabase Auth — store invite params in metadata
+    // so the email confirmation callback can redirect to /join
     const supabase = await createSupabaseServerClient();
+    const metadata: Record<string, string> = {};
+    if (invite_code) metadata.invite_code = invite_code;
+    if (invite_account) metadata.invite_account = invite_account;
+
+    // Pass the hCaptcha token through to Supabase when present. Supabase
+    // enforces CAPTCHA server-side when the project's Attack Protection is
+    // enabled; the widget is gated on NEXT_PUBLIC_HCAPTCHA_SITE_KEY in the
+    // frontend so local dev (no site key) still works without CAPTCHA.
+    const signUpOptions: { data?: Record<string, string>; captchaToken?: string } = {};
+    if (Object.keys(metadata).length > 0) signUpOptions.data = metadata;
+    if (captcha_token) signUpOptions.captchaToken = captcha_token;
+
     const { data: authData, error: authError } = await supabase.auth.signUp({
       email,
       password,
+      options: Object.keys(signUpOptions).length > 0 ? signUpOptions : undefined,
     });
 
     if (authError) {
@@ -105,6 +107,25 @@ export async function POST(request: NextRequest) {
     }
 
     const userId = authData.user.id;
+    let emailConfirmationPending = !authData.session;
+
+    // Invite-based signups: the student already proved email ownership by
+    // clicking the invite link, so skip the confirmation email and auto-confirm.
+    if (emailConfirmationPending && invite_code && invite_account) {
+      try {
+        const supabaseAdmin = createSupabaseAdminClient();
+        await supabaseAdmin.auth.admin.updateUserById(userId, {
+          email_confirm: true,
+        });
+        // Sign in to create a session — signUp doesn't return a session
+        // when enable_confirmations is true, even after admin-confirming.
+        await supabase.auth.signInWithPassword({ email, password });
+        emailConfirmationPending = false;
+      } catch (confirmError) {
+        console.error("[signup] Failed to auto-confirm invite user:", confirmError);
+        // Fall through — they'll get the confirmation email as fallback
+      }
+    }
 
     // Wrap all DB operations so we can clean up the Supabase auth user
     // if any insert fails — otherwise the user is stuck (email taken in
@@ -117,7 +138,6 @@ export async function POST(request: NextRequest) {
         email,
         firstName: name ?? email.split("@")[0],
         role,
-        dateOfBirth: date_of_birth,
         isEmailVerified: false,
         tosAcceptedAt: now,
         ppAcceptedAt: now,
@@ -156,7 +176,6 @@ export async function POST(request: NextRequest) {
           .insert(accounts)
           .values({
             studentName,
-            studentDateOfBirth: date_of_birth,
             gradeLevel: 9,
             graduationYear: defaultGradYear,
             state: state ?? "IL",
@@ -215,6 +234,7 @@ export async function POST(request: NextRequest) {
               id: newAccount.id,
               student_name: studentName,
             },
+            email_confirmation_pending: emailConfirmationPending,
           },
           undefined,
           201
@@ -231,6 +251,7 @@ export async function POST(request: NextRequest) {
             email,
             role,
           },
+          email_confirmation_pending: emailConfirmationPending,
         },
         undefined,
         201

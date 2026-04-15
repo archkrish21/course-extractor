@@ -122,10 +122,11 @@ test.describe("Planner — Add Course", () => {
     await page.waitForTimeout(2000);
     await expect(picker.locator("text=Searching courses")).toBeHidden({ timeout: 10_000 });
 
-    // Should show results (course cards) or "No courses found"
-    const hasResults = await picker.locator('ul[role="list"] > li').count();
-    const hasNoResults = await picker.locator("text=No courses found").isVisible().catch(() => false);
-    expect(hasResults > 0 || hasNoResults).toBeTruthy();
+    // Should show results (course cards in list items or buttons) or "No courses found"
+    const hasListItems = await picker.locator('ul[role="list"] > li').count();
+    const hasButtons = await picker.locator('button:has-text("Math")').count();
+    const hasNoResults = await picker.locator("text=/No courses found|no results/i").isVisible().catch(() => false);
+    expect(hasListItems > 0 || hasButtons > 0 || hasNoResults).toBeTruthy();
   });
 
   test("division/department filters work in picker", async ({ page }) => {

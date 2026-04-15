@@ -3,13 +3,17 @@ import { waitForHydration } from "./helpers";
 
 // ─── Helpers ───────────────────────────────────────────────────────────────
 
+// Use the pre-onboarding test student so the /onboarding layout guard
+// (which redirects completed users to /dashboard) doesn't bounce us.
+const ONBOARDING_TEST_EMAIL = "student-onboarding@test.com";
+
 async function login(page: Page) {
   await page.goto("/login");
   await waitForHydration(page);
-  await page.locator('input[type="email"]').fill("student@test.com");
+  await page.locator('input[type="email"]').fill(ONBOARDING_TEST_EMAIL);
   await page.locator('input[type="password"]').first().fill("Test1234!");
   await page.locator('form button[type="submit"]').click();
-  await page.waitForURL(/\/(dashboard|planner|courses)/, { timeout: 15_000 });
+  await page.waitForURL(/\/(dashboard|planner|courses|onboarding)/, { timeout: 15_000 });
 }
 
 async function navigateToOnboarding(page: Page) {
@@ -24,16 +28,10 @@ test.describe("Onboarding — Page Load", () => {
   test("onboarding page loads with step indicator", async ({ page }) => {
     await navigateToOnboarding(page);
 
-    // Step indicator with numbered circles
-    const steps = page.locator("text=/About You|Past Courses|Starting Plan|Goals/i");
+    // Step indicator — grade 9 flow shows About You + Starting Plan;
+    // grade 10+ flow shows About You + Past Courses + Assign Grades.
+    const steps = page.locator("text=/About You|Past Courses|Starting Plan|Assign Grades/i");
     expect(await steps.count()).toBeGreaterThanOrEqual(1);
-  });
-
-  test("shows skip setup button", async ({ page }) => {
-    await navigateToOnboarding(page);
-
-    const skipBtn = page.locator("button", { hasText: /Skip/i });
-    await expect(skipBtn.first()).toBeVisible({ timeout: 5_000 });
   });
 });
 
@@ -144,41 +142,6 @@ test.describe("Onboarding — Step Navigation", () => {
     }
   });
 
-  test("skip setup redirects to dashboard or planner", async ({ page }) => {
-    await navigateToOnboarding(page);
-
-    const skipBtn = page.locator("button", { hasText: /Skip setup/i }).first();
-    if ((await skipBtn.count()) === 0) {
-      // Try alternate skip button
-      const altSkip = page.locator("button", { hasText: /Skip/i }).first();
-      if ((await altSkip.count()) === 0) {
-        test.skip(true, "No skip button found");
-        return;
-      }
-      await altSkip.click();
-    } else {
-      await skipBtn.click();
-    }
-
-    await page.waitForURL(/\/(dashboard|planner)/, { timeout: 10_000 });
-  });
-});
-
-// ─── Step 4: Goals ─────────────────────────────────────────────────────────
-
-test.describe("Onboarding — Goals Step", () => {
-  test("goals step has GPA target and career interest fields", async ({ page }) => {
-    await navigateToOnboarding(page);
-
-    // Navigate through steps quickly to reach goals
-    // This test verifies the fields exist if we can reach the step
-    const gpaLabel = page.locator("text=/GPA Target/i");
-    const careerLabel = page.locator("text=/Career/i");
-
-    // These may only be visible on step 4 — just verify the page loaded
-    const heading = page.locator("text=/About You|Goals|onboarding/i");
-    expect(await heading.count()).toBeGreaterThanOrEqual(1);
-  });
 });
 
 // ─── Grade-Specific Onboarding Flows ───────────────────────────────────────
@@ -311,8 +274,8 @@ test.describe("Onboarding — Senior (Grade 12)", () => {
   });
 });
 
-test.describe("Onboarding — Step Skip Logic", () => {
-  test("entering past courses skips template step and goes to Goals", async ({ page }) => {
+test.describe("Onboarding — Returning Student Flow", () => {
+  test("Grade 10+ student advances Past Courses → Assign Grades", async ({ page }) => {
     await navigateToOnboarding(page);
 
     const grade10 = page.locator("label", { hasText: "Grade 10" }).first();
@@ -323,11 +286,11 @@ test.describe("Onboarding — Step Skip Logic", () => {
     await grade10.click();
     await page.waitForTimeout(300);
 
-    // Go to Step 2
+    // Step 1 → Step 2 (Past Courses)
     await page.getByRole("button", { name: "Next", exact: true }).click();
     await page.waitForTimeout(1_000);
 
-    // Try to select a course
+    // Select a past course
     const courseCheckbox = page.locator('input[type="checkbox"]').first();
     if ((await courseCheckbox.count()) === 0) {
       test.skip(true, "No courses available to select");
@@ -336,12 +299,12 @@ test.describe("Onboarding — Step Skip Logic", () => {
     await courseCheckbox.check();
     await page.waitForTimeout(300);
 
-    // Next should skip Step 3 (Starting Plan) and go to Step 4 (Goals)
+    // Step 2 → Step 3 (Assign Grades) — last step; Complete button expected
     await page.getByRole("button", { name: "Next", exact: true }).click();
     await page.waitForTimeout(1_000);
 
-    const goalsContent = page.locator("text=/GPA Target|Career|Goals|Complete/i");
-    expect(await goalsContent.count()).toBeGreaterThanOrEqual(1);
+    const assignHeader = page.locator("text=/Assign Grades/i");
+    expect(await assignHeader.count()).toBeGreaterThanOrEqual(1);
   });
 });
 
@@ -475,37 +438,29 @@ test.describe("Onboarding — Step 3: Plan Templates", () => {
     await expect(revertedBtn).toBeVisible();
   });
 
-  test("Start from scratch link is visible", async ({ page }) => {
+  test("deselecting a template leaves no Selected state (equivalent to start from scratch)", async ({ page }) => {
+    // The dedicated "Start from scratch" link was removed — not selecting a
+    // template, or toggling off a selected one, is the new equivalent.
     const reached = await navigateToTemplateStep(page);
     if (!reached) {
       test.skip(true, "Could not reach template step");
       return;
     }
 
-    const scratchLink = page.locator("button, a", { hasText: /Start from scratch/i });
-    await expect(scratchLink.first()).toBeVisible({ timeout: 5_000 });
-  });
-
-  test("Start from scratch deselects any selected template", async ({ page }) => {
-    const reached = await navigateToTemplateStep(page);
-    if (!reached) {
-      test.skip(true, "Could not reach template step");
-      return;
-    }
-
-    // Select a template first
+    // Select a template then toggle it off to verify deselection works.
     const selectBtn = page.locator("button", { hasText: "Select this plan" }).first();
-    if ((await selectBtn.count()) > 0) {
-      await selectBtn.click();
-      await page.waitForTimeout(300);
+    if ((await selectBtn.count()) === 0) {
+      test.skip(true, "No templates available");
+      return;
     }
-
-    // Click "Start from scratch"
-    const scratchLink = page.locator("button", { hasText: /Start from scratch/i }).first();
-    await scratchLink.click();
+    await selectBtn.click();
     await page.waitForTimeout(300);
 
-    // No template should be in "Selected" state
+    const selected = page.locator("button", { hasText: "Selected" }).first();
+    await expect(selected).toBeVisible();
+    await selected.click();
+    await page.waitForTimeout(300);
+
     const selectedBtns = page.locator("button", { hasText: "Selected" });
     expect(await selectedBtns.count()).toBe(0);
   });
@@ -543,17 +498,10 @@ test.describe("Onboarding → Planner: Blank Plan", () => {
       await confirmPw.fill("Test1234!");
     }
 
-    // Fill DOB if present
-    const dobInput = page.locator('input[type="date"]');
-    if ((await dobInput.count()) > 0) {
-      await dobInput.fill("2010-01-15");
-    }
-
-    // Accept Terms of Service checkbox (required for submit)
-    const tosCheckbox = page.locator('input[type="checkbox"]');
-    if ((await tosCheckbox.count()) > 0) {
-      await tosCheckbox.check();
-    }
+    // Age attestation (13+) — replaces the removed DOB input.
+    await page.locator("#age-confirm-checkbox").check();
+    // Accept Terms of Service
+    await page.locator("#tos-checkbox").check();
 
     await page.locator('form button[type="submit"]').click();
 
@@ -573,9 +521,9 @@ test.describe("Onboarding → Planner: Blank Plan", () => {
 
     // Handle consent if needed
     if (page.url().includes("/consent")) {
-      const checkbox = page.locator('input[type="checkbox"]');
-      if ((await checkbox.count()) > 0) {
-        await checkbox.check();
+      const consentCheckbox = page.locator('main input[type="checkbox"]').first();
+      if ((await consentCheckbox.count()) > 0) {
+        await consentCheckbox.check();
         const acceptBtn = page.getByRole("button", { name: "Accept", exact: true });
         await acceptBtn.click();
         await page.waitForURL(/\/onboarding/, { timeout: 10_000 });
@@ -588,7 +536,7 @@ test.describe("Onboarding → Planner: Blank Plan", () => {
       return;
     }
 
-    // Step 1: Select grade
+    // Step 1: Select Grade 9 (freshman — 2-step flow)
     const grade9 = page.locator("label", { hasText: "Grade 9" }).first();
     if ((await grade9.count()) === 0) {
       test.skip(true, "Not on onboarding page");
@@ -597,28 +545,19 @@ test.describe("Onboarding → Planner: Blank Plan", () => {
     await grade9.click();
     await page.waitForTimeout(300);
 
-    // Next → Step 3 (freshmen skip Step 2)
+    // Next → Step 2 (Starting Plan — last step for freshmen)
     await page.getByRole("button", { name: "Next", exact: true }).click();
     await page.waitForTimeout(1_500);
 
-    // Step 3: Click "Start from scratch"
-    const scratchLink = page.locator("button", { hasText: /Start from scratch/i }).first();
-    if ((await scratchLink.count()) > 0) {
-      await scratchLink.click();
-      await page.waitForTimeout(300);
-    }
-
-    // Next → Step 4 (Goals)
-    await page.getByRole("button", { name: "Next", exact: true }).click();
-    await page.waitForTimeout(1_000);
-
-    // Step 4: Complete
+    // Don't select any template — click Complete to start from scratch.
+    // (The "Start from scratch" link was removed; not selecting a template
+    // achieves the same thing.)
     const completeBtn = page.getByRole("button", { name: "Complete", exact: true });
     if ((await completeBtn.count()) > 0) {
       await completeBtn.click();
       await page.waitForURL(/\/(planner|dashboard)/, { timeout: 15_000 });
     } else {
-      test.skip(true, "Complete button not found on Step 4");
+      test.skip(true, "Complete button not found on Step 2");
       return;
     }
 
@@ -659,16 +598,10 @@ test.describe("Onboarding → Planner: Template Plan", () => {
       await confirmPw.fill("Test1234!");
     }
 
-    const dobInput = page.locator('input[type="date"]');
-    if ((await dobInput.count()) > 0) {
-      await dobInput.fill("2010-01-15");
-    }
-
-    // Accept Terms of Service checkbox (required for submit)
-    const tosCheckbox = page.locator('input[type="checkbox"]');
-    if ((await tosCheckbox.count()) > 0) {
-      await tosCheckbox.check();
-    }
+    // Age attestation (13+) — replaces the removed DOB input.
+    await page.locator("#age-confirm-checkbox").check();
+    // Accept Terms of Service
+    await page.locator("#tos-checkbox").check();
 
     await page.locator('form button[type="submit"]').click();
 
@@ -686,9 +619,9 @@ test.describe("Onboarding → Planner: Template Plan", () => {
 
     // Handle consent if needed
     if (page.url().includes("/consent")) {
-      const checkbox = page.locator('input[type="checkbox"]');
-      if ((await checkbox.count()) > 0) {
-        await checkbox.check();
+      const consentCheckbox = page.locator('main input[type="checkbox"]').first();
+      if ((await consentCheckbox.count()) > 0) {
+        await consentCheckbox.check();
         const acceptBtn = page.getByRole("button", { name: "Accept", exact: true });
         await acceptBtn.click();
         await page.waitForURL(/\/onboarding/, { timeout: 10_000 });
@@ -726,17 +659,13 @@ test.describe("Onboarding → Planner: Template Plan", () => {
     // Verify selected
     await expect(page.locator("button", { hasText: "Selected" }).first()).toBeVisible();
 
-    // Next → Step 4 (Goals)
-    await page.getByRole("button", { name: "Next", exact: true }).click();
-    await page.waitForTimeout(1_000);
-
-    // Step 4: Complete
+    // Step 2 is the last step for freshmen — Complete button here, no more Next.
     const completeBtn = page.getByRole("button", { name: "Complete", exact: true });
     if ((await completeBtn.count()) > 0) {
       await completeBtn.click();
       await page.waitForURL(/\/(planner|dashboard)/, { timeout: 15_000 });
     } else {
-      test.skip(true, "Complete button not found on Step 4");
+      test.skip(true, "Complete button not found on Step 2");
       return;
     }
 

@@ -1,5 +1,6 @@
 import Link from "next/link";
 import type { Metadata } from "next";
+import { SUPPORT_URL } from "@/config/support";
 
 export const metadata: Metadata = {
   title: "About — SAPS",
@@ -66,6 +67,32 @@ export default function AboutPage() {
             and be part of the journey.
           </p>
         </section>
+
+        {SUPPORT_URL && (
+          <section className="rounded-2xl border border-border bg-muted/30 p-6">
+            <h2 className="flex items-center gap-2 text-lg font-semibold text-foreground">
+              <svg aria-hidden="true" className="h-5 w-5 text-red-500" fill="currentColor" viewBox="0 0 24 24">
+                <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" />
+              </svg>
+              Support SAPS
+            </h2>
+            <p className="mt-2">
+              SAPS is built by a high school student in his spare time. If it&apos;s helped
+              you plan your courses, a small contribution helps cover hosting and keeps it free for everyone.
+            </p>
+            <a
+              href={SUPPORT_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="mt-4 inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground hover:bg-primary-hover transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
+            >
+              <svg aria-hidden="true" className="h-4 w-4" fill="currentColor" viewBox="0 0 24 24">
+                <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" />
+              </svg>
+              Support on Ko-fi
+            </a>
+          </section>
+        )}
 
         <section>
           <h2 className="text-lg font-semibold text-foreground">Important Note</h2>

@@ -4,6 +4,7 @@ import { db } from "@/lib/db";
 import { users } from "@/lib/db/schema";
 import { eq, sql } from "drizzle-orm";
 import { successResponse, errorResponse } from "@/lib/api/response";
+import { requireSameOrigin } from "@/lib/api/require-same-origin";
 import { requireAuth } from "@/lib/auth/get-user";
 
 const updateNameSchema = z.object({
@@ -22,7 +23,7 @@ export async function GET() {
     if (user instanceof Response) return user;
 
     const [userData] = await db
-      .select({ email: users.email, firstName: users.firstName, lastName: users.lastName, role: users.role, tourState: users.tourState })
+      .select({ email: users.email, firstName: users.firstName, lastName: users.lastName, role: users.role, tourState: users.tourState, onboardingCompletedAt: users.onboardingCompletedAt })
       .from(users)
       .where(eq(users.id, user.id))
       .limit(1);
@@ -37,6 +38,7 @@ export async function GET() {
       last_name: userData.lastName,
       role: userData.role,
       tour_state: userData.tourState ?? {},
+      onboarding_completed: userData.role !== "student" || !!userData.onboardingCompletedAt,
     });
   } catch (error) {
     console.error("[auth/me] GET error:", error);
@@ -52,6 +54,9 @@ export async function PATCH(request: NextRequest) {
   try {
     const user = await requireAuth();
     if (user instanceof Response) return user;
+
+    const csrf = requireSameOrigin(request);
+    if (csrf) return csrf;
 
     const body = await request.json();
     const parsed = updateNameSchema.safeParse(body);

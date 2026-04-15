@@ -17,6 +17,7 @@ import {
 import { eq, and, sql } from "drizzle-orm";
 import { requireAuth } from "@/lib/auth/get-user";
 import { successResponse, errorResponse } from "@/lib/api/response";
+import { requireSameOrigin } from "@/lib/api/require-same-origin";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 
 const notificationChannelSchema = z.object({
@@ -50,6 +51,9 @@ export async function PATCH(request: NextRequest) {
     const authResult = await requireAuth();
     if (authResult instanceof Response) return authResult;
     const user = authResult;
+
+    const csrf = requireSameOrigin(request);
+    if (csrf) return csrf;
 
     const body = await request.json();
     const parsed = updatePreferencesSchema.safeParse(body);
@@ -276,10 +280,13 @@ export async function GET() {
  * Permanently delete the user's account and all associated data.
  * Consent records are anonymized (userId set to null), not deleted.
  */
-export async function DELETE() {
+export async function DELETE(request: NextRequest) {
   try {
     const user = await requireAuth();
     if (user instanceof Response) return user;
+
+    const csrf = requireSameOrigin(request);
+    if (csrf) return csrf;
 
     // Cancel Stripe subscription and delete Stripe customer
     try {
@@ -330,6 +337,30 @@ export async function DELETE() {
 
     // Null out FK references before deleting accounts
     await db.execute(sql`UPDATE accounts SET billing_contact_id = NULL WHERE billing_contact_id = ${user.id}`);
+
+    // Delete accounts created by this user where no student has joined yet.
+    // These are parent-created shells with no student member — safe to remove.
+    await db.execute(sql`
+      DELETE FROM accounts
+      WHERE created_by = ${user.id}
+        AND id NOT IN (
+          SELECT account_id FROM account_members WHERE role = 'student'
+        )
+    `);
+    // For remaining accounts created by this user (student HAS joined),
+    // transfer created_by to the student so the parent user can be deleted
+    // (created_by has onDelete: restrict and is NOT NULL).
+    await db.execute(sql`
+      UPDATE accounts SET created_by = (
+        SELECT am.user_id FROM account_members am
+        WHERE am.account_id = accounts.id AND am.role = 'student'
+        LIMIT 1
+      )
+      WHERE created_by = ${user.id}
+        AND id IN (
+          SELECT account_id FROM account_members WHERE role = 'student'
+        )
+    `);
 
     // Delete plans this user created on OTHER students' accounts (orphan cleanup).
     // Without this, plans stay in four_year_plans with created_by=NULL after the UPDATE

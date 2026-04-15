@@ -75,6 +75,14 @@ vi.mock("@/lib/subscription/middleware", () => ({
   invalidateSubscriptionCache: vi.fn().mockResolvedValue(undefined),
 }));
 
+// Rate limiter mock — defaults to success. Individual tests can override
+// via mockRateLimit.mockResolvedValueOnce({ success: false, ... }) to
+// exercise the 429 path.
+const mockRateLimit = vi.fn().mockResolvedValue({ success: true, remaining: 20, resetAt: Math.floor(Date.now() / 1000) + 3600 });
+vi.mock("@/lib/api/rate-limit", () => ({
+  rateLimit: (...args: unknown[]) => mockRateLimit(...args),
+}));
+
 vi.mock("@/lib/email/client", () => ({
   sendEmail: vi.fn().mockResolvedValue(true),
 }));
@@ -613,6 +621,32 @@ describe("POST /api/v1/accounts/:id/members — linked accounts limit", () => {
     });
   });
 
+  it("returns 429 when the invite rate limit is exceeded", async () => {
+    // First call (rate limit check in members/route.ts) returns failure
+    mockRateLimit.mockResolvedValueOnce({
+      success: false,
+      remaining: 0,
+      resetAt: Math.floor(Date.now() / 1000) + 1800,
+    });
+
+    const request = makeJsonRequest(
+      `http://localhost:3000/api/v1/accounts/${TEST_ACCOUNT_ID}/members`,
+      { target_role: "parent", email: "parent@test.com" }
+    );
+    const response = await createMember(request, accountContext(TEST_ACCOUNT_ID));
+    const body = await response.json();
+
+    expect(response.status).toBe(429);
+    expect(body.error.code).toBe("RATE_LIMITED");
+    expect(body.error.retry_after).toBeGreaterThan(0);
+    // Verify the rate-limit key uses the invite: prefix scoped to userId
+    expect(mockRateLimit).toHaveBeenCalledWith(
+      expect.stringMatching(/^invite:/),
+      20,
+      3600
+    );
+  });
+
   it("returns 402 when at linked accounts limit", async () => {
     mockGetEffectiveTier.mockResolvedValue({ maxLinkedAccounts: 3 });
 
@@ -641,10 +675,11 @@ describe("POST /api/v1/accounts/:id/members — linked accounts limit", () => {
     let queryIndex = 0;
     dbChain.then = vi.fn().mockImplementation((resolve: (v: unknown) => unknown) => {
       queryIndex++;
-      if (queryIndex === 1) return Promise.resolve(resolve([])); // duplicate email check — none
-      if (queryIndex === 2) return Promise.resolve(resolve([{ count: 2 }])); // member count — under limit
-      if (queryIndex === 3) return Promise.resolve(resolve([{ studentName: "Test Student" }])); // account lookup for email
-      if (queryIndex === 4) return Promise.resolve(resolve([{ email: "owner@test.com" }])); // inviter lookup
+      if (queryIndex === 1) return Promise.resolve(resolve([{ role: "student", onboardingCompletedAt: new Date() }])); // inviter onboarding gate
+      if (queryIndex === 2) return Promise.resolve(resolve([])); // duplicate email check — none
+      if (queryIndex === 3) return Promise.resolve(resolve([{ count: 2 }])); // member count — under limit
+      if (queryIndex === 4) return Promise.resolve(resolve([{ studentName: "Test Student" }])); // account lookup for email
+      if (queryIndex === 5) return Promise.resolve(resolve([{ email: "owner@test.com" }])); // inviter lookup
       return Promise.resolve(resolve([]));
     });
     mockReturning.mockResolvedValue([{
@@ -682,10 +717,11 @@ describe("POST /api/v1/accounts/:id/members — linked accounts limit", () => {
     let queryIndex = 0;
     dbChain.then = vi.fn().mockImplementation((resolve: (v: unknown) => unknown) => {
       queryIndex++;
-      if (queryIndex === 1) return Promise.resolve(resolve([])); // duplicate email check — none
-      if (queryIndex === 2) return Promise.resolve(resolve([{ count: 1 }])); // member count — under limit
-      if (queryIndex === 3) return Promise.resolve(resolve([{ studentName: "Test Student" }])); // account lookup for email
-      if (queryIndex === 4) return Promise.resolve(resolve([{ email: "owner@test.com" }])); // inviter lookup
+      if (queryIndex === 1) return Promise.resolve(resolve([{ role: "student", onboardingCompletedAt: new Date() }])); // inviter onboarding gate
+      if (queryIndex === 2) return Promise.resolve(resolve([])); // duplicate email check — none
+      if (queryIndex === 3) return Promise.resolve(resolve([{ count: 1 }])); // member count — under limit
+      if (queryIndex === 4) return Promise.resolve(resolve([{ studentName: "Test Student" }])); // account lookup for email
+      if (queryIndex === 5) return Promise.resolve(resolve([{ email: "owner@test.com" }])); // inviter lookup
       return Promise.resolve(resolve([]));
     });
     mockReturning.mockResolvedValue([{
@@ -712,12 +748,13 @@ describe("POST /api/v1/accounts/:id/members — linked accounts limit", () => {
     let queryIndex = 0;
     dbChain.then = vi.fn().mockImplementation((resolve: (v: unknown) => unknown) => {
       queryIndex++;
-      if (queryIndex === 1) return Promise.resolve(resolve([])); // duplicate email check — none
+      if (queryIndex === 1) return Promise.resolve(resolve([{ role: "student", onboardingCompletedAt: new Date() }])); // inviter onboarding gate
+      if (queryIndex === 2) return Promise.resolve(resolve([])); // duplicate email check — none
       // Ownership check: return the plan as owned so the handler proceeds
-      if (queryIndex === 2) return Promise.resolve(resolve([{ planId: sharedPlanId }]));
-      if (queryIndex === 3) return Promise.resolve(resolve([{ count: 1 }]));
-      if (queryIndex === 4) return Promise.resolve(resolve([{ studentName: "Test Student" }]));
-      if (queryIndex === 5) return Promise.resolve(resolve([{ email: "owner@test.com" }]));
+      if (queryIndex === 3) return Promise.resolve(resolve([{ planId: sharedPlanId }]));
+      if (queryIndex === 4) return Promise.resolve(resolve([{ count: 1 }]));
+      if (queryIndex === 5) return Promise.resolve(resolve([{ studentName: "Test Student" }]));
+      if (queryIndex === 6) return Promise.resolve(resolve([{ email: "owner@test.com" }]));
       return Promise.resolve(resolve([]));
     });
     mockReturning.mockResolvedValue([{

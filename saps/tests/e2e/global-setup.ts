@@ -31,6 +31,14 @@ export const TEST_STUDENT_B_EMAIL = "student-b@test.com";
 export const TEST_PARENT_EMAIL = "parent@test.com";
 export const TEST_COUNSELOR_EMAIL = "counselor@test.com";
 export const TEST_CONSENT_EMAIL = "consent-test@test.com";
+// Non-onboarded student — used by onboarding E2E tests so the /onboarding
+// layout guard (which redirects completed users to /dashboard) doesn't bounce us.
+export const TEST_STUDENT_ONBOARDING_EMAIL = "student-onboarding@test.com";
+// Dedicated account for password-reset settings tests. These tests mutate the
+// Supabase auth password, so running them against the shared student@test.com
+// races other workers doing the same thing. Isolating to its own user keeps
+// parallel chromium + mobile runs safe without serializing the whole suite.
+export const TEST_STUDENT_PASSWORD_EMAIL = "student-password@test.com";
 export const EPHEMERAL_EMAILS = ["student2@test.com", "student3@test.com"];
 
 const TEST_STATE = "IL";
@@ -47,6 +55,10 @@ interface TestUser {
   role: "student" | "parent" | "counselor";
   name: string;
   dob: string;
+  // If true, seed the user with no onboarding_completed_at so the
+  // onboarding flow is reachable. Defaults to false (students otherwise
+  // get onboarding marked complete because they have seeded plan data).
+  preOnboarding?: boolean;
 }
 
 const TEST_USERS: TestUser[] = [
@@ -55,6 +67,8 @@ const TEST_USERS: TestUser[] = [
   { email: TEST_PARENT_EMAIL, role: "parent", name: "Test Parent", dob: "1980-06-01" },
   { email: TEST_COUNSELOR_EMAIL, role: "counselor", name: "Test Counselor", dob: "1985-09-20" },
   { email: TEST_CONSENT_EMAIL, role: "student", name: "Consent Tester", dob: "2010-01-01" },
+  { email: TEST_STUDENT_ONBOARDING_EMAIL, role: "student", name: "Fresh Student", dob: "2010-05-05", preOnboarding: true },
+  { email: TEST_STUDENT_PASSWORD_EMAIL, role: "student", name: "Password Tester", dob: "2010-04-04" },
 ];
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
@@ -164,11 +178,17 @@ async function globalSetup() {
       const id = userIds[user.email];
       if (!id) continue;
       const [first, last] = user.name.split(" ");
+      // Students get onboarding_completed_at set — their test data (plans,
+      // courses, grades) is already seeded, so they should be treated as
+      // having completed onboarding. A preOnboarding student is left null
+      // so onboarding E2E tests can reach the /onboarding page.
+      const onboardingAt = user.role === "student" && !user.preOnboarding ? "NOW()" : "NULL";
       await client.query(
-        `INSERT INTO users (id, email, first_name, last_name, role, date_of_birth, created_at)
-         VALUES ($1, $2, $3, $4, $5, $6, NOW())
+        `INSERT INTO users (id, email, first_name, last_name, role, date_of_birth, onboarding_completed_at, created_at)
+         VALUES ($1, $2, $3, $4, $5, $6, ${onboardingAt}, NOW())
          ON CONFLICT (id) DO UPDATE SET email = EXCLUDED.email, first_name = EXCLUDED.first_name,
-           last_name = EXCLUDED.last_name, role = EXCLUDED.role`,
+           last_name = EXCLUDED.last_name, role = EXCLUDED.role,
+           onboarding_completed_at = COALESCE(users.onboarding_completed_at, ${onboardingAt})`,
         [id, user.email, first, last || null, user.role, user.dob],
       );
     }
@@ -269,6 +289,26 @@ async function globalSetup() {
       }
     }
     console.log(`[e2e-setup] Primary plan: ${planId}`);
+
+    // ── 7b. Clean up excess plans from previous test runs ────────────
+    // The plan limit in launch mode is 3. Remove non-primary plans
+    // created by the student to leave room for test-created plans.
+    const excessPlans = await client.query(
+      `DELETE FROM plan_courses WHERE plan_id IN (
+         SELECT id FROM four_year_plans
+         WHERE account_id = $1 AND id <> $2 AND is_template = false AND created_by = $3
+       ) RETURNING plan_id`,
+      [accountId, planId, studentId],
+    );
+    const deletedPlans = await client.query(
+      `DELETE FROM four_year_plans
+       WHERE account_id = $1 AND id <> $2 AND is_template = false AND created_by = $3
+       RETURNING id`,
+      [accountId, planId, studentId],
+    );
+    if (deletedPlans.rows.length > 0) {
+      console.log(`[e2e-setup] Cleaned up ${deletedPlans.rows.length} excess plan(s) from previous runs`);
+    }
 
     // ── 8. Verify course catalog is seeded ─────────────────────────
     const catalogCheck = await client.query(
@@ -401,6 +441,40 @@ async function globalSetup() {
       // Always remove consent records so the consent form is shown
       await client.query(`DELETE FROM consent_records WHERE user_id = $1`, [consentTestId]);
       console.log(`[e2e-setup] Consent test account: ${consentAcctId} (no consent — form will show)`);
+    }
+
+    // ── 14b. Ensure password-test account (minimal — settings page only) ─
+    const passwordTesterId = userIds[TEST_STUDENT_PASSWORD_EMAIL];
+    if (passwordTesterId) {
+      // Always force the password back to TEST_PASSWORD, in case a prior
+      // interrupted run left it changed to a throwaway value.
+      await supabase.auth.admin.updateUserById(passwordTesterId, {
+        password: TEST_PASSWORD,
+      });
+
+      const pwAcctResult = await client.query(
+        `SELECT id FROM accounts WHERE student_user_id = $1 LIMIT 1`, [passwordTesterId],
+      );
+      let pwAcctId: string;
+      if (pwAcctResult.rows.length > 0) {
+        pwAcctId = pwAcctResult.rows[0].id;
+      } else {
+        const ins = await client.query(
+          `INSERT INTO accounts (student_user_id, student_name, grade_level, graduation_year, state, school_name, claimed_at, created_by)
+           VALUES ($1, 'Password Tester', $2, $3, $4, $5, NOW(), $1) RETURNING id`,
+          [passwordTesterId, TEST_GRADE_LEVEL, TEST_GRADUATION_YEAR, TEST_STATE, TEST_SCHOOL],
+        );
+        pwAcctId = ins.rows[0].id;
+      }
+      await ensureAccountMember(client, pwAcctId, passwordTesterId, "student", true, passwordTesterId);
+      await client.query(
+        `INSERT INTO student_profiles (user_id, current_grade_level, graduation_year)
+         VALUES ($1, $2, $3)
+         ON CONFLICT (user_id) DO UPDATE SET current_grade_level = EXCLUDED.current_grade_level`,
+        [passwordTesterId, TEST_GRADE_LEVEL, TEST_GRADUATION_YEAR],
+      );
+      await ensureConsent(client, passwordTesterId);
+      console.log(`[e2e-setup] Password-test account: ${pwAcctId}`);
     }
 
     // ── 15. Ensure 2nd student account for multi-child tests ────────

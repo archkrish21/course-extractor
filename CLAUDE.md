@@ -45,7 +45,7 @@ saps/
   worker/            # Background job stubs (future)
 ```
 
-Root-level docs (`TECH_DESIGN_DOC.md`, `PRODUCT_REQUIREMENTS.md`, `EXECUTIVE_SUMMARY.md`) contain detailed architecture and product specs.
+Documentation lives in `docs/` — product specs in `docs/product/`, architecture in `docs/architecture/`, deploy/ops guides in `docs/operations/`, security audits in `docs/security/`, and implementation plans in `docs/plans/`.
 
 ## Tech Stack
 

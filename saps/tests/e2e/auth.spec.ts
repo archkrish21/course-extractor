@@ -14,7 +14,8 @@ test.describe("Auth — Page Load", () => {
     // Form fields should be present
     await expect(page.locator('input[type="email"]')).toBeVisible();
     await expect(page.locator('input[type="password"]').first()).toBeVisible();
-    await expect(page.locator('input[type="date"]')).toBeVisible();
+    // DOB input was replaced with a 13+ self-attestation checkbox.
+    await expect(page.locator('input[type="checkbox"]').first()).toBeVisible();
 
     // Role selection should be present (student, parent, guardian, counselor)
     await expect(page.locator('[role="radio"]')).toHaveCount(4);

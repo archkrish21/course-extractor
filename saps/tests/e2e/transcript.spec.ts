@@ -71,11 +71,13 @@ test.describe("Transcript — GPA Display", () => {
 test.describe("Transcript — Grade Level Sections", () => {
   test("shows grade level sections for completed courses", async ({ page }) => {
     await navigateToTranscript(page);
+    // Extra wait for transcript data to load (GPA calculation + course grouping)
+    await page.waitForTimeout(2000);
 
     // Grade section headings render as `<h2>Grade N</h2>` inside the section button.
     // Empty state copy was changed to "No transcript data yet".
     const gradeSections = page.locator("text=/Grade 9|Grade 10|Grade 11|Grade 12/");
-    const emptyState = page.locator("text=/No transcript data yet|no completed courses/i");
+    const emptyState = page.locator("text=/No transcript data yet|no completed courses|no grades/i");
 
     const hasGrades = (await gradeSections.count()) > 0;
     const isEmpty = (await emptyState.count()) > 0;
@@ -103,16 +105,24 @@ test.describe("Transcript — Grade Level Sections", () => {
 test.describe("Transcript — Course Table", () => {
   test("shows course details in semester tables", async ({ page }) => {
     await navigateToTranscript(page);
+    await page.waitForTimeout(2000);
 
-    // Grade sections start collapsed; expand the first one if present
-    const firstGradeBtn = page.locator("button", { hasText: /^Grade \d+/ }).first();
-    if ((await firstGradeBtn.count()) > 0) {
-      await firstGradeBtn.click();
-      await page.waitForTimeout(300);
+    // Grade sections start collapsed; expand each one by Grade-N text.
+    // Iterating the `aria-expanded="false"` locator directly is unsafe —
+    // clicking a button flips its aria-expanded, so the locator set shrinks
+    // mid-loop and later nth(i) calls time out waiting for a vanished index.
+    for (const grade of [9, 10, 11, 12]) {
+      const toggle = page
+        .locator(`button[aria-expanded="false"]`)
+        .filter({ hasText: new RegExp(`Grade ${grade}\\b`) });
+      if ((await toggle.count()) > 0) {
+        await toggle.first().click();
+        await page.waitForTimeout(200);
+      }
     }
 
     const semesterLabels = page.locator("text=/Semester 1|Semester 2|Pre-Summer Session/");
-    const emptyState = page.locator("text=/No transcript data yet|no completed courses/i");
+    const emptyState = page.locator("text=/No transcript data yet|no completed courses|no grades/i");
 
     const hasSemesters = (await semesterLabels.count()) > 0;
     const isEmpty = (await emptyState.count()) > 0;

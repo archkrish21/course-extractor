@@ -110,7 +110,8 @@ function StatusBadge({ status }: { status: string }) {
 // ─── Page ───────────────────────────────────────────────────────────────────
 
 export default function ProgressPage() {
-  const { currentAccount } = useAccount();
+  const { currentAccount, userRole } = useAccount();
+  const isParentLike = userRole === "parent" || userRole === "guardian";
   const [data, setData] = useState<RequirementsData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
@@ -246,6 +247,32 @@ export default function ProgressPage() {
           <div className="h-48 rounded-xl bg-muted" />
           <div className="h-48 rounded-xl bg-muted" />
         </div>
+      </div>
+    );
+  }
+
+  // Parent/guardian with no student accounts — redirect to add student first
+  if (isParentLike && !currentAccount) {
+    return (
+      <div className="mx-auto max-w-6xl">
+        <h1 className="mb-1 text-2xl font-bold tracking-tight text-foreground sm:text-3xl">Academic Progress</h1>
+        <p className="mb-6 text-sm text-muted-foreground">Track your graduation requirements, credits, and GPA over time.</p>
+        <Card>
+          <CardContent>
+            <div className="py-12 text-center">
+              <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-primary/10">
+                <svg aria-hidden="true" className="h-6 w-6 text-primary" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M18 7.5v3m0 0v3m0-3h3m-3 0h-3m-2.25-4.125a3.375 3.375 0 1 1-6.75 0 3.375 3.375 0 0 1 6.75 0ZM3 19.235v-.11a6.375 6.375 0 0 1 12.75 0v.109A12.318 12.318 0 0 1 9.374 21c-2.331 0-4.512-.645-6.374-1.766Z" />
+                </svg>
+              </div>
+              <p className="text-base font-semibold text-foreground">Add a Student First</p>
+              <p className="mt-1 text-sm text-muted-foreground">Create a student profile to start tracking their academic progress.</p>
+              <Link href="/settings?add-student=1">
+                <Button size="sm" className="mt-4">Add Student</Button>
+              </Link>
+            </div>
+          </CardContent>
+        </Card>
       </div>
     );
   }

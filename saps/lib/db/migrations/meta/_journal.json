@@ -57,6 +57,20 @@
       "when": 1775587493203,
       "tag": "0007_complex_paladin",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1776095416693,
+      "tag": "0008_known_namorita",
+      "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1776120801943,
+      "tag": "0009_demonic_rogue",
+      "breakpoints": true
     }
   ]
 }

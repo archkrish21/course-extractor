@@ -1,14 +1,18 @@
 "use client";
 
-import { useState, useEffect, Suspense, type FormEvent } from "react";
+import { useRef, useState, useEffect, Suspense, type FormEvent } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
+import HCaptcha from "@hcaptcha/react-hcaptcha";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+
+const HCAPTCHA_SITE_KEY = process.env.NEXT_PUBLIC_HCAPTCHA_SITE_KEY;
 
 interface FieldErrors {
   email?: string;
   password?: string;
+  captcha?: string;
   form?: string;
 }
 
@@ -27,12 +31,25 @@ function LoginPageInner() {
   const [password, setPassword] = useState("");
   const [errors, setErrors] = useState<FieldErrors>({});
   const [loading, setLoading] = useState(false);
+  const [successMessage, setSuccessMessage] = useState("");
+  const [captchaToken, setCaptchaToken] = useState<string | null>(null);
+  const captchaRef = useRef<HCaptcha | null>(null);
 
-  // Show error from URL params (e.g., account_not_found)
+  // Show error/success from URL params
   useEffect(() => {
     const urlError = searchParams.get("error");
     if (urlError === "account_not_found") {
       setErrors({ form: "Account not found. Please sign up to create a new account." });
+    } else if (urlError === "confirmation_failed") {
+      setErrors({ form: "Email confirmation failed. The link may have expired. Please sign up again." });
+    } else if (urlError === "invalid_confirmation_link") {
+      setErrors({ form: "Invalid confirmation link. Please check your email and try again." });
+    }
+    if (searchParams.get("confirmed") === "true") {
+      setSuccessMessage("Email confirmed! You can now sign in.");
+    }
+    if (searchParams.get("password_updated") === "true") {
+      setSuccessMessage("Password updated successfully. Sign in with your new password.");
     }
   }, [searchParams]);
 
@@ -47,6 +64,9 @@ function LoginPageInner() {
       errs.password = "Password is required.";
     } else if (password.length < 8) {
       errs.password = "Password must be at least 8 characters.";
+    }
+    if (HCAPTCHA_SITE_KEY && !captchaToken) {
+      errs.captcha = "Please complete the CAPTCHA.";
     }
     return errs;
   }
@@ -70,10 +90,14 @@ function LoginPageInner() {
       const { error: authError } = await supabase.auth.signInWithPassword({
         email,
         password,
+        ...(captchaToken && { options: { captchaToken } }),
       });
 
       if (authError) {
         setErrors({ form: "Invalid email or password." });
+        // Tokens are single-use — reset for retry.
+        captchaRef.current?.resetCaptcha();
+        setCaptchaToken(null);
         return;
       }
 
@@ -112,6 +136,20 @@ function LoginPageInner() {
         Welcome back. Enter your credentials to continue.
       </p>
 
+      {successMessage && (
+        <div
+          className="mb-4 rounded-lg border border-green-200 bg-green-50 p-3 text-sm text-green-800 dark:border-green-800 dark:bg-green-950 dark:text-green-200"
+          role="status"
+        >
+          <span className="flex items-center gap-2">
+            <svg aria-hidden="true" className="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            {successMessage}
+          </span>
+        </div>
+      )}
+
       {errors.form && (
         <div
           className="mb-4 rounded-lg border border-destructive/30 bg-destructive-light p-3 text-sm text-destructive"
@@ -149,18 +187,47 @@ function LoginPageInner() {
           placeholder="you@example.com"
         />
 
-        <Input
-          label="Password"
-          type="password"
-          autoComplete="current-password"
-          required
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          error={errors.password}
-          placeholder="Enter your password"
-        />
+        <div>
+          <Input
+            label="Password"
+            type="password"
+            autoComplete="current-password"
+            required
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            error={errors.password}
+            placeholder="Enter your password"
+          />
+          <div className="mt-1 text-right">
+            <Link
+              href="/forgot-password"
+              className="text-xs text-primary hover:text-primary-hover underline underline-offset-4"
+            >
+              Forgot password?
+            </Link>
+          </div>
+        </div>
 
-        <Button type="submit" disabled={loading} className="mt-2 w-full">
+        {/* hCaptcha — renders only when site key is configured */}
+        {HCAPTCHA_SITE_KEY && (
+          <div className="flex flex-col items-center gap-1">
+            <HCaptcha
+              ref={captchaRef}
+              sitekey={HCAPTCHA_SITE_KEY}
+              onVerify={(token) => {
+                setCaptchaToken(token);
+                setErrors((prev) => ({ ...prev, captcha: undefined }));
+              }}
+              onExpire={() => setCaptchaToken(null)}
+              onError={() => setCaptchaToken(null)}
+            />
+            {errors.captcha && (
+              <p className="text-sm text-destructive" role="alert">{errors.captcha}</p>
+            )}
+          </div>
+        )}
+
+        <Button type="submit" disabled={loading || (!!HCAPTCHA_SITE_KEY && !captchaToken)} className="mt-2 w-full">
           {loading ? "Signing in..." : "Sign in"}
         </Button>
       </form>

@@ -9,6 +9,7 @@ import {
 } from "@/lib/db/schema";
 import { eq, and } from "drizzle-orm";
 import { successResponse, errorResponse } from "@/lib/api/response";
+import { requireSameOrigin } from "@/lib/api/require-same-origin";
 import { requireAuth } from "@/lib/auth/get-user";
 import { getPlanAccess, hasPermission } from "@/lib/auth/plan-permissions";
 import {
@@ -46,6 +47,9 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
   try {
     const user = await requireAuth();
     if (user instanceof Response) return user;
+
+    const csrf = requireSameOrigin(request);
+    if (csrf) return csrf;
 
     const { id: planId, courseId: planCourseId } = await context.params;
 
@@ -184,7 +188,7 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
       const allDone = await allSemesterCoursesCompleted({
         planId,
         gradeLevel: updated.gradeLevel,
-        semester: updated.semester,
+        semester: updated.semester!,
       });
       if (allDone) {
         await maybeCreateSemesterSnapshot({
@@ -217,6 +221,9 @@ export async function DELETE(request: NextRequest, context: RouteContext) {
   try {
     const user = await requireAuth();
     if (user instanceof Response) return user;
+
+    const csrf = requireSameOrigin(request);
+    if (csrf) return csrf;
 
     const { id: planId, courseId: planCourseId } = await context.params;
 

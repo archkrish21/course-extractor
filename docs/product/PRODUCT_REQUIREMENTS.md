@@ -446,10 +446,13 @@ The rigor score is recomputed nightly by the percentile stats job (Elite tier). 
 |---|---|---|
 | F-ON-01 | Email/password signup + Google OAuth. Email verification required before plan creation. Signup page: wider layout (max-w-lg), 2-column grids for credentials and personal info. Role selector with description cards (Student/Parent/Guardian/Counselor — 4 roles). Guardian maps to "parent" in DB for identical behavior. State (frozen to IL) and school (frozen to Stevenson) fields with "Request yours" link for unsupported schools. School request form stores to `school_requests` table via `POST /api/v1/school-request` (no auth). "Claim your account" link removed from signup. | Must |
 | F-ON-02 | Date of birth captured at signup. Block registration for users under 13 (COPPA). | Must |
-| F-ON-03 | **Bulk grade entry table** during onboarding: student selects courses from a dropdown and enters letter grades in a spreadsheet-style table. Not one course at a time. | Must |
-| F-ON-04 | Plan template selection during onboarding (Pre-Med, STEM/Engineering, Arts, Dual Credit Maximizer, 4-Year College Prep, General). Templates are pre-seeded — no admin UI required. | Must |
-| F-ON-05 | Goal setting: GPA target, college targets (reach/match/safety), career interest field. | Should |
-| F-ON-06 | Skip-and-complete-later option for grade history and goals. Dashboard shows a "Complete your profile" banner for incomplete onboarding. "Skip setup" link on onboarding page. | Must |
+| F-ON-03 | **Two-step flow for freshmen (grade 9), three-step flow for returning students (grades 10–12):** Step 1 "About You" captures current grade + auto-derived graduation year (read-only). Freshmen: Step 2 "Starting Plan" selects a template. Returning students: Step 2 "Past Courses" (selection-only checklist, grouped by grade/division) followed by Step 3 "Assign Grades" (per-course letter grade dropdown; pass/fail courses get P/F options via `PASS_FAIL_OPTIONS`). Goals step removed from v1. | Must |
+| F-ON-04 | Plan template selection during onboarding (Pre-Med, STEM/Engineering, Arts, Dual Credit Maximizer, 4-Year College Prep, General). **Shown only for grade-9 onboarding.** Returning students do not select a template; their onboarding produces a primary plan seeded with past courses only. Templates are pre-seeded — no admin UI required. | Must |
+| F-ON-05 | _Deferred._ Goals collection (GPA target, college targets, career interest) removed from v1 onboarding. Backend columns retained on `student_profiles` for future re-introduction. | Should |
+| F-ON-06 | Dashboard shows a "Complete your profile" banner for incomplete onboarding linking to `/onboarding`. Planner empty state for unonboarded students shows "Complete Your Onboarding" CTA (replaces the generic "Create Your First Plan"). "Skip setup" link removed. | Must |
+| F-ON-10 | **Past-grade auto-lock (implemented):** on onboarding completion, `four_year_plans.lockedGradeLevels` is seeded with all grades prior to the student's current grade (e.g., a grade-11 student gets `[9, 10]` locked). Past courses are a finalized academic record; the student can unlock from the planner if they need to correct history. | Must |
+| F-ON-11 | **Account grade-level authority:** `accounts.gradeLevel` and `accounts.graduationYear` are written by (1) signup defaults, (2) onboarding (student-declared), and (3) the year-end wizard (advance). Lock/unlock toggles on the planner no longer mutate account state — they affect only `lockedGradeLevels` on the plan. Settings shows "—" for grade/graduation until onboarding is complete. | Must |
+| F-ON-12 | **Student-invite gate:** students cannot send invites from Settings until onboarding is complete. Backend: `POST /api/v1/accounts/:id/members` returns 403 `ONBOARDING_REQUIRED` for students with null `onboardingCompletedAt`. Frontend: invite role select, email input, and Send button disabled with reduced opacity. | Must |
 | F-ON-06a | **Non-student role routing (Phase 3 — implemented):** Non-student roles (Parent, Guardian, Counselor) skip onboarding and go directly to dashboard. | Must |
 | F-ON-06b | **Welcome banner (Phase 3 — implemented):** Onboarding shows "Account created successfully!" banner with auto-dismiss. | Should |
 | F-ON-06c | **Smart routing after onboarding (Phase 3 — implemented):** After onboarding completion, redirect to dashboard if plans exist, planner otherwise. | Must |
@@ -481,7 +484,7 @@ Templates are tied to a specific `catalog_version_id`. During annual catalog upd
 | F-PL-07 | Multiple plan drafts per student. First plan auto-set to Primary. Additional plans default to Draft. | Must |
 | F-PL-08 | Primary plan designation (one per student at a time). Switching primary requires a confirmation step. Logged in plan_history. | Must |
 | F-PL-09 | Plan status lifecycle: Draft → Active → Archived. Archived plans are read-only but data is fully preserved. | Must |
-| F-PL-10 | **Grade-level locking:** after completing a grade via the year-end wizard, the entire grade level is locked in the planner (`lockedGradeLevels` JSONB integer array on `four_year_plans`). When a grade is locked: no add/remove courses, no bulk status/grade/clear, no individual course status/grade changes, no clear grade. GPA waiver toggle remains functional on locked grades (only exception). Lock/unlock icons appear on current and previous grade bars. Unlocking requires a confirmation dialog ("Unlock Grade X?"). Locking redirects to `/year-end?grade=X` for the grade completion wizard. API enforcement: PATCH returns 409 for non-waiver changes on locked grades, DELETE returns 409, POST (add course) returns 409. New endpoint: `POST /api/v1/plans/:id/lock-grade` with `{ grade_level, locked }` body. "Current grade" = first unlocked grade level, not just account grade level. | Must |
+| F-PL-10 | **Grade-level locking:** `lockedGradeLevels` JSONB integer array on `four_year_plans`. When a grade is locked: no add/remove courses, no bulk status/grade/clear, no individual course status/grade changes, no clear grade. GPA waiver toggle remains functional on locked grades (only exception). Lock/unlock icons appear on current and previous grade bars. Unlocking requires a confirmation dialog ("Unlock Grade X?"). **Lock is a pure UI/workflow gate — it does not trigger year-end and does not mutate `accounts.gradeLevel`.** API enforcement: PATCH returns 409 for non-waiver changes on locked grades, DELETE returns 409, POST (add course) returns 409. Endpoint: `POST /api/v1/plans/:id/lock-grade` with `{ grade_level, locked }` body — only writes `lockedGradeLevels`. Year-end is a separate, explicit flow at `/year-end` surfaced via the dashboard banner (F-YE-01). Lock is seeded on onboarding (F-ON-10) and extended by year-end advancement. "Current grade" in the planner header = first unlocked grade **at or after** `accounts.gradeLevel` (floor prevents display drift below the student's real grade). | Must |
 | F-PL-11 | Plan history / undo: last 20 changes per plan stored with timestamp, actor, before/after state. Undo restores the last change. | Should |
 | F-PL-12 | Plan template copy: selecting a template during onboarding or plan creation copies template courses into a new student-owned plan. | Must |
 | F-PL-13 | `created_from_template_id` tracked on each plan for analytics. | Should |
@@ -918,34 +921,53 @@ The dashboard uses a 3-row, 2-column grid layout:
 
 ### Flow 3 — Year-End Transition Workflow
 
+**Trigger model (implemented):** Year-end is an explicit, user-initiated ceremony — **not** a side-effect of locking a grade. The dashboard surfaces the wizard via an eligibility-gated banner; the planner's lock toggle is a pure UI gate with no coupling to year-end (see F-PL-10).
+
+**Dashboard banner eligibility (all must be true):**
+1. Account loaded; user is not a counselor.
+2. If user is a student, `users.onboardingCompletedAt` is set (onboarding banner takes priority otherwise).
+3. `student_profiles.yearEndTransitionState === 'pending'` (current year's transition is in flight, not completed).
+4. The student's primary plan has at least one course in the current grade (no point prompting on an empty grade).
+5. No other blocking banner (e.g. profile completion) is already showing.
+
+**Banner content:**
+- Title adapts to graduating vs advancing: *"Wrap up Grade 12 — ready to graduate?"* vs *"Wrap up Grade N — ready to advance to Grade N+1?"*
+- Sub-copy says how many courses still need grades, or "Review your grades and complete the school year" when all are entered.
+- **Warning sub-line (amber):** if any prereq violations exist on current-grade courses, or any `course_load` requirement gaps exist for the current grade, show *"N issues in Grade N — review before wrapping up"*. Computed client-side by intersecting `/api/v1/plans/:id/validate` course violations with `currentYearCourses` and filtering `/api/v1/requirements` course_load gaps by `metadata.gradeLevel`.
+- CTA routes to `/year-end`.
+
+**Year-end wizard (`/year-end`):**
+
 ```
-Trigger: School year is ending (student receives email reminder + dashboard banner)
+1. (Always visible across all 3 steps) Collapsed warning banner at top
+   ├── Shown only when prereq violations or course_load gaps exist in current grade
+   ├── Collapsed: "N issues to resolve in Grade N" + "Fix in planner" link
+   └── Expanded (on click): full list (course code + message for prereqs; "Sem X" + message for gaps)
 
-1. Dashboard banner: "It's time to complete your year-end review"
-   └── Student clicks "Start Year-End Review"
+2. Step 1 — Confirm Grades
+   ├── Lists all non-dropped courses for the current grade grouped by semester
+   ├── Editable grade dropdown for any course missing a grade (including status === 'completed' with null grade)
+   ├── Locked badge only when status === 'completed' AND plannedGrade is set
+   └── "N courses still need a grade" gate on Next button
 
-2. Year-End Wizard — Step 1: Confirm final grades
-   ├── Shows all enrolled/in-progress courses for the current year
-   ├── Student confirms or corrects final grades for each course
-   └── Grades locked → plan_courses.status → 'completed'
-   └── Entire grade level locked → grade added to four_year_plans.lockedGradeLevels
+3. Step 2 — Advance / Graduation
+   ├── Advancing: "Complete Grade N and advance to Grade N+1" preview
+   └── Graduating: "Congratulations! You've completed Grade 12" variant
 
-3. Year-End Wizard — Step 2: Advance grade level
-   ├── Shows: "You're completing Grade X. Continue as Grade X+1?"
-   └── Student confirms → student_profiles.current_grade_level += 1
-   └── "Current grade" in planner = first unlocked grade level (not just profile grade)
+4. Step 3 — Review (courses to be locked)
 
-4. Year-End Wizard — Step 3: Review next year's plan
-   ├── Shows the upcoming year's planned courses
-   ├── Runs fresh validation: any prereq/enrollment violations?
-   ├── Alerts shown inline for anything needing attention
-   └── Student can edit before completing
-
-5. Complete
-   ├── year_end_transition_state → 'completed'
-   ├── GPA snapshot taken ('semester_end')
-   └── Dashboard shows updated graduation progress
+5. Complete (POST /api/v1/year-end):
+   ├── accounts.gradeLevel += 1 (or stays on graduation)
+   ├── lockedGradeLevels += [completed grade]
+   ├── student_profiles.yearEndTransitionState →
+   │     'completed' for graduating students (terminal)
+   │     'pending' for advancing students (so next year's banner works)
+   ├── Next year's 'planned' courses → 'enrolled'
+   └── GPA snapshot created (trigger: 'semester_end')
 ```
+
+Non-blocking: warnings are surfaced but do not block submission. The student has agency (AP exam substitution, counselor approval, etc.).
+
 
 **Grade 12 (Graduating Seniors):**
 - Instead of advancing grade level, the year-end wizard triggers the graduation workflow.

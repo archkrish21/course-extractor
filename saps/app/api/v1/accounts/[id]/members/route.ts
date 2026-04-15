@@ -5,6 +5,8 @@ import { accountMembers, accountInviteCodes, accounts, users, planShares } from 
 import { eq, and, count, inArray } from "drizzle-orm";
 import { getEffectiveTier, invalidateSubscriptionCache } from "@/lib/subscription/middleware";
 import { successResponse, errorResponse } from "@/lib/api/response";
+import { rateLimit } from "@/lib/api/rate-limit";
+import { requireSameOrigin } from "@/lib/api/require-same-origin";
 import { requireAuth, getAccountContext } from "@/lib/auth/get-user";
 import { sendEmail } from "@/lib/email/client";
 import { inviteEmail as inviteEmailTemplate } from "@/lib/email/templates";
@@ -88,6 +90,21 @@ export async function POST(request: NextRequest, context: RouteContext) {
     const user = await requireAuth();
     if (user instanceof Response) return user;
 
+    const csrf = requireSameOrigin(request);
+    if (csrf) return csrf;
+
+    // Rate limit: 20 invites per hour per user. Prevents an invite-spam
+    // abuse pattern where a compromised account blasts out invites.
+    const rl = await rateLimit(`invite:${user.id}`, 20, 3600);
+    if (!rl.success) {
+      return errorResponse(
+        "RATE_LIMITED",
+        "Too many invite attempts. Try again later.",
+        429,
+        { retry_after: rl.resetAt - Math.floor(Date.now() / 1000) }
+      );
+    }
+
     const { id: accountId } = await context.params;
 
     // Verify account membership + canEdit
@@ -97,6 +114,22 @@ export async function POST(request: NextRequest, context: RouteContext) {
     }
     if (!accountCtx.canEdit) {
       return errorResponse("FORBIDDEN", "Read-only access.", 403);
+    }
+
+    // Block students from inviting until they've completed onboarding —
+    // ensures they can't share half-set-up plans or drag in parents/counselors
+    // before their own profile (grade, grad year, starting plan) is in place.
+    const [inviter] = await db
+      .select({ role: users.role, onboardingCompletedAt: users.onboardingCompletedAt })
+      .from(users)
+      .where(eq(users.id, user.id))
+      .limit(1);
+    if (inviter?.role === "student" && !inviter.onboardingCompletedAt) {
+      return errorResponse(
+        "ONBOARDING_REQUIRED",
+        "Complete onboarding before inviting others to your account.",
+        403
+      );
     }
 
     const body = await request.json();

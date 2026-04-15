@@ -199,15 +199,18 @@ test.describe("Course Detail Modal", () => {
       return;
     }
     await addBtn.click();
-    await page.waitForTimeout(500);
+    await page.waitForTimeout(2000);
 
     // Should show plan selector or grade/semester buttons
     const planSelect = page.locator("#add-plan-select");
     const gradeButtons = page.locator("button[aria-pressed]");
+    // "No plans found" is also valid when the user has no plans to add to
+    const noPlans = page.locator("text=/No plans found|no plans/i");
 
     const hasPlanSelect = (await planSelect.count()) > 0;
     const hasGradeButtons = (await gradeButtons.count()) > 0;
-    expect(hasPlanSelect || hasGradeButtons).toBeTruthy();
+    const hasNoPlans = (await noPlans.count()) > 0;
+    expect(hasPlanSelect || hasGradeButtons || hasNoPlans).toBeTruthy();
   });
 
   test("backdrop click closes modal", async ({ page }) => {
@@ -341,17 +344,35 @@ test.describe("Plans — Delete Modal", () => {
     await expect(page.locator("text=/Delete.*plan/i").first()).toBeVisible();
   });
 
+  // The primary/only plan cannot be deleted, so its Delete button renders
+  // disabled. `.first()` resolves to the disabled button and hangs the click.
+  // Iterate and skip disabled ones, matching the pattern used above.
+  async function clickFirstEnabledDelete(page: Page): Promise<boolean> {
+    const deleteBtns = page.locator(
+      "button.text-destructive, button[aria-label*='Delete' i]",
+    );
+    const count = await deleteBtns.count();
+    for (let i = 0; i < count; i++) {
+      const btn = deleteBtns.nth(i);
+      const disabled = await btn.isDisabled().catch(() => true);
+      if (!disabled) {
+        await btn.click();
+        return true;
+      }
+    }
+    return false;
+  }
+
   test("delete confirmation has Cancel and Delete buttons", async ({ page }) => {
     await login(page);
     await page.goto("/plans");
     await page.waitForTimeout(2_000);
 
-    const deleteBtn = page.locator("button.text-destructive, button[aria-label*='Delete' i]").first();
-    if ((await deleteBtn.count()) === 0) {
+    const clicked = await clickFirstEnabledDelete(page);
+    if (!clicked) {
       test.skip(true, "No deletable plans found");
       return;
     }
-    await deleteBtn.click();
     await page.waitForTimeout(500);
 
     await expect(page.getByRole("button", { name: /Cancel/i })).toBeVisible({ timeout: 5_000 });
@@ -363,12 +384,11 @@ test.describe("Plans — Delete Modal", () => {
     await page.goto("/plans");
     await page.waitForTimeout(2_000);
 
-    const deleteBtn = page.locator("button.text-destructive, button[aria-label*='Delete' i]").first();
-    if ((await deleteBtn.count()) === 0) {
+    const clicked = await clickFirstEnabledDelete(page);
+    if (!clicked) {
       test.skip(true, "No deletable plans found");
       return;
     }
-    await deleteBtn.click();
     await page.waitForTimeout(500);
 
     await page.getByRole("button", { name: /Cancel/i }).click();

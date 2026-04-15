@@ -5,7 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Card, CardHeader, CardContent, CardFooter } from "@/components/ui/card";
+import { Card, CardHeader, CardContent } from "@/components/ui/card";
 import { creditTypeBadgeVariant } from "@/lib/badge-utils";
 import { apiFetch } from "@/lib/api-client";
 
@@ -31,26 +31,21 @@ interface PlanTemplateInfo {
   }[];
 }
 
-interface CollegeTargets {
-  reach: string;
-  match: string;
-  safety: string;
-}
-
 // ─── Constants ─────────────────────────────────────────────────────────────
 
 const GRADE_LEVELS = [9, 10, 11, 12] as const;
 
 // Import from central config — Stevenson uses A, B, C, D, F (no +/- variants)
-import { GRADE_OPTIONS } from "@/config/grade-scale";
+import { GRADE_OPTIONS, PASS_FAIL_OPTIONS, isPassFailCourse } from "@/config/grade-scale";
 const LETTER_GRADES = GRADE_OPTIONS;
 
-const STEPS = [
-  { label: "About You", number: 1 },
-  { label: "Past Courses", number: 2 },
-  { label: "Starting Plan", number: 3 },
-  { label: "Goals", number: 4 },
-] as const;
+// Grade 9 flow: About You → Starting Plan (2 steps).
+// Grade 10+ flow: About You → Past Courses → Assign Grades (3 steps).
+function totalStepsFor(gradeLevel: number) {
+  return gradeLevel === 9 ? 2 : 3;
+}
+
+type StepInfo = { label: string; number: number };
 
 // ─── Helper: academic year string from grade + graduation year ─────────
 
@@ -61,19 +56,19 @@ function getAcademicYear(gradeLevel: number, graduationYear: number): string {
 
 // ─── Step Indicator ────────────────────────────────────────────────────────
 
-function StepIndicator({ currentStep }: { currentStep: number }) {
+function StepIndicator({ currentStep, steps }: { currentStep: number; steps: readonly StepInfo[] }) {
   return (
     <div className="mb-8">
       {/* Progress bar */}
       <div className="mb-6 h-2 w-full rounded-full bg-muted overflow-hidden">
         <div
           className="h-2 rounded-full bg-primary transition-all duration-300"
-          style={{ width: `${(currentStep / STEPS.length) * 100}%` }}
+          style={{ width: `${(currentStep / steps.length) * 100}%` }}
           role="progressbar"
           aria-valuenow={currentStep}
           aria-valuemin={1}
-          aria-valuemax={STEPS.length}
-          aria-label={`Step ${currentStep} of ${STEPS.length}`}
+          aria-valuemax={steps.length}
+          aria-label={`Step ${currentStep} of ${steps.length}`}
         />
       </div>
       {/* Step labels with connecting line */}
@@ -82,10 +77,10 @@ function StepIndicator({ currentStep }: { currentStep: number }) {
         <div className="absolute top-4 left-4 right-4 h-0.5 bg-border" aria-hidden="true" />
         <div
           className="absolute top-4 left-4 h-0.5 bg-primary transition-all duration-300"
-          style={{ width: currentStep > 1 ? `${((currentStep - 1) / (STEPS.length - 1)) * 100}%` : "0%" }}
+          style={{ width: currentStep > 1 ? `${((currentStep - 1) / (steps.length - 1)) * 100}%` : "0%" }}
           aria-hidden="true"
         />
-        {STEPS.map((step) => (
+        {steps.map((step) => (
           <div
             key={step.number}
             className={`relative z-10 flex flex-col items-center gap-1.5 ${
@@ -143,12 +138,10 @@ function StepAboutYou({
   gradeLevel,
   setGradeLevel,
   graduationYear,
-  setGraduationYear,
 }: {
   gradeLevel: number;
   setGradeLevel: (g: number) => void;
   graduationYear: number;
-  setGraduationYear: (y: number) => void;
 }) {
   return (
     <Card>
@@ -192,13 +185,9 @@ function StepAboutYou({
         <Input
           label="Expected graduation year"
           type="number"
-          min={2025}
-          max={2035}
           value={graduationYear}
-          onChange={(e: ChangeEvent<HTMLInputElement>) =>
-            setGraduationYear(parseInt(e.target.value, 10) || graduationYear)
-          }
-          helperText="Auto-calculated from your grade level. You can adjust if needed."
+          readOnly
+          helperText="Auto-calculated from your grade level."
         />
       </CardContent>
     </Card>
@@ -223,13 +212,11 @@ function StepPastCourses({
   graduationYear,
   completedCourses,
   setCompletedCourses,
-  onSkip,
 }: {
   gradeLevel: number;
   graduationYear: number;
   completedCourses: CompletedCourse[];
   setCompletedCourses: (c: CompletedCourse[]) => void;
-  onSkip: () => void;
 }) {
   const [allCourses, setAllCourses] = useState<ChecklistCourse[]>([]);
   const [loadingCourses, setLoadingCourses] = useState(true);
@@ -337,7 +324,7 @@ function StepPastCourses({
       <CardHeader>
         <h2 className="text-2xl font-bold text-foreground">Select Past Courses</h2>
         <p className="text-sm text-muted-foreground">
-          Check the courses you&apos;ve completed. Grades default to A — you can adjust them later in the planner.
+          Check the courses you&apos;ve completed. You&apos;ll enter final grades in the next step.
         </p>
       </CardHeader>
       <CardContent>
@@ -436,11 +423,6 @@ function StepPastCourses({
           </p>
         </div>
       </CardContent>
-      <CardFooter>
-        <button type="button" onClick={onSkip} className="min-h-[44px] text-sm text-muted-foreground underline underline-offset-4 hover:text-foreground focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring">
-          I&apos;m a freshman / skip for now
-        </button>
-      </CardFooter>
     </Card>
   );
 }
@@ -465,7 +447,8 @@ function StepChoosePlan({
       <CardHeader>
         <h2 className="text-2xl font-bold text-foreground">Choose a Starting Plan</h2>
         <p className="text-sm text-muted-foreground">
-          Pick a plan template that matches your interests. You can customize it later.
+          Pick a plan template that matches your interests — you can customize it later.
+          If none fit, click <span className="font-medium">Complete</span> without selecting one to start from scratch.
         </p>
       </CardHeader>
       <CardContent>
@@ -596,120 +579,125 @@ function StepChoosePlan({
           </div>
         )}
       </CardContent>
-      <CardFooter>
-        <button
-          type="button"
-          onClick={() => setSelectedTemplateId(null)}
-          className="min-h-[44px] text-sm text-muted-foreground underline underline-offset-4 hover:text-foreground focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
-        >
-          Start from scratch (no template)
-        </button>
-      </CardFooter>
     </Card>
   );
 }
 
-// ─── Step 4: Set Your Goals ────────────────────────────────────────────────
+// ─── Step 3: Assign Grades ─────────────────────────────────────────────────
 
-function StepGoals({
-  gpaGoal,
-  setGpaGoal,
-  collegeTargets,
-  setCollegeTargets,
-  careerGoals,
-  setCareerGoals,
+function StepAssignGrades({
+  gradeLevel,
+  graduationYear,
+  completedCourses,
+  setCompletedCourses,
 }: {
-  gpaGoal: string;
-  setGpaGoal: (v: string) => void;
-  collegeTargets: CollegeTargets;
-  setCollegeTargets: (v: CollegeTargets) => void;
-  careerGoals: string;
-  setCareerGoals: (v: string) => void;
+  gradeLevel: number;
+  graduationYear: number;
+  completedCourses: CompletedCourse[];
+  setCompletedCourses: (c: CompletedCourse[]) => void;
 }) {
+  const completedGrades: number[] = [];
+  for (let g = 9; g < gradeLevel; g++) completedGrades.push(g);
+
+  function setGradeFor(index: number, grade: string) {
+    setCompletedCourses(
+      completedCourses.map((c, i) => (i === index ? { ...c, grade } : c))
+    );
+  }
+
+  if (completedCourses.length === 0) {
+    return (
+      <Card>
+        <CardHeader>
+          <h2 className="text-2xl font-bold text-foreground">Assign Grades</h2>
+          <p className="text-sm text-muted-foreground">
+            You didn&apos;t select any past courses. Go back to add some, or continue to finish.
+          </p>
+        </CardHeader>
+      </Card>
+    );
+  }
+
   return (
     <Card>
       <CardHeader>
-        <h2 className="text-2xl font-bold text-foreground">Set Your Goals</h2>
+        <h2 className="text-2xl font-bold text-foreground">Assign Grades</h2>
         <p className="text-sm text-muted-foreground">
-          These goals help us personalize recommendations. All fields are optional
-          — you can set or change them anytime.
+          Enter the final grade for each past course. These will be locked once onboarding is complete —
+          you can unlock them later in the planner if you need to make corrections.
         </p>
       </CardHeader>
       <CardContent>
-        {/* GPA Target */}
-        <div className="mb-6">
-          <Input
-            label="GPA Target"
-            type="number"
-            min={0}
-            max={4.0}
-            step={0.1}
-            value={gpaGoal}
-            onChange={(e: ChangeEvent<HTMLInputElement>) => setGpaGoal(e.target.value)}
-            placeholder="e.g., 3.5"
-            helperText="Unweighted GPA on a 4.0 scale"
-          />
-        </div>
+        <div className="space-y-6">
+          {completedGrades.map((g) => {
+            const yr = getAcademicYear(g, graduationYear);
+            const entriesForYear = completedCourses
+              .map((c, i) => ({ entry: c, index: i }))
+              .filter(({ entry }) => entry.academic_year === yr);
+            if (entriesForYear.length === 0) return null;
 
-        {/* College targets */}
-        <fieldset className="mb-6">
-          <legend className="mb-3 text-sm font-medium text-foreground">
-            College Targets
-          </legend>
-          <div className="flex flex-col gap-4">
-            <Input
-              label="Reach school"
-              type="text"
-              value={collegeTargets.reach}
-              onChange={(e: ChangeEvent<HTMLInputElement>) =>
-                setCollegeTargets({ ...collegeTargets, reach: e.target.value })
-              }
-              placeholder="e.g., MIT"
-            />
-            <Input
-              label="Match school"
-              type="text"
-              value={collegeTargets.match}
-              onChange={(e: ChangeEvent<HTMLInputElement>) =>
-                setCollegeTargets({ ...collegeTargets, match: e.target.value })
-              }
-              placeholder="e.g., University of Illinois"
-            />
-            <Input
-              label="Safety school"
-              type="text"
-              value={collegeTargets.safety}
-              onChange={(e: ChangeEvent<HTMLInputElement>) =>
-                setCollegeTargets({ ...collegeTargets, safety: e.target.value })
-              }
-              placeholder="e.g., Illinois State"
-            />
-          </div>
-        </fieldset>
+            const bySemester: Record<number, typeof entriesForYear> = {};
+            for (const row of entriesForYear) {
+              const s = row.entry.semester;
+              if (!bySemester[s]) bySemester[s] = [];
+              bySemester[s].push(row);
+            }
+            const semesterKeys = Object.keys(bySemester)
+              .map((k) => parseInt(k, 10))
+              .sort((a, b) => a - b);
 
-        {/* Career interest */}
-        <div>
-          <label htmlFor="career-goals" className="mb-1.5 block text-sm font-medium text-foreground">
-            Career interest
-          </label>
-          <select
-            id="career-goals"
-            value={careerGoals}
-            onChange={(e) => setCareerGoals(e.target.value)}
-            className="h-11 min-h-[44px] w-full rounded-lg border border-border bg-background px-3 text-sm text-foreground focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
-          >
-            <option value="">Select an interest (optional)</option>
-            <option value="engineering">Engineering</option>
-            <option value="medicine">Medicine / Healthcare</option>
-            <option value="computer_science">Computer Science / Technology</option>
-            <option value="business">Business / Finance</option>
-            <option value="law">Law / Government</option>
-            <option value="arts">Arts / Design</option>
-            <option value="education">Education</option>
-            <option value="science">Science / Research</option>
-            <option value="communications">Communications / Media</option>
-            <option value="undecided">Undecided</option>
-          </select>
+            return (
+              <div key={g}>
+                <p className="mb-2 text-sm font-semibold text-foreground">
+                  Grade {g} · {yr}
+                </p>
+                {semesterKeys.map((sem) => {
+                  const label =
+                    sem === -2 ? "Pre-Summer Session 1" :
+                    sem === -1 ? "Pre-Summer Session 2" :
+                    `Semester ${sem}`;
+                  return (
+                    <div key={sem} className="mb-3">
+                      <p className="mb-1.5 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                        {label}
+                      </p>
+                      <div className="overflow-hidden rounded-lg border border-border">
+                        <table className="w-full text-sm">
+                          <tbody className="divide-y divide-border">
+                            {bySemester[sem].map(({ entry, index }) => {
+                              const options = isPassFailCourse(entry.code)
+                                ? PASS_FAIL_OPTIONS
+                                : GRADE_OPTIONS;
+                              return (
+                                <tr key={`${entry.code}-${entry.semester}-${index}`} className="bg-card">
+                                  <td className="px-3 py-2.5">
+                                    <p className="font-medium text-foreground">{entry.name}</p>
+                                    <p className="text-xs text-muted-foreground font-mono">{entry.code}</p>
+                                  </td>
+                                  <td className="px-3 py-2.5 text-right">
+                                    <select
+                                      value={entry.grade}
+                                      onChange={(e) => setGradeFor(index, e.target.value)}
+                                      className="h-9 min-w-[80px] rounded-lg border border-border bg-background px-2 text-sm focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
+                                      aria-label={`Grade for ${entry.code}`}
+                                    >
+                                      {options.map((o) => (
+                                        <option key={o} value={o}>{o}</option>
+                                      ))}
+                                    </select>
+                                  </td>
+                                </tr>
+                              );
+                            })}
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            );
+          })}
         </div>
       </CardContent>
     </Card>
@@ -731,6 +719,22 @@ function OnboardingPageInner() {
   const searchParams = useSearchParams();
   const isNewUser = searchParams.get("welcome") === "1";
   const [showWelcome, setShowWelcome] = useState(isNewUser);
+
+  // Block re-entry once onboarding is complete — /onboarding is a one-shot
+  // flow; returning users should be bounced to the main app.
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const res = await apiFetch("/api/v1/auth/me");
+        if (!res.ok || cancelled) return;
+        const json = await res.json();
+        const u = json.data ?? json;
+        if (u?.onboarding_completed) router.replace("/dashboard");
+      } catch { /* silent — let onboarding load */ }
+    })();
+    return () => { cancelled = true; };
+  }, [router]);
 
   // Auto-dismiss welcome banner after 6 seconds
   useEffect(() => {
@@ -764,18 +768,9 @@ function OnboardingPageInner() {
   const [isLoadingTemplates, setIsLoadingTemplates] = useState(false);
   const [selectedTemplateId, setSelectedTemplateId] = useState<string | null>(null);
 
-  // Step 4
-  const [gpaGoal, setGpaGoal] = useState("");
-  const [collegeTargets, setCollegeTargets] = useState<CollegeTargets>({
-    reach: "",
-    match: "",
-    safety: "",
-  });
-  const [careerGoals, setCareerGoals] = useState("");
-
   // Load templates when entering step 3
   useEffect(() => {
-    if (currentStep === 3 && templates.length === 0) {
+    if (currentStep === 2 && gradeLevel === 9 && templates.length === 0) {
       loadTemplates();
     }
   }, [currentStep]); // eslint-disable-line react-hooks/exhaustive-deps
@@ -796,28 +791,12 @@ function OnboardingPageInner() {
   }
 
   function goNext() {
-    if (currentStep === 1 && gradeLevel === 9) {
-      // Freshmen skip step 2 (no past courses)
-      setCurrentStep(3);
-    } else if (currentStep === 2 && completedCourses.length > 0) {
-      // If user entered past courses, skip step 3 (Starting Plan) — go straight to Goals
-      setCurrentStep(4);
-    } else {
-      setCurrentStep(Math.min(currentStep + 1, STEPS.length));
-    }
+    setCurrentStep(Math.min(currentStep + 1, totalStepsFor(gradeLevel)));
     setError(null);
   }
 
   function goPrevious() {
-    if (currentStep === 3 && gradeLevel === 9) {
-      // If on step 3 and was a freshman, go back to step 1
-      setCurrentStep(1);
-    } else if (currentStep === 4 && completedCourses.length > 0) {
-      // If user entered past courses and is on Goals, go back to Past Courses (skip step 3)
-      setCurrentStep(2);
-    } else {
-      setCurrentStep(Math.max(currentStep - 1, 1));
-    }
+    setCurrentStep(Math.max(currentStep - 1, 1));
     setError(null);
   }
 
@@ -844,21 +823,6 @@ function OnboardingPageInner() {
         payload.template_id = selectedTemplateId;
       }
 
-      const gpaNum = parseFloat(gpaGoal);
-      if (!isNaN(gpaNum) && gpaNum >= 0 && gpaNum <= 4.0) {
-        payload.gpa_goal = gpaNum;
-      }
-
-      const hasCollegeTargets =
-        collegeTargets.reach || collegeTargets.match || collegeTargets.safety;
-      if (hasCollegeTargets) {
-        payload.college_targets = collegeTargets;
-      }
-
-      if (careerGoals) {
-        payload.career_goals = careerGoals;
-      }
-
       const res = await apiFetch("/api/v1/auth/onboarding", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -872,6 +836,9 @@ function OnboardingPageInner() {
         );
         return;
       }
+
+      // Mark onboarding as complete
+      await apiFetch("/api/v1/auth/onboarding-complete", { method: "POST" }).catch(() => {});
 
       // Success — check if user has existing plans (from linked accounts)
       try {
@@ -915,30 +882,21 @@ function OnboardingPageInner() {
         </div>
       )}
 
-      <div className="mb-4 flex justify-end">
-        <button
-          type="button"
-          onClick={async () => {
-            try {
-              const res = await apiFetch("/api/v1/plans");
-              if (res.ok) {
-                const data = await res.json();
-                const plans = data?.data ?? data?.plans ?? data ?? [];
-                if (Array.isArray(plans) && plans.length > 0) {
-                  router.push("/dashboard");
-                  return;
-                }
-              }
-            } catch { /* fall through */ }
-            router.push("/planner");
-          }}
-          className="text-xs text-muted-foreground hover:text-foreground transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring rounded"
-        >
-          Skip setup →
-        </button>
-      </div>
-
-      <StepIndicator currentStep={currentStep} />
+      <StepIndicator
+        currentStep={currentStep}
+        steps={
+          gradeLevel === 9
+            ? [
+                { label: "About You", number: 1 },
+                { label: "Starting Plan", number: 2 },
+              ]
+            : [
+                { label: "About You", number: 1 },
+                { label: "Past Courses", number: 2 },
+                { label: "Assign Grades", number: 3 },
+              ]
+        }
+      />
 
       {/* Error banner */}
       {error && (
@@ -973,21 +931,10 @@ function OnboardingPageInner() {
             gradeLevel={gradeLevel}
             setGradeLevel={handleGradeLevelChange}
             graduationYear={graduationYear}
-            setGraduationYear={setGraduationYear}
           />
         )}
 
-        {currentStep === 2 && (
-          <StepPastCourses
-            gradeLevel={gradeLevel}
-            graduationYear={graduationYear}
-            completedCourses={completedCourses}
-            setCompletedCourses={setCompletedCourses}
-            onSkip={goNext}
-          />
-        )}
-
-        {currentStep === 3 && (
+        {currentStep === 2 && gradeLevel === 9 && (
           <StepChoosePlan
             templates={templates}
             selectedTemplateId={selectedTemplateId}
@@ -996,16 +943,24 @@ function OnboardingPageInner() {
           />
         )}
 
-        {currentStep === 4 && (
-          <StepGoals
-            gpaGoal={gpaGoal}
-            setGpaGoal={setGpaGoal}
-            collegeTargets={collegeTargets}
-            setCollegeTargets={setCollegeTargets}
-            careerGoals={careerGoals}
-            setCareerGoals={setCareerGoals}
+        {currentStep === 2 && gradeLevel !== 9 && (
+          <StepPastCourses
+            gradeLevel={gradeLevel}
+            graduationYear={graduationYear}
+            completedCourses={completedCourses}
+            setCompletedCourses={setCompletedCourses}
           />
         )}
+
+        {currentStep === 3 && gradeLevel !== 9 && (
+          <StepAssignGrades
+            gradeLevel={gradeLevel}
+            graduationYear={graduationYear}
+            completedCourses={completedCourses}
+            setCompletedCourses={setCompletedCourses}
+          />
+        )}
+
       </div>
 
       {/* Navigation buttons */}
@@ -1034,19 +989,7 @@ function OnboardingPageInner() {
         </div>
 
         <div className="flex items-center gap-3">
-          {/* Skip button (except on step 1 which is required) */}
-          {currentStep > 1 && currentStep < STEPS.length && (
-            <Button
-              type="button"
-              variant="ghost"
-              onClick={goNext}
-              disabled={isSubmitting}
-            >
-              Skip
-            </Button>
-          )}
-
-          {currentStep < STEPS.length ? (
+          {currentStep < totalStepsFor(gradeLevel) ? (
             <Button type="button" onClick={goNext} disabled={isSubmitting}>
               Next
               <svg

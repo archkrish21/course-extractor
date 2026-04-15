@@ -1,9 +1,10 @@
 import { NextRequest } from "next/server";
 import { z } from "zod";
 import { db } from "@/lib/db";
-import { fourYearPlans, accounts } from "@/lib/db/schema";
+import { fourYearPlans } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
 import { successResponse, errorResponse } from "@/lib/api/response";
+import { requireSameOrigin } from "@/lib/api/require-same-origin";
 import { requireAuth } from "@/lib/auth/get-user";
 import { getPlanAccess, hasPermission } from "@/lib/auth/plan-permissions";
 import { maybeCreateSemesterSnapshot } from "@/lib/gpa/snapshot";
@@ -26,6 +27,9 @@ export async function POST(request: NextRequest, context: RouteContext) {
   try {
     const user = await requireAuth();
     if (user instanceof Response) return user;
+
+    const csrf = requireSameOrigin(request);
+    if (csrf) return csrf;
 
     const { id: planId } = await context.params;
 
@@ -75,15 +79,6 @@ export async function POST(request: NextRequest, context: RouteContext) {
       .update(fourYearPlans)
       .set({ lockedGradeLevels: updated })
       .where(eq(fourYearPlans.id, planId));
-
-    // Keep account grade level in sync with first unlocked grade
-    if (plan.accountId) {
-      const newCurrentGrade = [9, 10, 11, 12].find((g) => !updated.includes(g)) ?? 12;
-      await db
-        .update(accounts)
-        .set({ gradeLevel: newCurrentGrade })
-        .where(eq(accounts.id, plan.accountId));
-    }
 
     // Auto-snapshot when locking a grade level
     if (locked && plan.studentId && plan.accountId) {

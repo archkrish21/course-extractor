@@ -1,7 +1,25 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
+import { eq } from "drizzle-orm";
 import { SapsLogo } from "@/components/ui/saps-logo";
+import { getAuthenticatedUser } from "@/lib/auth/get-user";
+import { db } from "@/lib/db";
+import { users } from "@/lib/db/schema";
 
-export default function OnboardingLayout({ children }: { children: React.ReactNode }) {
+export default async function OnboardingLayout({ children }: { children: React.ReactNode }) {
+  // Block re-entry: once a user has completed onboarding, bounce them to
+  // the main app. Applies to students (post-onboarding) and non-student
+  // roles (which never go through this flow). Unauthenticated visits are
+  // left alone — the auth middleware handles those.
+  const authUser = await getAuthenticatedUser();
+  if (authUser) {
+    const [row] = await db
+      .select({ onboardingCompletedAt: users.onboardingCompletedAt })
+      .from(users)
+      .where(eq(users.id, authUser.id))
+      .limit(1);
+    if (row?.onboardingCompletedAt) redirect("/dashboard");
+  }
   return (
     <div className="flex min-h-screen flex-col bg-muted">
       {/* Header */}

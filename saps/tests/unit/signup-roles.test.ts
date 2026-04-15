@@ -95,7 +95,7 @@ describe("Signup — role handling", () => {
       body: JSON.stringify({
         email: "guardian@test.com",
         password: "Password123!",
-        date_of_birth: "1980-01-01",
+        age_confirmed: true,
         role: "guardian",
         tos_accepted: true,
       }),
@@ -114,7 +114,7 @@ describe("Signup — role handling", () => {
       body: JSON.stringify({
         email: "guardian@test.com",
         password: "Password123!",
-        date_of_birth: "1980-01-01",
+        age_confirmed: true,
         role: "guardian",
         tos_accepted: true,
       }),
@@ -137,7 +137,7 @@ describe("Signup — role handling", () => {
       body: JSON.stringify({
         email: "counselor@test.com",
         password: "Password123!",
-        date_of_birth: "1980-01-01",
+        age_confirmed: true,
         role: "counselor",
         tos_accepted: true,
       }),
@@ -167,7 +167,7 @@ describe("Signup — role handling", () => {
       body: JSON.stringify({
         email: "student@test.com",
         password: "Password123!",
-        date_of_birth: "2008-01-01",
+        age_confirmed: true,
         role: "student",
         tos_accepted: true,
       }),
@@ -180,11 +180,8 @@ describe("Signup — role handling", () => {
     expect(body.data.user.role).toBe("student");
   });
 
-  it("rejects signup for users under 13 (COPPA)", async () => {
+  it("rejects signup when age_confirmed is missing (COPPA attestation required)", async () => {
     const { POST } = await import("@/app/api/v1/auth/signup/route");
-
-    const today = new Date();
-    const under13 = `${today.getFullYear() - 12}-${String(today.getMonth() + 1).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`;
 
     const request = new NextRequest(new URL("http://localhost:3000/api/v1/auth/signup"), {
       method: "POST",
@@ -192,15 +189,36 @@ describe("Signup — role handling", () => {
       body: JSON.stringify({
         email: "kid@test.com",
         password: "Password123!",
-        date_of_birth: under13,
         role: "student",
         tos_accepted: true,
       }),
     });
 
     const response = await POST(request);
-    expect(response.status).toBe(403);
+    expect(response.status).toBe(400);
     const body = await response.json();
-    expect(body.error.code).toBe("COPPA_BLOCKED");
+    expect(body.error.code).toBe("VALIDATION_ERROR");
+    expect(body.error.message).toMatch(/13 years old/i);
+  });
+
+  it("rejects signup when age_confirmed is false", async () => {
+    const { POST } = await import("@/app/api/v1/auth/signup/route");
+
+    const request = new NextRequest(new URL("http://localhost:3000/api/v1/auth/signup"), {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        email: "kid@test.com",
+        password: "Password123!",
+        age_confirmed: false,
+        role: "student",
+        tos_accepted: true,
+      }),
+    });
+
+    const response = await POST(request);
+    expect(response.status).toBe(400);
+    const body = await response.json();
+    expect(body.error.code).toBe("VALIDATION_ERROR");
   });
 });

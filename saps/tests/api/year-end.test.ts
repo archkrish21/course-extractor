@@ -1,0 +1,248 @@
+import { describe, it, expect, vi, beforeEach } from "vitest";
+import { NextRequest } from "next/server";
+
+// ── Test data ───────────────────────────────────────────────────────────────
+
+const TEST_USER = { id: "user-1", email: "student@test.com" };
+const TEST_ACCOUNT_CTX = { accountId: "acc-1", role: "student" as const, canEdit: true };
+
+// ── Mocks ───────────────────────────────────────────────────────────────────
+
+const mockReturning = vi.fn();
+const mockValues = vi.fn();
+const mockSet = vi.fn();
+
+function createQueryChain(resolveValue: unknown = []) {
+  const chain: Record<string, ReturnType<typeof vi.fn>> = {};
+  const self = () => chain;
+  chain.select = vi.fn().mockImplementation(self);
+  chain.from = vi.fn().mockImplementation(self);
+  chain.where = vi.fn().mockImplementation(self);
+  chain.innerJoin = vi.fn().mockImplementation(self);
+  chain.leftJoin = vi.fn().mockImplementation(self);
+  chain.orderBy = vi.fn().mockImplementation(self);
+  chain.limit = vi.fn().mockImplementation(self);
+  chain.then = vi.fn().mockImplementation((resolve: (v: unknown) => unknown) =>
+    Promise.resolve(resolve(resolveValue))
+  );
+  chain.insert = vi.fn().mockImplementation(self);
+  chain.values = mockValues.mockImplementation(self);
+  chain.returning = mockReturning.mockResolvedValue([]);
+  chain.update = vi.fn().mockImplementation(self);
+  chain.set = mockSet.mockImplementation(self);
+  chain.execute = vi.fn().mockResolvedValue(undefined);
+  return chain;
+}
+
+let dbChain = createQueryChain();
+
+vi.mock("@/lib/db", () => ({
+  db: new Proxy(
+    {},
+    {
+      get(_target, prop) {
+        if (prop === "execute") return dbChain.execute;
+        if (prop in dbChain) {
+          return (dbChain as Record<string, unknown>)[prop as string];
+        }
+        return undefined;
+      },
+    }
+  ),
+}));
+
+vi.mock("@/lib/auth/get-user", () => ({
+  requireAuth: vi.fn(),
+  getAccountContext: vi.fn(),
+}));
+
+vi.mock("@/lib/api/rate-limit", () => ({
+  rateLimit: vi.fn().mockResolvedValue({ success: true }),
+}));
+
+vi.mock("@/lib/api/require-same-origin", () => ({
+  requireSameOrigin: vi.fn().mockReturnValue(null),
+}));
+
+vi.mock("@/lib/gpa/snapshot", () => ({
+  maybeCreateSemesterSnapshot: vi.fn().mockResolvedValue(undefined),
+}));
+
+vi.mock("@/lib/db/schema", () => ({
+  fourYearPlans: { id: "id", accountId: "accountId", isPrimary: "isPrimary", isTemplate: "isTemplate", lockedGradeLevels: "lockedGradeLevels" },
+  planCourses: { id: "pc_id", planId: "pc_planId", courseId: "pc_courseId", gradeLevel: "pc_gradeLevel", semester: "pc_semester", status: "pc_status", plannedGrade: "pc_plannedGrade" },
+  courses: { id: "c_id", code: "c_code", name: "c_name", creditValue: "c_creditValue" },
+  accounts: { id: "a_id", gradeLevel: "a_gradeLevel", studentUserId: "a_studentUserId" },
+  accountMembers: { accountId: "am_accountId", userId: "am_userId" },
+  studentProfiles: { userId: "sp_userId", yearEndTransitionState: "sp_yearEndTransitionState" },
+}));
+
+vi.mock("@/config/grade-scale", () => ({
+  ALL_GRADES: ["A", "B", "C", "D", "F", "P"],
+}));
+
+vi.mock("drizzle-orm", () => ({
+  eq: vi.fn((...args: unknown[]) => ({ type: "eq", args })),
+  and: vi.fn((...args: unknown[]) => ({ type: "and", args })),
+  sql: Object.assign(
+    (strings: TemplateStringsArray, ..._values: unknown[]) => ({ type: "sql", strings }),
+    { raw: vi.fn() }
+  ),
+}));
+
+import { requireAuth, getAccountContext } from "@/lib/auth/get-user";
+import { GET, POST } from "@/app/api/v1/year-end/route";
+
+// ── Helpers ─────────────────────────────────────────────────────────────────
+
+function makeGetRequest(query = ""): NextRequest {
+  return new NextRequest(new URL(`http://localhost:3000/api/v1/year-end${query}`));
+}
+
+function makePostRequest(body: Record<string, unknown>): NextRequest {
+  return new NextRequest(new URL("http://localhost:3000/api/v1/year-end"), {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+  });
+}
+
+// ── Tests ───────────────────────────────────────────────────────────────────
+
+describe("GET /api/v1/year-end", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    dbChain = createQueryChain();
+    (requireAuth as ReturnType<typeof vi.fn>).mockResolvedValue(TEST_USER);
+    (getAccountContext as ReturnType<typeof vi.fn>).mockResolvedValue(TEST_ACCOUNT_CTX);
+  });
+
+  it("returns planId alongside year-end state (contract)", async () => {
+    // Consumers (dashboard banner, wizard) need planId so they can call
+    // /plans/:id/validate without a separate lookup.
+    let queryIndex = 0;
+    dbChain.then = vi.fn().mockImplementation((resolve: (v: unknown) => unknown) => {
+      queryIndex++;
+      if (queryIndex === 1) return Promise.resolve(resolve([{ accountId: "acc-1" }])); // membership
+      if (queryIndex === 2) return Promise.resolve(resolve([{ gradeLevel: 10 }]));      // account
+      if (queryIndex === 3) return Promise.resolve(resolve([{ yearEndTransitionState: "pending" }])); // profile
+      if (queryIndex === 4) return Promise.resolve(resolve([{ id: "plan-1" }]));        // primary plan
+      if (queryIndex === 5) return Promise.resolve(resolve([]));                          // current year courses
+      if (queryIndex === 6) return Promise.resolve(resolve([]));                          // next year courses
+      return Promise.resolve(resolve([]));
+    });
+
+    const response = await GET(makeGetRequest());
+    const body = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(body.data.planId).toBe("plan-1");
+    expect(body.data.gradeLevel).toBe(10);
+    expect(body.data.transitionState).toBe("pending");
+  });
+
+  it("returns planId as null when the student has no primary plan", async () => {
+    let queryIndex = 0;
+    dbChain.then = vi.fn().mockImplementation((resolve: (v: unknown) => unknown) => {
+      queryIndex++;
+      if (queryIndex === 1) return Promise.resolve(resolve([{ accountId: "acc-1" }]));
+      if (queryIndex === 2) return Promise.resolve(resolve([{ gradeLevel: 10 }]));
+      if (queryIndex === 3) return Promise.resolve(resolve([{ yearEndTransitionState: "pending" }]));
+      if (queryIndex === 4) return Promise.resolve(resolve([])); // no primary plan
+      return Promise.resolve(resolve([]));
+    });
+
+    const response = await GET(makeGetRequest());
+    const body = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(body.data.planId).toBeNull();
+  });
+
+  it("counts completed-without-grade courses as incomplete", async () => {
+    // Regression: previously incompleteCount excluded status === 'completed',
+    // which silently let year-end proceed with missing grades (the UI also
+    // rendered a locked '—' badge blocking entry). Now any non-dropped course
+    // without a plannedGrade is incomplete.
+    let queryIndex = 0;
+    dbChain.then = vi.fn().mockImplementation((resolve: (v: unknown) => unknown) => {
+      queryIndex++;
+      if (queryIndex === 1) return Promise.resolve(resolve([{ accountId: "acc-1" }]));
+      if (queryIndex === 2) return Promise.resolve(resolve([{ gradeLevel: 10 }]));
+      if (queryIndex === 3) return Promise.resolve(resolve([{ yearEndTransitionState: "pending" }]));
+      if (queryIndex === 4) return Promise.resolve(resolve([{ id: "plan-1" }]));
+      if (queryIndex === 5) return Promise.resolve(resolve([
+        { id: "pc-1", courseId: "c1", code: "MTH", name: "Math",      gradeLevel: 10, semester: 1, status: "completed", plannedGrade: "A", creditValue: "1.0" },
+        { id: "pc-2", courseId: "c2", code: "ENG", name: "English",   gradeLevel: 10, semester: 1, status: "completed", plannedGrade: null, creditValue: "1.0" }, // ← bug case
+        { id: "pc-3", courseId: "c3", code: "SCI", name: "Science",   gradeLevel: 10, semester: 1, status: "enrolled",  plannedGrade: null, creditValue: "1.0" },
+        { id: "pc-4", courseId: "c4", code: "GPE", name: "PE",        gradeLevel: 10, semester: 1, status: "dropped",   plannedGrade: null, creditValue: "1.0" }, // excluded
+      ]));
+      if (queryIndex === 6) return Promise.resolve(resolve([]));
+      return Promise.resolve(resolve([]));
+    });
+
+    const response = await GET(makeGetRequest());
+    const body = await response.json();
+
+    // Expect 2 incomplete: the completed-without-grade row AND the enrolled-without-grade row.
+    // Dropped is excluded; completed-with-grade is excluded.
+    expect(body.data.incompleteCount).toBe(2);
+  });
+});
+
+describe("POST /api/v1/year-end", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    dbChain = createQueryChain();
+    (requireAuth as ReturnType<typeof vi.fn>).mockResolvedValue(TEST_USER);
+    (getAccountContext as ReturnType<typeof vi.fn>).mockResolvedValue(TEST_ACCOUNT_CTX);
+  });
+
+  function mockAdvancingStudentChain(gradeLevel: number) {
+    let queryIndex = 0;
+    dbChain.then = vi.fn().mockImplementation((resolve: (v: unknown) => unknown) => {
+      queryIndex++;
+      // Membership lookup
+      if (queryIndex === 1) return Promise.resolve(resolve([{ accountId: "acc-1" }]));
+      // Account lookup (gradeLevel + studentUserId)
+      if (queryIndex === 2) return Promise.resolve(resolve([{ gradeLevel, studentUserId: TEST_USER.id }]));
+      // Primary plan lookup
+      if (queryIndex === 3) return Promise.resolve(resolve([{ id: "plan-1", lockedGradeLevels: [] }]));
+      // Plan courses for grade updates (status transitions)
+      if (queryIndex === 4) return Promise.resolve(resolve([]));
+      return Promise.resolve(resolve(undefined));
+    });
+  }
+
+  it("resets yearEndTransitionState to 'pending' for advancing students", async () => {
+    // Regression: previously the flag was set to 'completed' permanently,
+    // which hid the banner for all future years. Now advancing students
+    // reset to 'pending' so the banner works next year.
+    mockAdvancingStudentChain(10);
+
+    const response = await POST(makePostRequest({ grades: [], action: "complete" }));
+    expect(response.status).toBe(200);
+
+    // Find the .set() call that targets yearEndTransitionState.
+    const transitionSet = mockSet.mock.calls.find(([arg]) =>
+      arg && typeof arg === "object" && "yearEndTransitionState" in arg
+    );
+    expect(transitionSet).toBeDefined();
+    expect(transitionSet![0].yearEndTransitionState).toBe("pending");
+  });
+
+  it("keeps yearEndTransitionState as 'completed' for graduating students (grade 12)", async () => {
+    // Grade 12 has no next year; the flag is terminal. This is the one
+    // case where 'completed' is correct.
+    mockAdvancingStudentChain(12);
+
+    const response = await POST(makePostRequest({ grades: [], action: "complete" }));
+    expect(response.status).toBe(200);
+
+    const transitionSet = mockSet.mock.calls.find(([arg]) =>
+      arg && typeof arg === "object" && "yearEndTransitionState" in arg
+    );
+    expect(transitionSet).toBeDefined();
+    expect(transitionSet![0].yearEndTransitionState).toBe("completed");
+  });
+});

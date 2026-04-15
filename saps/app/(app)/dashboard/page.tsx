@@ -77,7 +77,7 @@ interface RequirementsData {
 }
 
 export default function DashboardPage() {
-  const { currentAccount, loading: accountLoading, userFirstName, userLastName } = useAccount();
+  const { currentAccount, loading: accountLoading, userFirstName, userLastName, userRole, onboardingCompleted } = useAccount();
   useTour({
     tourId: TOUR_IDS.welcome,
     steps: welcomeTourSteps,
@@ -105,6 +105,15 @@ export default function DashboardPage() {
   const [warningCount, setWarningCount] = useState(0);
   const [warningMessages, setWarningMessages] = useState<string[]>([]);
 
+  // Year-end eligibility
+  const [yearEndInfo, setYearEndInfo] = useState<{
+    gradeLevel: number;
+    isGraduating: boolean;
+    incompleteCount: number;
+    totalCourses: number;
+    issueCount: number;
+  } | null>(null);
+
   // Fetch primary plan info + warnings
   useEffect(() => {
     if (accountLoading) return;
@@ -116,12 +125,17 @@ export default function DashboardPage() {
           const plans: DashboardPlan[] = data.plans ?? data.data ?? data ?? [];
           const primary = plans.find((p) => p.isPrimary) ?? plans[0] ?? null;
           setPrimaryPlan(primary);
-          if (plans.length === 0) {
+          if (currentAccount?.role === "student" && !onboardingCompleted) {
+            setShowProfileBanner(true);
+            setProfileBannerTarget("planner");
+          } else if (plans.length === 0 && (currentAccount?.role === "student" || currentAccount?.role === "counselor")) {
             setShowProfileBanner(true);
             setProfileBannerTarget("planner");
           } else if (currentAccount?.role === "student" && !userFirstName) {
             setShowProfileBanner(true);
             setProfileBannerTarget("settings");
+          } else {
+            setShowProfileBanner(false);
           }
           if (primary) {
             try {
@@ -150,7 +164,10 @@ export default function DashboardPage() {
               // Silent — warnings not critical for dashboard
             }
           }
-        } else {
+        } else if (currentAccount?.role === "student" || currentAccount?.role === "counselor") {
+          // /plans fetch failed for a user who should have one — prompt setup.
+          // Skipped for parents/guardians with no linked student: their "Add Student"
+          // banner handles that case and we don't want two banners stacked.
           setShowProfileBanner(true);
           setProfileBannerTarget("planner");
         }
@@ -222,6 +239,81 @@ export default function DashboardPage() {
     }
     fetchRequirements();
   }, [accountLoading, currentAccount]);
+
+  // Fetch year-end eligibility (skipped for counselors — they don't own the student's academic clock)
+  useEffect(() => {
+    if (accountLoading || !currentAccount) return;
+    if (currentAccount.role === "counselor") return;
+    if (currentAccount.role === "student" && !onboardingCompleted) return;
+    async function fetchYearEnd() {
+      try {
+        const res = await apiFetch("/api/v1/year-end");
+        if (!res.ok) return;
+        const json = await res.json();
+        const data = json.data ?? json;
+        if (data.transitionState !== "pending") {
+          setYearEndInfo(null);
+          return;
+        }
+        const currentCourses: Array<{ courseId: string }> = data.currentYearCourses ?? [];
+        if (currentCourses.length === 0) {
+          setYearEndInfo(null);
+          return;
+        }
+        const currentCourseIds = new Set(currentCourses.map((c) => c.courseId));
+        const gradeLevel: number = data.gradeLevel;
+
+        // Count prereq violations + semester gaps scoped to current grade.
+        // Fetched alongside the eligibility probe so the banner can indicate
+        // "N issues to resolve before wrapping up".
+        let prereqIssues = 0;
+        let gapIssues = 0;
+        if (data.planId) {
+          try {
+            const [valRes, reqRes] = await Promise.all([
+              apiFetch(`/api/v1/plans/${data.planId}/validate`),
+              apiFetch("/api/v1/requirements"),
+            ]);
+            if (valRes.ok) {
+              const valJson = await valRes.json();
+              const valData = valJson.data ?? valJson;
+              for (const cv of valData.courseViolations ?? []) {
+                if (currentCourseIds.has(cv.courseId)) {
+                  prereqIssues += (cv.violations?.length ?? 1);
+                }
+              }
+            }
+            if (reqRes.ok) {
+              const reqJson = await reqRes.json();
+              const reqData = reqJson.data ?? reqJson;
+              const courseLoad = (reqData.groups ?? []).find(
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                (g: any) => g.group === "course_load"
+              );
+              for (const r of courseLoad?.requirements ?? []) {
+                if (r.status === "gap" && r.metadata?.gradeLevel === gradeLevel) {
+                  gapIssues += 1;
+                }
+              }
+            }
+          } catch {
+            // Silent — warnings optional
+          }
+        }
+
+        setYearEndInfo({
+          gradeLevel,
+          isGraduating: !!data.isGraduating,
+          incompleteCount: data.incompleteCount ?? 0,
+          totalCourses: currentCourses.length,
+          issueCount: prereqIssues + gapIssues,
+        });
+      } catch {
+        // Silent — banner just won't show
+      }
+    }
+    fetchYearEnd();
+  }, [accountLoading, currentAccount, onboardingCompleted]);
 
   // Fetch claim code if account is unclaimed (parent viewing)
   useEffect(() => {
@@ -341,8 +433,38 @@ export default function DashboardPage() {
         </div>
       )}
 
+      {/* Add Student banner — parent/guardian with no accounts */}
+      {!currentAccount && (userRole === "parent" || userRole === "guardian") && (
+        <div
+          className="mb-6 flex flex-col gap-3 rounded-xl border border-primary/30 bg-primary-light p-4 sm:flex-row sm:items-center sm:justify-between"
+          role="status"
+        >
+          <div className="flex items-start gap-3">
+            <svg
+              aria-hidden="true"
+              className="mt-0.5 h-5 w-5 shrink-0 text-primary"
+              fill="none"
+              viewBox="0 0 24 24"
+              strokeWidth={2}
+              stroke="currentColor"
+            >
+              <path strokeLinecap="round" strokeLinejoin="round" d="M18 7.5v3m0 0v3m0-3h3m-3 0h-3m-2.25-4.125a3.375 3.375 0 1 1-6.75 0 3.375 3.375 0 0 1 6.75 0ZM3 19.235v-.11a6.375 6.375 0 0 1 12.75 0v.109A12.318 12.318 0 0 1 9.374 21c-2.331 0-4.512-.645-6.374-1.766Z" />
+            </svg>
+            <div>
+              <p className="font-semibold text-primary">Add your child to get started</p>
+              <p className="text-sm text-muted-foreground">
+                Create a student profile, then invite them to manage their own academic plan.
+              </p>
+            </div>
+          </div>
+          <Link href="/settings?add-student=1" className="sm:shrink-0">
+            <Button size="sm">Add Student</Button>
+          </Link>
+        </div>
+      )}
+
       {/* Complete your profile / setup banner */}
-      {showProfileBanner && currentAccount?.isClaimed !== false && (
+      {showProfileBanner && currentAccount?.isClaimed !== false && !(!currentAccount && (userRole === "parent" || userRole === "guardian")) && (
         <div
           className="mb-6 flex flex-col gap-3 rounded-xl border border-primary/30 bg-primary-light p-4 sm:flex-row sm:items-center sm:justify-between"
           role="status"
@@ -365,36 +487,91 @@ export default function DashboardPage() {
             <div>
               <p className="font-semibold text-primary">
                 {profileBannerTarget === "planner"
-                  ? (currentAccount?.role === "counselor" ? "No plans shared yet" : "Get started")
+                  ? (currentAccount?.role === "counselor" ? "No plans shared yet" : "Complete your onboarding")
                   : "Complete your profile"}
               </p>
               <p className="text-sm text-muted-foreground">
                 {profileBannerTarget === "planner"
                   ? (currentAccount?.role === "counselor"
                     ? "Plans will appear here once a student shares their plan with you."
-                    : "Create your first plan to start organizing your academic path.")
+                    : "Set up your profile, add past courses, and create your first plan to get the most out of SAPS.")
                   : "Add your name and details to personalize your experience."}
               </p>
             </div>
           </div>
           <div className="flex items-center gap-2 sm:shrink-0">
             {profileBannerTarget === "planner" && currentAccount?.role === "counselor" ? null : (
-              <Link href={profileBannerTarget === "planner" ? "/planner" : "/settings"}>
+              <Link href={profileBannerTarget === "planner" ? "/onboarding" : "/settings"}>
                 <Button size="sm">
-                  {profileBannerTarget === "planner" ? "Create a plan" : "Complete profile"}
+                  {profileBannerTarget === "planner" ? "Start Onboarding" : "Complete profile"}
                 </Button>
               </Link>
             )}
-            <button
-              type="button"
-              onClick={() => setShowProfileBanner(false)}
-              aria-label="Dismiss banner"
-              className="flex h-8 w-8 items-center justify-center rounded-lg text-primary hover:bg-primary/10 transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
+            {/* Onboarding is mandatory — no dismiss. Other profile prompts remain dismissible. */}
+            {!(currentAccount?.role === "student" && profileBannerTarget === "planner" && !onboardingCompleted) && (
+              <button
+                type="button"
+                onClick={() => setShowProfileBanner(false)}
+                aria-label="Dismiss banner"
+                className="flex h-8 w-8 items-center justify-center rounded-lg text-primary hover:bg-primary/10 transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
+              >
+                <svg aria-hidden="true" className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M6 18 18 6M6 6l12 12" />
+                </svg>
+              </button>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Year-end wrap-up banner */}
+      {yearEndInfo && !showProfileBanner && (
+        <div
+          className="mb-6 flex flex-col gap-3 rounded-xl border border-primary/30 bg-primary-light p-4 sm:flex-row sm:items-center sm:justify-between"
+          role="status"
+        >
+          <div className="flex items-start gap-3">
+            <svg
+              aria-hidden="true"
+              className="mt-0.5 h-5 w-5 shrink-0 text-primary"
+              fill="none"
+              viewBox="0 0 24 24"
+              strokeWidth={2}
+              stroke="currentColor"
             >
-              <svg aria-hidden="true" className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M6 18 18 6M6 6l12 12" />
-              </svg>
-            </button>
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M9 12.75 11.25 15 15 9.75M21 12c0 1.268-.63 2.39-1.593 3.068a3.745 3.745 0 0 1-1.043 3.296 3.745 3.745 0 0 1-3.296 1.043A3.745 3.745 0 0 1 12 21c-1.268 0-2.39-.63-3.068-1.593a3.746 3.746 0 0 1-3.296-1.043 3.745 3.745 0 0 1-1.043-3.296A3.745 3.745 0 0 1 3 12c0-1.268.63-2.39 1.593-3.068a3.745 3.745 0 0 1 1.043-3.296 3.746 3.746 0 0 1 3.296-1.043A3.746 3.746 0 0 1 12 3c1.268 0 2.39.63 3.068 1.593a3.746 3.746 0 0 1 3.296 1.043 3.746 3.746 0 0 1 1.043 3.296A3.745 3.745 0 0 1 21 12Z"
+              />
+            </svg>
+            <div>
+              <p className="font-semibold text-primary">
+                {yearEndInfo.isGraduating
+                  ? `Wrap up Grade ${yearEndInfo.gradeLevel} — ready to graduate?`
+                  : `Wrap up Grade ${yearEndInfo.gradeLevel} — ready to advance to Grade ${yearEndInfo.gradeLevel + 1}?`}
+              </p>
+              <p className="text-sm text-muted-foreground">
+                {yearEndInfo.incompleteCount > 0
+                  ? `Enter final grades for ${yearEndInfo.incompleteCount} course${yearEndInfo.incompleteCount === 1 ? "" : "s"}, then lock in your year.`
+                  : "Review your grades and complete the school year."}
+              </p>
+              {yearEndInfo.issueCount > 0 && (
+                <p className="mt-1 flex items-center gap-1.5 text-sm font-medium text-warning">
+                  <svg aria-hidden="true" className="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126ZM12 15.75h.007v.008H12v-.008Z" />
+                  </svg>
+                  {yearEndInfo.issueCount} issue{yearEndInfo.issueCount === 1 ? "" : "s"} in Grade {yearEndInfo.gradeLevel} — review before wrapping up
+                </p>
+              )}
+            </div>
+          </div>
+          <div className="flex items-center gap-2 sm:shrink-0">
+            <Link href="/year-end">
+              <Button size="sm">
+                {yearEndInfo.incompleteCount > 0 ? "Review & complete" : "Complete year"}
+              </Button>
+            </Link>
           </div>
         </div>
       )}

@@ -300,6 +300,54 @@ describe("POST /api/v1/plans/:id/lock-grade", () => {
     expect(response.status).toBe(200);
     expect(body.data.locked_grade_levels).toEqual([9]);
   });
+
+  // Regression: lock/unlock is a pure UI gate. It must NOT mutate
+  // accounts.gradeLevel (nor any other accounts column). Previously the
+  // route synced "first unlocked grade" to accounts.gradeLevel, which let
+  // unlocking a past grade retroactively downgrade the student.
+  it("does not write to the accounts table when locking", async () => {
+    let queryIndex = 0;
+    dbChain.then = vi.fn().mockImplementation((resolve: (v: unknown) => unknown) => {
+      queryIndex++;
+      if (queryIndex === 1) return Promise.resolve(resolve([{ ...TEST_PLAN_UNLOCKED }]));
+      return Promise.resolve(resolve([]));
+    });
+
+    const request = makeJsonRequest(
+      `http://localhost:3000/api/v1/plans/${TEST_PLAN_ID}/lock-grade`,
+      { grade_level: 10, locked: true }
+    );
+    await lockGrade(request, planContext(TEST_PLAN_ID));
+
+    // Only one .set() call expected — on fourYearPlans for lockedGradeLevels.
+    // No .set() targeting gradeLevel (which would indicate an accounts write).
+    const setCalls = mockSet.mock.calls;
+    const accountWrite = setCalls.find(([arg]) =>
+      arg && typeof arg === "object" && "gradeLevel" in arg
+    );
+    expect(accountWrite).toBeUndefined();
+  });
+
+  it("does not write to the accounts table when unlocking", async () => {
+    let queryIndex = 0;
+    dbChain.then = vi.fn().mockImplementation((resolve: (v: unknown) => unknown) => {
+      queryIndex++;
+      if (queryIndex === 1) return Promise.resolve(resolve([{ ...TEST_PLAN }]));
+      return Promise.resolve(resolve([]));
+    });
+
+    const request = makeJsonRequest(
+      `http://localhost:3000/api/v1/plans/${TEST_PLAN_ID}/lock-grade`,
+      { grade_level: 9, locked: false }
+    );
+    await lockGrade(request, planContext(TEST_PLAN_ID));
+
+    const setCalls = mockSet.mock.calls;
+    const accountWrite = setCalls.find(([arg]) =>
+      arg && typeof arg === "object" && "gradeLevel" in arg
+    );
+    expect(accountWrite).toBeUndefined();
+  });
 });
 
 describe("PATCH /api/v1/plans/:id/courses/:courseId – lock enforcement", () => {

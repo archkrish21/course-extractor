@@ -24,7 +24,7 @@ Each item links to the authoritative doc so details don't get duplicated here.
 - [ ] Email templates customized with SAPS branding (confirmation, invite, magic link, recovery)
 - [ ] OTP expiry: **10 minutes**
 - [ ] Rate Limits → Emails/hour: **10**, Token verifications/5min: **30**, Signups/hour/IP: **10**
-- [ ] Password Policy → min length 8, `letters_digits` or stricter
+- [x] Password Policy → min length 8, `letters_digits` or stricter (configured 2026-04-15)
 - [x] Attack Protection → hCaptcha configured in Supabase dashboard with site key `7cc8cd46-…-0f70c1bcf266` (secret set 2026-04-15)
 - [x] CAPTCHA token wired through frontend signup/login forms — `@hcaptcha/react-hcaptcha` widget + token forwarded to Supabase; CSP allows `hcaptcha.com` origins. Still needs end-to-end prod smoke (checked in Phase 5).
 

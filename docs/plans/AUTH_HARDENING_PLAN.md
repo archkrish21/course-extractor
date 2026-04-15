@@ -486,8 +486,8 @@ These items must be applied to the hosted Supabase project, not `config.toml`. `
 - [ ] Test end-to-end in prod (site key set in Vercel, signup in incognito → widget appears → account created)
 
 #### Authentication → Password Policy
-- [ ] `minimum_password_length = 8`
-- [ ] `password_requirements = "letters_digits"` (or stricter)
+- [x] `minimum_password_length = 8` (configured 2026-04-15)
+- [x] `password_requirements = "letters_digits"` or stricter (configured 2026-04-15)
 
 #### Project Settings → API
 - [ ] Rotate the service role key if it has ever been committed or shared in chat history

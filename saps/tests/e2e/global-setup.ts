@@ -34,6 +34,11 @@ export const TEST_CONSENT_EMAIL = "consent-test@test.com";
 // Non-onboarded student — used by onboarding E2E tests so the /onboarding
 // layout guard (which redirects completed users to /dashboard) doesn't bounce us.
 export const TEST_STUDENT_ONBOARDING_EMAIL = "student-onboarding@test.com";
+// Dedicated account for password-reset settings tests. These tests mutate the
+// Supabase auth password, so running them against the shared student@test.com
+// races other workers doing the same thing. Isolating to its own user keeps
+// parallel chromium + mobile runs safe without serializing the whole suite.
+export const TEST_STUDENT_PASSWORD_EMAIL = "student-password@test.com";
 export const EPHEMERAL_EMAILS = ["student2@test.com", "student3@test.com"];
 
 const TEST_STATE = "IL";
@@ -63,6 +68,7 @@ const TEST_USERS: TestUser[] = [
   { email: TEST_COUNSELOR_EMAIL, role: "counselor", name: "Test Counselor", dob: "1985-09-20" },
   { email: TEST_CONSENT_EMAIL, role: "student", name: "Consent Tester", dob: "2010-01-01" },
   { email: TEST_STUDENT_ONBOARDING_EMAIL, role: "student", name: "Fresh Student", dob: "2010-05-05", preOnboarding: true },
+  { email: TEST_STUDENT_PASSWORD_EMAIL, role: "student", name: "Password Tester", dob: "2010-04-04" },
 ];
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
@@ -435,6 +441,40 @@ async function globalSetup() {
       // Always remove consent records so the consent form is shown
       await client.query(`DELETE FROM consent_records WHERE user_id = $1`, [consentTestId]);
       console.log(`[e2e-setup] Consent test account: ${consentAcctId} (no consent — form will show)`);
+    }
+
+    // ── 14b. Ensure password-test account (minimal — settings page only) ─
+    const passwordTesterId = userIds[TEST_STUDENT_PASSWORD_EMAIL];
+    if (passwordTesterId) {
+      // Always force the password back to TEST_PASSWORD, in case a prior
+      // interrupted run left it changed to a throwaway value.
+      await supabase.auth.admin.updateUserById(passwordTesterId, {
+        password: TEST_PASSWORD,
+      });
+
+      const pwAcctResult = await client.query(
+        `SELECT id FROM accounts WHERE student_user_id = $1 LIMIT 1`, [passwordTesterId],
+      );
+      let pwAcctId: string;
+      if (pwAcctResult.rows.length > 0) {
+        pwAcctId = pwAcctResult.rows[0].id;
+      } else {
+        const ins = await client.query(
+          `INSERT INTO accounts (student_user_id, student_name, grade_level, graduation_year, state, school_name, claimed_at, created_by)
+           VALUES ($1, 'Password Tester', $2, $3, $4, $5, NOW(), $1) RETURNING id`,
+          [passwordTesterId, TEST_GRADE_LEVEL, TEST_GRADUATION_YEAR, TEST_STATE, TEST_SCHOOL],
+        );
+        pwAcctId = ins.rows[0].id;
+      }
+      await ensureAccountMember(client, pwAcctId, passwordTesterId, "student", true, passwordTesterId);
+      await client.query(
+        `INSERT INTO student_profiles (user_id, current_grade_level, graduation_year)
+         VALUES ($1, $2, $3)
+         ON CONFLICT (user_id) DO UPDATE SET current_grade_level = EXCLUDED.current_grade_level`,
+        [passwordTesterId, TEST_GRADE_LEVEL, TEST_GRADUATION_YEAR],
+      );
+      await ensureConsent(client, passwordTesterId);
+      console.log(`[e2e-setup] Password-test account: ${pwAcctId}`);
     }
 
     // ── 15. Ensure 2nd student account for multi-child tests ────────

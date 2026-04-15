@@ -344,17 +344,35 @@ test.describe("Plans — Delete Modal", () => {
     await expect(page.locator("text=/Delete.*plan/i").first()).toBeVisible();
   });
 
+  // The primary/only plan cannot be deleted, so its Delete button renders
+  // disabled. `.first()` resolves to the disabled button and hangs the click.
+  // Iterate and skip disabled ones, matching the pattern used above.
+  async function clickFirstEnabledDelete(page: Page): Promise<boolean> {
+    const deleteBtns = page.locator(
+      "button.text-destructive, button[aria-label*='Delete' i]",
+    );
+    const count = await deleteBtns.count();
+    for (let i = 0; i < count; i++) {
+      const btn = deleteBtns.nth(i);
+      const disabled = await btn.isDisabled().catch(() => true);
+      if (!disabled) {
+        await btn.click();
+        return true;
+      }
+    }
+    return false;
+  }
+
   test("delete confirmation has Cancel and Delete buttons", async ({ page }) => {
     await login(page);
     await page.goto("/plans");
     await page.waitForTimeout(2_000);
 
-    const deleteBtn = page.locator("button.text-destructive, button[aria-label*='Delete' i]").first();
-    if ((await deleteBtn.count()) === 0) {
+    const clicked = await clickFirstEnabledDelete(page);
+    if (!clicked) {
       test.skip(true, "No deletable plans found");
       return;
     }
-    await deleteBtn.click();
     await page.waitForTimeout(500);
 
     await expect(page.getByRole("button", { name: /Cancel/i })).toBeVisible({ timeout: 5_000 });
@@ -366,12 +384,11 @@ test.describe("Plans — Delete Modal", () => {
     await page.goto("/plans");
     await page.waitForTimeout(2_000);
 
-    const deleteBtn = page.locator("button.text-destructive, button[aria-label*='Delete' i]").first();
-    if ((await deleteBtn.count()) === 0) {
+    const clicked = await clickFirstEnabledDelete(page);
+    if (!clicked) {
       test.skip(true, "No deletable plans found");
       return;
     }
-    await deleteBtn.click();
     await page.waitForTimeout(500);
 
     await page.getByRole("button", { name: /Cancel/i }).click();

@@ -107,14 +107,17 @@ test.describe("Transcript — Course Table", () => {
     await navigateToTranscript(page);
     await page.waitForTimeout(2000);
 
-    // Grade sections start collapsed; expand all visible grade buttons
-    const gradeBtns = page.locator('button[aria-expanded="false"]');
-    const btnCount = await gradeBtns.count();
-    for (let i = 0; i < btnCount; i++) {
-      const text = await gradeBtns.nth(i).textContent();
-      if (text && /Grade \d+/.test(text)) {
-        await gradeBtns.nth(i).click();
-        await page.waitForTimeout(300);
+    // Grade sections start collapsed; expand each one by Grade-N text.
+    // Iterating the `aria-expanded="false"` locator directly is unsafe —
+    // clicking a button flips its aria-expanded, so the locator set shrinks
+    // mid-loop and later nth(i) calls time out waiting for a vanished index.
+    for (const grade of [9, 10, 11, 12]) {
+      const toggle = page
+        .locator(`button[aria-expanded="false"]`)
+        .filter({ hasText: new RegExp(`Grade ${grade}\\b`) });
+      if ((await toggle.count()) > 0) {
+        await toggle.first().click();
+        await page.waitForTimeout(200);
       }
     }
 

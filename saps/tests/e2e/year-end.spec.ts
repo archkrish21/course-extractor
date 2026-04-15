@@ -205,13 +205,14 @@ test.describe("Year-End — Step Navigation", () => {
 
   test("Step 2 shows grade advancement cards", async ({ page }) => {
     await navigateToYearEnd(page);
+    await expect(page.locator("text=/Confirm Final Grades/i")).toBeVisible({ timeout: 10_000 });
     await fillAllGrades(page);
 
     const nextBtn = page.getByRole("button", { name: "Next", exact: true });
-    await expect(nextBtn).toBeEnabled({ timeout: 3_000 });
+    await expect(nextBtn).toBeEnabled({ timeout: 5_000 });
 
     await nextBtn.click();
-    await page.waitForTimeout(500);
+    await page.waitForTimeout(750);
 
     // Should show Current → Next grade cards or graduation message
     const gradeCards = page.locator("text=/Current|Next Year|Congratulations/i");

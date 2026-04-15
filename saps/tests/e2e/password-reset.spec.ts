@@ -1,6 +1,11 @@
 import { test, expect } from "@playwright/test";
 import { waitForHydration, login } from "./helpers";
 
+// Keep in sync with TEST_STUDENT_PASSWORD_EMAIL in global-setup.ts.
+// Inlined because importing from global-setup re-evaluates its module side
+// effects in the test parser and breaks test discovery.
+const TEST_STUDENT_PASSWORD_EMAIL = "student-password@test.com";
+
 /**
  * E2E tests for password reset flows:
  * 1. Forgot password page (unauthenticated)
@@ -265,8 +270,17 @@ test.describe("Password Reset — Settings Inline Change", () => {
 
   test("successfully changes password via settings page", async ({
     page,
-  }) => {
-    await login(page);
+  }, testInfo) => {
+    // Runs only on chromium. Mobile coverage adds nothing here (same settings
+    // UI, same toast), and running both projects against the same Supabase
+    // user creates an unavoidable race: while chromium is mid-rotation
+    // (password = TempXXX briefly), mobile's login attempt with Test1234!
+    // fails. A dedicated `student-password@test.com` account is still used
+    // so this test can't interfere with the shared student fixture.
+    test.skip(testInfo.project.name !== "chromium", "Runs only on chromium to avoid parallel auth race");
+
+    const projectSuffix = testInfo.project.name || "x";
+    await login(page, TEST_STUDENT_PASSWORD_EMAIL);
     await page.goto("/settings");
     await page.waitForTimeout(2_000);
 
@@ -279,22 +293,30 @@ test.describe("Password Reset — Settings Inline Change", () => {
     await expect(editButton).toBeVisible({ timeout: 5_000 });
     await editButton.click();
 
-    // Fill in new password (same as current to keep test account working)
-    await page.getByPlaceholder("Enter new password").fill("Test1234!");
-    await page.getByPlaceholder("Confirm new password").fill("Test1234!");
-
-    // Click Save
+    // Supabase GoTrue rejects setting a password that matches the current one.
+    // Use a throwaway password, then change it back so subsequent login tests
+    // (which rely on TEST_PASSWORD = "Test1234!") continue to work.
+    const tempPw = `Temp${Date.now()}${projectSuffix}!A1`;
+    await page.getByPlaceholder("Enter new password").fill(tempPw);
+    await page.getByPlaceholder("Confirm new password").fill(tempPw);
     await page.getByRole("button", { name: "Save" }).click();
 
-    // Should show success toast
     await expect(page.getByText("Password updated successfully")).toBeVisible({
       timeout: 10_000,
     });
 
-    // Form should close
     await expect(
       page.getByPlaceholder("Enter new password"),
     ).not.toBeVisible({ timeout: 5_000 });
+
+    // Restore the canonical test password so later tests can still log in.
+    await page.locator("button").filter({ hasText: "--------" }).first().click();
+    await page.getByPlaceholder("Enter new password").fill("Test1234!");
+    await page.getByPlaceholder("Confirm new password").fill("Test1234!");
+    await page.getByRole("button", { name: "Save" }).click();
+    await expect(page.getByText("Password updated successfully")).toBeVisible({
+      timeout: 10_000,
+    });
   });
 });
 

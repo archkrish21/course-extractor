@@ -12,7 +12,7 @@ const cspHeader = [
   "img-src 'self' data: https:",
   "font-src 'self'",
   isDev
-    ? "connect-src 'self' ws://localhost:* http://localhost:* http://127.0.0.1:* https://*.supabase.co https://hcaptcha.com https://*.hcaptcha.com https://*.ingest.us.sentry.io https://*.ingest.sentry.io"
+    ? "connect-src 'self' ws://localhost:* http://localhost:* http://127.0.0.1:* https://*.supabase.co https://hcaptcha.com https://*.hcaptcha.com https://*.ingest.us.sentry.io https://*.ingest.sentry.io https://*.i.posthog.com"
     : "connect-src 'self' https://*.supabase.co https://api.stripe.com https://*.i.posthog.com https://*.upstash.io https://hcaptcha.com https://*.hcaptcha.com https://*.ingest.us.sentry.io https://*.ingest.sentry.io",
   "frame-src https://js.stripe.com https://hcaptcha.com https://*.hcaptcha.com",
   "object-src 'none'",

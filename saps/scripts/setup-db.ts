@@ -148,7 +148,7 @@ async function main() {
     if (!skipCourses) {
       log("2/7", "Loading course catalog...");
 
-      const jsonPath = path.join(__dirname, "..", "extractor", "data", "2026-courses.json");
+      const jsonPath = path.join(__dirname, "..", "extractor", "data", "2026-courses-with-summer.json");
       if (!fs.existsSync(jsonPath)) {
         warn("2/7", `Course data not found at ${jsonPath}. Skipping.`);
       } else {

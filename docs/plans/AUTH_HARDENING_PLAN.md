@@ -16,6 +16,8 @@ Each step is self-contained with concrete files, code sketches, verification, an
 
 Work under `saps/` unless noted otherwise.
 
+> **Prod-only items from this plan** (Step 2 curl, Step 5c/5d) are tracked in [`LAUNCH_CHECKLIST.md`](../operations/LAUNCH_CHECKLIST.md) alongside the other launch prerequisites. Check there before going live.
+
 ---
 
 ## Pre-work (once, before starting)

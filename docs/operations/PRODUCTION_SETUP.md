@@ -4,6 +4,8 @@ Step-by-step guide to provision and configure a production (or staging) deployme
 
 All commands run from `saps/` unless noted otherwise.
 
+> **Launching to production?** Work from [`LAUNCH_CHECKLIST.md`](./LAUNCH_CHECKLIST.md) — it pulls together every `[ ]` item from this guide, the auth hardening plan, and the third-party integrations into one tickable list. Use this doc for the "how" and the checklist for the "what's left."
+
 ---
 
 ## Table of Contents

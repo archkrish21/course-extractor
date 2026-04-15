@@ -50,6 +50,7 @@ extractor/.venv/
 
 # supabase local
 supabase/.temp/
+supabase/snippets/
 
 # editor
 .idea/

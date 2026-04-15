@@ -1,14 +1,18 @@
 "use client";
 
-import { useState, useEffect, Suspense, type FormEvent } from "react";
+import { useRef, useState, useEffect, Suspense, type FormEvent } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
+import HCaptcha from "@hcaptcha/react-hcaptcha";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+
+const HCAPTCHA_SITE_KEY = process.env.NEXT_PUBLIC_HCAPTCHA_SITE_KEY;
 
 interface FieldErrors {
   email?: string;
   password?: string;
+  captcha?: string;
   form?: string;
 }
 
@@ -28,6 +32,8 @@ function LoginPageInner() {
   const [errors, setErrors] = useState<FieldErrors>({});
   const [loading, setLoading] = useState(false);
   const [successMessage, setSuccessMessage] = useState("");
+  const [captchaToken, setCaptchaToken] = useState<string | null>(null);
+  const captchaRef = useRef<HCaptcha | null>(null);
 
   // Show error/success from URL params
   useEffect(() => {
@@ -59,6 +65,9 @@ function LoginPageInner() {
     } else if (password.length < 8) {
       errs.password = "Password must be at least 8 characters.";
     }
+    if (HCAPTCHA_SITE_KEY && !captchaToken) {
+      errs.captcha = "Please complete the CAPTCHA.";
+    }
     return errs;
   }
 
@@ -81,10 +90,14 @@ function LoginPageInner() {
       const { error: authError } = await supabase.auth.signInWithPassword({
         email,
         password,
+        ...(captchaToken && { options: { captchaToken } }),
       });
 
       if (authError) {
         setErrors({ form: "Invalid email or password." });
+        // Tokens are single-use — reset for retry.
+        captchaRef.current?.resetCaptcha();
+        setCaptchaToken(null);
         return;
       }
 
@@ -195,7 +208,26 @@ function LoginPageInner() {
           </div>
         </div>
 
-        <Button type="submit" disabled={loading} className="mt-2 w-full">
+        {/* hCaptcha — renders only when site key is configured */}
+        {HCAPTCHA_SITE_KEY && (
+          <div className="flex flex-col items-center gap-1">
+            <HCaptcha
+              ref={captchaRef}
+              sitekey={HCAPTCHA_SITE_KEY}
+              onVerify={(token) => {
+                setCaptchaToken(token);
+                setErrors((prev) => ({ ...prev, captcha: undefined }));
+              }}
+              onExpire={() => setCaptchaToken(null)}
+              onError={() => setCaptchaToken(null)}
+            />
+            {errors.captcha && (
+              <p className="text-sm text-destructive" role="alert">{errors.captcha}</p>
+            )}
+          </div>
+        )}
+
+        <Button type="submit" disabled={loading || (!!HCAPTCHA_SITE_KEY && !captchaToken)} className="mt-2 w-full">
           {loading ? "Signing in..." : "Sign in"}
         </Button>
       </form>

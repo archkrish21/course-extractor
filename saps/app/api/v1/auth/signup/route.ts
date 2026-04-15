@@ -39,6 +39,7 @@ const signupSchema = z.object({
   }),
   invite_code: z.string().max(8).optional(),
   invite_account: z.string().uuid().optional(),
+  captcha_token: z.string().optional(),
 });
 
 export async function POST(request: NextRequest) {
@@ -68,7 +69,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const { email, password, role: rawRole, name, state, school_name, invite_code, invite_account } = parsed.data;
+    const { email, password, role: rawRole, name, state, school_name, invite_code, invite_account, captcha_token } = parsed.data;
 
     // Map "guardian" to "parent" for storage — they have identical behavior
     const role = rawRole === "guardian" ? "parent" : rawRole;
@@ -80,10 +81,18 @@ export async function POST(request: NextRequest) {
     if (invite_code) metadata.invite_code = invite_code;
     if (invite_account) metadata.invite_account = invite_account;
 
+    // Pass the hCaptcha token through to Supabase when present. Supabase
+    // enforces CAPTCHA server-side when the project's Attack Protection is
+    // enabled; the widget is gated on NEXT_PUBLIC_HCAPTCHA_SITE_KEY in the
+    // frontend so local dev (no site key) still works without CAPTCHA.
+    const signUpOptions: { data?: Record<string, string>; captchaToken?: string } = {};
+    if (Object.keys(metadata).length > 0) signUpOptions.data = metadata;
+    if (captcha_token) signUpOptions.captchaToken = captcha_token;
+
     const { data: authData, error: authError } = await supabase.auth.signUp({
       email,
       password,
-      options: Object.keys(metadata).length > 0 ? { data: metadata } : undefined,
+      options: Object.keys(signUpOptions).length > 0 ? signUpOptions : undefined,
     });
 
     if (authError) {

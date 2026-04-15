@@ -1,11 +1,14 @@
 "use client";
 
-import { useState, type FormEvent } from "react";
+import { useRef, useState, type FormEvent } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import HCaptcha from "@hcaptcha/react-hcaptcha";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
+
+const HCAPTCHA_SITE_KEY = process.env.NEXT_PUBLIC_HCAPTCHA_SITE_KEY;
 
 type Role = "student" | "parent" | "guardian" | "counselor";
 
@@ -16,6 +19,7 @@ interface FieldErrors {
   ageConfirmed?: string;
   role?: string;
   tos?: string;
+  captcha?: string;
   form?: string;
 }
 
@@ -42,6 +46,8 @@ export default function SignupPage() {
   const [loading, setLoading] = useState(false);
   const [confirmationPending, setConfirmationPending] = useState(false);
   const [hasInvite, setHasInvite] = useState(false);
+  const [captchaToken, setCaptchaToken] = useState<string | null>(null);
+  const captchaRef = useRef<HCaptcha | null>(null);
 
   function validate(): FieldErrors {
     const errs: FieldErrors = {};
@@ -54,6 +60,7 @@ export default function SignupPage() {
     if (!ageConfirmed) errs.ageConfirmed = "You must be at least 13 years old to create an account.";
     if (!role) errs.role = "Please select a role.";
     if (!tosAccepted) errs.tos = "You must agree to continue.";
+    if (HCAPTCHA_SITE_KEY && !captchaToken) errs.captcha = "Please complete the CAPTCHA.";
     return errs;
   }
 
@@ -76,12 +83,16 @@ export default function SignupPage() {
           state: "IL", school_name: "Adlai E. Stevenson High School", tos_accepted: true,
           ...(inviteCode && { invite_code: inviteCode }),
           ...(inviteAccount && { invite_account: inviteAccount }),
+          ...(captchaToken && { captcha_token: captchaToken }),
         }),
       });
 
       if (!res.ok) {
         const data = await res.json().catch(() => ({}));
         setErrors({ form: data?.error?.message || data?.message || "Signup failed. Please try again." });
+        // Reset CAPTCHA so the user can re-solve on retry (tokens are single-use).
+        captchaRef.current?.resetCaptcha();
+        setCaptchaToken(null);
         return;
       }
 
@@ -292,8 +303,27 @@ export default function SignupPage() {
             }
           />
 
+          {/* hCaptcha — renders only when site key is configured */}
+          {HCAPTCHA_SITE_KEY && (
+            <div className="flex flex-col items-center gap-1">
+              <HCaptcha
+                ref={captchaRef}
+                sitekey={HCAPTCHA_SITE_KEY}
+                onVerify={(token) => {
+                  setCaptchaToken(token);
+                  setErrors((prev) => ({ ...prev, captcha: undefined }));
+                }}
+                onExpire={() => setCaptchaToken(null)}
+                onError={() => setCaptchaToken(null)}
+              />
+              {errors.captcha && (
+                <p className="text-sm text-destructive" role="alert">{errors.captcha}</p>
+              )}
+            </div>
+          )}
+
           {/* Submit */}
-          <Button type="submit" disabled={loading || !tosAccepted || !ageConfirmed} className="w-full">
+          <Button type="submit" disabled={loading || !tosAccepted || !ageConfirmed || (!!HCAPTCHA_SITE_KEY && !captchaToken)} className="w-full">
             {loading ? "Creating account..." : "Create account"}
           </Button>
         </form>

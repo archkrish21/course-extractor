@@ -11,11 +11,11 @@ Each item links to the authoritative doc so details don't get duplicated here.
 **Source:** [`PRODUCTION_SETUP.md` §1–6](./PRODUCTION_SETUP.md), [`AUTH_HARDENING_PLAN.md` §5c](../plans/AUTH_HARDENING_PLAN.md)
 
 ### Project creation
-- [ ] Supabase project created (choose region close to users)
-- [ ] Credentials collected: `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`, `DATABASE_URL`
-- [ ] Schema applied: `npm run db:setup` against the hosted DB
-- [ ] Course catalog loaded and verified (≥ ~360 rows in `courses` where `is_active = true`)
-- [ ] Legal documents seeded (`legal_documents` has rows)
+- [x] Supabase project created (choose region close to users)
+- [x] Credentials collected: `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`, `DATABASE_URL`
+- [x] Schema applied: `npm run db:setup` + `db:migrate` against the hosted DB (done 2026-04-15)
+- [x] Course catalog loaded and verified (361 active courses — 315 base + 46 summer, matches `saps/extractor/data/2026-courses-with-summer.json`. Backfilled 2026-04-15 after switching default catalog JSON.)
+- [x] Legal documents seeded (3 rows — ToS, Privacy, Age Attestation, verified 2026-04-15)
 
 ### Auth configuration — Supabase dashboard
 - [ ] URL Configuration → Site URL set to `https://yourdomain.com`

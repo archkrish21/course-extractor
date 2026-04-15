@@ -56,9 +56,12 @@ Each item links to the authoritative doc so details don't get duplicated here.
 - [ ] Send a test confirmation email to yourself — arrives within 10 minutes, lands in inbox not spam
 
 ### Sentry + PostHog (monitoring)
-- [ ] Sentry project created, `SENTRY_DSN` + `NEXT_PUBLIC_SENTRY_DSN` in Vercel env vars
-- [ ] PostHog project created, `NEXT_PUBLIC_POSTHOG_KEY` + `POSTHOG_PERSONAL_API_KEY` in Vercel env vars
-- [ ] Sentry release tagged on first deploy (source maps upload configured)
+- [x] Sentry project created (org `saps-57`, project `javascript-nextjs`); SDK wired for client/server/edge; verified locally (2026-04-15)
+- [x] PostHog project created (default project on US Cloud); provider mounted in root layout; `$pageview` verified in Live Events (2026-04-15)
+- [ ] `SENTRY_DSN` + `NEXT_PUBLIC_SENTRY_DSN` + `SENTRY_AUTH_TOKEN` in Vercel env vars (values saved locally)
+- [ ] `NEXT_PUBLIC_POSTHOG_KEY` in Vercel env vars (value in local `.env.local`)
+- [ ] `POSTHOG_PERSONAL_API_KEY` + `POSTHOG_PROJECT_ID` in Vercel env vars — required so the account-delete GDPR purge path actually hits PostHog (currently silently skipped when unset)
+- [ ] Sentry release tagged on first deploy (source-map upload configured via SENTRY_AUTH_TOKEN)
 - [ ] Trigger a test error in production → confirmed in Sentry
 
 ---

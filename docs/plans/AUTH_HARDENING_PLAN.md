@@ -265,7 +265,7 @@ Revert the commit. Rate limits are additive.
 - [x] `invite`, `join`, `claim` all have `rateLimit()` calls
 - [x] `auth/signup`, `auth/login`, `auth/onboarding` still have their limits
 - [x] New test covers 429 path for invite
-- [ ] Manual curl verification — deferred to prod (Step 5d smoke test). Rate limiter fails open locally because Upstash Redis isn't configured; unit tests + regression tests cover the 429 path. Authoritative check happens against the hosted deployment after provisioning Upstash.
+- [x] Manual curl verification done — with Upstash Redis configured locally (REST URL + token in `.env.local`), 7 rapid `POST /api/v1/auth/login` attempts returned 401 on 1-5 and **429** on 6-7 (verified 2026-04-15). Same behavior will apply in prod once the same env vars are set in Vercel.
 
 ---
 

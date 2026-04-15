@@ -37,9 +37,9 @@ Each item links to the authoritative doc so details don't get duplicated here.
 ## Phase 2 — Third-party integrations
 
 ### Upstash Redis (required for rate limiting)
-- [ ] Upstash project created, Redis instance provisioned
-- [ ] `UPSTASH_REDIS_REST_URL` + `UPSTASH_REDIS_REST_TOKEN` in Vercel env vars
-- [ ] Verified: rate limiter no longer fails open (see Phase 4 curl test)
+- [x] Upstash project created, Redis instance provisioned (2026-04-15)
+- [ ] `UPSTASH_REDIS_REST_URL` + `UPSTASH_REDIS_REST_TOKEN` in Vercel env vars — values saved locally, add when provisioning Vercel
+- [x] Verified rate limiter works against Upstash — local 7× login curl returned 401 × 5, then 429 × 2 (2026-04-15)
 
 ### Stripe (paid subscriptions)
 - [ ] Stripe account in **live mode**, not test mode

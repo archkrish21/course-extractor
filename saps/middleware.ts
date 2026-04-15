@@ -48,8 +48,9 @@ export const config = {
      * - _next/static (static files)
      * - _next/image (image optimization)
      * - favicon.ico
+     * - monitoring (Sentry tunnel route — must not be intercepted)
      * - image file extensions (svg, png, jpg, jpeg, gif, webp)
      */
-    "/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
+    "/((?!_next/static|_next/image|favicon.ico|monitoring|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
   ],
 };

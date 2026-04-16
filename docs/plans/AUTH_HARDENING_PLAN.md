@@ -466,9 +466,9 @@ Items verified now against the local stack ([saps/supabase/config.toml](saps/sup
 These items must be applied to the hosted Supabase project, not `config.toml`. `config.toml` only configures the local stack; the hosted project has its own dashboard settings.
 
 #### Authentication → URL Configuration
-- [ ] Site URL: `https://yourdomain.com`
-- [ ] Redirect URLs: `https://yourdomain.com/**`
-- [ ] Remove any stale `localhost` or `*.vercel.app` entries
+- [x] Site URL: `https://saps-archkrish21s-projects.vercel.app` (configured 2026-04-16)
+- [x] Redirect URLs: `https://*-archkrish21s-projects.vercel.app/**` (wildcard for all preview/prod, configured 2026-04-16)
+- [x] No stale `localhost` entries in redirect URLs
 
 #### Authentication → Rate Limits
 - [ ] Emails per hour: **10**
@@ -476,13 +476,13 @@ These items must be applied to the hosted Supabase project, not `config.toml`. `
 - [ ] Signups per hour per IP: **10**
 
 #### Authentication → Providers → Email
-- [ ] Enable "Confirm email"
-- [ ] Customize the confirmation, invite, magic link, and recovery email templates with your branding
+- [x] Enable "Confirm email" (configured 2026-04-16)
+- [x] Customize the confirmation, invite, magic link, recovery, and email change templates with SAPS branding — blue header, consistent footer with app URL + context line. All links route through `/auth/confirm` using `{{ .TokenHash }}` (updated 2026-04-16)
 - [ ] Set OTP expiry to 10 minutes (default is 1 hour — unnecessarily long)
 
 #### Authentication → Attack Protection
 - [x] Enable **CAPTCHA** — hCaptcha provider configured in Supabase (secret set 2026-04-15)
-- [x] Frontend wiring done — `@hcaptcha/react-hcaptcha` widget renders on `/signup` + `/login` when `NEXT_PUBLIC_HCAPTCHA_SITE_KEY` is set; token forwarded via `signUp({ options: { captchaToken } })` on the server and `signInWithPassword({ options: { captchaToken } })` on the client. CSP updated to allow `hcaptcha.com` + `*.hcaptcha.com` origins.
+- [x] Frontend wiring done — `@hcaptcha/react-hcaptcha` widget renders on `/signup`, `/login`, and `/forgot-password` when `NEXT_PUBLIC_HCAPTCHA_SITE_KEY` is set; token forwarded to Supabase. CSP updated to allow `hcaptcha.com` + `*.hcaptcha.com` origins. (forgot-password added 2026-04-16)
 - [ ] Test end-to-end in prod (site key set in Vercel, signup in incognito → widget appears → account created)
 
 #### Authentication → Password Policy
@@ -503,7 +503,7 @@ These items must be applied to the hosted Supabase project, not `config.toml`. `
 ### 5e. Exit criteria
 
 - [x] 5a — local audit complete
-- [ ] 5c — prod provisioning checklist applied (done during launch)
+- [~] 5c — prod provisioning partially applied (2026-04-16: Site URL, redirect URLs, email confirm, email templates, CAPTCHA done. Remaining: dashboard rate limits, OTP expiry)
 - [ ] 5d — prod smoke test passed (done during launch)
 
 ---
@@ -512,11 +512,11 @@ These items must be applied to the hosted Supabase project, not `config.toml`. `
 
 - [x] Step 1 — RLS enabled on all 39 tables (37 original + 2 newly created log tables), 38 policies in place, tests pass
 - [x] Step 2 — Auth + invite endpoints rate-limited
-- [x] Step 3 — Origin check on 30 route files (webhook + public forms exempt)
+- [x] Step 3 — Origin check on 30 route files (webhook + public forms exempt); updated to allow Vercel preview/prod origins (2026-04-16)
 - [x] Step 4 — Session refresh middleware in place
-- [ ] Step 5 — Supabase hardening
+- [~] Step 5 — Supabase hardening (mostly done)
   - [x] 5a local audit (service role key, anon signups, refresh token rotation, rate limits)
-  - [ ] 5c prod provisioning checklist (done during launch)
+  - [~] 5c prod provisioning checklist (Site URL, redirects, email confirm, templates, CAPTCHA done 2026-04-16. Remaining: dashboard rate limits, OTP expiry)
   - [ ] 5d prod smoke test (done during launch)
 
 ### Regression safety

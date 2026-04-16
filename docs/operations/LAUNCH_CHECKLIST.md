@@ -18,19 +18,19 @@ Each item links to the authoritative doc so details don't get duplicated here.
 - [x] Legal documents seeded (3 rows — ToS, Privacy, Age Attestation, verified 2026-04-15)
 
 ### Auth configuration — Supabase dashboard
-- [ ] URL Configuration → Site URL set to `https://yourdomain.com`
-- [ ] URL Configuration → Redirect URLs include `https://yourdomain.com/**`, no stale `localhost` / `*.vercel.app`
-- [ ] Email provider → "Confirm email" enabled
-- [ ] Email templates customized with SAPS branding (confirmation, invite, magic link, recovery)
+- [x] URL Configuration → Site URL set to `https://saps-archkrish21s-projects.vercel.app` (configured 2026-04-16)
+- [x] URL Configuration → Redirect URLs include `https://*-archkrish21s-projects.vercel.app/**` for all preview/prod deployments (configured 2026-04-16)
+- [x] Email provider → "Confirm email" enabled (configured 2026-04-16)
+- [x] Email templates customized with SAPS branding — confirmation, invite, magic link, recovery, email change. All use `{{ .SiteURL }}/auth/confirm?token_hash={{ .TokenHash }}&type=...` for proper routing (updated 2026-04-16)
 - [ ] OTP expiry: **10 minutes**
 - [ ] Rate Limits → Emails/hour: **10**, Token verifications/5min: **30**, Signups/hour/IP: **10**
 - [x] Password Policy → min length 8, `letters_digits` or stricter (configured 2026-04-15)
 - [x] Attack Protection → hCaptcha configured in Supabase dashboard with site key `7cc8cd46-…-0f70c1bcf266` (secret set 2026-04-15)
-- [x] CAPTCHA token wired through frontend signup/login forms — `@hcaptcha/react-hcaptcha` widget + token forwarded to Supabase; CSP allows `hcaptcha.com` origins. Still needs end-to-end prod smoke (checked in Phase 5).
+- [x] CAPTCHA token wired through frontend signup/login/forgot-password forms — `@hcaptcha/react-hcaptcha` widget + token forwarded to Supabase; CSP allows `hcaptcha.com` origins (updated 2026-04-16 to include forgot-password)
 
 ### Secrets hygiene
 - [ ] Service role key rotated if it was ever committed or shared
-- [ ] Service role key stored only in Vercel server-only env vars (never `NEXT_PUBLIC_`)
+- [x] Service role key stored only in Vercel server-only env vars (never `NEXT_PUBLIC_`) — verified 2026-04-16
 
 ---
 
@@ -38,7 +38,7 @@ Each item links to the authoritative doc so details don't get duplicated here.
 
 ### Upstash Redis (required for rate limiting)
 - [x] Upstash project created, Redis instance provisioned (2026-04-15)
-- [ ] `UPSTASH_REDIS_REST_URL` + `UPSTASH_REDIS_REST_TOKEN` in Vercel env vars — values saved locally, add when provisioning Vercel
+- [x] `UPSTASH_REDIS_REST_URL` + `UPSTASH_REDIS_REST_TOKEN` in Vercel env vars (configured 2026-04-16)
 - [x] Verified rate limiter works against Upstash — local 7× login curl returned 401 × 5, then 429 × 2 (2026-04-15)
 
 ### Stripe (paid subscriptions) — DEFERRED to post-launch
@@ -52,16 +52,16 @@ Each item links to the authoritative doc so details don't get duplicated here.
 
 ### Resend (transactional email)
 - [ ] Domain added to Resend and DNS records verified (SPF, DKIM, DMARC)
-- [ ] `RESEND_API_KEY` in Vercel env vars
+- [x] `RESEND_API_KEY` in Vercel env vars (configured 2026-04-16)
 - [ ] Supabase Auth → SMTP set to Resend (or equivalent), "from" address uses your verified domain
 - [ ] Send a test confirmation email to yourself — arrives within 10 minutes, lands in inbox not spam
 
 ### Sentry + PostHog (monitoring)
 - [x] Sentry project created (org `saps-57`, project `javascript-nextjs`); SDK wired for client/server/edge; verified locally (2026-04-15)
 - [x] PostHog project created (default project on US Cloud); provider mounted in root layout; `$pageview` verified in Live Events (2026-04-15)
-- [ ] `SENTRY_DSN` + `NEXT_PUBLIC_SENTRY_DSN` + `SENTRY_AUTH_TOKEN` in Vercel env vars (values saved locally)
-- [ ] `NEXT_PUBLIC_POSTHOG_KEY` in Vercel env vars (value in local `.env.local`)
-- [ ] `POSTHOG_PERSONAL_API_KEY` + `POSTHOG_PROJECT_ID` in Vercel env vars — required so the account-delete GDPR purge path actually hits PostHog (currently silently skipped when unset)
+- [x] `NEXT_PUBLIC_SENTRY_DSN` in Vercel env vars (configured 2026-04-16). `SENTRY_AUTH_TOKEN` not yet set — source maps won't upload until this is added.
+- [x] `NEXT_PUBLIC_POSTHOG_KEY` in Vercel env vars (configured 2026-04-16)
+- [x] `POSTHOG_PERSONAL_API_KEY` + `POSTHOG_PROJECT_ID` in Vercel env vars (configured 2026-04-16)
 - [ ] Sentry release tagged on first deploy (source-map upload configured via SENTRY_AUTH_TOKEN)
 - [ ] Trigger a test error in production → confirmed in Sentry
 
@@ -71,15 +71,17 @@ Each item links to the authoritative doc so details don't get duplicated here.
 
 **Source:** [`PRODUCTION_SETUP.md` §8](./PRODUCTION_SETUP.md)
 
-- [ ] GitHub repo connected to Vercel project
-- [ ] Build command and install command use `saps/` as root (or monorepo config applied)
-- [ ] All env vars from `saps/.env.local.example` set in Vercel (production environment)
-- [ ] `NEXT_PUBLIC_APP_URL` = `https://yourdomain.com`
-- [ ] `NEXT_PUBLIC_SUPPORT_URL` set (or intentionally blank)
-- [ ] `NEXT_PUBLIC_HCAPTCHA_SITE_KEY` = `7cc8cd46-ce44-47d6-a60c-0f70c1bcf266` (required for CAPTCHA widget to render on signup/login)
+- [x] GitHub repo connected to Vercel project (`archkrish21/course-extractor` → `saps` project, configured 2026-04-16)
+- [x] Build command and install command use `saps/` as root (configured 2026-04-16)
+- [x] All env vars from `saps/.env.local.example` set in Vercel — 22 vars for production + preview (configured 2026-04-16)
+- [x] `NEXT_PUBLIC_APP_URL` = `https://saps.vercel.app` (configured 2026-04-16)
+- [ ] `NEXT_PUBLIC_SUPPORT_URL` set — awaiting Ko-fi account setup (#37)
+- [x] `NEXT_PUBLIC_HCAPTCHA_SITE_KEY` = `7cc8cd46-ce44-47d6-a60c-0f70c1bcf266` (configured 2026-04-16)
 - [ ] Custom domain added in Vercel, DNS pointing, SSL cert issued
-- [ ] First successful production deploy
-- [ ] CSP headers allow the hosted Supabase URL (see [`PRODUCTION_SETUP.md` §7 CSP note](./PRODUCTION_SETUP.md))
+- [x] First successful production deploy (2026-04-16)
+- [x] CSP headers allow the hosted Supabase URL
+- [x] Preview deployments working — auto-deploy on PR, preview URLs generated
+- [x] CSRF origin check allows Vercel domains (VERCEL_URL + *.vercel.app)
 
 ---
 
@@ -155,4 +157,4 @@ These are known limitations documented elsewhere, intentionally not blocking lau
 
 ---
 
-**Last updated:** 2026-04-15
+**Last updated:** 2026-04-16

@@ -74,57 +74,64 @@ export async function POST(request: NextRequest) {
     // Map "guardian" to "parent" for storage — they have identical behavior
     const role = rawRole === "guardian" ? "parent" : rawRole;
 
-    // Create user via Supabase Auth — store invite params in metadata
-    // so the email confirmation callback can redirect to /join
+    // Create user via Supabase Auth.
+    // Invite-based signups use admin.createUser() to skip the confirmation
+    // email — the user already proved email ownership by clicking the invite
+    // link. Normal signups use signUp() which sends a confirmation email.
     const supabase = await createSupabaseServerClient();
-    const metadata: Record<string, string> = {};
-    if (invite_code) metadata.invite_code = invite_code;
-    if (invite_account) metadata.invite_account = invite_account;
+    const isInviteSignup = !!(invite_code && invite_account);
 
-    // Pass the hCaptcha token through to Supabase when present. Supabase
-    // enforces CAPTCHA server-side when the project's Attack Protection is
-    // enabled; the widget is gated on NEXT_PUBLIC_HCAPTCHA_SITE_KEY in the
-    // frontend so local dev (no site key) still works without CAPTCHA.
-    const signUpOptions: { data?: Record<string, string>; captchaToken?: string } = {};
-    if (Object.keys(metadata).length > 0) signUpOptions.data = metadata;
-    if (captcha_token) signUpOptions.captchaToken = captcha_token;
+    let userId: string;
+    let emailConfirmationPending: boolean;
 
-    const { data: authData, error: authError } = await supabase.auth.signUp({
-      email,
-      password,
-      options: Object.keys(signUpOptions).length > 0 ? signUpOptions : undefined,
-    });
-
-    if (authError) {
-      if (authError.message.includes("already registered")) {
-        return errorResponse("EMAIL_EXISTS", "An account with this email already exists.", 409);
-      }
-      return errorResponse("AUTH_ERROR", authError.message, 400);
-    }
-
-    if (!authData.user) {
-      return errorResponse("AUTH_ERROR", "Failed to create user account.", 500);
-    }
-
-    const userId = authData.user.id;
-    let emailConfirmationPending = !authData.session;
-
-    // Invite-based signups: the student already proved email ownership by
-    // clicking the invite link, so skip the confirmation email and auto-confirm.
-    if (emailConfirmationPending && invite_code && invite_account) {
-      try {
-        const supabaseAdmin = createSupabaseAdminClient();
-        await supabaseAdmin.auth.admin.updateUserById(userId, {
+    if (isInviteSignup) {
+      // Admin create — pre-confirmed, no confirmation email sent
+      const supabaseAdmin = createSupabaseAdminClient();
+      const { data: adminData, error: adminError } =
+        await supabaseAdmin.auth.admin.createUser({
+          email,
+          password,
           email_confirm: true,
+          user_metadata: { invite_code, invite_account },
         });
-        // Sign in to create a session — signUp doesn't return a session
-        // when enable_confirmations is true, even after admin-confirming.
-        await supabase.auth.signInWithPassword({ email, password });
-        emailConfirmationPending = false;
-      } catch (confirmError) {
-        console.error("[signup] Failed to auto-confirm invite user:", confirmError);
-        // Fall through — they'll get the confirmation email as fallback
+
+      if (adminError) {
+        if (adminError.message.includes("already been registered") || adminError.message.includes("already registered")) {
+          return errorResponse("EMAIL_EXISTS", "An account with this email already exists.", 409);
+        }
+        return errorResponse("AUTH_ERROR", adminError.message, 400);
       }
+
+      if (!adminData.user) {
+        return errorResponse("AUTH_ERROR", "Failed to create user account.", 500);
+      }
+
+      userId = adminData.user.id;
+      emailConfirmationPending = false;
+    } else {
+      // Normal signup — confirmation email sent by Supabase
+      const signUpOptions: { data?: Record<string, string>; captchaToken?: string } = {};
+      if (captcha_token) signUpOptions.captchaToken = captcha_token;
+
+      const { data: authData, error: authError } = await supabase.auth.signUp({
+        email,
+        password,
+        options: Object.keys(signUpOptions).length > 0 ? signUpOptions : undefined,
+      });
+
+      if (authError) {
+        if (authError.message.includes("already registered")) {
+          return errorResponse("EMAIL_EXISTS", "An account with this email already exists.", 409);
+        }
+        return errorResponse("AUTH_ERROR", authError.message, 400);
+      }
+
+      if (!authData.user) {
+        return errorResponse("AUTH_ERROR", "Failed to create user account.", 500);
+      }
+
+      userId = authData.user.id;
+      emailConfirmationPending = !authData.session;
     }
 
     // Wrap all DB operations so we can clean up the Supabase auth user

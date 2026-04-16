@@ -2,6 +2,10 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## Hard Rules
+
+- **Never commit directly to `main`.** All changes — code, docs, config, templates — must go through a feature/fix branch and be merged via PR. No exceptions.
+
 ## Project Overview
 
 SAPS (Student Academic Planning System) is a Next.js web app for high school students, parents, and counselors to manage four-year academic plans, course selection, grade tracking, and GPA calculation. Currently targets Stevenson High School.

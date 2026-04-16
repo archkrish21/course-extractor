@@ -1,15 +1,20 @@
 "use client";
 
-import { useState, type FormEvent } from "react";
+import { useRef, useState, type FormEvent } from "react";
 import Link from "next/link";
+import HCaptcha from "@hcaptcha/react-hcaptcha";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+
+const HCAPTCHA_SITE_KEY = process.env.NEXT_PUBLIC_HCAPTCHA_SITE_KEY;
 
 export default function ForgotPasswordPage() {
   const [email, setEmail] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [sent, setSent] = useState(false);
+  const [captchaToken, setCaptchaToken] = useState<string | null>(null);
+  const captchaRef = useRef<HCaptcha | null>(null);
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
@@ -19,6 +24,10 @@ export default function ForgotPasswordPage() {
     }
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
       setError("Enter a valid email address.");
+      return;
+    }
+    if (HCAPTCHA_SITE_KEY && !captchaToken) {
+      setError("Please complete the CAPTCHA.");
       return;
     }
 
@@ -33,11 +42,16 @@ export default function ForgotPasswordPage() {
       );
       const { error: resetError } = await supabase.auth.resetPasswordForEmail(
         email,
-        { redirectTo: `${window.location.origin}/auth/confirm?type=recovery` }
+        {
+          redirectTo: `${window.location.origin}/auth/confirm?type=recovery`,
+          captchaToken: captchaToken ?? undefined,
+        }
       );
 
       if (resetError) {
         setError("Failed to send reset email. Please try again.");
+        captchaRef.current?.resetCaptcha();
+        setCaptchaToken(null);
         return;
       }
 
@@ -66,7 +80,7 @@ export default function ForgotPasswordPage() {
           Didn&apos;t receive it?{" "}
           <button
             type="button"
-            onClick={() => setSent(false)}
+            onClick={() => { setSent(false); captchaRef.current?.resetCaptcha(); setCaptchaToken(null); }}
             className="font-medium text-primary hover:text-primary-hover underline underline-offset-4"
           >
             Try again
@@ -115,6 +129,17 @@ export default function ForgotPasswordPage() {
           onChange={(e) => setEmail(e.target.value)}
           placeholder="you@example.com"
         />
+
+        {HCAPTCHA_SITE_KEY && (
+          <div className="flex justify-center">
+            <HCaptcha
+              ref={captchaRef}
+              sitekey={HCAPTCHA_SITE_KEY}
+              onVerify={(token) => setCaptchaToken(token)}
+              onExpire={() => setCaptchaToken(null)}
+            />
+          </div>
+        )}
 
         <Button type="submit" disabled={loading} className="mt-2 w-full">
           {loading ? "Sending..." : "Send reset link"}

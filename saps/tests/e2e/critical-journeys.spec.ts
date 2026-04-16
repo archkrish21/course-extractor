@@ -103,7 +103,10 @@ test.describe("Critical Journey: Course Grading and GPA", () => {
 
     // Capture transcript GPA
     await page.goto("/transcript");
-    await page.waitForTimeout(3_000);
+    await expect(
+      page.getByRole("heading", { name: "Transcript", exact: true })
+    ).toBeVisible({ timeout: 10_000 });
+    await page.waitForLoadState("networkidle", { timeout: 10_000 }).catch(() => {});
 
     const emptyState = page.locator("text=/No transcript data yet|no completed courses/i");
     if ((await emptyState.count()) > 0) {
@@ -112,11 +115,15 @@ test.describe("Critical Journey: Course Grading and GPA", () => {
     }
 
     const transcriptGpaElement = page.locator("text=/\\d+\\.\\d{2,3}/").first();
+    await expect(transcriptGpaElement).toBeVisible({ timeout: 10_000 });
     const transcriptGpa = await transcriptGpaElement.textContent();
 
     // Now check progress page
     await page.goto("/progress");
-    await page.waitForTimeout(3_000);
+    await expect(
+      page.getByRole("heading", { name: "Academic Progress" })
+    ).toBeVisible({ timeout: 10_000 });
+    await page.waitForLoadState("networkidle", { timeout: 10_000 }).catch(() => {});
 
     // Progress page should show GPA somewhere (summary sidebar or cards)
     const progressGpa = page.locator("text=/\\d+\\.\\d{2,3}/").first();
@@ -280,14 +287,14 @@ test.describe("Critical Journey: Parent Views Child Plan", () => {
 
   test("parent can view child's plans page", async ({ page }) => {
     await page.goto("/plans");
-    await page.waitForTimeout(2_000);
+    await page.waitForLoadState("networkidle", { timeout: 10_000 }).catch(() => {});
 
-    // Should show plans or empty state — not an error
-    const plansContent = page.locator("text=/plans|No plans|Shared/i");
-    const heading = page.locator("text=/Plans|My Plans/i");
-
-    const hasContent = (await plansContent.count()) > 0 || (await heading.count()) > 0;
-    expect(hasContent).toBeTruthy();
+    // Wait for the page to render any content — heading or plan cards
+    await expect.poll(async () => {
+      const plansContent = await page.locator("text=/plans|No plans|Shared/i").count();
+      const heading = await page.locator("text=/Plans|My Plans/i").count();
+      return plansContent + heading;
+    }, { timeout: 10_000 }).toBeGreaterThanOrEqual(1);
   });
 
   test("parent can view child's planner with course data", async ({ page }) => {

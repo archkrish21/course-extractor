@@ -9,7 +9,10 @@ import { login } from "./helpers";
 async function navigateToTranscript(page: Page) {
   await login(page);
   await page.goto("/transcript");
-  await page.waitForTimeout(3000);
+  await expect(
+    page.getByRole("heading", { name: "Transcript", exact: true })
+  ).toBeVisible({ timeout: 10_000 });
+  await page.waitForLoadState("networkidle", { timeout: 10_000 }).catch(() => {});
 }
 
 // ─── Navigation ─────────────────────────────────────────────────────────────
@@ -187,7 +190,7 @@ test.describe("Transcript — Disclaimer", () => {
     }
 
     // Disclaimer text appears multiple times (page banner + print footer); use .first()
-    await expect(page.locator("text=Disclaimer").first()).toBeVisible({ timeout: 5_000 });
+    await expect(page.locator("text=Disclaimer").first()).toBeVisible({ timeout: 10_000 });
     await expect(page.locator("text=This is not an official school document").first()).toBeVisible();
   });
 

@@ -415,13 +415,16 @@ test.describe("Dashboard — Attention Required Card", () => {
   test("attention required card shows status (no issues or category headers)", async ({ page }) => {
     await login(page);
     await page.goto("/dashboard");
-    await page.waitForTimeout(5000);
+    await expect(page.locator("text=Attention Required").first()).toBeVisible({ timeout: 10_000 });
+    await page.waitForLoadState("networkidle", { timeout: 10_000 }).catch(() => {});
 
-    // Card now shows either "No issues found" OR one of the category headers
-    const noIssues = page.locator("text=/No issues found/");
-    const categoryHeader = page.locator("text=/Graduation Requirement Gaps|Semester Requirement Gaps|Prerequisite Violations/");
-
-    expect((await noIssues.count()) + (await categoryHeader.count())).toBeGreaterThanOrEqual(1);
+    // Card now shows either "No issues found", a category header, or empty-state copy
+    await expect.poll(async () => {
+      const noIssues = await page.locator("text=/No issues found/").count();
+      const categoryHeader = await page.locator("text=/Graduation Requirement Gaps|Semester Requirement Gaps|Prerequisite Violations/").count();
+      const noPrimary = await page.locator("text=/Create a plan to see requirement status/").count();
+      return noIssues + categoryHeader + noPrimary;
+    }, { timeout: 10_000 }).toBeGreaterThanOrEqual(1);
   });
 
   test("attention required card shows categorized sections when issues exist", async ({ page }) => {

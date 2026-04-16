@@ -38,5 +38,13 @@ export function verifyOrigin(request: NextRequest): boolean {
   if (!origin) {
     return process.env.NODE_ENV !== "production";
   }
-  return ALLOWED_ORIGINS.has(origin);
+  if (ALLOWED_ORIGINS.has(origin)) {
+    return true;
+  }
+  // Allow any Vercel preview deployment under our project
+  if (process.env.VERCEL && origin.endsWith(".vercel.app") && origin.startsWith("https://")) {
+    return true;
+  }
+  console.warn(`[csrf] Rejected origin: ${origin}. Allowed: ${[...ALLOWED_ORIGINS].join(", ")}`);
+  return false;
 }

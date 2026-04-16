@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback, useRef } from "react";
 import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { TrialBanner } from "@/components/trial-banner";
 import { FeedbackWidget } from "@/components/feedback-widget";
 import { TourButton } from "@/components/tour-button";
@@ -371,6 +371,7 @@ function AccountSwitcher() {
 
 function AppLayoutInner({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
+  const searchParams = useSearchParams();
   const router = useRouter();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [authChecked, setAuthChecked] = useState(false);
@@ -384,7 +385,9 @@ function AppLayoutInner({ children }: { children: React.ReactNode }) {
     const supabase = createSupabaseBrowserClient();
     supabase.auth.getSession().then(async ({ data: { session } }) => {
       if (!session) {
-        router.replace(`/login?redirect=${encodeURIComponent(pathname)}`);
+        const search = searchParams.toString();
+        const fullPath = search ? `${pathname}?${search}` : pathname;
+        router.replace(`/login?redirect=${encodeURIComponent(fullPath)}`);
         setAuthChecked(true);
         return;
       }

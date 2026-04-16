@@ -384,7 +384,9 @@ function AppLayoutInner({ children }: { children: React.ReactNode }) {
     const supabase = createSupabaseBrowserClient();
     supabase.auth.getSession().then(async ({ data: { session } }) => {
       if (!session) {
-        router.replace(`/login?redirect=${encodeURIComponent(pathname)}`);
+        const search = window.location.search;
+        const fullPath = search ? `${pathname}${search}` : pathname;
+        router.replace(`/login?redirect=${encodeURIComponent(fullPath)}`);
         setAuthChecked(true);
         return;
       }

@@ -101,7 +101,8 @@ function LoginPageInner() {
         return;
       }
 
-      router.push("/dashboard");
+      const redirectTo = searchParams.get("redirect") || "/dashboard";
+      router.push(redirectTo);
       router.refresh();
     } catch {
       setErrors({ form: "Something went wrong. Please try again." });

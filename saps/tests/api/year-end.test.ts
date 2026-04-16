@@ -81,6 +81,11 @@ vi.mock("@/config/grade-scale", () => ({
   ALL_GRADES: ["A", "B", "C", "D", "F", "P"],
 }));
 
+const mockIsYearEndBannerActive = vi.fn().mockReturnValue(true);
+vi.mock("@/config/school-calendar", () => ({
+  isYearEndBannerActive: (...args: unknown[]) => mockIsYearEndBannerActive(...args),
+}));
+
 vi.mock("drizzle-orm", () => ({
   eq: vi.fn((...args: unknown[]) => ({ type: "eq", args })),
   and: vi.fn((...args: unknown[]) => ({ type: "and", args })),
@@ -157,6 +162,25 @@ describe("GET /api/v1/year-end", () => {
 
     expect(response.status).toBe(200);
     expect(body.data.planId).toBeNull();
+  });
+
+  it("returns empty data when outside the year-end banner window", async () => {
+    mockIsYearEndBannerActive.mockReturnValueOnce(false);
+
+    let queryIndex = 0;
+    dbChain.then = vi.fn().mockImplementation((resolve: (v: unknown) => unknown) => {
+      queryIndex++;
+      if (queryIndex === 1) return Promise.resolve(resolve([{ accountId: "acc-1" }]));
+      return Promise.resolve(resolve([]));
+    });
+
+    const response = await GET(makeGetRequest());
+    const body = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(body.data.currentYearCourses).toEqual([]);
+    expect(body.data.planId).toBeNull();
+    expect(body.data.gradeLevel).toBeNull();
   });
 
   it("counts completed-without-grade courses as incomplete", async () => {

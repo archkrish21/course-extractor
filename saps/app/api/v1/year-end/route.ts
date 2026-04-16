@@ -16,6 +16,7 @@ import { successResponse, errorResponse } from "@/lib/api/response";
 import { requireSameOrigin } from "@/lib/api/require-same-origin";
 import { requireAuth, getAccountContext } from "@/lib/auth/get-user";
 import { rateLimit } from "@/lib/api/rate-limit";
+import { isYearEndBannerActive } from "@/config/school-calendar";
 
 async function resolveAccountId(request: NextRequest, userId: string): Promise<string | null> {
   const headerAccountId = request.headers.get("X-Account-Id");
@@ -42,6 +43,19 @@ export async function GET(request: NextRequest) {
 
     const accountCtx = await getAccountContext(user.id, accountId);
     if (!accountCtx) return errorResponse("FORBIDDEN", "Not a member of this account.", 403);
+
+    // Only show year-end data when we're in the banner window
+    if (!isYearEndBannerActive()) {
+      return successResponse({
+        transitionState: "pending",
+        gradeLevel: null,
+        isGraduating: false,
+        planId: null,
+        currentYearCourses: [],
+        nextYearCourses: [],
+        incompleteCount: 0,
+      });
+    }
 
     // Get account grade level
     const [account] = await db

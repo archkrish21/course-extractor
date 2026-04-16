@@ -41,13 +41,14 @@ Each item links to the authoritative doc so details don't get duplicated here.
 - [ ] `UPSTASH_REDIS_REST_URL` + `UPSTASH_REDIS_REST_TOKEN` in Vercel env vars — values saved locally, add when provisioning Vercel
 - [x] Verified rate limiter works against Upstash — local 7× login curl returned 401 × 5, then 429 × 2 (2026-04-15)
 
-### Stripe (paid subscriptions)
-- [ ] Stripe account in **live mode**, not test mode
-- [ ] `STRIPE_SECRET_KEY` (live `sk_live_…`), `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY` (`pk_live_…`) in Vercel env vars
-- [ ] Webhook endpoint `https://yourdomain.com/api/v1/stripe/webhook` registered in Stripe dashboard
-- [ ] `STRIPE_WEBHOOK_SECRET` (live webhook signing secret) in Vercel env vars
-- [ ] Products / prices for Plus and Elite tiers exist in live mode with correct amounts
-- [ ] Test subscription flow end-to-end with a real card (use a small-amount test then refund)
+### Stripe (paid subscriptions) — DEFERRED to post-launch
+> Subscription tiers disabled for v1 (free-only launch). Moved to v1.1 milestone.
+- [ ] ~~Stripe account in **live mode**, not test mode~~
+- [ ] ~~`STRIPE_SECRET_KEY` (live `sk_live_…`), `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY` (`pk_live_…`) in Vercel env vars~~
+- [ ] ~~Webhook endpoint registered in Stripe dashboard~~
+- [ ] ~~`STRIPE_WEBHOOK_SECRET` in Vercel env vars~~
+- [ ] ~~Products / prices for Plus and Elite tiers~~
+- [ ] ~~Test subscription flow end-to-end~~
 
 ### Resend (transactional email)
 - [ ] Domain added to Resend and DNS records verified (SPF, DKIM, DMARC)
@@ -56,9 +57,12 @@ Each item links to the authoritative doc so details don't get duplicated here.
 - [ ] Send a test confirmation email to yourself — arrives within 10 minutes, lands in inbox not spam
 
 ### Sentry + PostHog (monitoring)
-- [ ] Sentry project created, `SENTRY_DSN` + `NEXT_PUBLIC_SENTRY_DSN` in Vercel env vars
-- [ ] PostHog project created, `NEXT_PUBLIC_POSTHOG_KEY` + `POSTHOG_PERSONAL_API_KEY` in Vercel env vars
-- [ ] Sentry release tagged on first deploy (source maps upload configured)
+- [x] Sentry project created (org `saps-57`, project `javascript-nextjs`); SDK wired for client/server/edge; verified locally (2026-04-15)
+- [x] PostHog project created (default project on US Cloud); provider mounted in root layout; `$pageview` verified in Live Events (2026-04-15)
+- [ ] `SENTRY_DSN` + `NEXT_PUBLIC_SENTRY_DSN` + `SENTRY_AUTH_TOKEN` in Vercel env vars (values saved locally)
+- [ ] `NEXT_PUBLIC_POSTHOG_KEY` in Vercel env vars (value in local `.env.local`)
+- [ ] `POSTHOG_PERSONAL_API_KEY` + `POSTHOG_PROJECT_ID` in Vercel env vars — required so the account-delete GDPR purge path actually hits PostHog (currently silently skipped when unset)
+- [ ] Sentry release tagged on first deploy (source-map upload configured via SENTRY_AUTH_TOKEN)
 - [ ] Trigger a test error in production → confirmed in Sentry
 
 ---
@@ -120,7 +124,7 @@ done
 - [ ] Delete a plan → count drops, no orphan rows
 - [ ] Invite parent from Settings → invite email arrives → parent signs up via link → lands on child's dashboard
 - [ ] Parent can view plan; parent remove flow clears access
-- [ ] Stripe checkout → complete purchase with real card → webhook fires → subscription tier reflects in UI
+- [ ] ~~Stripe checkout → deferred to post-launch (free-only v1)~~
 - [ ] Transcript, Progress, Year-End pages render correctly for a seeded grade-10 user
 - [ ] Password reset flow end-to-end (request → email → update → login with new password)
 - [ ] Login with wrong password 5× → rate limited (if Upstash wired)

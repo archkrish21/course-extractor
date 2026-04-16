@@ -295,19 +295,19 @@ test.describe("Planner — Set Primary", () => {
           const value = await options.nth(i).getAttribute("value");
           if (value) {
             await planSelector.selectOption(value);
-            await page.waitForTimeout(500);
+            await page.waitForTimeout(1500);
           }
           break;
         }
       }
     }
 
+    // Wait for the Primary badge to confirm the plan loaded
+    await expect(page.getByText("Primary")).toBeVisible({ timeout: 10_000 });
+
     // The "Set Primary" button should NOT be visible for the primary plan
     const setPrimaryBtn = page.getByLabel(/Set.*as primary plan/i);
     await expect(setPrimaryBtn).toBeHidden();
-
-    // But "Primary" badge should be visible
-    await expect(page.getByText("Primary")).toBeVisible();
   });
 
   test("clicking Set Primary changes the plan to primary and active", async ({
@@ -389,6 +389,7 @@ test.describe("Planner — Set Primary", () => {
   test("old primary plan is demoted to draft after switching", async ({
     page,
   }) => {
+    test.setTimeout(60_000);
     await navigateToPlanner(page);
 
     const planSelector = page.locator("select[aria-label='Select a plan']");
@@ -418,7 +419,7 @@ test.describe("Planner — Set Primary", () => {
       return;
     }
     await planSelector.selectOption(primaryValue);
-    await page.waitForTimeout(500);
+    await page.waitForTimeout(1000);
     const currentPrimaryName = primaryName;
 
     // Find a non-primary plan and switch to it
@@ -441,10 +442,11 @@ test.describe("Planner — Set Primary", () => {
 
     // Set the non-primary plan as primary
     await planSelector.selectOption(nonPrimaryValue);
-    await page.waitForTimeout(1000);
-    const setPrimaryBtn = page.getByLabel(/Set.*as primary plan/i);
-    await setPrimaryBtn.click();
     await page.waitForTimeout(1500);
+    const setPrimaryBtn = page.getByLabel(/Set.*as primary plan/i);
+    await expect(setPrimaryBtn).toBeVisible({ timeout: 5_000 });
+    await setPrimaryBtn.click();
+    await page.waitForTimeout(2000);
 
     // Now switch back to the old primary
     const updatedOptions = planSelector.locator("option");
@@ -455,24 +457,21 @@ test.describe("Planner — Set Primary", () => {
         const oldValue = await updatedOptions.nth(i).getAttribute("value");
         if (oldValue) {
           await planSelector.selectOption(oldValue);
-          await page.waitForTimeout(1000);
+          await page.waitForTimeout(1500);
         }
         break;
       }
     }
 
-    // Old primary should now show "draft" status (not "active"). The Badge
-    // component (components/ui/badge.tsx) doesn't include the literal string
-    // "badge" in its class names — it uses Tailwind utility classes like
-    // "bg-warning-light text-warning". Match the visible badge text directly.
+    // Old primary should now show "draft" status (not "active").
     const draftBadge = page.getByText("draft", { exact: true });
-    await expect(draftBadge).toBeVisible({ timeout: 3000 });
+    await expect(draftBadge).toBeVisible({ timeout: 5_000 });
 
     // Restore: set the old primary back
     const restoreBtn = page.getByLabel(/Set.*as primary plan/i);
     if (await restoreBtn.isVisible()) {
       await restoreBtn.click();
-      await page.waitForTimeout(1000);
+      await page.waitForTimeout(1500);
     }
   });
 });

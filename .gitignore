@@ -35,3 +35,4 @@ build/
 # Audit reports
 audit-review-report/
 security-review-report/
+.vercel

@@ -9,7 +9,10 @@ import { login } from "./helpers";
 async function navigateToProgress(page: Page) {
   await login(page);
   await page.goto("/progress");
-  await page.waitForTimeout(3000);
+  await expect(
+    page.getByRole("heading", { name: "Academic Progress" })
+  ).toBeVisible({ timeout: 15_000 });
+  await page.waitForLoadState("networkidle", { timeout: 10_000 }).catch(() => {});
 }
 
 // ─── Navigation ─────────────────────────────────────────────────────────────
@@ -51,7 +54,7 @@ test.describe("Progress — Navigation", () => {
     await navigateToProgress(page);
 
     const editPlanBtn = page.locator("text=Edit Plan");
-    await expect(editPlanBtn).toBeVisible({ timeout: 5_000 });
+    await expect(editPlanBtn).toBeVisible({ timeout: 10_000 });
     await editPlanBtn.click();
     await page.waitForURL(/\/planner/, { timeout: 10_000 });
   });
@@ -142,19 +145,19 @@ test.describe("Progress — Requirement Cards", () => {
   test("requirement cards show status badges", async ({ page }) => {
     await navigateToProgress(page);
 
-    // Status badges: Complete, In Progress, or Gap
+    // Status badges: Complete, In Progress, or Gap — wait for at least one
     const badges = page.locator("text=/Complete|In Progress|Gap/");
-    const count = await badges.count();
-    expect(count).toBeGreaterThanOrEqual(1);
+    await expect(badges.first()).toBeVisible({ timeout: 10_000 });
   });
 
   test("requirement cards show progress bars", async ({ page }) => {
     await navigateToProgress(page);
 
-    // Progress bars (role=progressbar or the bar divs)
-    const progressBars = page.locator('[class*="rounded-full"][class*="bg-muted"]');
+    // Progress bar container divs — match the h-2 or h-2.5 bar wrappers
+    // specifically, not the small bullet dots which also use rounded-full bg-muted.
+    const progressBars = page.locator('div.overflow-hidden[class*="rounded-full"][class*="bg-muted"]');
+    await expect(progressBars.first()).toBeVisible({ timeout: 10_000 });
     const count = await progressBars.count();
-    // At least 1 overall + some per-requirement
     expect(count).toBeGreaterThanOrEqual(2);
   });
 
@@ -369,12 +372,16 @@ test.describe("Progress — Course Load", () => {
   test("course load shows OK or Underload/Overload badge", async ({ page }) => {
     await navigateToProgress(page);
 
-    const okBadge = page.locator("text=OK");
-    const underloadBadge = page.locator("text=Underload");
-    const overloadBadge = page.locator("text=Overload");
+    // Wait for the Semester Requirements section to render before counting badges
+    await expect(page.locator("text=Semester Requirements").first()).toBeVisible({ timeout: 10_000 });
 
-    const hasAny = (await okBadge.count()) + (await underloadBadge.count()) + (await overloadBadge.count());
-    expect(hasAny).toBeGreaterThanOrEqual(1);
+    // Use expect.poll to retry the count assertion until data renders
+    await expect.poll(async () => {
+      const ok = await page.locator("text=OK").count();
+      const under = await page.locator("text=Underload").count();
+      const over = await page.locator("text=Overload").count();
+      return ok + under + over;
+    }, { timeout: 10_000 }).toBeGreaterThanOrEqual(1);
   });
 });
 
@@ -632,12 +639,12 @@ test.describe("Progress — Summary Sidebar", () => {
     test.skip(test.info().project.name === "mobile", "Desktop sidebar test");
     await navigateToProgress(page);
 
-    // Should show at least one status indicator
-    const complete = page.locator("text=Complete");
-    const onTrack = page.locator("text=On track");
-    const gapText = page.locator("text=/\\d+ gap/");
-
-    const hasAny = (await complete.count()) + (await onTrack.count()) + (await gapText.count());
-    expect(hasAny).toBeGreaterThanOrEqual(1);
+    // Wait for the sidebar to render category status indicators
+    await expect.poll(async () => {
+      const complete = await page.locator("text=Complete").count();
+      const onTrack = await page.locator("text=On track").count();
+      const gaps = await page.locator("text=/\\d+ gap/").count();
+      return complete + onTrack + gaps;
+    }, { timeout: 10_000 }).toBeGreaterThanOrEqual(1);
   });
 });

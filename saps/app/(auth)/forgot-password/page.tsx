@@ -141,7 +141,7 @@ export default function ForgotPasswordPage() {
           </div>
         )}
 
-        <Button type="submit" disabled={loading} className="mt-2 w-full">
+        <Button type="submit" disabled={loading || !email.trim() || (!!HCAPTCHA_SITE_KEY && !captchaToken)} className="mt-2 w-full">
           {loading ? "Sending..." : "Send reset link"}
         </Button>
       </form>

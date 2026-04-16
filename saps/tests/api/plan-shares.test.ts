@@ -89,6 +89,8 @@ vi.mock("@/lib/email/client", () => ({
 
 vi.mock("@/lib/email/templates", () => ({
   inviteEmail: vi.fn().mockReturnValue({ subject: "Invite", html: "<p>Invite</p>" }),
+  newUserInviteEmail: vi.fn().mockReturnValue({ subject: "Invite", html: "<p>New user invite</p>" }),
+  existingUserInviteEmail: vi.fn().mockReturnValue({ subject: "Invite", html: "<p>Existing user invite</p>" }),
 }));
 
 const mockGetPlanAccess = vi.fn();

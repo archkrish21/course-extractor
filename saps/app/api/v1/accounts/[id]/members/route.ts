@@ -9,7 +9,7 @@ import { rateLimit } from "@/lib/api/rate-limit";
 import { requireSameOrigin } from "@/lib/api/require-same-origin";
 import { requireAuth, getAccountContext } from "@/lib/auth/get-user";
 import { sendEmail } from "@/lib/email/client";
-import { inviteEmail as inviteEmailTemplate } from "@/lib/email/templates";
+import { newUserInviteEmail, existingUserInviteEmail } from "@/lib/email/templates";
 
 function generateInviteCode(): string {
   const chars = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789";
@@ -269,16 +269,30 @@ export async function POST(request: NextRequest, context: RouteContext) {
         .where(eq(users.id, user.id))
         .limit(1);
 
-      const origin = request.nextUrl.origin;
-      const claimUrl = `${origin}/signup?invite=${inviteCode}&account=${accountId}&role=${target_role}`;
+      // Check if the invited email already has a SAPS account
+      const [existingUser] = await db
+        .select({ id: users.id })
+        .from(users)
+        .where(eq(users.email, parsed.data.email))
+        .limit(1);
 
-      const template = inviteEmailTemplate({
-        inviterName: inviter?.email ?? "A student",
-        studentName: account?.studentName ?? "a student",
-        role: target_role,
-        inviteCode,
-        claimUrl,
-      });
+      const origin = request.nextUrl.origin;
+      const inviterName = inviter?.email ?? "A student";
+      const studentName = account?.studentName ?? "a student";
+
+      const template = existingUser
+        ? existingUserInviteEmail({
+            inviterName,
+            studentName,
+            role: target_role,
+            joinUrl: `${origin}/join?code=${inviteCode}&account=${accountId}`,
+          })
+        : newUserInviteEmail({
+            inviterName,
+            studentName,
+            role: target_role,
+            claimUrl: `${origin}/signup?invite=${inviteCode}&account=${accountId}&role=${target_role}`,
+          });
 
       console.log("[members] Sending invite email to:", parsed.data.email);
       const emailSent = await sendEmail({

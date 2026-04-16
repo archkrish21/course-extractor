@@ -8,7 +8,7 @@ import { successResponse, errorResponse } from "@/lib/api/response";
 import { requireSameOrigin } from "@/lib/api/require-same-origin";
 import { requireAuth } from "@/lib/auth/get-user";
 import { sendEmail } from "@/lib/email/client";
-import { inviteEmail as inviteEmailTemplate } from "@/lib/email/templates";
+import { newUserInviteEmail, existingUserInviteEmail } from "@/lib/email/templates";
 
 function generateCode(): string {
   const chars = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789";
@@ -142,20 +142,23 @@ export async function POST(request: NextRequest) {
       return account;
     });
 
-    // Send invite email — always use signup link. The email template includes
-    // a secondary "join directly" link for users who already have an account.
-    // This prevents the wrong user from claiming the invite if someone else
-    // is logged in on the same browser.
+    // Send invite email — pick template based on whether the student already
+    // has a SAPS account. New users go to /signup; existing users go to /join.
     const origin = request.nextUrl.origin;
-    const claimUrl = `${origin}/signup?invite=${inviteCode}&account=${result.id}&role=student`;
 
-    const template = inviteEmailTemplate({
-      inviterName: user.email,
-      studentName: student_name,
-      role: "student",
-      inviteCode,
-      claimUrl,
-    });
+    const template = studentExists
+      ? existingUserInviteEmail({
+          inviterName: user.email,
+          studentName: student_name,
+          role: "student",
+          joinUrl: `${origin}/join?code=${inviteCode}&account=${result.id}`,
+        })
+      : newUserInviteEmail({
+          inviterName: user.email,
+          studentName: student_name,
+          role: "student",
+          claimUrl: `${origin}/signup?invite=${inviteCode}&account=${result.id}&role=student`,
+        });
 
     const emailSent = await sendEmail({
       to: normalizedEmail,

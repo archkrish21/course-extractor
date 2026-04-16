@@ -10,12 +10,12 @@ import type { NextRequest } from "next/server";
  *   to make mutations without manually configuring each preview URL.
  * - localhost:3000 + 127.0.0.1:3000 — both dev-loopback variants.
  */
+const vercelUrl = process.env.VERCEL_URL || process.env.NEXT_PUBLIC_VERCEL_URL;
+
 const ALLOWED_ORIGINS = new Set(
   [
     process.env.NEXT_PUBLIC_APP_URL,
-    process.env.NEXT_PUBLIC_VERCEL_URL
-      ? `https://${process.env.NEXT_PUBLIC_VERCEL_URL}`
-      : undefined,
+    vercelUrl ? `https://${vercelUrl}` : undefined,
     "http://localhost:3000",
     "http://127.0.0.1:3000",
   ].filter(Boolean)

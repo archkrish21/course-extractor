@@ -89,6 +89,8 @@ vi.mock("@/lib/email/client", () => ({
 
 vi.mock("@/lib/email/templates", () => ({
   inviteEmail: vi.fn().mockReturnValue({ subject: "Invite", html: "<p>Invite</p>" }),
+  newUserInviteEmail: vi.fn().mockReturnValue({ subject: "Invite", html: "<p>New user invite</p>" }),
+  existingUserInviteEmail: vi.fn().mockReturnValue({ subject: "Invite", html: "<p>Existing user invite</p>" }),
 }));
 
 vi.mock("drizzle-orm", () => ({
@@ -105,6 +107,7 @@ vi.mock("drizzle-orm", () => ({
 }));
 
 import { requireAuth } from "@/lib/auth/get-user";
+import { newUserInviteEmail, existingUserInviteEmail } from "@/lib/email/templates";
 import { GET, POST } from "@/app/api/v1/accounts/route";
 import { POST as claimAccount } from "@/app/api/v1/accounts/claim/route";
 
@@ -153,6 +156,9 @@ describe("POST /api/v1/accounts", () => {
     expect(body.data).toHaveProperty("invite_code");
     expect(body.data).toHaveProperty("student_exists", false);
     expect(body.data).toHaveProperty("email_sent");
+    // New user → should use newUserInviteEmail, not existingUserInviteEmail
+    expect(newUserInviteEmail).toHaveBeenCalled();
+    expect(existingUserInviteEmail).not.toHaveBeenCalled();
   });
 
   it("parent creates account with email invite (existing student)", async () => {
@@ -175,6 +181,9 @@ describe("POST /api/v1/accounts", () => {
     expect(response.status).toBe(201);
     expect(body.data).toHaveProperty("student_exists", true);
     expect(body.data).toHaveProperty("email_sent");
+    // Existing user → should use existingUserInviteEmail, not newUserInviteEmail
+    expect(existingUserInviteEmail).toHaveBeenCalled();
+    expect(newUserInviteEmail).not.toHaveBeenCalled();
   });
 
   it("parent can create account without DOB, grade, or graduation year", async () => {

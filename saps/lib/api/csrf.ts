@@ -5,18 +5,17 @@ import type { NextRequest } from "next/server";
  *
  * Rationale for each:
  * - NEXT_PUBLIC_APP_URL — the canonical production origin. Set during deploy.
- * - localhost:3000 + 127.0.0.1:3000 — both dev-loopback variants. A user
- *   visiting either gets a different Origin header, and we need both to
- *   work without special-casing in dev.
- *
- * Previews, staging, and any non-configured environments will be rejected
- * by the origin check in production. That's intentional — if you want a
- * preview deployment to accept browser mutations, set NEXT_PUBLIC_APP_URL
- * for that preview.
+ * - NEXT_PUBLIC_VERCEL_URL — auto-set by Vercel to the deployment's unique
+ *   domain (e.g. saps-git-branch-team.vercel.app). Allows preview deploys
+ *   to make mutations without manually configuring each preview URL.
+ * - localhost:3000 + 127.0.0.1:3000 — both dev-loopback variants.
  */
 const ALLOWED_ORIGINS = new Set(
   [
     process.env.NEXT_PUBLIC_APP_URL,
+    process.env.NEXT_PUBLIC_VERCEL_URL
+      ? `https://${process.env.NEXT_PUBLIC_VERCEL_URL}`
+      : undefined,
     "http://localhost:3000",
     "http://127.0.0.1:3000",
   ].filter(Boolean)

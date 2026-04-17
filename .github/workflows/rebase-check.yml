@@ -1,0 +1,22 @@
+name: Rebase check
+
+on:
+  pull_request:
+    branches: [main]
+
+jobs:
+  rebase-check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Check if branch is rebased on main
+        run: |
+          git fetch origin main
+          if ! git merge-base --is-ancestor origin/main HEAD; then
+            echo "::error::Branch is not rebased on main. Please run: git fetch origin main && git rebase origin/main"
+            exit 1
+          fi
+          echo "Branch is up to date with main."

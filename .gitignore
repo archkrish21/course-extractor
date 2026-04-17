@@ -30,7 +30,8 @@ build/
 .next/
 
 # Claude Code
-.claude/
+.claude/*
+!.claude/settings.json
 
 # Audit reports
 audit-review-report/

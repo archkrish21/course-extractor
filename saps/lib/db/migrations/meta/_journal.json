@@ -71,6 +71,13 @@
       "when": 1776120801943,
       "tag": "0009_demonic_rogue",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1776441052411,
+      "tag": "0010_strange_wild_child",
+      "breakpoints": true
     }
   ]
 }

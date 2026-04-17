@@ -15,6 +15,7 @@ import { eq, and, sql, count, or } from "drizzle-orm";
 import { successResponse, errorResponse } from "@/lib/api/response";
 import { requireSameOrigin } from "@/lib/api/require-same-origin";
 import { requireAuth, getAccountContext } from "@/lib/auth/get-user";
+import { audit } from "@/lib/audit/log";
 import { getEffectiveTier } from "@/lib/subscription/middleware";
 
 /**
@@ -397,6 +398,15 @@ export async function POST(request: NextRequest) {
       userId: user.id,
       grantedBy: user.id,
       permission: "owner",
+    });
+
+    await audit({
+      userId: user.id,
+      action: "plan.created",
+      resourceType: "plan",
+      resourceId: newPlan.id,
+      metadata: { name, studentId, fromTemplateId: from_template_id },
+      request,
     });
 
     // If from_template_id, copy template courses into the new plan

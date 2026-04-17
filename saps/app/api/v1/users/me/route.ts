@@ -19,6 +19,7 @@ import { requireAuth } from "@/lib/auth/get-user";
 import { successResponse, errorResponse } from "@/lib/api/response";
 import { requireSameOrigin } from "@/lib/api/require-same-origin";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
+import { audit } from "@/lib/audit/log";
 
 const notificationChannelSchema = z.object({
   email: z.boolean().optional(),
@@ -314,6 +315,14 @@ export async function DELETE(request: NextRequest) {
     } catch (stripeErr) {
       console.error("[users/me] Stripe cleanup failed (non-fatal):", stripeErr);
     }
+
+    await audit({
+      userId: user.id,
+      action: "account.deleted",
+      resourceType: "user",
+      resourceId: user.id,
+      request,
+    });
 
     // Collect account IDs before deletion (needed for Redis cleanup later)
     const userAccountIds = await db

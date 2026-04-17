@@ -3,6 +3,7 @@ import { z } from "zod";
 import { db } from "@/lib/db";
 import { sql } from "drizzle-orm";
 import { successResponse, errorResponse } from "@/lib/api/response";
+import { rateLimit } from "@/lib/api/rate-limit";
 
 const contactSchema = z.object({
   name: z.string().min(1).max(200),
@@ -17,6 +18,13 @@ const contactSchema = z.object({
  */
 export async function POST(request: NextRequest) {
   try {
+    const ip = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim()
+      ?? request.headers.get("x-real-ip") ?? "unknown";
+    const rl = await rateLimit(`contact:${ip}`, 5, 60);
+    if (!rl.success) {
+      return errorResponse("RATE_LIMITED", "Too many requests.", 429);
+    }
+
     const body = await request.json();
     const parsed = contactSchema.safeParse(body);
     if (!parsed.success) {

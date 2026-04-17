@@ -85,7 +85,7 @@ Revert the commit. Rate limits are additive.
 
 ### 1f. Exit criteria
 
-- [ ] `contact`, `school-request`, `feedback` all have `rateLimit()` calls
+- [x] `contact`, `school-request`, `feedback` all have `rateLimit()` calls
 - [ ] New test covers the 429 path for `contact`
 - [ ] Manual curl verification for `contact`
 
@@ -170,9 +170,9 @@ Purely additive logging; rollback = revert commit.
 
 ### 2e. Exit criteria
 
-- [ ] Startup check warns once at process start if Redis missing in prod
-- [ ] Rate-limit fall-through logs throttled warning in prod
-- [ ] Local verification done
+- [x] Startup check warns once at process start if Redis missing in prod
+- [x] Rate-limit fall-through logs throttled warning in prod
+- [ ] Local verification done (requires `NODE_ENV=production npm start` without Redis)
 
 ---
 
@@ -291,23 +291,23 @@ Drop the table migration; remove `audit()` calls. Safe because audit writes are 
 
 ### 3f. Exit criteria
 
-- [ ] `audit_log` table exists
-- [ ] `audit()` helper in place
-- [ ] All 11 sensitive handlers call `audit()`
-- [ ] Audit writes don't block request flow
+- [x] `audit_log` table exists (migration 0010)
+- [x] `audit()` helper in place (`lib/audit/log.ts`)
+- [x] All 11 sensitive handlers call `audit()` (login, login_failed, signup, member.invited/removed/joined, plan.created/deleted/shared/unshared, account.deleted)
+- [x] Audit writes don't block request flow (verified — tests pass even when audit mock throws)
 
 ---
 
 ## Checklist — prod hardening complete
 
-- [ ] Step 1 — Spam endpoints rate-limited
-- [ ] Step 2 — Startup check + fall-through logging active
-- [ ] Step 3 — `audit_log` table + logging in 11 sensitive handlers
+- [x] Step 1 — Spam endpoints rate-limited (contact 5/60s by IP, school-request 5/60s by IP, feedback 10/300s by userId)
+- [x] Step 2 — Startup check + fall-through logging active (instrumentation.ts + rate-limit.ts)
+- [x] Step 3 — `audit_log` table + logging in 11 sensitive handlers
 
 ### Regression safety
-- [ ] `npm test` passes
+- [x] `npm test` passes (505 passed, 18 skipped)
 - [ ] `npm run test:e2e` passes
-- [ ] Rollback instructions for each step documented and tested
+- [x] Rollback instructions for each step documented
 
 ---
 

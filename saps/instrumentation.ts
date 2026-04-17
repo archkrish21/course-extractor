@@ -3,6 +3,8 @@ import * as Sentry from "@sentry/nextjs";
 export async function register() {
   if (process.env.NEXT_RUNTIME === "nodejs") {
     await import("./sentry.server.config");
+    const { runStartupChecks } = await import("@/lib/api/startup-checks");
+    runStartupChecks();
   }
 
   if (process.env.NEXT_RUNTIME === "edge") {

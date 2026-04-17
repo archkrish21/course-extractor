@@ -307,6 +307,27 @@ export const stripeEvents = pgTable(
   ]
 );
 
+// ─── AUDIT LOG ─────────────────────────────────────────────────────────────
+
+export const auditLog = pgTable(
+  "audit_log",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    userId: uuid("user_id").references(() => users.id, { onDelete: "set null" }),
+    action: text("action").notNull(),
+    resourceType: text("resource_type"),
+    resourceId: text("resource_id"),
+    metadata: jsonb("metadata"),
+    ip: text("ip"),
+    userAgent: text("user_agent"),
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow(),
+  },
+  (table) => [
+    index("idx_audit_log_user").on(table.userId, table.createdAt),
+    index("idx_audit_log_action").on(table.action, table.createdAt),
+  ]
+);
+
 // ─── ACCOUNT EVENTS ─────────────────────────────────────────────────────────
 
 export const accountEvents = pgTable(

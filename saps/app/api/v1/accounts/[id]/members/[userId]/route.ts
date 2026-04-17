@@ -5,6 +5,7 @@ import { eq, and, sql } from "drizzle-orm";
 import { successResponse, errorResponse } from "@/lib/api/response";
 import { requireSameOrigin } from "@/lib/api/require-same-origin";
 import { requireAuth, getAccountContext } from "@/lib/auth/get-user";
+import { audit } from "@/lib/audit/log";
 
 interface RouteContext {
   params: Promise<{ id: string; userId: string }>;
@@ -89,6 +90,15 @@ export async function DELETE(request: NextRequest, context: RouteContext) {
           eq(accountMembers.userId, targetUserId)
         )
       );
+
+    await audit({
+      userId: user.id,
+      action: "member.removed",
+      resourceType: "account",
+      resourceId: accountId,
+      metadata: { targetUserId },
+      request,
+    });
 
     return successResponse({ deleted: true });
   } catch (error) {

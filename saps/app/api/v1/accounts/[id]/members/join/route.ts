@@ -7,6 +7,7 @@ import { successResponse, errorResponse } from "@/lib/api/response";
 import { rateLimit } from "@/lib/api/rate-limit";
 import { requireSameOrigin } from "@/lib/api/require-same-origin";
 import { requireAuth } from "@/lib/auth/get-user";
+import { audit } from "@/lib/audit/log";
 
 const joinSchema = z.object({
   invite_code: z.string().min(1).max(8),
@@ -95,6 +96,15 @@ export async function POST(request: NextRequest, context: RouteContext) {
     }
 
     let joinedAccountId = accountId;
+
+    await audit({
+      userId: user.id,
+      action: "member.joined",
+      resourceType: "account",
+      resourceId: accountId,
+      metadata: { inviteCode: invite_code, targetRole: invite.targetRole },
+      request,
+    });
 
     await db.transaction(async (tx) => {
       if (invite.targetRole === "student") {

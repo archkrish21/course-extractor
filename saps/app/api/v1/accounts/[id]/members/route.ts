@@ -8,6 +8,7 @@ import { successResponse, errorResponse } from "@/lib/api/response";
 import { rateLimit } from "@/lib/api/rate-limit";
 import { requireSameOrigin } from "@/lib/api/require-same-origin";
 import { requireAuth, getAccountContext } from "@/lib/auth/get-user";
+import { audit } from "@/lib/audit/log";
 import { sendEmail } from "@/lib/email/client";
 import { newUserInviteEmail, existingUserInviteEmail } from "@/lib/email/templates";
 
@@ -253,6 +254,15 @@ export async function POST(request: NextRequest, context: RouteContext) {
         createdBy: user.id,
       })
       .returning();
+
+    await audit({
+      userId: user.id,
+      action: "member.invited",
+      resourceType: "account",
+      resourceId: accountId,
+      metadata: { targetEmail: parsed.data.email, targetRole: target_role },
+      request,
+    });
 
     // Send email invite if email provided
     console.log("[members] Invite created:", inviteCode, "email:", parsed.data.email ?? "none");

@@ -15,6 +15,7 @@ import { requireSameOrigin } from "@/lib/api/require-same-origin";
 import { requireAuth, getAccountContext } from "@/lib/auth/get-user";
 import { getPlanAccess, hasPermission } from "@/lib/auth/plan-permissions";
 import { validatePlanIntegrity } from "@/lib/prereq/validator";
+import { audit } from "@/lib/audit/log";
 
 const patchSchema = z.object({
   name: z.string().min(1).max(100).optional(),
@@ -362,6 +363,14 @@ export async function DELETE(request: NextRequest, context: RouteContext) {
         409
       );
     }
+
+    await audit({
+      userId: user.id,
+      action: "plan.deleted",
+      resourceType: "plan",
+      resourceId: planId,
+      request,
+    });
 
     // Delete the plan (cascades to plan_courses, plan_history, etc.)
     await db.delete(fourYearPlans).where(eq(fourYearPlans.id, planId));

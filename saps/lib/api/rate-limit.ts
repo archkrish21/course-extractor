@@ -1,4 +1,5 @@
 import { Redis } from "@upstash/redis";
+import { logger } from "@/lib/logger";
 
 // Only initialize Redis if credentials are configured
 const REDIS_URL = process.env.UPSTASH_REDIS_REST_URL;
@@ -12,6 +13,7 @@ const redis = redisConfigured
 // Cache Redis availability to avoid repeated connection attempts
 let redisAvailable = redisConfigured;
 let lastRedisCheck = 0;
+let lastWarnLog = 0;
 const REDIS_RETRY_INTERVAL_MS = 60_000; // Retry Redis every 60s after a failure
 
 interface RateLimitResult {
@@ -43,6 +45,13 @@ export async function rateLimit(
       // Try to reconnect in the background, don't block this request
       redisAvailable = true; // Optimistic — will be set back to false if it fails again
     } else {
+      if (process.env.NODE_ENV === "production" && !redis) {
+        const now = Date.now();
+        if (now - lastWarnLog > 60_000) {
+          logger.warn({ key }, "[rate-limit] passing through — Redis not configured in production");
+          lastWarnLog = now;
+        }
+      }
       return passThrough;
     }
   }

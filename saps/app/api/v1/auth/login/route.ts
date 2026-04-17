@@ -7,6 +7,7 @@ import { eq } from "drizzle-orm";
 import { successResponse, errorResponse } from "@/lib/api/response";
 import { requireSameOrigin } from "@/lib/api/require-same-origin";
 import { rateLimit } from "@/lib/api/rate-limit";
+import { audit } from "@/lib/audit/log";
 
 const loginSchema = z.object({
   email: z.string().email("Invalid email address"),
@@ -49,8 +50,20 @@ export async function POST(request: NextRequest) {
     });
 
     if (error) {
+      await audit({
+        userId: null,
+        action: "auth.login_failed",
+        metadata: { email },
+        request,
+      });
       return errorResponse("INVALID_CREDENTIALS", "Invalid email or password.", 401);
     }
+
+    await audit({
+      userId: data.user.id,
+      action: "auth.login",
+      request,
+    });
 
     // Update last_login timestamp
     await db

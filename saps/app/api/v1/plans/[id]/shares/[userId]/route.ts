@@ -7,6 +7,7 @@ import { successResponse, errorResponse } from "@/lib/api/response";
 import { requireSameOrigin } from "@/lib/api/require-same-origin";
 import { requireAuth } from "@/lib/auth/get-user";
 import { getPlanAccess, hasPermission } from "@/lib/auth/plan-permissions";
+import { audit } from "@/lib/audit/log";
 
 const updateShareSchema = z.object({
   permission: z.enum(["view", "edit", "delete"]),
@@ -119,6 +120,15 @@ export async function DELETE(request: NextRequest, context: RouteContext) {
       .where(
         and(eq(planShares.planId, planId), eq(planShares.userId, targetUserId))
       );
+
+    await audit({
+      userId: user.id,
+      action: "plan.unshared",
+      resourceType: "plan",
+      resourceId: planId,
+      metadata: { targetUserId },
+      request,
+    });
 
     return successResponse({ deleted: true });
   } catch (error) {

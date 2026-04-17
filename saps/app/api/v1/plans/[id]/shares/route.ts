@@ -7,6 +7,7 @@ import { successResponse, errorResponse } from "@/lib/api/response";
 import { requireSameOrigin } from "@/lib/api/require-same-origin";
 import { requireAuth } from "@/lib/auth/get-user";
 import { getPlanAccess, hasPermission } from "@/lib/auth/plan-permissions";
+import { audit } from "@/lib/audit/log";
 
 const shareSchema = z.object({
   user_id: z.string().uuid(),
@@ -153,6 +154,15 @@ export async function POST(request: NextRequest, context: RouteContext) {
         permission,
       })
       .returning();
+
+    await audit({
+      userId: user.id,
+      action: "plan.shared",
+      resourceType: "plan",
+      resourceId: planId,
+      metadata: { targetUserId, permission },
+      request,
+    });
 
     return successResponse(
       {

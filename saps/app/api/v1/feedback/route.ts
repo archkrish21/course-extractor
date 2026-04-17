@@ -5,6 +5,7 @@ import { sql } from "drizzle-orm";
 import { successResponse, errorResponse } from "@/lib/api/response";
 import { requireSameOrigin } from "@/lib/api/require-same-origin";
 import { requireAuth } from "@/lib/auth/get-user";
+import { rateLimit } from "@/lib/api/rate-limit";
 
 const feedbackSchema = z.object({
   rating: z.number().int().min(1).max(5),
@@ -23,6 +24,11 @@ export async function POST(request: NextRequest) {
 
     const csrf = requireSameOrigin(request);
     if (csrf) return csrf;
+
+    const rl = await rateLimit(`feedback:${user.id}`, 10, 300);
+    if (!rl.success) {
+      return errorResponse("RATE_LIMITED", "Too many requests.", 429);
+    }
 
     const body = await request.json();
     const parsed = feedbackSchema.safeParse(body);

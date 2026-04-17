@@ -3,9 +3,13 @@ name: Rebase check
 on:
   pull_request:
     branches: [main]
+  push:
+    branches: [main]
 
 jobs:
+  # Runs on PR events — checks the PR branch itself
   rebase-check:
+    if: github.event_name == 'pull_request'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
@@ -20,3 +24,51 @@ jobs:
             exit 1
           fi
           echo "Branch is up to date with main."
+
+  # Runs when main is pushed — re-checks all open PRs
+  recheck-open-prs:
+    if: github.event_name == 'push'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+
+      - name: Check open PRs for stale branches
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          git fetch origin main
+          MAIN_SHA=$(git rev-parse origin/main)
+
+          prs=$(gh pr list --base main --state open --json number,headRefName --jq '.[] | "\(.number) \(.headRefName)"')
+
+          if [ -z "$prs" ]; then
+            echo "No open PRs targeting main."
+            exit 0
+          fi
+
+          stale_found=false
+
+          while IFS=' ' read -r pr_number branch; do
+            echo "Checking PR #${pr_number} (${branch})..."
+            git fetch origin "$branch"
+            branch_sha=$(git rev-parse "origin/${branch}")
+
+            if ! git merge-base --is-ancestor "$MAIN_SHA" "$branch_sha"; then
+              echo "::warning::PR #${pr_number} (${branch}) needs rebase on main"
+              gh pr comment "$pr_number" --body "⚠️ **Rebase needed** — \`main\` has moved ahead. Please rebase before merging:
+          \`\`\`bash
+          git fetch origin main
+          git rebase origin/main
+          git push --force-with-lease
+          \`\`\`"
+              stale_found=true
+            else
+              echo "PR #${pr_number} is up to date."
+            fi
+          done <<< "$prs"
+
+          if [ "$stale_found" = true ]; then
+            echo "::warning::One or more open PRs need rebasing."
+          fi

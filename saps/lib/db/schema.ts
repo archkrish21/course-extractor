@@ -1186,7 +1186,9 @@ export const usersRelations = relations(users, ({ one, many }) => ({
     references: [accounts.studentUserId],
     relationName: "accountStudent",
   }),
-  accountMemberships: many(accountMembers),
+  accountMemberships: many(accountMembers, {
+    relationName: "memberUser",
+  }),
   studentParentLinksAsStudent: many(studentParentLinks, {
     relationName: "studentParentStudent",
   }),
@@ -1207,7 +1209,9 @@ export const usersRelations = relations(users, ({ one, many }) => ({
   notifications: many(notifications),
   accountEvents: many(accountEvents),
   dualCreditLog: many(dualCreditLog),
-  parentInviteCodes: many(parentInviteCodes),
+  parentInviteCodes: many(parentInviteCodes, {
+    relationName: "parentInviteStudent",
+  }),
 }));
 
 export const studentProfilesRelations = relations(
@@ -1252,6 +1256,7 @@ export const counselorStudentLinksRelations = relations(
     linkedByUser: one(users, {
       fields: [counselorStudentLinks.linkedBy],
       references: [users.id],
+      relationName: "counselorLinkLinkedBy",
     }),
   })
 );
@@ -1588,10 +1593,12 @@ export const parentInviteCodesRelations = relations(
     student: one(users, {
       fields: [parentInviteCodes.studentId],
       references: [users.id],
+      relationName: "parentInviteStudent",
     }),
     claimedByUser: one(users, {
       fields: [parentInviteCodes.claimedBy],
       references: [users.id],
+      relationName: "parentInviteClaimer",
     }),
   })
 );
@@ -1632,9 +1639,11 @@ export const accountMembersRelations = relations(accountMembers, ({ one }) => ({
   user: one(users, {
     fields: [accountMembers.userId],
     references: [users.id],
+    relationName: "memberUser",
   }),
   invitedByUser: one(users, {
     fields: [accountMembers.invitedBy],
     references: [users.id],
+    relationName: "memberInviter",
   }),
 }));

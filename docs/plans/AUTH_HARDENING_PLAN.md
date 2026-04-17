@@ -432,7 +432,7 @@ Delete the file.
 ### 4d. Exit criteria
 
 - [x] `saps/middleware.ts` exists
-- [ ] Manual verification of transparent refresh (deferred — requires JWT expiry change)
+- [ ] Manual verification of transparent refresh (deferred — local JWT expiry is 24hr for test stability, so verify via browser devtools by manually setting cookie expiry to the past)
 - [x] All unit tests pass (432)
 
 ---

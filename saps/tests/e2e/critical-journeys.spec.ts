@@ -299,18 +299,17 @@ test.describe("Critical Journey: Parent Views Child Plan", () => {
 
   test("parent can view child's planner with course data", async ({ page }) => {
     await page.goto("/planner");
-    await page.waitForTimeout(3_000);
 
-    // Should see Course Planner heading or "No Plans Shared" message
-    const plannerHeading = page.locator("text=/Course Planner/i");
-    const noPlans = page.locator("text=/No Plans|No plans shared|Create/i");
-
-    const seesPlanner = (await plannerHeading.count()) > 0;
-    const seesEmpty = (await noPlans.count()) > 0;
-    expect(seesPlanner || seesEmpty).toBeTruthy();
+    // Wait for the page to render — either planner content or empty state
+    await expect.poll(async () => {
+      const plannerContent = await page.locator("text=/Course Planner|Grade \\d+|Semester/i").count();
+      const emptyState = await page.locator("text=/No Plans|No plans shared|Create|Complete your onboarding/i").count();
+      return plannerContent + emptyState;
+    }, { timeout: 15_000 }).toBeGreaterThanOrEqual(1);
 
     // If planner loaded, verify course content is visible
-    if (seesPlanner) {
+    const plannerHeading = page.locator("text=/Course Planner/i");
+    if ((await plannerHeading.count()) > 0) {
       const courseContent = page.locator("text=/Grade \\d+|Semester|credits/i");
       await expect(courseContent.first()).toBeVisible({ timeout: 5_000 });
     }

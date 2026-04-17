@@ -256,15 +256,18 @@ test.describe("Course Browser — Filters", () => {
     await filterContainer(page).locator("#division-select").selectOption("Mathematics");
     await waitForCoursesLoaded(page);
 
-    // Clear filters
-    await page.getByRole("button", { name: "Clear all filters" }).click();
+    // Clear filters — on mobile the button may be inside the filter drawer
+    const clearBtn = page.getByRole("button", { name: "Clear all filters" });
+    if (!(await clearBtn.isVisible())) {
+      await openFilterDrawerIfMobile(page);
+    }
+    await clearBtn.click();
     await waitForCoursesLoaded(page);
 
     // Count should match initial
-    const restoredCountText = await page
-      .locator("text=/\\d+ courses? found/")
-      .textContent();
-    expect(restoredCountText).toBe(initialCountText);
+    await expect.poll(async () => {
+      return await page.locator("text=/\\d+ courses? found/").textContent();
+    }, { timeout: 10_000 }).toBe(initialCountText);
   });
 });
 

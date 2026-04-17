@@ -430,7 +430,14 @@ test.describe("Dashboard — Attention Required Card", () => {
   test("attention required card shows categorized sections when issues exist", async ({ page }) => {
     await login(page);
     await page.goto("/dashboard");
-    await page.waitForTimeout(5000);
+
+    // Wait for the Attention Required card to render in any state
+    await expect.poll(async () => {
+      const noPrimary = await page.locator("text=/Create a plan to see requirement status/").count();
+      const noIssues = await page.locator("text=/No issues found/").count();
+      const categories = await page.locator("text=/Graduation Requirement Gaps|Semester Requirement Gaps|Prerequisite Violations/").count();
+      return noPrimary + noIssues + categories;
+    }, { timeout: 15_000 }).toBeGreaterThanOrEqual(1);
 
     // Earlier tests in the same worker can mutate DB state such that no
     // plan is currently primary. In that case the Attention Required card

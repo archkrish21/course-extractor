@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Hard Rules
 
-- **Never commit directly to `main`.** All changes — code, docs, config, templates — must go through a feature/fix branch and be merged via PR. No exceptions.
+- **For any git-related actions** (branching, committing, pushing, PRs, conflict resolution), follow the rules in `/git-rules`.
 
 ## Project Overview
 

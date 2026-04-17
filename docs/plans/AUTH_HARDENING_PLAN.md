@@ -528,17 +528,19 @@ These items must be applied to the hosted Supabase project, not `config.toml`. `
 
 ## Dependencies and sequencing with the prod plan
 
+> **All prod hardening steps are now complete** (merged to main 2026-04-17). The sequencing notes below are kept for historical context.
+
 These auth items and the prod hardening items can be worked independently, but some natural orderings help:
 
-- **Step 1 (RLS) migration** and **prod plan Step 3 (audit_log table)** both add schema — if doing them close together, generate a single migration to save one `npm run db:migrate` cycle. Otherwise, separate migrations are fine.
-- **Step 2 (rate limits)** shares infrastructure with **prod plan Step 1 (spam rate limits)** and **prod plan Step 2 (fail-loud Redis check)**. If you're touching rate limiting, it's efficient to do all three in the same branch.
+- **Step 1 (RLS) migration** and **prod plan Step 3 (audit_log table)** both add schema — ✅ both landed as separate migrations (0009 + 0010).
+- **Step 2 (rate limits)** shares infrastructure with **prod plan Step 1 (spam rate limits)** and **prod plan Step 2 (fail-loud Redis check)** — ✅ all three complete.
 - **Step 3 (Origin check)** has no dependencies on the prod plan.
 - **Step 4 (middleware)** has no dependencies on the prod plan.
 - **Step 5 (Supabase dashboard)** is done during prod provisioning, alongside other env setup.
 
 ## What this plan explicitly does NOT cover
 
-- Audit logging — moved to [PROD_HARDENING_PLAN.md](PROD_HARDENING_PLAN.md) Step 3
-- Rate limiting for spam on `contact`/`school-request`/`feedback` — moved to [PROD_HARDENING_PLAN.md](PROD_HARDENING_PLAN.md) Step 1
-- Redis fail-loud observability — moved to [PROD_HARDENING_PLAN.md](PROD_HARDENING_PLAN.md) Step 2
+- ~~Audit logging — moved to [PROD_HARDENING_PLAN.md](PROD_HARDENING_PLAN.md) Step 3~~ ✅ Done
+- ~~Rate limiting for spam on `contact`/`school-request`/`feedback` — moved to [PROD_HARDENING_PLAN.md](PROD_HARDENING_PLAN.md) Step 1~~ ✅ Done
+- ~~Redis fail-loud observability — moved to [PROD_HARDENING_PLAN.md](PROD_HARDENING_PLAN.md) Step 2~~ ✅ Done
 - Penetration testing, SOC 2 compliance, WAF/DDoS — out of scope for this launch.

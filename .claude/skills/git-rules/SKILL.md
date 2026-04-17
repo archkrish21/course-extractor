@@ -8,6 +8,7 @@ description: Git workflow rules for branching, rebasing, pushing, and merging. U
 ## Hard Rules
 
 - **Never commit directly to `main`.** All changes — code, docs, config, templates, tests — must go through a feature/fix branch and be merged via PR. No exceptions.
+- **Always rebase on `main` before opening a PR.** Run `git fetch origin main && git rebase origin/main` before every `gh pr create`. No exceptions, even if the branch was just created from an up-to-date `main`.
 
 ## Branch Naming
 

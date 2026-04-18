@@ -20,7 +20,7 @@ export async function sendEmail(params: {
   try {
     const resend = new Resend(apiKey);
     const { error } = await resend.emails.send({
-      from: params.from ?? "SAPS <onboarding@resend.dev>",
+      from: params.from ?? `Plan with Genie <${process.env.RESEND_FROM_EMAIL ?? "onboarding@resend.dev"}>`,
       to: params.to,
       subject: params.subject,
       html: params.html,

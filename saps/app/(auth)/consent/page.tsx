@@ -81,7 +81,7 @@ function ConsentPageInner() {
     }
   }
 
-  const isUpdate = pending.some((d) => d.summary && d.summary !== "Initial version");
+  const isUpdate = pending.some((d) => d.summary && !d.summary.startsWith("Initial version"));
 
   if (loading) {
     return (

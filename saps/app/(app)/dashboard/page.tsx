@@ -487,23 +487,27 @@ export default function DashboardPage() {
             <div>
               <p className="font-semibold text-primary">
                 {profileBannerTarget === "planner"
-                  ? (currentAccount?.role === "counselor" ? "No plans shared yet" : "Complete your onboarding")
+                  ? (currentAccount?.role === "counselor"
+                    ? "No plans shared yet"
+                    : (!onboardingCompleted ? "Complete your onboarding" : "Create your first plan"))
                   : "Complete your profile"}
               </p>
               <p className="text-sm text-muted-foreground">
                 {profileBannerTarget === "planner"
                   ? (currentAccount?.role === "counselor"
                     ? "Plans will appear here once a student shares their plan with you."
-                    : "Set up your profile, add past courses, and create your first plan to get the most out of SAPS.")
+                    : (!onboardingCompleted
+                      ? "Set up your profile, add past courses, and create your first plan to get the most out of SAPS."
+                      : "Head to the planner to build your four-year course plan."))
                   : "Add your name and details to personalize your experience."}
               </p>
             </div>
           </div>
           <div className="flex items-center gap-2 sm:shrink-0">
             {profileBannerTarget === "planner" && currentAccount?.role === "counselor" ? null : (
-              <Link href={profileBannerTarget === "planner" ? "/onboarding" : "/settings"}>
+              <Link href={profileBannerTarget === "planner" ? (onboardingCompleted ? "/planner" : "/onboarding") : "/settings"}>
                 <Button size="sm">
-                  {profileBannerTarget === "planner" ? "Start Onboarding" : "Complete profile"}
+                  {profileBannerTarget === "planner" ? (onboardingCompleted ? "Go to Planner" : "Start Onboarding") : "Complete profile"}
                 </Button>
               </Link>
             )}

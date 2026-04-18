@@ -38,6 +38,27 @@ export async function middleware(request: NextRequest) {
   // call requireAuth() separately to get the authenticated user.
   await supabase.auth.getUser();
 
+  // Prevent browser from caching authenticated pages (e.g. dashboard, settings)
+  // so the back button doesn't show stale content after logout or account deletion.
+  const pathname = request.nextUrl.pathname;
+  const isAppRoute =
+    pathname.startsWith("/dashboard") ||
+    pathname.startsWith("/courses") ||
+    pathname.startsWith("/planner") ||
+    pathname.startsWith("/progress") ||
+    pathname.startsWith("/transcript") ||
+    pathname.startsWith("/settings") ||
+    pathname.startsWith("/plans") ||
+    pathname.startsWith("/join") ||
+    pathname.startsWith("/year-end");
+
+  if (isAppRoute) {
+    response.headers.set(
+      "Cache-Control",
+      "no-store, no-cache, must-revalidate"
+    );
+  }
+
   return response;
 }
 

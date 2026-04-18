@@ -72,7 +72,7 @@ export async function POST(request: NextRequest) {
     if (!parsed.success) {
       return errorResponse(
         "VALIDATION_ERROR",
-        parsed.error.errors[0]?.message ?? "Invalid input.",
+        parsed.error.issues[0]?.message ?? "Invalid input.",
         400
       );
     }

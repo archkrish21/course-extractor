@@ -57,6 +57,7 @@ export const users = pgTable(
     tosAcceptedAt: timestamp("tos_accepted_at", { withTimezone: true }),
     ppAcceptedAt: timestamp("pp_accepted_at", { withTimezone: true }),
     onboardingCompletedAt: timestamp("onboarding_completed_at", { withTimezone: true }),
+    profileSetupCompletedAt: timestamp("profile_setup_completed_at", { withTimezone: true }),
     notificationPreferences: jsonb("notification_preferences").default({
       alert_triggered: { email: true, in_app: true },
       catalog_update: { email: true, in_app: true },

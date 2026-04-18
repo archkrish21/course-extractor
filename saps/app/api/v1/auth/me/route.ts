@@ -23,7 +23,7 @@ export async function GET() {
     if (user instanceof Response) return user;
 
     const [userData] = await db
-      .select({ email: users.email, firstName: users.firstName, lastName: users.lastName, role: users.role, tourState: users.tourState, onboardingCompletedAt: users.onboardingCompletedAt })
+      .select({ email: users.email, firstName: users.firstName, lastName: users.lastName, role: users.role, tourState: users.tourState, onboardingCompletedAt: users.onboardingCompletedAt, profileSetupCompletedAt: users.profileSetupCompletedAt })
       .from(users)
       .where(eq(users.id, user.id))
       .limit(1);
@@ -39,6 +39,7 @@ export async function GET() {
       role: userData.role,
       tour_state: userData.tourState ?? {},
       onboarding_completed: userData.role !== "student" || !!userData.onboardingCompletedAt,
+      profile_setup_completed: !!userData.profileSetupCompletedAt,
     });
   } catch (error) {
     console.error("[auth/me] GET error:", error);

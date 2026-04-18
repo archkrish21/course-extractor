@@ -400,6 +400,15 @@ function AppLayoutInner({ children }: { children: React.ReactNode }) {
           setAuthChecked(true);
           return;
         }
+        if (res.ok) {
+          const json = await res.json();
+          const data = json?.data ?? json;
+          if (!data.profile_setup_completed) {
+            router.replace("/profile-setup");
+            setAuthChecked(true);
+            return;
+          }
+        }
       } catch { /* proceed — API might be slow */ }
       setIsAuthenticated(true);
       setAuthChecked(true);

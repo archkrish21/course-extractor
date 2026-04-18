@@ -78,6 +78,13 @@
       "when": 1776441052411,
       "tag": "0010_strange_wild_child",
       "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "7",
+      "when": 1776483838965,
+      "tag": "0011_silly_puck",
+      "breakpoints": true
     }
   ]
 }

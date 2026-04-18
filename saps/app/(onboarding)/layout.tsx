@@ -14,10 +14,14 @@ export default async function OnboardingLayout({ children }: { children: React.R
   const authUser = await getAuthenticatedUser();
   if (authUser) {
     const [row] = await db
-      .select({ onboardingCompletedAt: users.onboardingCompletedAt })
+      .select({
+        onboardingCompletedAt: users.onboardingCompletedAt,
+        profileSetupCompletedAt: users.profileSetupCompletedAt,
+      })
       .from(users)
       .where(eq(users.id, authUser.id))
       .limit(1);
+    if (!row?.profileSetupCompletedAt) redirect("/profile-setup");
     if (row?.onboardingCompletedAt) redirect("/dashboard");
   }
   return (

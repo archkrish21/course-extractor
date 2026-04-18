@@ -156,6 +156,7 @@ export async function POST(request: NextRequest) {
         isEmailVerified: false,
         tosAcceptedAt: now,
         ppAcceptedAt: now,
+        profileSetupCompletedAt: now,
       });
 
       // Record consent for current legal documents

@@ -140,9 +140,19 @@ async function globalSetup() {
     }
 
     // ── 2. Create/verify auth users ──────────────────────────────────
-    const { data: existingAuth } = await supabase.auth.admin.listUsers();
+    // listUsers() paginates (default 50/page). Fetch all pages so we find
+    // existing test users even when many ephemeral accounts exist.
+    const allAuthUsers: Array<{ email?: string; id: string }> = [];
+    let page = 1;
+    while (true) {
+      const { data } = await supabase.auth.admin.listUsers({ page, perPage: 1000 });
+      if (!data?.users?.length) break;
+      allAuthUsers.push(...data.users);
+      if (data.users.length < 1000) break;
+      page++;
+    }
     const authByEmail = new Map(
-      existingAuth?.users?.map((u) => [u.email, u.id]) ?? [],
+      allAuthUsers.map((u) => [u.email, u.id]),
     );
 
     const userIds: Record<string, string> = {};
@@ -183,12 +193,14 @@ async function globalSetup() {
       // having completed onboarding. A preOnboarding student is left null
       // so onboarding E2E tests can reach the /onboarding page.
       const onboardingAt = user.role === "student" && !user.preOnboarding ? "NOW()" : "NULL";
+      const profileSetupAt = !user.preOnboarding ? "NOW()" : "NULL";
       await client.query(
-        `INSERT INTO users (id, email, first_name, last_name, role, date_of_birth, onboarding_completed_at, created_at)
-         VALUES ($1, $2, $3, $4, $5, $6, ${onboardingAt}, NOW())
+        `INSERT INTO users (id, email, first_name, last_name, role, date_of_birth, onboarding_completed_at, profile_setup_completed_at, created_at)
+         VALUES ($1, $2, $3, $4, $5, $6, ${onboardingAt}, ${profileSetupAt}, NOW())
          ON CONFLICT (id) DO UPDATE SET email = EXCLUDED.email, first_name = EXCLUDED.first_name,
            last_name = EXCLUDED.last_name, role = EXCLUDED.role,
-           onboarding_completed_at = COALESCE(users.onboarding_completed_at, ${onboardingAt})`,
+           onboarding_completed_at = COALESCE(users.onboarding_completed_at, ${onboardingAt}),
+           profile_setup_completed_at = COALESCE(users.profile_setup_completed_at, ${profileSetupAt})`,
         [id, user.email, first, last || null, user.role, user.dob],
       );
     }
@@ -396,6 +408,16 @@ async function globalSetup() {
     await client.query(
       `UPDATE four_year_plans SET locked_grade_levels = $1 WHERE id = $2`,
       [JSON.stringify([9]), planId],
+    );
+
+    // ── 12b. Ensure primary plan is visible to the student ──────────
+    // Previous test runs may have hidden the plan via plan_shares.
+    // The plans API filters hidden plans by default, so the transcript
+    // page won't see the primary plan if is_hidden = true.
+    await client.query(
+      `UPDATE plan_shares SET is_hidden = false
+       WHERE plan_id = $1 AND user_id = $2`,
+      [planId, studentId],
     );
 
     // ── 13. Ensure plan shares for parent & counselor ────────────────

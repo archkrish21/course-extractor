@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, type FormEvent } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -20,6 +21,7 @@ export default function ProfileSetupPage() {
   const [role, setRole] = useState<Role>("student");
   const [name, setName] = useState("");
   const [ageConfirmed, setAgeConfirmed] = useState(false);
+  const [tosAccepted, setTosAccepted] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [checking, setChecking] = useState(true);
@@ -53,7 +55,7 @@ export default function ProfileSetupPage() {
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
-    if (!name.trim() || !ageConfirmed) return;
+    if (!name.trim() || !ageConfirmed || !tosAccepted) return;
     setError(null);
     setLoading(true);
 
@@ -65,6 +67,7 @@ export default function ProfileSetupPage() {
           role,
           name: name.trim(),
           age_confirmed: true,
+          tos_accepted: true,
         }),
       });
 
@@ -180,10 +183,30 @@ export default function ProfileSetupPage() {
             label={<span className="text-xs">I confirm that I am at least 13 years old.</span>}
           />
 
+          {/* Terms of Service & Privacy Policy */}
+          <Checkbox
+            id="tos-checkbox"
+            checked={tosAccepted}
+            onChange={(e) => setTosAccepted(e.target.checked)}
+            label={
+              <span className="text-xs">
+                I agree to the{" "}
+                <Link href="/terms" target="_blank" className="text-primary hover:underline">Terms of Service</Link>
+                {" "}and{" "}
+                <Link href="/privacy" target="_blank" className="text-primary hover:underline">Privacy Policy</Link>.
+                {(role === "parent" || role === "guardian") && (
+                  <span className="block mt-0.5 text-muted-foreground">
+                    I confirm that I am the parent or legal guardian of the student.
+                  </span>
+                )}
+              </span>
+            }
+          />
+
           {/* Submit */}
           <Button
             type="submit"
-            disabled={loading || !ageConfirmed || !name.trim()}
+            disabled={loading || !ageConfirmed || !tosAccepted || !name.trim()}
             className="w-full"
           >
             {loading ? "Setting up..." : "Continue"}

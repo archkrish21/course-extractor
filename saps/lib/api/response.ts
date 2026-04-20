@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import * as Sentry from "@sentry/nextjs";
 
 interface SuccessMeta {
   has_more?: boolean;
@@ -31,6 +32,15 @@ export function errorResponse(
     },
     { status }
   );
+}
+
+/**
+ * Log an unexpected error to Sentry and return a 500 response.
+ * Use in catch blocks for unexpected/internal errors.
+ */
+export function serverError(error: unknown, context?: string) {
+  Sentry.captureException(error, { tags: { context } });
+  return errorResponse("INTERNAL_ERROR", "An unexpected error occurred.", 500);
 }
 
 export function paginatedResponse<T>(

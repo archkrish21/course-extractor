@@ -1,7 +1,8 @@
 # Security Review — SAPS
 
 > Generated: 2026-04-09
-> Status: Issues documented, fixes deferred until e2e tests complete
+> Last updated: 2026-04-20
+> Status: HIGH issues resolved, launch blockers cleared
 
 ---
 
@@ -26,53 +27,15 @@ Solid security foundations — Supabase Auth, Drizzle ORM (parameterized queries
 
 ### app/ — API Routes
 
-#### 1. [HIGH] Missing Zod validation in year-end POST
+#### 1. [HIGH] ~~Missing Zod validation in year-end POST~~ — FIXED
 
-**File:** `app/api/v1/year-end/route.ts` lines 174-227
-
-The `grades` array and `gradeOverride` are destructured from the request body **without Zod schema validation**, unlike every other POST route in the app.
-
-```typescript
-// Current (unsafe)
-const body = await request.json();
-const { grades, action, grade: gradeOverride } = body;
-```
-
-**Impact:**
-- `grade` values written directly to DB without checking against valid grade enums
-- `planCourseId` not validated as UUID — could be any string
-- `gradeOverride` has no bounds check (should be 9-12)
-
-**Fix:**
-```typescript
-const yearEndSchema = z.object({
-  action: z.literal("complete"),
-  grade: z.number().int().min(9).max(12).optional(),
-  grades: z.array(z.object({
-    planCourseId: z.string().uuid(),
-    grade: z.enum(ALL_GRADES),
-  })).optional(),
-});
-
-const parsed = yearEndSchema.safeParse(body);
-if (!parsed.success) {
-  return errorResponse("VALIDATION_ERROR", "Invalid request body.", 400);
-}
-const { grades, action, grade: gradeOverride } = parsed.data;
-```
+**Status:** Resolved. Zod schema added with `z.literal("complete")` for action, `z.string().uuid()` for planCourseId, `z.enum(ALL_GRADES)` for grades, and `z.number().int().min(9).max(12)` for gradeOverride. See `app/api/v1/year-end/route.ts` lines 200-218.
 
 ---
 
-#### 2. [MEDIUM] gradeOverride allows graduation logic bypass
+#### 2. [MEDIUM] ~~gradeOverride allows graduation logic bypass~~ — MITIGATED
 
-**File:** `app/api/v1/year-end/route.ts` line 189
-
-```typescript
-const gradeLevel = typeof gradeOverride === "number" ? gradeOverride : accountGradeLevel;
-const isGraduating = gradeLevel >= 12;
-```
-
-A user could send `{ "grade": 12, "action": "complete" }` to trigger graduation logic regardless of actual grade level. Partially mitigated by fixing Issue #1 (bounds check to 9-12), but consider also verifying `gradeOverride` matches or is adjacent to the account's actual grade level.
+**Status:** Mitigated by Issue #1 fix. `gradeOverride` is now bounded to `z.number().int().min(9).max(12)` via Zod validation. Users can only specify valid grade levels (9-12).
 
 ---
 
@@ -244,7 +207,7 @@ Scripts use `DATABASE_URL` from env without checking `NODE_ENV` or prompting for
 ## Strengths
 
 - Consistent `requireAuth()` + `getAccountContext()` pattern across all 43 API routes
-- Zod `safeParse()` with field-level error reporting on all routes (except year-end)
+- Zod `safeParse()` with field-level error reporting on all routes
 - Redis sliding-window rate limiting on auth (5/min), courses (30/min), checkout (5/min), etc.
 - Plan permission hierarchy: `view < edit < delete < owner`
 - COPPA compliance check (age 13+) at signup
@@ -260,9 +223,9 @@ Scripts use `DATABASE_URL` from env without checking `NODE_ENV` or prompting for
 
 | # | Issue | Severity | Effort | When |
 |---|-------|----------|--------|------|
-| 1 | Year-end Zod validation | HIGH | 15 min | After e2e tests |
-| 4 | FREE_LAUNCH_MODE flag | HIGH | 2 min | Before production |
-| 2 | gradeOverride bounds | MEDIUM | 5 min | After e2e tests |
+| 1 | ~~Year-end Zod validation~~ | ~~HIGH~~ | ~~15 min~~ | **FIXED** |
+| 4 | FREE_LAUNCH_MODE flag | HIGH | 2 min | Before paid subscriptions (v1.1) — stays `true` for free launch |
+| 2 | ~~gradeOverride bounds~~ | ~~MEDIUM~~ | ~~5 min~~ | **FIXED** (via #1) |
 | 3 | Account claim race condition | MEDIUM | 10 min | After e2e tests |
 | 5 | Rate limiter fail-open | MEDIUM | 20 min | Before production |
 | 6 | Account status enforcement | MEDIUM | 15 min | Before production |

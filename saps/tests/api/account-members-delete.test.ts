@@ -99,12 +99,12 @@ describe("DELETE /api/v1/accounts/:id/members/:userId", () => {
     (requireSameOrigin as ReturnType<typeof vi.fn>).mockReturnValue(null);
   });
 
-  it("removes a non-student member successfully", async () => {
+  it("removes a non-student member successfully (invited by caller)", async () => {
     let queryIndex = 0;
     dbChain.then = vi.fn().mockImplementation((resolve: (v: unknown) => unknown) => {
       queryIndex++;
       if (queryIndex === 1) return Promise.resolve(resolve([{ studentUserId: STUDENT_USER.id }])); // account lookup
-      if (queryIndex === 2) return Promise.resolve(resolve([{ userId: COUNSELOR_USER.id }])); // target member exists
+      if (queryIndex === 2) return Promise.resolve(resolve([{ userId: COUNSELOR_USER.id, invitedBy: PARENT_USER.id }])); // target member exists, invited by parent
       return Promise.resolve(resolve([]));
     });
 
@@ -122,7 +122,7 @@ describe("DELETE /api/v1/accounts/:id/members/:userId", () => {
     dbChain.then = vi.fn().mockImplementation((resolve: (v: unknown) => unknown) => {
       queryIndex++;
       if (queryIndex === 1) return Promise.resolve(resolve([{ studentUserId: STUDENT_USER.id }])); // account lookup
-      if (queryIndex === 2) return Promise.resolve(resolve([{ userId: PARENT_USER.id }])); // target member exists
+      if (queryIndex === 2) return Promise.resolve(resolve([{ userId: PARENT_USER.id, invitedBy: null }])); // target is self — invitedBy irrelevant
       return Promise.resolve(resolve([]));
     });
 
@@ -133,6 +133,25 @@ describe("DELETE /api/v1/accounts/:id/members/:userId", () => {
 
     expect(response.status).toBe(200);
     expect(body.data).toEqual({ deleted: true });
+  });
+
+  it("non-inviter parent cannot remove another member", async () => {
+    let queryIndex = 0;
+    dbChain.then = vi.fn().mockImplementation((resolve: (v: unknown) => unknown) => {
+      queryIndex++;
+      if (queryIndex === 1) return Promise.resolve(resolve([{ studentUserId: STUDENT_USER.id }])); // account lookup
+      if (queryIndex === 2) return Promise.resolve(resolve([{ userId: COUNSELOR_USER.id, invitedBy: "someone-else" }])); // invited by a different user
+      return Promise.resolve(resolve([]));
+    });
+
+    const request = createDeleteRequest();
+    const context = makeRouteContext(TEST_ACCOUNT_ID, COUNSELOR_USER.id);
+    const response = await DELETE(request, context);
+    const body = await response.json();
+
+    expect(response.status).toBe(403);
+    expect(body.error.code).toBe("FORBIDDEN");
+    expect(body.error.message).toContain("only remove members you invited");
   });
 
   it("blocks non-student from removing the student (account owner)", async () => {
@@ -161,7 +180,7 @@ describe("DELETE /api/v1/accounts/:id/members/:userId", () => {
     dbChain.then = vi.fn().mockImplementation((resolve: (v: unknown) => unknown) => {
       queryIndex++;
       if (queryIndex === 1) return Promise.resolve(resolve([{ studentUserId: STUDENT_USER.id }])); // account lookup
-      if (queryIndex === 2) return Promise.resolve(resolve([{ userId: STUDENT_USER.id }])); // target member exists
+      if (queryIndex === 2) return Promise.resolve(resolve([{ userId: STUDENT_USER.id, invitedBy: null }])); // target member exists
       return Promise.resolve(resolve([]));
     });
 

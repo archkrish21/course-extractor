@@ -22,8 +22,8 @@ Each item links to the authoritative doc so details don't get duplicated here.
 - [x] URL Configuration → Redirect URLs include `https://*-archkrish21s-projects.vercel.app/**` for all preview/prod deployments (configured 2026-04-16)
 - [x] Email provider → "Confirm email" enabled (configured 2026-04-16)
 - [x] Email templates customized with SAPS branding — confirmation, invite, magic link, recovery, email change. All use `{{ .SiteURL }}/auth/confirm?token_hash={{ .TokenHash }}&type=...` for proper routing (updated 2026-04-16)
-- [ ] OTP expiry: **10 minutes**
-- [ ] Rate Limits → Emails/hour: **10**, Token verifications/5min: **30**, Signups/hour/IP: **10**
+- [x] OTP expiry: **10 minutes** (`mailer_otp_exp: 600`, verified via Management API 2026-04-20)
+- [x] Rate Limits → Emails/hour: **10**, Token verifications/5min: **30**, Signups/hour/IP: **10** (configured 2026-04-20)
 - [x] Password Policy → min length 8, `letters_digits` or stricter (configured 2026-04-15)
 - [x] Attack Protection → hCaptcha configured in Supabase dashboard with site key `7cc8cd46-…-0f70c1bcf266` (secret set 2026-04-15)
 - [x] CAPTCHA token wired through frontend signup/login/forgot-password forms — `@hcaptcha/react-hcaptcha` widget + token forwarded to Supabase; CSP allows `hcaptcha.com` origins (updated 2026-04-16 to include forgot-password)
@@ -63,7 +63,7 @@ Each item links to the authoritative doc so details don't get duplicated here.
 - [x] `NEXT_PUBLIC_POSTHOG_KEY` in Vercel env vars (configured 2026-04-16)
 - [x] `POSTHOG_PERSONAL_API_KEY` + `POSTHOG_PROJECT_ID` in Vercel env vars (configured 2026-04-16)
 - [ ] Sentry release tagged on first deploy (source-map upload configured via SENTRY_AUTH_TOKEN)
-- [ ] Trigger a test error in production → confirmed in Sentry
+- [x] Trigger a test error in production → confirmed in Sentry (2026-04-20, PR #65 added missing `sentry.client.config.ts` + `serverError()` helper)
 
 ---
 
@@ -91,12 +91,12 @@ Each item links to the authoritative doc so details don't get duplicated here.
 
 These are the items explicitly deferred to prod during auth hardening (local already verified where possible on 2026-04-15).
 
-- [ ] Rate limit: 7 rapid `POST /api/v1/auth/login` requests — attempts 6-7 return 429 (command below)
-- [ ] CAPTCHA appears on signup in incognito window
+- [x] Rate limit: 7 rapid `POST /api/v1/auth/login` requests — 5× 401, 2× 429 (verified on planwithgenie.com 2026-04-20)
+- [x] CAPTCHA appears on signup in incognito window (verified on planwithgenie.com 2026-04-20)
 - [ ] 11 rapid signups from same IP → 11th is blocked
-- [ ] Email confirmation arrives within 10 min
+- [x] Email confirmation arrives within 10 min (verified 2026-04-20)
 - [ ] Old service role key (if rotated) fails
-- [ ] RLS active: in Supabase SQL Editor run `SET ROLE authenticated; SELECT * FROM users;` → 0 rows
+- [x] RLS active: in Supabase SQL Editor run `SET ROLE authenticated; SELECT * FROM users;` → 0 rows (verified 2026-04-20)
 - [ ] Session refresh middleware verified (optional — requires temporarily lowering JWT expiry to observe transparent refresh)
 
 ### Prod rate-limit curl (after Upstash is wired)
@@ -117,21 +117,21 @@ done
 
 **Source:** [`PRODUCTION_SETUP.md` §9](./PRODUCTION_SETUP.md)
 
-- [ ] App loads at `https://yourdomain.com`
-- [ ] Signup → confirmation email arrives → link works → land on onboarding
-- [ ] Onboarding (grade, graduation year, age attestation, ToS) completes
-- [ ] Dashboard loads with no errors in Sentry
-- [ ] Planner → create plan → add courses → save
-- [ ] 3-plan limit enforced (disabled "Create Plan" after 3)
-- [ ] Delete a plan → count drops, no orphan rows
-- [ ] Invite parent from Settings → invite email arrives → parent signs up via link → lands on child's dashboard
-- [ ] Parent can view plan; parent remove flow clears access
+- [x] App loads at `https://planwithgenie.com` (verified 2026-04-20)
+- [x] Signup → confirmation email arrives → link works → land on onboarding (verified 2026-04-20)
+- [x] Onboarding (grade, graduation year, age attestation, ToS) completes (verified 2026-04-20)
+- [x] Dashboard loads with no errors in Sentry (verified 2026-04-20)
+- [x] Planner → create plan → add courses → save (verified 2026-04-20)
+- [x] 3-plan limit enforced (disabled "Create Plan" after 3) (verified 2026-04-20)
+- [x] Delete a plan → count drops, no orphan rows (verified 2026-04-20)
+- [x] Invite parent from Settings → invite email arrives → parent signs up via link → lands on child's dashboard (verified 2026-04-20)
+- [x] Parent can view plan; parent remove flow clears access (verified 2026-04-20)
 - [ ] ~~Stripe checkout → deferred to post-launch (free-only v1)~~
-- [ ] Transcript, Progress, Year-End pages render correctly for a seeded grade-10 user
-- [ ] Password reset flow end-to-end (request → email → update → login with new password)
-- [ ] Login with wrong password 5× → rate limited (if Upstash wired)
-- [ ] Check Supabase Auth Logs — no unexpected errors
-- [ ] Check Sentry — no uncaught errors from the smoke test run
+- [x] Transcript, Progress, Year-End pages render correctly (verified 2026-04-20)
+- [x] Password reset flow end-to-end (request → email → update → login with new password) (verified 2026-04-20)
+- [x] Login with wrong password 5× → rate limited (verified 2026-04-20)
+- [x] Check Supabase Auth Logs — no unexpected errors (verified 2026-04-20)
+- [x] Check Sentry — no uncaught errors from the smoke test run (verified 2026-04-20)
 
 ---
 
@@ -157,4 +157,4 @@ These are known limitations documented elsewhere, intentionally not blocking lau
 
 ---
 
-**Last updated:** 2026-04-17
+**Last updated:** 2026-04-20

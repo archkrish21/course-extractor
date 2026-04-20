@@ -383,7 +383,10 @@ export async function DELETE(request: NextRequest) {
         AND student_id IS DISTINCT FROM ${user.id}
     `);
     await db.execute(sql`UPDATE four_year_plans SET created_by = NULL WHERE created_by = ${user.id}`);
-    await db.execute(sql`UPDATE account_invite_codes SET created_by = NULL WHERE created_by = ${user.id}`);
+    // Delete all invite codes created by this user (created_by is NOT NULL, so we
+    // must remove them before deleting the user to avoid FK constraint errors).
+    await db.execute(sql`DELETE FROM account_invite_codes WHERE created_by = ${user.id}`);
+    // Null out claimed_by references so the user FK doesn't block deletion
     await db.execute(sql`UPDATE account_invite_codes SET claimed_by = NULL WHERE claimed_by = ${user.id}`);
 
     // Delete accounts where this user is the student (CASCADE handles plans, courses, etc.)

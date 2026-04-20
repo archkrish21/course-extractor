@@ -21,6 +21,7 @@ interface AccountMember {
   role: string;
   canEdit: boolean;
   joinedAt: string;
+  canRemove: boolean;
 }
 
 export default function SettingsPage() {
@@ -98,6 +99,7 @@ export default function SettingsPage() {
             role: m.role,
             canEdit: m.can_edit ?? m.canEdit ?? false,
             joinedAt: m.joined_at ?? m.joinedAt ?? "",
+            canRemove: m.can_remove ?? m.canRemove ?? false,
           })) as AccountMember[]);
         }
       } catch { /* silent */ }
@@ -146,7 +148,12 @@ export default function SettingsPage() {
     }
   }, [currentAccount]);
 
-  const otherMembers = members.filter((m) => m.email !== userEmail);
+  const otherMembers = members.filter((m) => {
+    if (m.email === userEmail) return false;
+    // For parents/guardians/counselors, the student is already shown in Student Info
+    if ((isParentLike || currentAccount?.role === "counselor") && m.role === "student") return false;
+    return true;
+  });
 
   // Handlers
   const handleSaveUserName = async () => {
@@ -616,11 +623,11 @@ export default function SettingsPage() {
           </section>
         )}
 
-        {/* --- Linked Accounts ------------------------------------- */}
+        {/* --- Also Shared With ------------------------------------ */}
         <section>
           <div className="mb-4 flex items-center justify-between">
             <h2 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-              Linked Accounts
+              Also Shared With
             </h2>
             {otherMembers.length > 0 && (
               <Badge className="bg-muted text-muted-foreground">{otherMembers.length}</Badge>
@@ -652,19 +659,21 @@ export default function SettingsPage() {
                           <p className="truncate text-[11px] text-muted-foreground">{m.email}</p>
                         </div>
                       </div>
-                      <button type="button" onClick={() => handleRemoveMember(m.userId, [m.firstName, m.lastName].filter(Boolean).join(" ") || m.email, m.role)}
-                        disabled={removingMember === m.userId}
-                        className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-muted-foreground/40 hover:text-destructive hover:bg-destructive-light transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
-                        title={m.role === "student" ? "Unlink" : "Remove"}>
-                        <svg aria-hidden="true" className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" d="M6 18 18 6M6 6l12 12" />
-                        </svg>
-                      </button>
+                      {m.canRemove && (
+                        <button type="button" onClick={() => handleRemoveMember(m.userId, [m.firstName, m.lastName].filter(Boolean).join(" ") || m.email, m.role)}
+                          disabled={removingMember === m.userId}
+                          className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-muted-foreground/40 hover:text-destructive hover:bg-destructive-light transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
+                          title={m.role === "student" ? "Unlink" : "Remove"}>
+                          <svg aria-hidden="true" className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M6 18 18 6M6 6l12 12" />
+                          </svg>
+                        </button>
+                      )}
                     </div>
                   ))}
 
                   {otherMembers.length === 0 && (
-                    <p className="py-4 text-center text-sm text-muted-foreground">No linked accounts yet.</p>
+                    <p className="py-4 text-center text-sm text-muted-foreground">Not shared with anyone yet.</p>
                   )}
 
                   {/* Invite -- hidden for counselors (view-only role) */}

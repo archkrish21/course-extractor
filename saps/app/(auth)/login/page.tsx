@@ -119,10 +119,14 @@ function LoginPageInner() {
         process.env.NEXT_PUBLIC_SUPABASE_URL!,
         process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
       );
+      const redirectTo = searchParams.get("redirect");
+      const callbackUrl = redirectTo
+        ? `${window.location.origin}/api/v1/auth/callback?next=${encodeURIComponent(redirectTo)}`
+        : `${window.location.origin}/api/v1/auth/callback`;
       await supabase.auth.signInWithOAuth({
         provider: "google",
         options: {
-          redirectTo: `${window.location.origin}/api/v1/auth/callback`,
+          redirectTo: callbackUrl,
         },
       });
     } catch {

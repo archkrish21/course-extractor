@@ -54,7 +54,10 @@ export async function DELETE(request: NextRequest, context: RouteContext) {
 
     // Verify the target user is actually a member
     const [targetMember] = await db
-      .select({ userId: accountMembers.userId })
+      .select({
+        userId: accountMembers.userId,
+        invitedBy: accountMembers.invitedBy,
+      })
       .from(accountMembers)
       .where(
         and(
@@ -66,6 +69,15 @@ export async function DELETE(request: NextRequest, context: RouteContext) {
 
     if (!targetMember) {
       return errorResponse("NOT_FOUND", "Member not found.", 404);
+    }
+
+    // Students can remove anyone; others can only remove members they invited
+    if (accountCtx.role !== "student" && targetMember.invitedBy !== user.id) {
+      return errorResponse(
+        "FORBIDDEN",
+        "You can only remove members you invited.",
+        403
+      );
     }
 
     // Delete plans this member created on this account (orphan cleanup).

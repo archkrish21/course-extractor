@@ -57,6 +57,7 @@ export async function GET(request: NextRequest, context: RouteContext) {
         role: accountMembers.role,
         canEdit: accountMembers.canEdit,
         joinedAt: accountMembers.joinedAt,
+        invitedBy: accountMembers.invitedBy,
         email: users.email,
         firstName: users.firstName,
         lastName: users.lastName,
@@ -64,6 +65,9 @@ export async function GET(request: NextRequest, context: RouteContext) {
       .from(accountMembers)
       .innerJoin(users, eq(accountMembers.userId, users.id))
       .where(eq(accountMembers.accountId, accountId));
+
+    // Students can remove anyone; others can only remove members they invited
+    const callerRole = accountCtx.role;
 
     return successResponse(
       members.map((m) => ({
@@ -74,6 +78,9 @@ export async function GET(request: NextRequest, context: RouteContext) {
         role: m.role,
         can_edit: m.canEdit,
         joined_at: m.joinedAt,
+        can_remove:
+          m.userId !== user.id &&
+          (callerRole === "student" || m.invitedBy === user.id),
       }))
     );
   } catch (error) {

@@ -50,6 +50,7 @@ export default function SettingsPage() {
   const [deleting, setDeleting] = useState(false);
   const [unlinkConfirm, setUnlinkConfirm] = useState<{ studentName: string } | null>(null);
   const [unlinking, setUnlinking] = useState(false);
+  const [removeConfirm, setRemoveConfirm] = useState<{ userId: string; name: string; role: string } | null>(null);
   const [memberLimit, setMemberLimit] = useState(3);
   const [accountPlans, setAccountPlans] = useState<Array<{ id: string; name: string; isPrimary: boolean }>>([]);
   const [invitePlanShares, setInvitePlanShares] = useState<Record<string, string>>({}); // planId -> permission
@@ -190,23 +191,28 @@ export default function SettingsPage() {
     finally { setUnlinking(false); }
   };
 
-  const handleRemoveMember = async (userId: string, name: string, role: string) => {
+  const handleRemoveMember = (userId: string, name: string, role: string) => {
     if (!currentAccount?.id) return;
 
-    // When a parent/guardian unlinks a student, show confirmation modal
+    // When a parent/guardian unlinks a student, show the unlink-student modal
     if (role === "student" && isParentLike) {
       setUnlinkConfirm({ studentName: name });
       return;
     }
 
-    if (!confirm(`Remove ${name} from this account?`)) return;
-    setRemovingMember(userId);
+    // Show confirmation modal for all other removals
+    setRemoveConfirm({ userId, name, role });
+  };
+
+  const confirmRemoveMember = async () => {
+    if (!currentAccount?.id || !removeConfirm) return;
+    setRemovingMember(removeConfirm.userId);
     try {
-      const res = await apiFetch(`/api/v1/accounts/${currentAccount.id}/members/${userId}`, { method: "DELETE" });
-      if (res.ok) { setMembers((prev) => prev.filter((m) => m.userId !== userId)); showToast(`${name} removed`); }
+      const res = await apiFetch(`/api/v1/accounts/${currentAccount.id}/members/${removeConfirm.userId}`, { method: "DELETE" });
+      if (res.ok) { setMembers((prev) => prev.filter((m) => m.userId !== removeConfirm.userId)); showToast(`${removeConfirm.name} removed`); }
       else { const json = await res.json().catch(() => null); showToast(json?.error?.message ?? "Failed to remove."); }
     } catch { /* silent */ }
-    finally { setRemovingMember(null); }
+    finally { setRemovingMember(null); setRemoveConfirm(null); }
   };
 
   const handleSendInvite = async () => {
@@ -623,11 +629,11 @@ export default function SettingsPage() {
           </section>
         )}
 
-        {/* --- Also Shared With ------------------------------------ */}
+        {/* --- Shared With ------------------------------------ */}
         <section>
           <div className="mb-4 flex items-center justify-between">
             <h2 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-              Also Shared With
+              Shared With
             </h2>
             {otherMembers.length > 0 && (
               <Badge className="bg-muted text-muted-foreground">{otherMembers.length}</Badge>
@@ -926,6 +932,39 @@ export default function SettingsPage() {
                 <Button variant="ghost" size="sm" onClick={() => setUnlinkConfirm(null)} disabled={unlinking}>Cancel</Button>
                 <Button variant="destructive" size="sm" onClick={handleUnlinkStudent} disabled={unlinking}>
                   {unlinking ? "Unlinking..." : "Unlink"}
+                </Button>
+              </div>
+            </div>
+          </div>
+        </>
+      )}
+
+      {/* --- Remove Member Confirmation Modal ----------------------- */}
+      {removeConfirm && (
+        <>
+          <div className="fixed inset-0 z-40 bg-black/50" onClick={() => { if (!removingMember) setRemoveConfirm(null); }} aria-hidden="true" />
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+            <div className="w-full max-w-md rounded-xl bg-card shadow-xl" role="alertdialog" aria-modal="true"
+              onClick={(e) => e.stopPropagation()}>
+              <div className="p-6">
+                <div className="flex items-start gap-3">
+                  <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-destructive-light">
+                    <svg aria-hidden="true" className="h-5 w-5 text-destructive" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126ZM12 15.75h.007v.008H12v-.008Z" />
+                    </svg>
+                  </span>
+                  <div>
+                    <h3 className="text-base font-semibold text-foreground">Remove {removeConfirm.name}?</h3>
+                    <p className="mt-1 text-sm text-muted-foreground">
+                      This will remove {removeConfirm.name} from this account. They will lose access to all plans and data. This cannot be undone.
+                    </p>
+                  </div>
+                </div>
+              </div>
+              <div className="flex items-center justify-end gap-2 border-t border-border px-6 py-3">
+                <Button variant="ghost" size="sm" onClick={() => setRemoveConfirm(null)} disabled={!!removingMember}>Cancel</Button>
+                <Button variant="destructive" size="sm" onClick={confirmRemoveMember} disabled={!!removingMember}>
+                  {removingMember ? "Removing..." : "Remove"}
                 </Button>
               </div>
             </div>

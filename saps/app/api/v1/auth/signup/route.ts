@@ -139,13 +139,6 @@ export async function POST(request: NextRequest) {
     // if any insert fails — otherwise the user is stuck (email taken in
     // Supabase but no app-level records, so they can't re-register or log in).
     try {
-      await audit({
-        userId,
-        action: "auth.signup",
-        metadata: { email, role },
-        request,
-      });
-
       // Insert into users table
       const now = new Date();
       await db.insert(users).values({
@@ -157,6 +150,13 @@ export async function POST(request: NextRequest) {
         tosAcceptedAt: now,
         ppAcceptedAt: now,
         profileSetupCompletedAt: now,
+      });
+
+      await audit({
+        userId,
+        action: "auth.signup",
+        metadata: { email, role },
+        request,
       });
 
       // Record consent for current legal documents

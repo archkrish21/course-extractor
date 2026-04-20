@@ -8,6 +8,8 @@ import {
   subscriptionPlans,
   accounts,
   accountMembers,
+  legalDocuments,
+  consentRecords,
 } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
 import { successResponse, errorResponse } from "@/lib/api/response";
@@ -20,6 +22,9 @@ const profileSetupSchema = z.object({
   name: z.string().min(1).max(200),
   age_confirmed: z.literal(true, {
     message: "You must confirm that you are at least 13 years old.",
+  }),
+  tos_accepted: z.literal(true, {
+    message: "You must agree to the Terms of Service and Privacy Policy.",
   }),
 });
 
@@ -136,13 +141,44 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // Update user record with chosen role, name, and mark setup complete
+    // Record consent for current legal documents
+    const currentDocs = await db
+      .select({ id: legalDocuments.id, type: legalDocuments.type })
+      .from(legalDocuments)
+      .where(eq(legalDocuments.isCurrent, true));
+
+    const ipAddress =
+      request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ??
+      request.headers.get("x-real-ip") ??
+      null;
+    const userAgent = request.headers.get("user-agent") ?? null;
+
+    for (const doc of currentDocs) {
+      await db.insert(consentRecords).values({
+        userId: user.id,
+        legalDocumentId: doc.id,
+        action: "accepted",
+        ipAddress,
+        userAgent,
+        consentedAt: now,
+      });
+    }
+
+    // Determine ToS/PP timestamps from accepted documents
+    const userUpdate: Record<string, Date> = {
+      profileSetupCompletedAt: now,
+    };
+    const docTypes = currentDocs.map((d) => d.type);
+    if (docTypes.includes("terms_of_service")) userUpdate.tosAcceptedAt = now;
+    if (docTypes.includes("privacy_policy")) userUpdate.ppAcceptedAt = now;
+
+    // Update user record with chosen role, name, consent timestamps, and mark setup complete
     await db
       .update(users)
       .set({
         role,
         firstName: name,
-        profileSetupCompletedAt: now,
+        ...userUpdate,
       })
       .where(eq(users.id, user.id));
 
@@ -152,10 +188,7 @@ export async function POST(request: NextRequest) {
 
     return successResponse({
       role,
-      next:
-        role === "student"
-          ? "/consent?next=/onboarding"
-          : "/consent?next=/dashboard",
+      next: role === "student" ? "/onboarding" : "/dashboard",
     });
   } catch (error) {
     console.error("[profile-setup] Unexpected error:", error);

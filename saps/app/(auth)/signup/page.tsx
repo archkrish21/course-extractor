@@ -105,14 +105,8 @@ export default function SignupPage() {
       }
 
       if (inviteCode && inviteAccount) {
-        // The server auto-confirmed the email but the session cookie wasn't
-        // set in the browser. Sign in client-side before redirecting to /join.
-        const { createBrowserClient } = await import("@supabase/ssr");
-        const supabase = createBrowserClient(
-          process.env.NEXT_PUBLIC_SUPABASE_URL!,
-          process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-        );
-        await supabase.auth.signInWithPassword({ email, password });
+        // The server established the session cookie during signup (via
+        // admin.generateLink + verifyOtp), so we can redirect directly.
         router.push(`/join?code=${inviteCode}&account=${inviteAccount}`);
       } else if (role === "student") {
         router.push("/onboarding?welcome=1");

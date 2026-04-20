@@ -109,6 +109,23 @@ export async function POST(request: NextRequest) {
 
       userId = adminData.user.id;
       emailConfirmationPending = false;
+
+      // Establish the browser session server-side so the client doesn't need
+      // to call signInWithPassword (which would require a captcha token).
+      // Generate a magic link token via admin, then verify it through the
+      // cookie-aware server client to set session cookies in the response.
+      const { data: linkData, error: linkError } =
+        await supabaseAdmin.auth.admin.generateLink({
+          type: "magiclink",
+          email,
+        });
+
+      if (!linkError && linkData?.properties?.hashed_token) {
+        await supabase.auth.verifyOtp({
+          token_hash: linkData.properties.hashed_token,
+          type: "magiclink",
+        });
+      }
     } else {
       // Normal signup — confirmation email sent by Supabase
       const signUpOptions: { data?: Record<string, string>; captchaToken?: string } = {};

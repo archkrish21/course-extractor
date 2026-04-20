@@ -471,19 +471,19 @@ These items must be applied to the hosted Supabase project, not `config.toml`. `
 - [x] No stale `localhost` entries in redirect URLs
 
 #### Authentication → Rate Limits
-- [ ] Emails per hour: **10**
-- [ ] Token verifications per 5 min: **30**
-- [ ] Signups per hour per IP: **10**
+- [x] Emails per hour: **10** (configured 2026-04-20)
+- [x] Token verifications per 5 min: **30** (configured 2026-04-20)
+- [x] Signups per hour per IP: **10** (configured 2026-04-20)
 
 #### Authentication → Providers → Email
 - [x] Enable "Confirm email" (configured 2026-04-16)
 - [x] Customize the confirmation, invite, magic link, recovery, and email change templates with SAPS branding — blue header, consistent footer with app URL + context line. All links route through `/auth/confirm` using `{{ .TokenHash }}` (updated 2026-04-16)
-- [ ] Set OTP expiry to 10 minutes (default is 1 hour — unnecessarily long)
+- [x] Set OTP expiry to 10 minutes (`mailer_otp_exp: 600`, configured via Management API 2026-04-20). Email templates updated to say "10 minutes" instead of "1 hour".
 
 #### Authentication → Attack Protection
 - [x] Enable **CAPTCHA** — hCaptcha provider configured in Supabase (secret set 2026-04-15)
 - [x] Frontend wiring done — `@hcaptcha/react-hcaptcha` widget renders on `/signup`, `/login`, and `/forgot-password` when `NEXT_PUBLIC_HCAPTCHA_SITE_KEY` is set; token forwarded to Supabase. CSP updated to allow `hcaptcha.com` + `*.hcaptcha.com` origins. (forgot-password added 2026-04-16)
-- [ ] Test end-to-end in prod (site key set in Vercel, signup in incognito → widget appears → account created)
+- [x] Test end-to-end in prod (site key set in Vercel, signup in incognito → widget appears → account created) (verified on planwithgenie.com 2026-04-20)
 
 #### Authentication → Password Policy
 - [x] `minimum_password_length = 8` (configured 2026-04-15)
@@ -493,18 +493,18 @@ These items must be applied to the hosted Supabase project, not `config.toml`. `
 - [ ] Rotate the service role key if it has ever been committed or shared in chat history
 - [ ] Store the new key in Vercel env vars (server-only, never `NEXT_PUBLIC_`)
 
-### 5d. Prod smoke test — TODO during prod launch verification
+### 5d. Prod smoke test — verified 2026-04-20
 
-- [ ] Sign up with throwaway email from incognito → CAPTCHA appears
+- [x] Sign up with throwaway email from incognito → CAPTCHA appears (verified on planwithgenie.com 2026-04-20)
 - [ ] Sign up 11 times quickly from the same IP → blocked after 10
-- [ ] Email confirmation arrives within 10 min
+- [x] Email confirmation arrives within 10 min (verified 2026-04-20)
 - [ ] Attempting to use the old service role key (if rotated) fails
 
 ### 5e. Exit criteria
 
 - [x] 5a — local audit complete
-- [~] 5c — prod provisioning partially applied (2026-04-16: Site URL, redirect URLs, email confirm, email templates, CAPTCHA done. Remaining: dashboard rate limits, OTP expiry)
-- [ ] 5d — prod smoke test passed (done during launch)
+- [x] 5c — prod provisioning complete (Site URL, redirect URLs, email confirm, email templates, CAPTCHA done 2026-04-16. Dashboard rate limits + OTP expiry configured 2026-04-20.)
+- [x] 5d — prod smoke test passed (CAPTCHA, email confirmation, rate limiting verified on planwithgenie.com 2026-04-20)
 
 ---
 
@@ -514,10 +514,10 @@ These items must be applied to the hosted Supabase project, not `config.toml`. `
 - [x] Step 2 — Auth + invite endpoints rate-limited
 - [x] Step 3 — Origin check on 30 route files (webhook + public forms exempt); updated to allow Vercel preview/prod origins (2026-04-16)
 - [x] Step 4 — Session refresh middleware in place
-- [~] Step 5 — Supabase hardening (mostly done)
+- [x] Step 5 — Supabase hardening complete
   - [x] 5a local audit (service role key, anon signups, refresh token rotation, rate limits)
-  - [~] 5c prod provisioning checklist (Site URL, redirects, email confirm, templates, CAPTCHA done 2026-04-16. Remaining: dashboard rate limits, OTP expiry)
-  - [ ] 5d prod smoke test (done during launch)
+  - [x] 5c prod provisioning complete (all items configured by 2026-04-20)
+  - [x] 5d prod smoke test passed (2026-04-20)
 
 ### Regression safety
 - [ ] `npm test` passes

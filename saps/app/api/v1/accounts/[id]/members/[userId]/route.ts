@@ -71,8 +71,8 @@ export async function DELETE(request: NextRequest, context: RouteContext) {
       return errorResponse("NOT_FOUND", "Member not found.", 404);
     }
 
-    // Students can remove anyone; others can only remove members they invited
-    if (accountCtx.role !== "student" && targetMember.invitedBy !== user.id) {
+    // Students can remove anyone; others can remove themselves or members they invited
+    if (accountCtx.role !== "student" && targetUserId !== user.id && targetMember.invitedBy !== user.id) {
       return errorResponse(
         "FORBIDDEN",
         "You can only remove members you invited.",

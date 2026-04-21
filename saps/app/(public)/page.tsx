@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Image from "next/image";
 import Link from "next/link";
 import { HOME_FEATURES } from "@/config/homepage";
 
@@ -99,39 +100,54 @@ export default function HomePage() {
       {/* ─── Hero ────────────────────────────────────────────────── */}
       <section className="relative overflow-hidden">
         <div className="mx-auto max-w-6xl px-4 pb-16 pt-16 sm:px-6 sm:pb-24 sm:pt-20 lg:pt-28">
-          <div className="mx-auto max-w-3xl text-center">
-            <div className="inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/5 px-4 py-1.5 text-sm font-medium text-primary">
-              <span className="relative flex h-2 w-2">
-                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-primary opacity-75" />
-                <span className="relative inline-flex h-2 w-2 rounded-full bg-primary" />
-              </span>
-              Free during early access
+          <div className="grid grid-cols-1 items-center gap-10 lg:grid-cols-2 lg:gap-16">
+            {/* Left — headline + CTAs */}
+            <div className="text-center lg:text-left">
+              <div className="inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/5 px-4 py-1.5 text-sm font-medium text-primary">
+                <span className="relative flex h-2 w-2">
+                  <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-primary opacity-75" />
+                  <span className="relative inline-flex h-2 w-2 rounded-full bg-primary" />
+                </span>
+                Free during early access
+              </div>
+
+              <h1 className="mt-6 text-4xl font-extrabold tracking-tight text-foreground sm:text-5xl lg:text-6xl">
+                Plan Your 4-Year
+                <br />
+                <span className="bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent [-webkit-text-fill-color:transparent]">
+                  High School Journey
+                </span>
+              </h1>
+
+              <p className="mx-auto mt-6 max-w-xl text-lg leading-relaxed text-muted-foreground lg:mx-0">
+                Track courses, grades, and GPA. Monitor graduation requirements. Keep parents and counselors in the loop — all in one place.
+              </p>
+
+              <div className="mt-8 flex flex-col items-center gap-3 sm:flex-row sm:justify-center lg:justify-start">
+                <Link href="/signup"
+                  className="group flex w-full min-h-[44px] items-center justify-center gap-2 rounded-xl bg-primary px-8 py-3.5 text-base font-semibold text-primary-foreground shadow-lg shadow-primary/25 hover:bg-primary-hover focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring transition-all sm:w-auto">
+                  Get Started Free
+                  <svg aria-hidden="true" className="h-4 w-4 transition-transform group-hover:translate-x-0.5" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5 21 12m0 0-7.5 7.5M21 12H3" />
+                  </svg>
+                </Link>
+                <a href="#how-it-works"
+                  className="flex w-full min-h-[44px] items-center justify-center rounded-xl border border-border px-8 py-3.5 text-base font-semibold text-foreground hover:bg-muted focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring transition-colors sm:w-auto">
+                  See How It Works
+                </a>
+              </div>
             </div>
 
-            <h1 className="mt-6 text-4xl font-extrabold tracking-tight text-foreground sm:text-5xl lg:text-6xl">
-              Plan Your 4-Year
-              <br />
-              <span className="bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent [-webkit-text-fill-color:transparent]">
-                High School Journey
-              </span>
-            </h1>
-
-            <p className="mx-auto mt-6 max-w-xl text-lg leading-relaxed text-muted-foreground">
-              Track courses, grades, and GPA. Monitor graduation requirements. Keep parents and counselors in the loop — all in one place.
-            </p>
-
-            <div className="mt-8 flex flex-col items-center gap-3 sm:flex-row sm:justify-center">
-              <Link href="/signup"
-                className="group flex w-full min-h-[44px] items-center justify-center gap-2 rounded-xl bg-primary px-8 py-3.5 text-base font-semibold text-primary-foreground shadow-lg shadow-primary/25 hover:bg-primary-hover focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring transition-all sm:w-auto">
-                Get Started Free
-                <svg aria-hidden="true" className="h-4 w-4 transition-transform group-hover:translate-x-0.5" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5 21 12m0 0-7.5 7.5M21 12H3" />
-                </svg>
-              </Link>
-              <a href="#how-it-works"
-                className="flex w-full min-h-[44px] items-center justify-center rounded-xl border border-border px-8 py-3.5 text-base font-semibold text-foreground hover:bg-muted focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring transition-colors sm:w-auto">
-                See How It Works
-              </a>
+            {/* Right — mascot */}
+            <div className="flex justify-center lg:justify-end">
+              <Image
+                src="/brand/genie-mascot.png"
+                alt="The Plan with Genie mascot"
+                width={512}
+                height={512}
+                priority
+                className="h-auto w-full max-w-xs sm:max-w-sm lg:max-w-md"
+              />
             </div>
           </div>
 

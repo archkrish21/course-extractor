@@ -11,6 +11,7 @@
 /blob-report/
 /tests/report/
 /tests/reports/
+/tests/e2e/.auth/
 
 # next.js
 /.next/

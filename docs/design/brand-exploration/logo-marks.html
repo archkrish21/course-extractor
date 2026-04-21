@@ -1,0 +1,410 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>planwithgenie — Logo Mark Options</title>
+<style>
+  :root { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, sans-serif; color: #0f172a; }
+  * { box-sizing: border-box; }
+  body { margin: 0; padding: 48px 32px; background: #f8fafc; line-height: 1.55; }
+  h1 { font-size: 28px; margin: 0 0 6px; font-weight: 800; letter-spacing: -0.5px; }
+  h2 { font-size: 20px; margin: 0 0 4px; font-weight: 700; }
+  .subtitle { color: #64748b; margin-bottom: 40px; font-size: 15px; max-width: 780px; }
+  .card { background: white; border: 1px solid #e2e8f0; border-radius: 16px; padding: 32px; margin-bottom: 28px; max-width: 1100px; margin-left: auto; margin-right: auto; }
+  .tag { color: #64748b; font-size: 14px; margin: 0 0 20px; }
+  .grid { display: grid; grid-template-columns: 1.3fr 1fr 1fr; gap: 16px; }
+  @media (max-width: 960px) { .grid { grid-template-columns: 1fr; } }
+  .panel { border-radius: 12px; padding: 24px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px; min-height: 220px; }
+  .panel.light { background: #ffffff; border: 1px solid #e2e8f0; }
+  .panel.dark  { background: #0f172a; color: #e2e8f0; }
+  .panel.muted { background: #f1f5f9; }
+  .panel-label { font-size: 11px; text-transform: uppercase; letter-spacing: 1.3px; color: #94a3b8; margin-top: auto; }
+  .panel.dark .panel-label { color: #64748b; }
+  .sizes { display: flex; gap: 20px; align-items: flex-end; }
+  .sizes small { display: block; margin-top: 6px; font-size: 10px; color: #94a3b8; text-align: center; }
+  .panel.dark .sizes small { color: #64748b; }
+  .lockup { display: flex; align-items: center; gap: 14px; }
+  .wordmark { font-weight: 800; font-size: 28px; letter-spacing: -1.2px; }
+  .wordmark .accent-plum { color: #6D28D9; }
+  .wordmark .accent-gold { color: #FCD34D; }
+  .wordmark .accent-white { color: #F1F5F9; }
+  .pick { display:inline-block; background:#dcfce7; color:#166534; font-size:11px; padding:3px 10px; border-radius:12px; font-weight:600; margin-left: 8px; vertical-align: middle; }
+  .nav-demo { display: flex; align-items: center; justify-content: space-between; padding: 10px 18px; background: white; border: 1px solid #e2e8f0; border-radius: 10px; width: 100%; max-width: 420px; }
+  .nav-demo .right { display: flex; gap: 16px; font-size: 13px; color: #64748b; }
+  .palette { display:flex; gap:8px; margin-bottom: 18px; }
+  .swatch { display:flex; align-items:center; gap:6px; font-size:12px; color:#475569; background:#f1f5f9; padding:4px 10px 4px 4px; border-radius:20px; }
+  .swatch span { width:18px; height:18px; border-radius:50%; border:1px solid rgba(0,0,0,0.1); }
+  .reco { background:#f0fdf4; border:1px solid #86efac; border-radius:10px; padding:16px 18px; color:#14532d; font-size:14px; margin-top: 20px; }
+  .reco strong { color:#065f46; }
+</style>
+</head>
+<body>
+
+<h1>planwithgenie — Logo Mark Options</h1>
+<p class="subtitle">
+  Three simple marks that pair with the genie mascot and scale down to favicon size.
+  Shown at 96/48/32/16px, on light + dark backgrounds, and as horizontal lockups with the wordmark.
+</p>
+
+<!-- Shared palette reference -->
+<div class="card">
+  <h2>Shared palette</h2>
+  <div class="palette">
+    <div class="swatch"><span style="background:#6D28D9"></span>Plum #6D28D9</div>
+    <div class="swatch"><span style="background:#059669"></span>Emerald #059669</div>
+    <div class="swatch"><span style="background:#FCD34D"></span>Gold #FCD34D</div>
+    <div class="swatch"><span style="background:#E11D48"></span>Ruby #E11D48</div>
+    <div class="swatch"><span style="background:#0F172A"></span>Midnight #0F172A</div>
+  </div>
+  <p style="color:#64748b;font-size:13px;margin:0;">
+    Matches the mascot's turban (plum), gem (ruby), filigree (gold), and skin (emerald). Midnight is for dark-mode contrast and favicon tiles.
+  </p>
+</div>
+
+<!-- ============================================================ -->
+<!-- OPTION 1: TURBAN + GEM                                        -->
+<!-- ============================================================ -->
+<section class="card">
+  <h2>Option 1 — Turban + Gem <span class="pick">recommended</span></h2>
+  <p class="tag">Direct visual cue from the mascot. Instantly "genie-coded" without a lamp. Reduces cleanly to 16px.</p>
+
+  <div class="grid">
+    <!-- LIGHT sizes -->
+    <div class="panel light">
+      <div class="sizes">
+        <div>
+          <!-- 96 -->
+          <svg viewBox="0 0 200 200" width="96" xmlns="http://www.w3.org/2000/svg">
+            <path d="M 40 140 Q 45 92 100 85 Q 155 92 160 140 Q 160 150 150 152 L 50 152 Q 40 150 40 140 Z" fill="#6D28D9"/>
+            <path d="M 52 118 Q 100 108 148 118 Q 150 122 148 126 L 52 126 Q 50 122 52 118 Z" fill="#FCD34D"/>
+            <path d="M 100 100 L 108 112 L 100 128 L 92 112 Z" fill="#E11D48"/>
+            <path d="M 100 104 L 104 110 L 100 118 L 96 110 Z" fill="#FECACA"/>
+            <circle cx="100" cy="72" r="6" fill="#6D28D9"/>
+            <path d="M 100 62 L 100 68" stroke="#FCD34D" stroke-width="3" stroke-linecap="round"/>
+            <path d="M 100 60 L 108 50" stroke="#FCD34D" stroke-width="3" stroke-linecap="round"/>
+          </svg>
+          <small>96px</small>
+        </div>
+        <div>
+          <svg viewBox="0 0 200 200" width="48" xmlns="http://www.w3.org/2000/svg">
+            <path d="M 40 140 Q 45 92 100 85 Q 155 92 160 140 Q 160 150 150 152 L 50 152 Q 40 150 40 140 Z" fill="#6D28D9"/>
+            <path d="M 52 118 Q 100 108 148 118 Q 150 122 148 126 L 52 126 Q 50 122 52 118 Z" fill="#FCD34D"/>
+            <path d="M 100 100 L 108 112 L 100 128 L 92 112 Z" fill="#E11D48"/>
+            <circle cx="100" cy="72" r="6" fill="#6D28D9"/>
+            <path d="M 100 62 L 100 68" stroke="#FCD34D" stroke-width="3" stroke-linecap="round"/>
+            <path d="M 100 60 L 108 50" stroke="#FCD34D" stroke-width="3" stroke-linecap="round"/>
+          </svg>
+          <small>48px</small>
+        </div>
+        <div>
+          <svg viewBox="0 0 200 200" width="32" xmlns="http://www.w3.org/2000/svg">
+            <path d="M 40 140 Q 45 92 100 85 Q 155 92 160 140 Q 160 150 150 152 L 50 152 Q 40 150 40 140 Z" fill="#6D28D9"/>
+            <path d="M 52 118 Q 100 108 148 118 Q 150 122 148 126 L 52 126 Q 50 122 52 118 Z" fill="#FCD34D"/>
+            <path d="M 100 100 L 108 112 L 100 128 L 92 112 Z" fill="#E11D48"/>
+            <circle cx="100" cy="72" r="6" fill="#6D28D9"/>
+            <path d="M 100 62 L 108 50" stroke="#FCD34D" stroke-width="3" stroke-linecap="round"/>
+          </svg>
+          <small>32px</small>
+        </div>
+        <div>
+          <svg viewBox="0 0 200 200" width="16" xmlns="http://www.w3.org/2000/svg">
+            <path d="M 40 140 Q 45 92 100 85 Q 155 92 160 140 Q 160 150 150 152 L 50 152 Q 40 150 40 140 Z" fill="#6D28D9"/>
+            <path d="M 52 118 Q 100 108 148 118 Q 150 122 148 126 L 52 126 Q 50 122 52 118 Z" fill="#FCD34D"/>
+            <path d="M 100 100 L 108 112 L 100 128 L 92 112 Z" fill="#E11D48"/>
+          </svg>
+          <small>16px</small>
+        </div>
+      </div>
+      <div class="panel-label">Light — size scaling</div>
+    </div>
+
+    <!-- Lockup light -->
+    <div class="panel light">
+      <div class="lockup">
+        <svg viewBox="0 0 200 200" width="52" xmlns="http://www.w3.org/2000/svg">
+          <path d="M 40 140 Q 45 92 100 85 Q 155 92 160 140 Q 160 150 150 152 L 50 152 Q 40 150 40 140 Z" fill="#6D28D9"/>
+          <path d="M 52 118 Q 100 108 148 118 Q 150 122 148 126 L 52 126 Q 50 122 52 118 Z" fill="#FCD34D"/>
+          <path d="M 100 100 L 108 112 L 100 128 L 92 112 Z" fill="#E11D48"/>
+          <circle cx="100" cy="72" r="6" fill="#6D28D9"/>
+          <path d="M 100 62 L 108 50" stroke="#FCD34D" stroke-width="3" stroke-linecap="round"/>
+        </svg>
+        <div class="wordmark"><span>planwith</span><span class="accent-plum">genie</span></div>
+      </div>
+      <div class="nav-demo" style="margin-top: 14px;">
+        <div style="display:flex;align-items:center;gap:8px;">
+          <svg viewBox="0 0 200 200" width="24" xmlns="http://www.w3.org/2000/svg">
+            <path d="M 40 140 Q 45 92 100 85 Q 155 92 160 140 Q 160 150 150 152 L 50 152 Q 40 150 40 140 Z" fill="#6D28D9"/>
+            <path d="M 52 118 Q 100 108 148 118 Q 150 122 148 126 L 52 126 Q 50 122 52 118 Z" fill="#FCD34D"/>
+            <path d="M 100 100 L 108 112 L 100 128 L 92 112 Z" fill="#E11D48"/>
+          </svg>
+          <strong style="font-size:14px;">planwithgenie</strong>
+        </div>
+        <div class="right"><span>Plans</span><span>Pricing</span></div>
+      </div>
+      <div class="panel-label">Nav lockup</div>
+    </div>
+
+    <!-- Dark -->
+    <div class="panel dark">
+      <div class="sizes">
+        <div>
+          <svg viewBox="0 0 200 200" width="64" xmlns="http://www.w3.org/2000/svg">
+            <path d="M 40 140 Q 45 92 100 85 Q 155 92 160 140 Q 160 150 150 152 L 50 152 Q 40 150 40 140 Z" fill="#A78BFA"/>
+            <path d="M 52 118 Q 100 108 148 118 Q 150 122 148 126 L 52 126 Q 50 122 52 118 Z" fill="#FCD34D"/>
+            <path d="M 100 100 L 108 112 L 100 128 L 92 112 Z" fill="#E11D48"/>
+            <circle cx="100" cy="72" r="6" fill="#A78BFA"/>
+            <path d="M 100 60 L 108 50" stroke="#FCD34D" stroke-width="3" stroke-linecap="round"/>
+          </svg>
+          <small>64px</small>
+        </div>
+        <div>
+          <svg viewBox="0 0 200 200" width="32" xmlns="http://www.w3.org/2000/svg">
+            <path d="M 40 140 Q 45 92 100 85 Q 155 92 160 140 Q 160 150 150 152 L 50 152 Q 40 150 40 140 Z" fill="#A78BFA"/>
+            <path d="M 52 118 Q 100 108 148 118 Q 150 122 148 126 L 52 126 Q 50 122 52 118 Z" fill="#FCD34D"/>
+            <path d="M 100 100 L 108 112 L 100 128 L 92 112 Z" fill="#E11D48"/>
+          </svg>
+          <small>32px</small>
+        </div>
+      </div>
+      <div class="lockup" style="margin-top:10px;">
+        <svg viewBox="0 0 200 200" width="38" xmlns="http://www.w3.org/2000/svg">
+          <path d="M 40 140 Q 45 92 100 85 Q 155 92 160 140 Q 160 150 150 152 L 50 152 Q 40 150 40 140 Z" fill="#A78BFA"/>
+          <path d="M 52 118 Q 100 108 148 118 Q 150 122 148 126 L 52 126 Q 50 122 52 118 Z" fill="#FCD34D"/>
+          <path d="M 100 100 L 108 112 L 100 128 L 92 112 Z" fill="#E11D48"/>
+        </svg>
+        <div class="wordmark"><span class="accent-white">planwith</span><span class="accent-gold">genie</span></div>
+      </div>
+      <div class="panel-label">Dark</div>
+    </div>
+  </div>
+</section>
+
+
+<!-- ============================================================ -->
+<!-- OPTION 2: G-SPARK                                             -->
+<!-- ============================================================ -->
+<section class="card">
+  <h2>Option 2 — G-Spark Tile</h2>
+  <p class="tag">Cleanest, most tech-forward. No genie imagery — all brand lives in the wordmark + spark. Best for app-icon / PWA.</p>
+
+  <div class="grid">
+    <!-- LIGHT sizes -->
+    <div class="panel light">
+      <div class="sizes">
+        <div>
+          <svg viewBox="0 0 200 200" width="96" xmlns="http://www.w3.org/2000/svg">
+            <rect width="200" height="200" rx="36" fill="#0F172A"/>
+            <text x="38" y="148" font-family="Inter, -apple-system, sans-serif" font-weight="800" font-size="140" fill="#F1F5F9" letter-spacing="-6">G</text>
+            <path d="M 145 42 L 149 58 L 165 62 L 149 66 L 145 82 L 141 66 L 125 62 L 141 58 Z" fill="#FCD34D"/>
+          </svg>
+          <small>96px</small>
+        </div>
+        <div>
+          <svg viewBox="0 0 200 200" width="48" xmlns="http://www.w3.org/2000/svg">
+            <rect width="200" height="200" rx="36" fill="#0F172A"/>
+            <text x="38" y="148" font-family="Inter, -apple-system, sans-serif" font-weight="800" font-size="140" fill="#F1F5F9" letter-spacing="-6">G</text>
+            <path d="M 145 42 L 149 58 L 165 62 L 149 66 L 145 82 L 141 66 L 125 62 L 141 58 Z" fill="#FCD34D"/>
+          </svg>
+          <small>48px</small>
+        </div>
+        <div>
+          <svg viewBox="0 0 200 200" width="32" xmlns="http://www.w3.org/2000/svg">
+            <rect width="200" height="200" rx="36" fill="#0F172A"/>
+            <text x="38" y="148" font-family="Inter, -apple-system, sans-serif" font-weight="800" font-size="140" fill="#F1F5F9" letter-spacing="-6">G</text>
+            <path d="M 145 42 L 149 58 L 165 62 L 149 66 L 145 82 L 141 66 L 125 62 L 141 58 Z" fill="#FCD34D"/>
+          </svg>
+          <small>32px</small>
+        </div>
+        <div>
+          <svg viewBox="0 0 200 200" width="16" xmlns="http://www.w3.org/2000/svg">
+            <rect width="200" height="200" rx="36" fill="#0F172A"/>
+            <text x="38" y="148" font-family="Inter, -apple-system, sans-serif" font-weight="800" font-size="140" fill="#F1F5F9" letter-spacing="-6">G</text>
+            <path d="M 145 42 L 149 58 L 165 62 L 149 66 L 145 82 L 141 66 L 125 62 L 141 58 Z" fill="#FCD34D"/>
+          </svg>
+          <small>16px</small>
+        </div>
+      </div>
+      <div class="panel-label">Light — size scaling</div>
+    </div>
+
+    <div class="panel light">
+      <div class="lockup">
+        <svg viewBox="0 0 200 200" width="52" xmlns="http://www.w3.org/2000/svg">
+          <rect width="200" height="200" rx="36" fill="#0F172A"/>
+          <text x="38" y="148" font-family="Inter, -apple-system, sans-serif" font-weight="800" font-size="140" fill="#F1F5F9" letter-spacing="-6">G</text>
+          <path d="M 145 42 L 149 58 L 165 62 L 149 66 L 145 82 L 141 66 L 125 62 L 141 58 Z" fill="#FCD34D"/>
+        </svg>
+        <div class="wordmark"><span>planwith</span><span class="accent-plum">genie</span></div>
+      </div>
+      <div class="nav-demo" style="margin-top: 14px;">
+        <div style="display:flex;align-items:center;gap:8px;">
+          <svg viewBox="0 0 200 200" width="24" xmlns="http://www.w3.org/2000/svg">
+            <rect width="200" height="200" rx="36" fill="#0F172A"/>
+            <text x="38" y="148" font-family="Inter, -apple-system, sans-serif" font-weight="800" font-size="140" fill="#F1F5F9" letter-spacing="-6">G</text>
+            <path d="M 145 42 L 149 58 L 165 62 L 149 66 L 145 82 L 141 66 L 125 62 L 141 58 Z" fill="#FCD34D"/>
+          </svg>
+          <strong style="font-size:14px;">planwithgenie</strong>
+        </div>
+        <div class="right"><span>Plans</span><span>Pricing</span></div>
+      </div>
+      <div class="panel-label">Nav lockup</div>
+    </div>
+
+    <div class="panel dark">
+      <div class="sizes">
+        <div>
+          <svg viewBox="0 0 200 200" width="64" xmlns="http://www.w3.org/2000/svg">
+            <rect width="200" height="200" rx="36" fill="#F1F5F9"/>
+            <text x="38" y="148" font-family="Inter, -apple-system, sans-serif" font-weight="800" font-size="140" fill="#0F172A" letter-spacing="-6">G</text>
+            <path d="M 145 42 L 149 58 L 165 62 L 149 66 L 145 82 L 141 66 L 125 62 L 141 58 Z" fill="#6D28D9"/>
+          </svg>
+          <small>64px (inverted)</small>
+        </div>
+        <div>
+          <svg viewBox="0 0 200 200" width="32" xmlns="http://www.w3.org/2000/svg">
+            <rect width="200" height="200" rx="36" fill="#F1F5F9"/>
+            <text x="38" y="148" font-family="Inter, -apple-system, sans-serif" font-weight="800" font-size="140" fill="#0F172A" letter-spacing="-6">G</text>
+            <path d="M 145 42 L 149 58 L 165 62 L 149 66 L 145 82 L 141 66 L 125 62 L 141 58 Z" fill="#6D28D9"/>
+          </svg>
+          <small>32px</small>
+        </div>
+      </div>
+      <div class="panel-label">Dark (inverted tile)</div>
+    </div>
+  </div>
+</section>
+
+
+<!-- ============================================================ -->
+<!-- OPTION 3: LAMP + STAR                                         -->
+<!-- ============================================================ -->
+<section class="card">
+  <h2>Option 3 — Lamp + Star</h2>
+  <p class="tag">Generic brass oil-lamp silhouette (public-domain shape) with a gold star. Genie-coded without the Disney blue-smoke trap.</p>
+
+  <div class="grid">
+    <div class="panel light">
+      <div class="sizes">
+        <div>
+          <svg viewBox="0 0 220 180" width="110" xmlns="http://www.w3.org/2000/svg">
+            <!-- Handle -->
+            <path d="M 50 100 Q 28 100 28 85 Q 28 72 42 72" fill="none" stroke="#6D28D9" stroke-width="7" stroke-linecap="round"/>
+            <!-- Lamp body -->
+            <path d="M 48 108 Q 48 82 85 78 L 130 78 Q 160 82 160 108 Q 160 128 140 132 L 68 132 Q 48 128 48 108 Z" fill="#6D28D9"/>
+            <!-- Base -->
+            <rect x="58" y="132" width="94" height="10" rx="3" fill="#5B21B6"/>
+            <!-- Spout -->
+            <path d="M 158 95 L 185 88 L 189 98 L 165 106 Z" fill="#6D28D9"/>
+            <!-- Star -->
+            <path d="M 195 42 L 199 56 L 214 60 L 199 64 L 195 78 L 191 64 L 176 60 L 191 56 Z" fill="#FCD34D"/>
+            <!-- Smaller sparkle -->
+            <circle cx="175" cy="38" r="3" fill="#FCD34D"/>
+          </svg>
+          <small>96px</small>
+        </div>
+        <div>
+          <svg viewBox="0 0 220 180" width="56" xmlns="http://www.w3.org/2000/svg">
+            <path d="M 50 100 Q 28 100 28 85 Q 28 72 42 72" fill="none" stroke="#6D28D9" stroke-width="7" stroke-linecap="round"/>
+            <path d="M 48 108 Q 48 82 85 78 L 130 78 Q 160 82 160 108 Q 160 128 140 132 L 68 132 Q 48 128 48 108 Z" fill="#6D28D9"/>
+            <rect x="58" y="132" width="94" height="10" rx="3" fill="#5B21B6"/>
+            <path d="M 158 95 L 185 88 L 189 98 L 165 106 Z" fill="#6D28D9"/>
+            <path d="M 195 42 L 199 56 L 214 60 L 199 64 L 195 78 L 191 64 L 176 60 L 191 56 Z" fill="#FCD34D"/>
+          </svg>
+          <small>48px</small>
+        </div>
+        <div>
+          <svg viewBox="0 0 220 180" width="36" xmlns="http://www.w3.org/2000/svg">
+            <path d="M 50 100 Q 28 100 28 85 Q 28 72 42 72" fill="none" stroke="#6D28D9" stroke-width="7" stroke-linecap="round"/>
+            <path d="M 48 108 Q 48 82 85 78 L 130 78 Q 160 82 160 108 Q 160 128 140 132 L 68 132 Q 48 128 48 108 Z" fill="#6D28D9"/>
+            <rect x="58" y="132" width="94" height="10" rx="3" fill="#5B21B6"/>
+            <path d="M 158 95 L 185 88 L 189 98 L 165 106 Z" fill="#6D28D9"/>
+            <path d="M 195 42 L 199 56 L 214 60 L 199 64 L 195 78 L 191 64 L 176 60 L 191 56 Z" fill="#FCD34D"/>
+          </svg>
+          <small>32px</small>
+        </div>
+        <div>
+          <svg viewBox="0 0 220 180" width="18" xmlns="http://www.w3.org/2000/svg">
+            <path d="M 48 108 Q 48 82 85 78 L 130 78 Q 160 82 160 108 Q 160 128 140 132 L 68 132 Q 48 128 48 108 Z" fill="#6D28D9"/>
+            <rect x="58" y="132" width="94" height="10" rx="3" fill="#5B21B6"/>
+            <path d="M 158 95 L 185 88 L 189 98 L 165 106 Z" fill="#6D28D9"/>
+            <path d="M 195 42 L 199 56 L 214 60 L 199 64 L 195 78 L 191 64 L 176 60 L 191 56 Z" fill="#FCD34D"/>
+          </svg>
+          <small>16px</small>
+        </div>
+      </div>
+      <div class="panel-label">Light — size scaling</div>
+    </div>
+
+    <div class="panel light">
+      <div class="lockup">
+        <svg viewBox="0 0 220 180" width="60" xmlns="http://www.w3.org/2000/svg">
+          <path d="M 50 100 Q 28 100 28 85 Q 28 72 42 72" fill="none" stroke="#6D28D9" stroke-width="7" stroke-linecap="round"/>
+          <path d="M 48 108 Q 48 82 85 78 L 130 78 Q 160 82 160 108 Q 160 128 140 132 L 68 132 Q 48 128 48 108 Z" fill="#6D28D9"/>
+          <rect x="58" y="132" width="94" height="10" rx="3" fill="#5B21B6"/>
+          <path d="M 158 95 L 185 88 L 189 98 L 165 106 Z" fill="#6D28D9"/>
+          <path d="M 195 42 L 199 56 L 214 60 L 199 64 L 195 78 L 191 64 L 176 60 L 191 56 Z" fill="#FCD34D"/>
+        </svg>
+        <div class="wordmark"><span>planwith</span><span class="accent-plum">genie</span></div>
+      </div>
+      <div class="nav-demo" style="margin-top: 14px;">
+        <div style="display:flex;align-items:center;gap:8px;">
+          <svg viewBox="0 0 220 180" width="26" xmlns="http://www.w3.org/2000/svg">
+            <path d="M 48 108 Q 48 82 85 78 L 130 78 Q 160 82 160 108 Q 160 128 140 132 L 68 132 Q 48 128 48 108 Z" fill="#6D28D9"/>
+            <path d="M 158 95 L 185 88 L 189 98 L 165 106 Z" fill="#6D28D9"/>
+            <path d="M 195 42 L 199 56 L 214 60 L 199 64 L 195 78 L 191 64 L 176 60 L 191 56 Z" fill="#FCD34D"/>
+          </svg>
+          <strong style="font-size:14px;">planwithgenie</strong>
+        </div>
+        <div class="right"><span>Plans</span><span>Pricing</span></div>
+      </div>
+      <div class="panel-label">Nav lockup</div>
+    </div>
+
+    <div class="panel dark">
+      <div class="sizes">
+        <div>
+          <svg viewBox="0 0 220 180" width="64" xmlns="http://www.w3.org/2000/svg">
+            <path d="M 50 100 Q 28 100 28 85 Q 28 72 42 72" fill="none" stroke="#A78BFA" stroke-width="7" stroke-linecap="round"/>
+            <path d="M 48 108 Q 48 82 85 78 L 130 78 Q 160 82 160 108 Q 160 128 140 132 L 68 132 Q 48 128 48 108 Z" fill="#A78BFA"/>
+            <rect x="58" y="132" width="94" height="10" rx="3" fill="#6D28D9"/>
+            <path d="M 158 95 L 185 88 L 189 98 L 165 106 Z" fill="#A78BFA"/>
+            <path d="M 195 42 L 199 56 L 214 60 L 199 64 L 195 78 L 191 64 L 176 60 L 191 56 Z" fill="#FCD34D"/>
+          </svg>
+          <small>64px</small>
+        </div>
+        <div>
+          <svg viewBox="0 0 220 180" width="32" xmlns="http://www.w3.org/2000/svg">
+            <path d="M 48 108 Q 48 82 85 78 L 130 78 Q 160 82 160 108 Q 160 128 140 132 L 68 132 Q 48 128 48 108 Z" fill="#A78BFA"/>
+            <path d="M 158 95 L 185 88 L 189 98 L 165 106 Z" fill="#A78BFA"/>
+            <path d="M 195 42 L 199 56 L 214 60 L 199 64 L 195 78 L 191 64 L 176 60 L 191 56 Z" fill="#FCD34D"/>
+          </svg>
+          <small>32px</small>
+        </div>
+      </div>
+      <div class="panel-label">Dark</div>
+    </div>
+  </div>
+</section>
+
+<!-- RECOMMENDATION -->
+<div class="card">
+  <h2>My recommendation</h2>
+  <div class="reco">
+    <strong>Go with Option 1 — Turban + Gem.</strong><br/><br/>
+    It carries the mascot's visual DNA directly (plum turban, gold wrap, ruby gem), stays readable at 16px (unlike the mascot itself), and creates a clear brand system:
+    <ul style="margin: 8px 0 0; padding-left: 20px;">
+      <li><strong>Mascot</strong> (full genie) → landing hero, marketing, email headers</li>
+      <li><strong>Turban mark</strong> → favicon, nav bar, app icon, tiny contexts</li>
+      <li><strong>Wordmark</strong> <span style="color:#6D28D9;font-weight:800;">planwith<span style="color:#0f172a;">genie</span></span> → text-heavy contexts (emails, invoices, footers)</li>
+    </ul>
+    Option 2 is safer but disconnected from the mascot. Option 3 (lamp) works but revives some of the "genie lamp" connotations we were trying to move away from.
+  </div>
+</div>
+
+<p style="max-width:1100px;margin:0 auto;color:#64748b;font-size:13px;text-align:center;">
+  Pick an option (or tell me what to tweak — different turban shape, different gem, two-color version) and I'll finalize the SVG files and drop them into <code>saps/public/brand/</code>.
+</p>
+
+</body>
+</html>

@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Genie Wordmark Preview</title>
+<style>
+  body { margin: 0; padding: 48px 32px; font-family: -apple-system, BlinkMacSystemFont, Inter, sans-serif; background: #f8fafc; color: #0f172a; line-height: 1.5; }
+  h1 { margin: 0 0 8px; font-size: 24px; font-weight: 800; letter-spacing: -0.5px; }
+  p.sub { color: #64748b; max-width: 700px; font-size: 14px; margin: 0 0 40px; }
+  .card { background: white; border: 1px solid #e2e8f0; border-radius: 16px; padding: 32px; margin-bottom: 20px; max-width: 900px; margin-left: auto; margin-right: auto; }
+  .card h2 { margin: 0 0 20px; font-size: 16px; font-weight: 600; color: #64748b; text-transform: uppercase; letter-spacing: 1px; }
+  .row { display: flex; gap: 40px; align-items: flex-end; flex-wrap: wrap; }
+  .item { display: flex; flex-direction: column; align-items: center; gap: 8px; }
+  .item small { color: #94a3b8; font-size: 11px; }
+  .dark { background: #0f172a; }
+  .dark h2 { color: #94a3b8; }
+  .dark .item small { color: #64748b; }
+</style>
+</head>
+<body>
+
+<h1>Shared-tall-i wordmark — SVG preview</h1>
+<p class="sub">
+  "planwith" splits around a shared tall "i" that also serves as the i in "Genie".
+  The stem and dot render as solid shapes so they'll align regardless of font loading.
+  Shown at 4 sizes on light + dark backgrounds.
+</p>
+
+<!-- Nav-bar alignment check -->
+<section class="card">
+  <h2>Nav-bar alignment check (vs. favicon)</h2>
+  <div style="display: flex; align-items: center; gap: 8px; padding: 16px; border: 1px solid #e2e8f0; border-radius: 10px; background: white; max-width: 420px;">
+    <img src="../../../saps/public/favicon-96x96.png" alt="favicon" width="32" height="32" />
+    <svg role="img" viewBox="0 -12 170 100" height="44" xmlns="http://www.w3.org/2000/svg">
+      <path d="M 120 24 C 113 37, 127 52, 120 68" stroke="#059669" stroke-width="9" stroke-linecap="round" fill="none" opacity="0.75"/>
+      <circle cx="120" cy="11" r="4" fill="#059669"/>
+      <text x="113" y="31" text-anchor="end" font-family="Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" font-size="18" font-weight="600" letter-spacing="1.2" fill="#6B1F3D">planw</text>
+      <text x="127" y="31" text-anchor="start" font-family="Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" font-size="18" font-weight="600" letter-spacing="1.2" fill="#6B1F3D">th</text>
+      <text x="113" y="73" text-anchor="end" font-family="Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" font-weight="900" letter-spacing="-2" fill="#059669"><tspan font-size="72">G</tspan><tspan font-size="56">en</tspan></text>
+      <text x="127" y="73" text-anchor="start" font-family="Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" font-size="56" font-weight="900" letter-spacing="-2" fill="#059669">e</text>
+    </svg>
+  </div>
+  <p style="color:#64748b;font-size:13px;margin-top:12px;">
+    Favicon (32×32 PNG, left) + wordmark (44px tall SVG, right) — both vertical-centered via flex. The wordmark's content is now centered in its viewBox, so their visual centers should line up.
+  </p>
+</section>
+
+<!-- Light -->
+<section class="card">
+  <h2>Light background</h2>
+  <div class="row">
+    <div class="item">
+      <svg role="img" viewBox="0 -12 170 100" height="32" xmlns="http://www.w3.org/2000/svg">
+        <path d="M 130 24 C 123 37, 137 52, 130 68" stroke="#059669" stroke-width="9" stroke-linecap="round" fill="none" opacity="0.75"/>
+        <circle cx="130" cy="11" r="4" fill="#059669"/>
+        <text x="123" y="31" text-anchor="end" font-family="Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" font-size="18" font-weight="600" letter-spacing="1.2" fill="#6B1F3D">planw</text>
+        <text x="137" y="31" text-anchor="start" font-family="Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" font-size="18" font-weight="600" letter-spacing="1.2" fill="#6B1F3D">th</text>
+        <text x="123" y="73" text-anchor="end" font-family="Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" font-weight="900" letter-spacing="-2" fill="#059669"><tspan font-size="72">G</tspan><tspan font-size="56">en</tspan></text>
+        <text x="137" y="73" text-anchor="start" font-family="Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" font-size="56" font-weight="900" letter-spacing="-2" fill="#059669">e</text>
+      </svg>
+      <small>32 px (sm)</small>
+    </div>
+    <div class="item">
+      <svg role="img" viewBox="0 -12 170 100" height="44" xmlns="http://www.w3.org/2000/svg">
+        <path d="M 130 24 C 123 37, 137 52, 130 68" stroke="#059669" stroke-width="9" stroke-linecap="round" fill="none" opacity="0.75"/>
+        <circle cx="130" cy="11" r="4" fill="#059669"/>
+        <text x="123" y="31" text-anchor="end" font-family="Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" font-size="18" font-weight="600" letter-spacing="1.2" fill="#6B1F3D">planw</text>
+        <text x="137" y="31" text-anchor="start" font-family="Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" font-size="18" font-weight="600" letter-spacing="1.2" fill="#6B1F3D">th</text>
+        <text x="123" y="73" text-anchor="end" font-family="Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" font-weight="900" letter-spacing="-2" fill="#059669"><tspan font-size="72">G</tspan><tspan font-size="56">en</tspan></text>
+        <text x="137" y="73" text-anchor="start" font-family="Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" font-size="56" font-weight="900" letter-spacing="-2" fill="#059669">e</text>
+      </svg>
+      <small>44 px (md)</small>
+    </div>
+    <div class="item">
+      <svg role="img" viewBox="0 -12 170 100" height="56" xmlns="http://www.w3.org/2000/svg">
+        <path d="M 130 24 C 123 37, 137 52, 130 68" stroke="#059669" stroke-width="9" stroke-linecap="round" fill="none" opacity="0.75"/>
+        <circle cx="130" cy="11" r="4" fill="#059669"/>
+        <text x="123" y="31" text-anchor="end" font-family="Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" font-size="18" font-weight="600" letter-spacing="1.2" fill="#6B1F3D">planw</text>
+        <text x="137" y="31" text-anchor="start" font-family="Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" font-size="18" font-weight="600" letter-spacing="1.2" fill="#6B1F3D">th</text>
+        <text x="123" y="73" text-anchor="end" font-family="Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" font-weight="900" letter-spacing="-2" fill="#059669"><tspan font-size="72">G</tspan><tspan font-size="56">en</tspan></text>
+        <text x="137" y="73" text-anchor="start" font-family="Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" font-size="56" font-weight="900" letter-spacing="-2" fill="#059669">e</text>
+      </svg>
+      <small>56 px (lg)</small>
+    </div>
+    <div class="item">
+      <svg role="img" viewBox="0 -12 170 100" height="72" xmlns="http://www.w3.org/2000/svg">
+        <path d="M 130 24 C 123 37, 137 52, 130 68" stroke="#059669" stroke-width="9" stroke-linecap="round" fill="none" opacity="0.75"/>
+        <circle cx="130" cy="11" r="4" fill="#059669"/>
+        <text x="123" y="31" text-anchor="end" font-family="Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" font-size="18" font-weight="600" letter-spacing="1.2" fill="#6B1F3D">planw</text>
+        <text x="137" y="31" text-anchor="start" font-family="Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" font-size="18" font-weight="600" letter-spacing="1.2" fill="#6B1F3D">th</text>
+        <text x="123" y="73" text-anchor="end" font-family="Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" font-weight="900" letter-spacing="-2" fill="#059669"><tspan font-size="72">G</tspan><tspan font-size="56">en</tspan></text>
+        <text x="137" y="73" text-anchor="start" font-family="Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" font-size="56" font-weight="900" letter-spacing="-2" fill="#059669">e</text>
+      </svg>
+      <small>72 px (xl)</small>
+    </div>
+  </div>
+</section>
+
+<!-- Dark -->
+<section class="card dark">
+  <h2>Dark background</h2>
+  <div class="row">
+    <div class="item">
+      <svg role="img" viewBox="0 -12 170 100" height="44" xmlns="http://www.w3.org/2000/svg">
+        <path d="M 130 24 C 123 37, 137 52, 130 68" stroke="#FCD34D" stroke-width="9" stroke-linecap="round" fill="none" opacity="0.75"/>
+        <circle cx="130" cy="11" r="4" fill="#FCD34D"/>
+        <text x="123" y="31" text-anchor="end" font-family="Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" font-size="18" font-weight="600" letter-spacing="1.2" fill="#F1F5F9">planw</text>
+        <text x="137" y="31" text-anchor="start" font-family="Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" font-size="18" font-weight="600" letter-spacing="1.2" fill="#F1F5F9">th</text>
+        <text x="123" y="73" text-anchor="end" font-family="Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" font-weight="900" letter-spacing="-2" fill="#FCD34D"><tspan font-size="72">G</tspan><tspan font-size="56">en</tspan></text>
+        <text x="137" y="73" text-anchor="start" font-family="Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" font-size="56" font-weight="900" letter-spacing="-2" fill="#FCD34D">e</text>
+      </svg>
+      <small>44 px (md)</small>
+    </div>
+    <div class="item">
+      <svg role="img" viewBox="0 -12 170 100" height="72" xmlns="http://www.w3.org/2000/svg">
+        <path d="M 130 24 C 123 37, 137 52, 130 68" stroke="#FCD34D" stroke-width="9" stroke-linecap="round" fill="none" opacity="0.75"/>
+        <circle cx="130" cy="11" r="4" fill="#FCD34D"/>
+        <text x="123" y="31" text-anchor="end" font-family="Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" font-size="18" font-weight="600" letter-spacing="1.2" fill="#F1F5F9">planw</text>
+        <text x="137" y="31" text-anchor="start" font-family="Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" font-size="18" font-weight="600" letter-spacing="1.2" fill="#F1F5F9">th</text>
+        <text x="123" y="73" text-anchor="end" font-family="Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" font-weight="900" letter-spacing="-2" fill="#FCD34D"><tspan font-size="72">G</tspan><tspan font-size="56">en</tspan></text>
+        <text x="137" y="73" text-anchor="start" font-family="Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" font-size="56" font-weight="900" letter-spacing="-2" fill="#FCD34D">e</text>
+      </svg>
+      <small>72 px (xl)</small>
+    </div>
+  </div>
+</section>
+
+<p style="max-width:900px;margin:0 auto;color:#64748b;font-size:13px;text-align:center;">
+  Tell me what to tweak — thicker/thinner stem, bigger/smaller dot, different spacing between planw/th, larger or smaller planwith vs Genie, etc.
+</p>
+
+</body>
+</html>

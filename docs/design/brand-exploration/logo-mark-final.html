@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>planwithgenie — Grad Cap + Turban Mark</title>
+<style>
+  :root { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, sans-serif; color: #0f172a; }
+  * { box-sizing: border-box; }
+  body { margin: 0; padding: 48px 32px; background: #f8fafc; line-height: 1.55; }
+  h1 { font-size: 28px; margin: 0 0 6px; font-weight: 800; letter-spacing: -0.5px; }
+  h2 { font-size: 20px; margin: 0 0 6px; font-weight: 700; }
+  .subtitle { color: #64748b; margin-bottom: 40px; font-size: 15px; max-width: 780px; }
+  .card { background: white; border: 1px solid #e2e8f0; border-radius: 16px; padding: 32px; margin-bottom: 28px; max-width: 1100px; margin-left: auto; margin-right: auto; }
+  .row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-top: 16px; }
+  @media (max-width: 900px) { .row { grid-template-columns: repeat(2, 1fr); } }
+  .panel { border-radius: 12px; padding: 24px 16px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; min-height: 180px; }
+  .panel.light { background: #ffffff; border: 1px solid #e2e8f0; }
+  .panel.dark { background: #0f172a; }
+  .panel.tile-plum { background: #1E1065; }
+  .panel.tile-cream { background: #FFFBEB; }
+  .panel-label { font-size: 11px; text-transform: uppercase; letter-spacing: 1.3px; color: #94a3b8; margin-top: auto; }
+  .size-label { font-size: 10px; color: #94a3b8; margin-top: 4px; }
+  .dark .size-label, .tile-plum .size-label { color: #94a3b8; }
+  .lockup { display: flex; align-items: center; gap: 14px; }
+  .wordmark { font-weight: 800; font-size: 30px; letter-spacing: -1.2px; }
+  .wordmark .plum { color: #6D28D9; }
+  .wordmark .gold { color: #FCD34D; }
+  .wordmark .white { color: #F1F5F9; }
+  .nav-demo { display: flex; align-items: center; justify-content: space-between; padding: 10px 18px; background: white; border: 1px solid #e2e8f0; border-radius: 10px; width: 100%; max-width: 420px; margin-top: 6px; }
+  .nav-demo .right { display: flex; gap: 16px; font-size: 13px; color: #64748b; }
+  .note { background: #f0f9ff; border: 1px solid #bae6fd; border-radius: 10px; padding: 14px 16px; color: #0c4a6e; font-size: 13px; margin-top: 18px; }
+</style>
+</head>
+<body>
+
+<h1>Grad Cap + Turban — Logo Mark</h1>
+<p class="subtitle">
+  Clean hand-coded SVG of the concept from the Ideogram image. Two-color, bold silhouette, favicon-safe.
+  Primary version has a tassel; simplified version drops it for 16–32px use.
+</p>
+
+<!-- ============================================================ -->
+<!-- SIZE SCALING                                                  -->
+<!-- ============================================================ -->
+<section class="card">
+  <h2>Primary mark — size scaling</h2>
+  <p style="color:#64748b;margin:0;font-size:14px;">The full mark with tassel. Stays crisp down to about 32px.</p>
+
+  <div class="row">
+    <div class="panel light">
+      <svg viewBox="0 0 200 200" width="128" xmlns="http://www.w3.org/2000/svg">
+        <path d="M 32 82 Q 32 170 58 178 L 142 178 Q 168 170 168 82 Z" fill="#6D28D9"/>
+        <path d="M 32 126 Q 100 134 168 126 L 168 144 Q 100 152 32 144 Z" fill="#FCD34D"/>
+        <ellipse cx="100" cy="135" rx="10" ry="13" fill="#E11D48"/>
+        <ellipse cx="100" cy="132" rx="3.5" ry="5" fill="#FECACA"/>
+        <polygon points="100,18 192,54 100,90 8,54" fill="#6D28D9"/>
+        <path d="M 8 54 L 100 90 L 192 54 L 192 62 L 100 98 L 8 62 Z" fill="#4C1D95"/>
+        <circle cx="100" cy="54" r="6" fill="#FCD34D"/>
+        <path d="M 100 54 Q 146 64 160 90" fill="none" stroke="#FCD34D" stroke-width="3" stroke-linecap="round"/>
+        <path d="M 160 92 L 160 112" stroke="#FCD34D" stroke-width="7" stroke-linecap="round"/>
+      </svg>
+      <div class="size-label">128 px</div>
+      <div class="panel-label">Full detail</div>
+    </div>
+
+    <div class="panel light">
+      <svg viewBox="0 0 200 200" width="64" xmlns="http://www.w3.org/2000/svg">
+        <path d="M 32 82 Q 32 170 58 178 L 142 178 Q 168 170 168 82 Z" fill="#6D28D9"/>
+        <path d="M 32 126 Q 100 134 168 126 L 168 144 Q 100 152 32 144 Z" fill="#FCD34D"/>
+        <ellipse cx="100" cy="135" rx="10" ry="13" fill="#E11D48"/>
+        <ellipse cx="100" cy="132" rx="3.5" ry="5" fill="#FECACA"/>
+        <polygon points="100,18 192,54 100,90 8,54" fill="#6D28D9"/>
+        <path d="M 8 54 L 100 90 L 192 54 L 192 62 L 100 98 L 8 62 Z" fill="#4C1D95"/>
+        <circle cx="100" cy="54" r="6" fill="#FCD34D"/>
+        <path d="M 100 54 Q 146 64 160 90" fill="none" stroke="#FCD34D" stroke-width="3" stroke-linecap="round"/>
+        <path d="M 160 92 L 160 112" stroke="#FCD34D" stroke-width="7" stroke-linecap="round"/>
+      </svg>
+      <div class="size-label">64 px</div>
+      <div class="panel-label">Nav / header</div>
+    </div>
+
+    <div class="panel light">
+      <svg viewBox="0 0 200 200" width="48" xmlns="http://www.w3.org/2000/svg">
+        <path d="M 32 82 Q 32 170 58 178 L 142 178 Q 168 170 168 82 Z" fill="#6D28D9"/>
+        <path d="M 32 126 Q 100 134 168 126 L 168 144 Q 100 152 32 144 Z" fill="#FCD34D"/>
+        <ellipse cx="100" cy="135" rx="10" ry="13" fill="#E11D48"/>
+        <polygon points="100,18 192,54 100,90 8,54" fill="#6D28D9"/>
+        <path d="M 8 54 L 100 90 L 192 54 L 192 62 L 100 98 L 8 62 Z" fill="#4C1D95"/>
+        <circle cx="100" cy="54" r="6" fill="#FCD34D"/>
+        <path d="M 100 54 Q 146 64 160 90" fill="none" stroke="#FCD34D" stroke-width="3" stroke-linecap="round"/>
+        <path d="M 160 92 L 160 112" stroke="#FCD34D" stroke-width="7" stroke-linecap="round"/>
+      </svg>
+      <div class="size-label">48 px</div>
+      <div class="panel-label">App icon</div>
+    </div>
+
+    <div class="panel light">
+      <svg viewBox="0 0 200 200" width="32" xmlns="http://www.w3.org/2000/svg">
+        <path d="M 32 82 Q 32 170 58 178 L 142 178 Q 168 170 168 82 Z" fill="#6D28D9"/>
+        <path d="M 32 126 Q 100 134 168 126 L 168 144 Q 100 152 32 144 Z" fill="#FCD34D"/>
+        <ellipse cx="100" cy="135" rx="10" ry="13" fill="#E11D48"/>
+        <polygon points="100,18 192,54 100,90 8,54" fill="#6D28D9"/>
+        <circle cx="100" cy="54" r="6" fill="#FCD34D"/>
+        <path d="M 100 54 Q 146 64 160 90" fill="none" stroke="#FCD34D" stroke-width="3" stroke-linecap="round"/>
+      </svg>
+      <div class="size-label">32 px</div>
+      <div class="panel-label">Small</div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================ -->
+<!-- SIMPLIFIED FAVICON VARIANT                                    -->
+<!-- ============================================================ -->
+<section class="card">
+  <h2>Simplified variant — for 16–32px use</h2>
+  <p style="color:#64748b;margin:0;font-size:14px;">Tassel and shadow removed. Just cap + turban + band + gem. Maximum readability at tiny sizes.</p>
+
+  <div class="row">
+    <div class="panel light">
+      <svg viewBox="0 0 200 200" width="96" xmlns="http://www.w3.org/2000/svg">
+        <path d="M 32 82 Q 32 170 58 178 L 142 178 Q 168 170 168 82 Z" fill="#6D28D9"/>
+        <path d="M 32 126 Q 100 134 168 126 L 168 144 Q 100 152 32 144 Z" fill="#FCD34D"/>
+        <ellipse cx="100" cy="135" rx="11" ry="14" fill="#E11D48"/>
+        <polygon points="100,18 192,54 100,90 8,54" fill="#6D28D9"/>
+        <circle cx="100" cy="54" r="7" fill="#FCD34D"/>
+      </svg>
+      <div class="size-label">96 px (simplified)</div>
+    </div>
+
+    <div class="panel light">
+      <svg viewBox="0 0 200 200" width="48" xmlns="http://www.w3.org/2000/svg">
+        <path d="M 32 82 Q 32 170 58 178 L 142 178 Q 168 170 168 82 Z" fill="#6D28D9"/>
+        <path d="M 32 126 Q 100 134 168 126 L 168 144 Q 100 152 32 144 Z" fill="#FCD34D"/>
+        <ellipse cx="100" cy="135" rx="11" ry="14" fill="#E11D48"/>
+        <polygon points="100,18 192,54 100,90 8,54" fill="#6D28D9"/>
+        <circle cx="100" cy="54" r="7" fill="#FCD34D"/>
+      </svg>
+      <div class="size-label">48 px</div>
+    </div>
+
+    <div class="panel light">
+      <svg viewBox="0 0 200 200" width="32" xmlns="http://www.w3.org/2000/svg">
+        <path d="M 32 82 Q 32 170 58 178 L 142 178 Q 168 170 168 82 Z" fill="#6D28D9"/>
+        <path d="M 32 126 Q 100 134 168 126 L 168 144 Q 100 152 32 144 Z" fill="#FCD34D"/>
+        <ellipse cx="100" cy="135" rx="11" ry="14" fill="#E11D48"/>
+        <polygon points="100,18 192,54 100,90 8,54" fill="#6D28D9"/>
+      </svg>
+      <div class="size-label">32 px (favicon)</div>
+    </div>
+
+    <div class="panel light">
+      <svg viewBox="0 0 200 200" width="16" xmlns="http://www.w3.org/2000/svg">
+        <path d="M 32 82 Q 32 170 58 178 L 142 178 Q 168 170 168 82 Z" fill="#6D28D9"/>
+        <path d="M 32 126 Q 100 134 168 126 L 168 144 Q 100 152 32 144 Z" fill="#FCD34D"/>
+        <ellipse cx="100" cy="135" rx="12" ry="16" fill="#E11D48"/>
+        <polygon points="100,18 192,54 100,90 8,54" fill="#6D28D9"/>
+      </svg>
+      <div class="size-label">16 px (favicon)</div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================ -->
+<!-- CONTEXTS                                                      -->
+<!-- ============================================================ -->
+<section class="card">
+  <h2>In context</h2>
+
+  <div class="row" style="grid-template-columns: repeat(2, 1fr);">
+    <!-- Wordmark lockup -->
+    <div class="panel light">
+      <div class="lockup">
+        <svg viewBox="0 0 200 200" width="56" xmlns="http://www.w3.org/2000/svg">
+          <path d="M 32 82 Q 32 170 58 178 L 142 178 Q 168 170 168 82 Z" fill="#6D28D9"/>
+          <path d="M 32 126 Q 100 134 168 126 L 168 144 Q 100 152 32 144 Z" fill="#FCD34D"/>
+          <ellipse cx="100" cy="135" rx="10" ry="13" fill="#E11D48"/>
+          <polygon points="100,18 192,54 100,90 8,54" fill="#6D28D9"/>
+          <path d="M 8 54 L 100 90 L 192 54 L 192 62 L 100 98 L 8 62 Z" fill="#4C1D95"/>
+          <circle cx="100" cy="54" r="6" fill="#FCD34D"/>
+          <path d="M 100 54 Q 146 64 160 90" fill="none" stroke="#FCD34D" stroke-width="3" stroke-linecap="round"/>
+          <path d="M 160 92 L 160 112" stroke="#FCD34D" stroke-width="7" stroke-linecap="round"/>
+        </svg>
+        <div class="wordmark"><span>planwith</span><span class="plum">genie</span></div>
+      </div>
+      <div class="nav-demo">
+        <div style="display:flex;align-items:center;gap:8px;">
+          <svg viewBox="0 0 200 200" width="26" xmlns="http://www.w3.org/2000/svg">
+            <path d="M 32 82 Q 32 170 58 178 L 142 178 Q 168 170 168 82 Z" fill="#6D28D9"/>
+            <path d="M 32 126 Q 100 134 168 126 L 168 144 Q 100 152 32 144 Z" fill="#FCD34D"/>
+            <ellipse cx="100" cy="135" rx="11" ry="14" fill="#E11D48"/>
+            <polygon points="100,18 192,54 100,90 8,54" fill="#6D28D9"/>
+          </svg>
+          <strong style="font-size:14px;">planwithgenie</strong>
+        </div>
+        <div class="right"><span>Plans</span><span>Pricing</span></div>
+      </div>
+      <div class="panel-label">Wordmark + nav bar</div>
+    </div>
+
+    <!-- App-icon tile -->
+    <div class="panel tile-plum">
+      <svg viewBox="0 0 200 200" width="140" xmlns="http://www.w3.org/2000/svg">
+        <!-- Inverted for dark tile: swap plum ↔ cream -->
+        <path d="M 32 82 Q 32 170 58 178 L 142 178 Q 168 170 168 82 Z" fill="#F8FAFC"/>
+        <path d="M 32 126 Q 100 134 168 126 L 168 144 Q 100 152 32 144 Z" fill="#FCD34D"/>
+        <ellipse cx="100" cy="135" rx="10" ry="13" fill="#E11D48"/>
+        <polygon points="100,18 192,54 100,90 8,54" fill="#F8FAFC"/>
+        <path d="M 8 54 L 100 90 L 192 54 L 192 62 L 100 98 L 8 62 Z" fill="#CBD5E1"/>
+        <circle cx="100" cy="54" r="6" fill="#FCD34D"/>
+        <path d="M 100 54 Q 146 64 160 90" fill="none" stroke="#FCD34D" stroke-width="3" stroke-linecap="round"/>
+        <path d="M 160 92 L 160 112" stroke="#FCD34D" stroke-width="7" stroke-linecap="round"/>
+      </svg>
+      <div class="size-label" style="color:#e2e8f0;">Inverted for dark tile</div>
+      <div class="panel-label" style="color:#94a3b8;">App icon — plum tile</div>
+    </div>
+  </div>
+
+  <div class="note">
+    <strong>Tip on color inversion:</strong> on dark/plum tiles, the plum shapes become cream/white and the
+    gold band stays gold. This keeps the silhouette readable without adding new colors to the system.
+  </div>
+</section>
+
+<!-- ============================================================ -->
+<!-- MASCOT PAIRING                                                -->
+<!-- ============================================================ -->
+<section class="card">
+  <h2>Paired with the mascot</h2>
+  <p style="color:#64748b;margin:0 0 16px;font-size:14px;">
+    Side by side — same palette, same visual DNA (plum turban, gold band, ruby gem). They feel like one system.
+  </p>
+  <div class="panel light" style="flex-direction:row;gap:32px;min-height:260px;">
+    <img src="../../../saps/public/brand/genie-mascot.png" alt="Genie mascot" style="height:220px;" onerror="this.style.display='none';this.nextElementSibling.style.display='block';">
+    <div style="display:none;padding:40px;color:#94a3b8;font-size:13px;text-align:center;border:1px dashed #cbd5e1;border-radius:8px;">
+      (Mascot image at saps/public/brand/genie-mascot.png not found — it will show here once the file loads)
+    </div>
+    <svg viewBox="0 0 200 200" width="180" xmlns="http://www.w3.org/2000/svg">
+      <path d="M 32 82 Q 32 170 58 178 L 142 178 Q 168 170 168 82 Z" fill="#6D28D9"/>
+      <path d="M 32 126 Q 100 134 168 126 L 168 144 Q 100 152 32 144 Z" fill="#FCD34D"/>
+      <ellipse cx="100" cy="135" rx="10" ry="13" fill="#E11D48"/>
+      <ellipse cx="100" cy="132" rx="3.5" ry="5" fill="#FECACA"/>
+      <polygon points="100,18 192,54 100,90 8,54" fill="#6D28D9"/>
+      <path d="M 8 54 L 100 90 L 192 54 L 192 62 L 100 98 L 8 62 Z" fill="#4C1D95"/>
+      <circle cx="100" cy="54" r="6" fill="#FCD34D"/>
+      <path d="M 100 54 Q 146 64 160 90" fill="none" stroke="#FCD34D" stroke-width="3" stroke-linecap="round"/>
+      <path d="M 160 92 L 160 112" stroke="#FCD34D" stroke-width="7" stroke-linecap="round"/>
+    </svg>
+  </div>
+</section>
+
+<p style="max-width:1100px;margin:0 auto;color:#64748b;font-size:13px;text-align:center;">
+  Tell me: ship this, or what to adjust? (e.g. different gem shape, no tassel anywhere, rounder turban,
+  taller cap, different proportions.) Once you approve I'll write the final SVGs into
+  <code>saps/public/brand/logo-mark.svg</code> and <code>logo-mark-simple.svg</code>.
+</p>
+
+</body>
+</html>

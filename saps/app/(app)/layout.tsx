@@ -12,6 +12,7 @@ import { apiFetch } from "@/lib/api-client";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 import { FREE_LAUNCH_MODE } from "@/config/subscription-plans";
 import { SapsLogo } from "@/components/ui/saps-logo";
+import { GenieWordmark } from "@/components/ui/genie-wordmark";
 import { Spinner } from "@/components/ui/spinner";
 import { SupportLink } from "@/components/ui/support-link";
 import { SUPPORT_URL } from "@/config/support";
@@ -462,7 +463,7 @@ function AppLayoutInner({ children }: { children: React.ReactNode }) {
           {/* Logo */}
           <Link href="/dashboard" className="flex items-center gap-2 mr-8 shrink-0">
             <SapsLogo size="md" />
-            <span className="text-lg font-bold text-foreground">SAPS</span>
+            <GenieWordmark size="md" />
           </Link>
 
           {/* Desktop nav items */}

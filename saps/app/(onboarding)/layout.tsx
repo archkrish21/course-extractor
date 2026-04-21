@@ -2,6 +2,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { eq } from "drizzle-orm";
 import { SapsLogo } from "@/components/ui/saps-logo";
+import { GenieWordmark } from "@/components/ui/genie-wordmark";
 import { getAuthenticatedUser } from "@/lib/auth/get-user";
 import { db } from "@/lib/db";
 import { users } from "@/lib/db/schema";
@@ -30,7 +31,7 @@ export default async function OnboardingLayout({ children }: { children: React.R
       <header className="sticky top-0 z-40 flex flex-col items-center justify-center bg-muted py-4 border-b border-border/40">
         <Link href="/" className="flex flex-col items-center gap-2 hover:opacity-90 transition-opacity">
           <SapsLogo size="lg" />
-          <h1 className="text-2xl font-bold tracking-tight text-foreground">SAPS</h1>
+          <GenieWordmark size="xl" />
           <p className="text-sm text-muted-foreground">Student Academic Planning System</p>
         </Link>
       </header>

@@ -1,0 +1,460 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>planwithgenie.com — Genie Mascot Concept</title>
+<style>
+  :root { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, sans-serif; color: #0f172a; }
+  * { box-sizing: border-box; }
+  body { margin: 0; padding: 48px 32px; background: #f8fafc; line-height: 1.55; }
+  h1 { font-size: 28px; margin: 0 0 6px; font-weight: 800; letter-spacing: -0.5px; }
+  h2 { font-size: 20px; margin: 0 0 6px; font-weight: 700; }
+  .subtitle { color: #64748b; margin-bottom: 40px; font-size: 15px; max-width: 780px; }
+  .card { background: white; border: 1px solid #e2e8f0; border-radius: 16px; padding: 32px; margin-bottom: 28px; max-width: 1100px; margin-left:auto; margin-right:auto; }
+  .panels { display:grid; grid-template-columns: 2fr 1fr; gap:20px; margin-top: 20px; }
+  @media (max-width: 900px){ .panels { grid-template-columns: 1fr; } }
+  .panel { border-radius: 12px; padding: 24px; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:14px; }
+  .panel.light { background:#ffffff; border:1px solid #e2e8f0; }
+  .panel.dark  { background:#0f172a; color:#e2e8f0; }
+  .panel-label { font-size:11px; text-transform:uppercase; letter-spacing:1.3px; color:#94a3b8; }
+  .favicon-row { display:flex; gap:18px; align-items:flex-end; justify-content:center; margin-top:8px; }
+  .favicon-row small { display:block; margin-top:6px; font-size:10px; color:#94a3b8; text-align:center; }
+  .tagline { font-weight:500; font-size:13px; color:#64748b; }
+  .panel.dark .tagline { color:#94a3b8; }
+  pre { background:#0f172a; color:#e2e8f0; padding:18px; border-radius:10px; overflow:auto; font-size:12.5px; line-height:1.55; }
+  .note { background:#fffbeb; border:1px solid #fde68a; border-radius:10px; padding:16px 18px; color:#78350f; font-size:14px; }
+  ul.tight { margin: 8px 0 0; padding-left:20px; }
+  ul.tight li { margin-bottom:4px; }
+</style>
+</head>
+<body>
+
+<h1>planwithgenie.com — Genie Mascot Concept</h1>
+<p class="subtitle">
+  A confident, regally-dressed genie with folded arms, admiring a sparkling academic plan beside him.
+  Below is my SVG direction sketch (stylized/flat) plus an AI-image prompt for a richer, illustrated render.
+</p>
+
+<!-- ============================================================ -->
+<!-- MASCOT COMPOSITION                                            -->
+<!-- ============================================================ -->
+<section class="card">
+  <h2>Mascot + Plan — Hero Lockup</h2>
+  <p style="color:#64748b;margin:0 0 8px;font-size:14px;">
+    Character on the left, folded arms, proud smirk, looking toward a glowing four-year plan grid.
+  </p>
+
+  <div class="panels">
+    <!-- LIGHT -->
+    <div class="panel light">
+      <svg viewBox="0 0 560 440" width="520" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <radialGradient id="planGlowL" cx="50%" cy="50%" r="50%">
+            <stop offset="0%"  stop-color="#FDE68A" stop-opacity="0.65"/>
+            <stop offset="60%" stop-color="#FCD34D" stop-opacity="0.18"/>
+            <stop offset="100%" stop-color="#FCD34D" stop-opacity="0"/>
+          </radialGradient>
+          <linearGradient id="smokeL" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%"  stop-color="#1E3A8A" stop-opacity="1"/>
+            <stop offset="100%" stop-color="#1E3A8A" stop-opacity="0"/>
+          </linearGradient>
+          <linearGradient id="vestL" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%"  stop-color="#1E40AF"/>
+            <stop offset="100%" stop-color="#1E3A8A"/>
+          </linearGradient>
+        </defs>
+
+        <!-- ===== GENIE ===== -->
+        <!-- Smoke tail (fading) -->
+        <path d="M 115 320 Q 90 360 130 400 Q 180 420 230 400 Q 270 370 245 320 Z"
+              fill="url(#smokeL)"/>
+        <!-- Cloud puffs on tail -->
+        <circle cx="120" cy="395" r="14" fill="#1E3A8A" opacity="0.35"/>
+        <circle cx="240" cy="395" r="12" fill="#1E3A8A" opacity="0.35"/>
+        <circle cx="180" cy="415" r="16" fill="#1E3A8A" opacity="0.25"/>
+
+        <!-- Body / vest -->
+        <path d="M 125 230 Q 115 290 130 330 L 235 330 Q 250 290 240 230 Q 220 215 182 213 Q 145 215 125 230 Z"
+              fill="url(#vestL)"/>
+        <!-- Vest center trim (gold sash) -->
+        <path d="M 182 213 L 182 330" stroke="#FCD34D" stroke-width="4" stroke-linecap="round"/>
+        <circle cx="182" cy="260" r="5" fill="#FCD34D"/>
+        <circle cx="182" cy="290" r="4" fill="#FCD34D"/>
+
+        <!-- Bare chest V -->
+        <path d="M 160 215 L 182 245 L 204 215 Q 195 228 182 228 Q 170 228 160 215 Z"
+              fill="#C08457"/>
+
+        <!-- Folded arms (horizontal band across chest) -->
+        <path d="M 120 255 Q 182 240 244 255 Q 248 280 244 298 Q 182 283 120 298 Q 116 280 120 255 Z"
+              fill="#C08457"/>
+        <!-- Arm shading -->
+        <path d="M 120 278 Q 182 264 244 278" fill="none" stroke="#8B5A2B" stroke-width="1.2" opacity="0.4"/>
+        <!-- Gold bracelets on wrists -->
+        <rect x="114" y="260" width="18" height="32" rx="4" fill="#FCD34D"/>
+        <rect x="232" y="260" width="18" height="32" rx="4" fill="#FCD34D"/>
+        <rect x="114" y="268" width="18" height="4" fill="#CA8A04"/>
+        <rect x="114" y="284" width="18" height="4" fill="#CA8A04"/>
+        <rect x="232" y="268" width="18" height="4" fill="#CA8A04"/>
+        <rect x="232" y="284" width="18" height="4" fill="#CA8A04"/>
+        <!-- Fingers tucked -->
+        <circle cx="238" cy="276" r="5" fill="#C08457"/>
+        <circle cx="126" cy="276" r="5" fill="#C08457"/>
+
+        <!-- Neck -->
+        <path d="M 168 195 L 196 195 L 192 218 L 172 218 Z" fill="#C08457"/>
+
+        <!-- Head -->
+        <ellipse cx="182" cy="170" rx="44" ry="46" fill="#C08457"/>
+        <!-- Ear -->
+        <ellipse cx="140" cy="172" rx="5" ry="8" fill="#A66B3F"/>
+        <ellipse cx="224" cy="172" rx="5" ry="8" fill="#A66B3F"/>
+        <!-- Earrings -->
+        <circle cx="140" cy="182" r="3.5" fill="#FCD34D"/>
+        <circle cx="224" cy="182" r="3.5" fill="#FCD34D"/>
+
+        <!-- Beard -->
+        <path d="M 148 188 Q 160 235 182 235 Q 204 235 216 188 Q 210 215 182 218 Q 154 215 148 188 Z"
+              fill="#F8FAFC"/>
+        <path d="M 168 220 Q 182 240 196 220" fill="none" stroke="#E2E8F0" stroke-width="1.5"/>
+        <!-- Beard curl tips -->
+        <circle cx="152" cy="190" r="3" fill="#F8FAFC"/>
+        <circle cx="212" cy="190" r="3" fill="#F8FAFC"/>
+
+        <!-- Mustache (curled up, proud) -->
+        <path d="M 160 175 Q 170 168 182 172 Q 194 168 204 175 Q 200 180 192 176 Q 182 182 172 176 Q 164 180 160 175 Z"
+              fill="#F8FAFC"/>
+        <circle cx="158" cy="172" r="2.5" fill="#F8FAFC"/>
+        <circle cx="206" cy="172" r="2.5" fill="#F8FAFC"/>
+
+        <!-- Mouth (confident smirk) -->
+        <path d="M 172 186 Q 182 192 192 186" fill="none" stroke="#4A2C17" stroke-width="2.2" stroke-linecap="round"/>
+
+        <!-- Eyes (squinted / smiling-confident) -->
+        <path d="M 158 152 Q 164 146 170 152" fill="none" stroke="#0F172A" stroke-width="3" stroke-linecap="round"/>
+        <path d="M 194 152 Q 200 146 206 152" fill="none" stroke="#0F172A" stroke-width="3" stroke-linecap="round"/>
+
+        <!-- Eyebrows (relaxed, proud) -->
+        <path d="M 154 140 Q 162 136 172 140" fill="none" stroke="#0F172A" stroke-width="2.5" stroke-linecap="round"/>
+        <path d="M 192 140 Q 202 136 210 140" fill="none" stroke="#0F172A" stroke-width="2.5" stroke-linecap="round"/>
+
+        <!-- Turban -->
+        <path d="M 138 138 Q 142 100 182 95 Q 222 100 226 138 Q 226 144 220 146 L 144 146 Q 138 144 138 138 Z"
+              fill="#1E3A8A"/>
+        <!-- Turban wrap lines -->
+        <path d="M 146 130 Q 182 120 218 130" stroke="#F1F5F9" stroke-width="1.5" fill="none" opacity="0.3"/>
+        <path d="M 148 118 Q 182 108 216 118" stroke="#F1F5F9" stroke-width="1.2" fill="none" opacity="0.2"/>
+        <!-- Center gem -->
+        <path d="M 182 108 L 188 115 L 182 125 L 176 115 Z" fill="#FCD34D"/>
+        <path d="M 182 112 L 185 117 L 182 122 L 179 117 Z" fill="#FEF3C7"/>
+        <!-- Turban top bulb -->
+        <circle cx="182" cy="88" r="7" fill="#1E3A8A"/>
+        <!-- Plume feather -->
+        <path d="M 182 82 Q 192 62 210 52" fill="none" stroke="#FCD34D" stroke-width="3.5" stroke-linecap="round"/>
+        <path d="M 188 68 Q 196 64 202 58" fill="none" stroke="#FCD34D" stroke-width="2" stroke-linecap="round"/>
+
+        <!-- ===== PLAN ===== -->
+        <g transform="translate(340, 140)">
+          <circle cx="70" cy="90" r="110" fill="url(#planGlowL)"/>
+
+          <!-- Scroll / document -->
+          <rect x="0" y="0" width="150" height="180" rx="8" fill="#FFFBEB" stroke="#CA8A04" stroke-width="2.5"/>
+          <!-- Header bar -->
+          <rect x="0" y="0" width="150" height="22" rx="8" fill="#1E3A8A"/>
+          <rect x="0" y="14" width="150" height="8" fill="#1E3A8A"/>
+          <circle cx="12" cy="11" r="3" fill="#FCD34D"/>
+          <circle cx="22" cy="11" r="3" fill="#FCD34D" opacity="0.6"/>
+          <circle cx="32" cy="11" r="3" fill="#FCD34D" opacity="0.3"/>
+
+          <!-- 4×4 planner grid (four years × four semesters) -->
+          <g>
+            <!-- cells -->
+            <rect x="8"   y="32"  width="32" height="32" rx="3" fill="#6366F1" opacity="0.85"/>
+            <rect x="44"  y="32"  width="32" height="32" rx="3" fill="#8B5CF6" opacity="0.75"/>
+            <rect x="80"  y="32"  width="32" height="32" rx="3" fill="#E2E8F0"/>
+            <rect x="116" y="32"  width="32" height="32" rx="3" fill="#E2E8F0"/>
+
+            <rect x="8"   y="68"  width="32" height="32" rx="3" fill="#EC4899" opacity="0.8"/>
+            <rect x="44"  y="68"  width="32" height="32" rx="3" fill="#14B8A6" opacity="0.8"/>
+            <rect x="80"  y="68"  width="32" height="32" rx="3" fill="#F59E0B" opacity="0.8"/>
+            <rect x="116" y="68"  width="32" height="32" rx="3" fill="#E2E8F0"/>
+
+            <rect x="8"   y="104" width="32" height="32" rx="3" fill="#E2E8F0"/>
+            <rect x="44"  y="104" width="32" height="32" rx="3" fill="#10B981" opacity="0.8"/>
+            <rect x="80"  y="104" width="32" height="32" rx="3" fill="#E2E8F0"/>
+            <rect x="116" y="104" width="32" height="32" rx="3" fill="#E2E8F0"/>
+
+            <rect x="8"   y="140" width="32" height="32" rx="3" fill="#E2E8F0"/>
+            <rect x="44"  y="140" width="32" height="32" rx="3" fill="#E2E8F0"/>
+            <rect x="80"  y="140" width="32" height="32" rx="3" fill="#E2E8F0"/>
+            <rect x="116" y="140" width="32" height="32" rx="3" fill="#E2E8F0"/>
+          </g>
+
+          <!-- Sparkles around plan -->
+          <g fill="#FCD34D">
+            <path d="M -20 -10 L -16 0 L -6 4 L -16 8 L -20 18 L -24 8 L -34 4 L -24 0 Z"/>
+            <path d="M 160 -5 L 163 4 L 172 7 L 163 10 L 160 19 L 157 10 L 148 7 L 157 4 Z"/>
+            <path d="M 170 160 L 173 168 L 181 171 L 173 174 L 170 182 L 167 174 L 159 171 L 167 168 Z"/>
+            <path d="M -15 170 L -12 178 L -4 181 L -12 184 L -15 192 L -18 184 L -26 181 L -18 178 Z"/>
+            <circle cx="155" cy="90"  r="2.5"/>
+            <circle cx="-10" cy="95"  r="2"/>
+            <circle cx="180" cy="40"  r="2"/>
+            <circle cx="-5"  cy="40"  r="2"/>
+          </g>
+        </g>
+
+        <!-- Wordmark -->
+        <text x="280" y="420" text-anchor="middle"
+              font-family="Inter, -apple-system, sans-serif"
+              font-weight="800" font-size="34" fill="#0F172A" letter-spacing="-1.2">
+          planwith<tspan fill="#1E3A8A">genie</tspan>
+        </text>
+      </svg>
+      <div class="tagline">Academic planning, granted.</div>
+      <div class="panel-label">Light background</div>
+    </div>
+
+    <!-- FAVICON VARIANTS -->
+    <div class="panel light">
+      <div class="favicon-row">
+        <div>
+          <svg viewBox="0 0 260 260" width="96" xmlns="http://www.w3.org/2000/svg">
+            <rect width="260" height="260" rx="48" fill="#0F172A"/>
+            <!-- simplified genie head only for icon -->
+            <ellipse cx="130" cy="150" rx="52" ry="54" fill="#C08457"/>
+            <path d="M 95 168 Q 130 230 165 168 Q 158 205 130 210 Q 102 205 95 168 Z" fill="#F8FAFC"/>
+            <path d="M 108 150 Q 118 143 130 148 Q 142 143 152 150 Q 146 158 138 154 Q 130 162 122 154 Q 114 158 108 150 Z" fill="#F8FAFC"/>
+            <path d="M 118 167 Q 130 173 142 167" fill="none" stroke="#4A2C17" stroke-width="2.5" stroke-linecap="round"/>
+            <path d="M 108 130 Q 114 124 120 130" fill="none" stroke="#0F172A" stroke-width="3.5" stroke-linecap="round"/>
+            <path d="M 140 130 Q 146 124 152 130" fill="none" stroke="#0F172A" stroke-width="3.5" stroke-linecap="round"/>
+            <!-- Turban -->
+            <path d="M 80 112 Q 86 70 130 65 Q 174 70 180 112 Q 180 120 172 122 L 88 122 Q 80 120 80 112 Z" fill="#1E3A8A"/>
+            <path d="M 130 78 L 137 88 L 130 100 L 123 88 Z" fill="#FCD34D"/>
+            <circle cx="130" cy="55" r="8" fill="#1E3A8A"/>
+            <path d="M 130 48 Q 142 30 160 22" fill="none" stroke="#FCD34D" stroke-width="4" stroke-linecap="round"/>
+          </svg>
+          <small>96px</small>
+        </div>
+        <div>
+          <svg viewBox="0 0 260 260" width="48" xmlns="http://www.w3.org/2000/svg">
+            <rect width="260" height="260" rx="48" fill="#0F172A"/>
+            <ellipse cx="130" cy="150" rx="52" ry="54" fill="#C08457"/>
+            <path d="M 95 168 Q 130 230 165 168 Q 158 205 130 210 Q 102 205 95 168 Z" fill="#F8FAFC"/>
+            <path d="M 108 150 Q 118 143 130 148 Q 142 143 152 150 Q 146 158 138 154 Q 130 162 122 154 Q 114 158 108 150 Z" fill="#F8FAFC"/>
+            <path d="M 118 167 Q 130 173 142 167" fill="none" stroke="#4A2C17" stroke-width="2.5" stroke-linecap="round"/>
+            <path d="M 108 130 Q 114 124 120 130" fill="none" stroke="#0F172A" stroke-width="3.5" stroke-linecap="round"/>
+            <path d="M 140 130 Q 146 124 152 130" fill="none" stroke="#0F172A" stroke-width="3.5" stroke-linecap="round"/>
+            <path d="M 80 112 Q 86 70 130 65 Q 174 70 180 112 Q 180 120 172 122 L 88 122 Q 80 120 80 112 Z" fill="#1E3A8A"/>
+            <path d="M 130 78 L 137 88 L 130 100 L 123 88 Z" fill="#FCD34D"/>
+            <circle cx="130" cy="55" r="8" fill="#1E3A8A"/>
+            <path d="M 130 48 Q 142 30 160 22" fill="none" stroke="#FCD34D" stroke-width="4" stroke-linecap="round"/>
+          </svg>
+          <small>48px</small>
+        </div>
+        <div>
+          <svg viewBox="0 0 260 260" width="24" xmlns="http://www.w3.org/2000/svg">
+            <rect width="260" height="260" rx="48" fill="#0F172A"/>
+            <ellipse cx="130" cy="150" rx="52" ry="54" fill="#C08457"/>
+            <path d="M 95 168 Q 130 230 165 168 Q 158 205 130 210 Q 102 205 95 168 Z" fill="#F8FAFC"/>
+            <path d="M 80 112 Q 86 70 130 65 Q 174 70 180 112 Q 180 120 172 122 L 88 122 Q 80 120 80 112 Z" fill="#1E3A8A"/>
+            <path d="M 130 78 L 137 88 L 130 100 L 123 88 Z" fill="#FCD34D"/>
+            <circle cx="130" cy="55" r="8" fill="#1E3A8A"/>
+          </svg>
+          <small>24px</small>
+        </div>
+      </div>
+      <div class="panel-label">Icon / Favicon (head only)</div>
+    </div>
+  </div>
+
+  <!-- DARK BACKGROUND -->
+  <div class="panels" style="margin-top: 20px; grid-template-columns: 1fr;">
+    <div class="panel dark">
+      <svg viewBox="0 0 560 440" width="520" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <radialGradient id="planGlowD" cx="50%" cy="50%" r="50%">
+            <stop offset="0%"  stop-color="#FCD34D" stop-opacity="0.5"/>
+            <stop offset="70%" stop-color="#FCD34D" stop-opacity="0.1"/>
+            <stop offset="100%" stop-color="#FCD34D" stop-opacity="0"/>
+          </radialGradient>
+        </defs>
+
+        <!-- Smoke tail -->
+        <path d="M 115 320 Q 90 360 130 400 Q 180 420 230 400 Q 270 370 245 320 Z" fill="#334155"/>
+
+        <!-- Body -->
+        <path d="M 125 230 Q 115 290 130 330 L 235 330 Q 250 290 240 230 Q 220 215 182 213 Q 145 215 125 230 Z" fill="#3B82F6"/>
+        <path d="M 182 213 L 182 330" stroke="#FCD34D" stroke-width="4" stroke-linecap="round"/>
+        <path d="M 160 215 L 182 245 L 204 215 Q 195 228 182 228 Q 170 228 160 215 Z" fill="#C08457"/>
+
+        <!-- Folded arms -->
+        <path d="M 120 255 Q 182 240 244 255 Q 248 280 244 298 Q 182 283 120 298 Q 116 280 120 255 Z" fill="#C08457"/>
+        <rect x="114" y="260" width="18" height="32" rx="4" fill="#FCD34D"/>
+        <rect x="232" y="260" width="18" height="32" rx="4" fill="#FCD34D"/>
+
+        <!-- Neck + head -->
+        <path d="M 168 195 L 196 195 L 192 218 L 172 218 Z" fill="#C08457"/>
+        <ellipse cx="182" cy="170" rx="44" ry="46" fill="#C08457"/>
+        <circle cx="140" cy="182" r="3.5" fill="#FCD34D"/>
+        <circle cx="224" cy="182" r="3.5" fill="#FCD34D"/>
+
+        <!-- Beard + mustache + mouth + eyes -->
+        <path d="M 148 188 Q 160 235 182 235 Q 204 235 216 188 Q 210 215 182 218 Q 154 215 148 188 Z" fill="#F8FAFC"/>
+        <path d="M 160 175 Q 170 168 182 172 Q 194 168 204 175 Q 200 180 192 176 Q 182 182 172 176 Q 164 180 160 175 Z" fill="#F8FAFC"/>
+        <path d="M 172 186 Q 182 192 192 186" fill="none" stroke="#4A2C17" stroke-width="2.2" stroke-linecap="round"/>
+        <path d="M 158 152 Q 164 146 170 152" fill="none" stroke="#0F172A" stroke-width="3" stroke-linecap="round"/>
+        <path d="M 194 152 Q 200 146 206 152" fill="none" stroke="#0F172A" stroke-width="3" stroke-linecap="round"/>
+        <path d="M 154 140 Q 162 136 172 140" fill="none" stroke="#0F172A" stroke-width="2.5" stroke-linecap="round"/>
+        <path d="M 192 140 Q 202 136 210 140" fill="none" stroke="#0F172A" stroke-width="2.5" stroke-linecap="round"/>
+
+        <!-- Turban -->
+        <path d="M 138 138 Q 142 100 182 95 Q 222 100 226 138 Q 226 144 220 146 L 144 146 Q 138 144 138 138 Z" fill="#3B82F6"/>
+        <path d="M 182 108 L 188 115 L 182 125 L 176 115 Z" fill="#FCD34D"/>
+        <circle cx="182" cy="88" r="7" fill="#3B82F6"/>
+        <path d="M 182 82 Q 192 62 210 52" fill="none" stroke="#FCD34D" stroke-width="3.5" stroke-linecap="round"/>
+
+        <!-- Plan -->
+        <g transform="translate(340, 140)">
+          <circle cx="70" cy="90" r="110" fill="url(#planGlowD)"/>
+          <rect x="0" y="0" width="150" height="180" rx="8" fill="#F1F5F9" stroke="#FCD34D" stroke-width="2.5"/>
+          <rect x="0" y="0" width="150" height="22" rx="8" fill="#1E3A8A"/>
+          <rect x="0" y="14" width="150" height="8" fill="#1E3A8A"/>
+          <rect x="8"   y="32"  width="32" height="32" rx="3" fill="#6366F1"/>
+          <rect x="44"  y="32"  width="32" height="32" rx="3" fill="#8B5CF6"/>
+          <rect x="80"  y="32"  width="32" height="32" rx="3" fill="#CBD5E1"/>
+          <rect x="116" y="32"  width="32" height="32" rx="3" fill="#CBD5E1"/>
+          <rect x="8"   y="68"  width="32" height="32" rx="3" fill="#EC4899"/>
+          <rect x="44"  y="68"  width="32" height="32" rx="3" fill="#14B8A6"/>
+          <rect x="80"  y="68"  width="32" height="32" rx="3" fill="#F59E0B"/>
+          <rect x="116" y="68"  width="32" height="32" rx="3" fill="#CBD5E1"/>
+          <rect x="8"   y="104" width="32" height="32" rx="3" fill="#CBD5E1"/>
+          <rect x="44"  y="104" width="32" height="32" rx="3" fill="#10B981"/>
+          <rect x="80"  y="104" width="32" height="32" rx="3" fill="#CBD5E1"/>
+          <rect x="116" y="104" width="32" height="32" rx="3" fill="#CBD5E1"/>
+          <rect x="8"   y="140" width="32" height="32" rx="3" fill="#CBD5E1"/>
+          <rect x="44"  y="140" width="32" height="32" rx="3" fill="#CBD5E1"/>
+          <rect x="80"  y="140" width="32" height="32" rx="3" fill="#CBD5E1"/>
+          <rect x="116" y="140" width="32" height="32" rx="3" fill="#CBD5E1"/>
+          <g fill="#FCD34D">
+            <path d="M -20 -10 L -16 0 L -6 4 L -16 8 L -20 18 L -24 8 L -34 4 L -24 0 Z"/>
+            <path d="M 160 -5 L 163 4 L 172 7 L 163 10 L 160 19 L 157 10 L 148 7 L 157 4 Z"/>
+            <path d="M 170 160 L 173 168 L 181 171 L 173 174 L 170 182 L 167 174 L 159 171 L 167 168 Z"/>
+            <path d="M -15 170 L -12 178 L -4 181 L -12 184 L -15 192 L -18 184 L -26 181 L -18 178 Z"/>
+          </g>
+        </g>
+
+        <text x="280" y="420" text-anchor="middle"
+              font-family="Inter, -apple-system, sans-serif"
+              font-weight="800" font-size="34" fill="#F1F5F9" letter-spacing="-1.2">
+          planwith<tspan fill="#FCD34D">genie</tspan>
+        </text>
+      </svg>
+      <div class="tagline">Academic planning, granted.</div>
+      <div class="panel-label">Dark background</div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================ -->
+<!-- HONESTY NOTE                                                  -->
+<!-- ============================================================ -->
+<section class="card">
+  <h2>About this sketch</h2>
+  <div class="note">
+    <strong>This SVG is a direction/composition sketch, not a production-grade illustration.</strong>
+    Hand-coded SVG can't realistically produce "rich, painterly" character art — it reads as flat/mascot-style at best.
+    For a truly <em>rich</em> genie that looks commissioned, I'd recommend one of these paths:
+    <ul class="tight">
+      <li><strong>AI image generator</strong> (Midjourney, DALL·E 3 via ChatGPT, Ideogram, Flux) — fastest; use the prompt below.</li>
+      <li><strong>Hire an illustrator</strong> on Fiverr (~$50–150), 99designs, or Dribbble — most polished; 3–7 day turnaround.</li>
+      <li><strong>Adobe Express / Canva Magic</strong> — middle ground; built-in mascot templates you can recolor.</li>
+    </ul>
+  </div>
+</section>
+
+<!-- ============================================================ -->
+<!-- AI PROMPT                                                     -->
+<!-- ============================================================ -->
+<section class="card">
+  <h2>Legal-safe AI prompts (three directions)</h2>
+  <p style="color:#64748b;margin:0 0 12px;font-size:14px;">
+    All three avoid the Disney Aladdin trade-dress cues: <strong>no blue skin, no magic lamp, no smoke-from-lamp tail</strong>.
+    Each keeps the "wise, confident, magical helper" brand concept. Pick one and run it through Midjourney / DALL·E 3 / Ideogram.
+  </p>
+
+  <h3 style="margin:20px 0 6px;font-size:15px;">Option A — The Scholar Genie (recommended)</h3>
+  <p style="color:#64748b;margin:0 0 8px;font-size:13px;">Emerald-green skin, academic robes, standing on a book stack. Most clearly "academic."</p>
+<pre>A professional vector mascot of an original character: a wise, confident
+scholar-genie with emerald-green skin (NOT blue), warm friendly eyes, a
+proud knowing smile, a neat short black beard and softly curled black
+mustache. Wearing an ornate deep-plum and gold embroidered scholar's
+robe with wide sleeves, folded arms across chest, gold bangles on both
+wrists. A deep-plum turban with gold trim and a single ruby gem on the
+forehead, small gold tassel on top. He floats on a small stylized white
+cloud of golden stars (NO magic lamp, NO smoke tail, NO lamp visible
+anywhere in the image). Beside him, a floating glowing parchment scroll
+displaying a 4-by-4 academic planner grid with colorful course blocks
+(indigo, violet, teal, amber, pink, green), surrounded by twinkling
+gold four-point sparkles. Original character design, clearly distinct
+from Disney's Aladdin Genie. Clean flat vector illustration, modern
+tech-startup mascot style similar to Duolingo or Slack, centered
+composition, transparent background, crisp edges, premium feel.
+Palette: plum #6D28D9, emerald #059669, gold #FCD34D, cream #FFFBEB.
+--ar 16:9 --style raw --v 6</pre>
+
+  <h3 style="margin:24px 0 6px;font-size:15px;">Option B — The Golden Sage</h3>
+  <p style="color:#64748b;margin:0 0 8px;font-size:13px;">Warm gold/bronze skin, regal sage aesthetic. Feels premium, parent-friendly.</p>
+<pre>A professional vector mascot of an original character: a confident,
+regal sage-genie with luminous warm-gold skin (NOT blue, NOT green), a
+proud smirk, bright attentive eyes, a neat full white beard and curled
+white mustache. Wearing an indigo and cream embroidered long coat with
+gold trim, folded arms across chest, thick gold cuff bracelets. A deep
+indigo turban with a large teardrop-shaped sapphire gem on the
+forehead and a small peacock-style plume. He stands on a small floating
+cloud made of gold sparkles (NO magic lamp anywhere, NO blue smoke, NO
+lamp visible). Beside him, a glowing open book displaying a 4-by-4
+academic planner grid with colorful course blocks, surrounded by
+twinkling gold and cream four-point sparkles. Original character
+design, clearly distinct from Disney's Aladdin Genie. Clean flat
+vector illustration, thick confident linework, premium mascot style,
+centered composition, transparent background, crisp edges.
+Palette: indigo #1E3A8A, gold #F59E0B, cream #FFFBEB, sapphire #0EA5E9.
+--ar 16:9 --style raw --v 6</pre>
+
+  <h3 style="margin:24px 0 6px;font-size:15px;">Option C — The Young Apprentice</h3>
+  <p style="color:#64748b;margin:0 0 8px;font-size:13px;">Younger, student-aged genie. More relatable to high-schoolers using the product.</p>
+<pre>A professional vector mascot of an original character: a young,
+friendly student-genie, approximately teenage appearance, with warm
+deep-violet skin (NOT blue), a bright confident smile, kind eyes, no
+beard. Wearing a modern academic vest in plum and gold over a cream
+tunic, folded arms across chest, small gold wrist bands. A small plum
+turban-cap with a gold star emblem on the forehead. He floats on a
+swirl of gold and violet stardust (NO magic lamp, NO smoke-from-lamp,
+NO lamp visible). Beside him, a floating glowing tablet or scroll
+displaying a 4-by-4 academic planner grid with colorful course blocks,
+surrounded by twinkling gold sparkles and tiny graduation caps.
+Original character design, clearly distinct from Disney's Aladdin
+Genie, modern and youthful. Clean flat vector illustration, friendly
+mascot style similar to Duolingo, centered composition, transparent
+background, crisp edges, high contrast.
+Palette: plum #6D28D9, violet #8B5CF6, gold #FCD34D, cream #FFFBEB.
+--ar 16:9 --style raw --v 6</pre>
+
+  <div class="note" style="margin-top:24px;">
+    <strong>If the generator still produces a blue or lamp-based result, add to the end:</strong>
+    <code style="display:block;margin-top:6px;background:#fef3c7;padding:8px;border-radius:6px;">
+      --no blue skin, magic lamp, smoke tail, Aladdin, Disney, Genie from Aladdin
+    </code>
+    (Midjourney's <code>--no</code> flag removes listed concepts. For DALL·E/Ideogram, phrase as
+    "without any magic lamp, without any smoke trail, not blue-skinned" in the prompt body.)
+  </div>
+</section>
+
+<p style="max-width:1100px;margin:0 auto;color:#64748b;font-size:13px;text-align:center;">
+  Tell me what to adjust — turban style, expression, proportions, or palette — and I'll update the SVG
+  and tune the AI prompt to match.
+</p>
+
+</body>
+</html>

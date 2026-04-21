@@ -5,6 +5,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { HOME_FEATURES } from "@/config/homepage";
 import { SapsLogo } from "@/components/ui/saps-logo";
+import { GenieWordmark } from "@/components/ui/genie-wordmark";
 import { SupportLink } from "@/components/ui/support-link";
 
 const NAV_LINKS = [
@@ -34,7 +35,7 @@ export default function PublicLayout({ children }: { children: React.ReactNode }
         <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-4 sm:px-6">
           <Link href="/" className="flex items-center gap-2 focus-ring">
             <SapsLogo size="md" />
-            <span className="text-lg font-bold text-foreground">SAPS</span>
+            <GenieWordmark size="md" />
           </Link>
 
           {/* Desktop nav */}
@@ -102,7 +103,7 @@ export default function PublicLayout({ children }: { children: React.ReactNode }
             <div className="sm:col-span-2 lg:col-span-1">
               <div className="flex items-center gap-2">
                 <SapsLogo size="sm" />
-                <span className="font-bold text-foreground">SAPS</span>
+                <GenieWordmark size="sm" />
               </div>
               <p className="mt-3 text-xs leading-relaxed text-muted-foreground">
                 Student Academic Planning System. Built by a Stevenson High School student.

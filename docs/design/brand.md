@@ -181,3 +181,26 @@ The brand was deliberately engineered to avoid the **Disney/Aladdin** trade-dres
 - **Maroon + gold + ruby** palette — regal without invoking a specific existing character.
 
 For the full iteration history (including rejected concepts), see [`brand-exploration/`](./brand-exploration/).
+
+---
+
+## Tools Used
+
+These external tools produced the brand assets. Each fills a specific gap that pure code can't.
+
+| Tool | Role in this brand |
+|---|---|
+| **[Ideogram](https://ideogram.ai/)** | Primary AI image generator for the **mascot** and the ornate **primary logo mark** (grad cap + turban). Version 3.0's Style Reference feature made it possible to lock palette + pattern across iterations by uploading the mascot as a reference image. |
+| **[Recraft](https://www.recraft.ai/)** | Used when Ideogram struggled with **simple symmetric logos** (the favicon mark). Recraft is trained on vector/logo data and handles geometric, bilateral-symmetric shapes better than general-purpose image AI. |
+| **[remove.bg](https://www.remove.bg/)** | Quick background cleanup for AI-generated PNGs. AI models often leave faint gradients, color fringes, or stray sparkles in the "transparent" areas — remove.bg wipes those in one pass and returns a clean alpha channel. |
+| **[vectorizer.io](https://www.vectorizer.io/)** | Converts finalized raster mascot/logo renders into clean SVGs. Used so the mascot can scale for print, giant banners, or future design work without quality loss. Free alternative to the paid [vectorizer.ai](https://vectorizer.ai/). |
+| **[RealFaviconGenerator](https://realfavicongenerator.net/)** | Generates the full favicon suite (20+ files — `.ico`, SVG, Apple touch, PWA manifests, Android Chrome, Safari pinned tab) from a single source PNG. Also emits the exact HTML snippet to wire into `<head>`. Indispensable for shipping a cross-platform favicon. |
+
+### Typical workflow (for future brand asset work)
+
+1. **Design concept / sketch** — hand-tuned SVG component (for wordmarks and precise shapes) or AI prompt (for characters, illustrations, ornate marks).
+2. **Generate via Ideogram or Recraft** — iterate with explicit negative prompts (`"no blue skin, no magic lamp, no Aladdin"`) until the result lands.
+3. **Clean with remove.bg** — strip background artifacts.
+4. **Vectorize with vectorizer.io** — convert raster to SVG if scaling is needed.
+5. **Favicon suite via RealFaviconGenerator** — upload final PNG, download zipped output, drop into `saps/public/`.
+6. **Archive sources** in [`brand-exploration/`](./brand-exploration/) so the workflow is reproducible.

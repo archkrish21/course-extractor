@@ -83,6 +83,7 @@ npm test                   # Vitest unit tests (single run)
 npm run test:watch         # Vitest watch mode
 npm run test:coverage      # Coverage report (text + HTML)
 npm run test:e2e           # Playwright E2E (headless)
+npm run test:e2e:desktop   # Alias — same as test:e2e (desktop-only Chromium)
 npm run test:e2e:ui        # Playwright with inspector UI
 ```
 
@@ -93,8 +94,9 @@ npm run test:e2e:ui        # Playwright with inspector UI
 npx vitest run tests/unit/gpa-calc.test.ts
 
 # E2E test (Playwright)
-npx playwright test tests/e2e/planner.spec.ts
-npx playwright test tests/e2e/planner.spec.ts --project=chromium  # desktop only
+npx playwright test tests/e2e/api/gpa.spec.ts         # API-tier test
+npx playwright test tests/e2e/ui/planner.spec.ts      # UI-tier test
+npx playwright test --grep "adding a course"          # by test name
 ```
 
 ### Python extractor (from `saps/extractor/`)
@@ -138,10 +140,17 @@ These are not needed for small bug fixes or config changes — CLAUDE.md provide
 - 14-day trial, no credit card required
 
 ### E2E Test Infrastructure
-- Global setup (`tests/e2e/global-setup.ts`) resets the local DB and seeds test accounts
-- Two Playwright projects: Desktop Chrome + iPhone 13 (mobile)
-- Detailed test orchestration guide: `tests/TEST_ORCHESTRATION.md`
+- Suite is organized into three tiers under `tests/e2e/`:
+  - `api/` — pure API tests (fast, business logic)
+  - `ui/` — per-page UI smoke tests (use pre-saved storageState)
+  - `journeys/` — multi-page role-based flows
+- `auth.setup.ts` creates `.auth/<role>.json` storageState files (one per role) that all tests inherit — no per-test UI login
+- `global-setup.ts` seeds deterministic DB state; `global-teardown.ts` wipes non-primary scratch plans and orphans after runs
+- Fixture helpers in `tests/e2e/helpers/api-client.ts` — use these to set up state instead of clicking through the UI
+- Single command: `npm run test:e2e:desktop` (74 tests, ~4 min)
+- Detailed guide: `tests/TEST_ORCHESTRATION.md`
 - Dev server auto-started by Playwright if not running
+- **Accessibility (a11y)**: NOT in the default gate. Axe scans were removed from the suite for speed and noise reasons. Run axe DevTools manually before merging a new page; a `test:a11y` nightly job is planned post-v1. See `tests/TEST_ORCHESTRATION.md#accessibility-a11y` for details.
 
 ### Path Alias
 - `@/*` maps to `saps/` root (e.g., `@/lib/db/schema`, `@/components/ui/button`)

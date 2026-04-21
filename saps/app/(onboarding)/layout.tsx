@@ -30,7 +30,10 @@ export default async function OnboardingLayout({ children }: { children: React.R
       <header className="sticky top-0 z-40 flex flex-col items-center justify-center bg-muted py-4 border-b border-border/40">
         <Link href="/" className="flex flex-col items-center gap-2 hover:opacity-90 transition-opacity">
           <SapsLogo size="lg" />
-          <h1 className="text-2xl font-bold tracking-tight text-foreground">SAPS</h1>
+          <h1 className="text-2xl font-extrabold tracking-tight">
+            <span className="text-foreground">planwith</span>
+            <span className="text-[#059669] dark:text-[#FCD34D]">genie</span>
+          </h1>
           <p className="text-sm text-muted-foreground">Student Academic Planning System</p>
         </Link>
       </header>

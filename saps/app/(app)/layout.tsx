@@ -462,7 +462,10 @@ function AppLayoutInner({ children }: { children: React.ReactNode }) {
           {/* Logo */}
           <Link href="/dashboard" className="flex items-center gap-2 mr-8 shrink-0">
             <SapsLogo size="md" />
-            <span className="text-lg font-bold text-foreground">SAPS</span>
+            <span className="text-lg font-extrabold tracking-tight">
+              <span className="text-foreground">planwith</span>
+              <span className="text-[#059669] dark:text-[#FCD34D]">genie</span>
+            </span>
           </Link>
 
           {/* Desktop nav items */}

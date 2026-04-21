@@ -1,15 +1,13 @@
 import Link from "next/link";
 import { SapsLogo } from "@/components/ui/saps-logo";
+import { GenieWordmark } from "@/components/ui/genie-wordmark";
 
 export default function AuthLayout({ children }: { children: React.ReactNode }) {
   return (
     <div className="flex min-h-screen flex-col items-center justify-center bg-muted px-4 py-8">
       <Link href="/" className="mb-8 flex flex-col items-center gap-2 hover:opacity-90 transition-opacity">
         <SapsLogo size="xl" />
-        <h1 className="text-2xl font-extrabold tracking-tight">
-          <span className="text-foreground">planwith</span>
-          <span className="text-[#059669] dark:text-[#FCD34D]">genie</span>
-        </h1>
+        <GenieWordmark size="xl" />
         <p className="text-sm text-muted-foreground">Student Academic Planning System</p>
       </Link>
 

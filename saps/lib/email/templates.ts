@@ -43,8 +43,8 @@ function emailLayout(params: {
           <!-- Header -->
           <tr>
             <td style="background-color: #6B1F3D; padding: 24px 32px; text-align: center;">
-              <img src="${APP_URL}/brand/wordmark-email.png" alt="Plan with Genie" width="260" height="153" style="display: block; margin: 0 auto; max-width: 100%; height: auto;">
-              <p style="margin: 12px 0 0; font-size: 13px; color: #FCD34D;">Academic planning, granted.</p>
+              <img src="${APP_URL}/brand/wordmark-email.png" alt="Plan with Genie" width="150" height="50" style="display: block; margin: 0 auto; max-width: 100%; height: auto;">
+              <p style="margin: 0; padding: 0; font-size: 13px; line-height: 1; color: #FCD34D;">Academic planning, granted.</p>
             </td>
           </tr>
           <!-- Body -->

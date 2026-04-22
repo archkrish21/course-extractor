@@ -1,4 +1,4 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 -12 170 100" role="img" aria-label="planwithGenie">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 7 170 68" role="img" aria-label="planwithGenie">
   <path d="M 130 24 C 123 37, 137 52, 130 68"
         stroke="#FCD34D" stroke-width="9" stroke-linecap="round" fill="none" opacity="0.75" />
   <circle cx="130" cy="11" r="4" fill="#FCD34D" />

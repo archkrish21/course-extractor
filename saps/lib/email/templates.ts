@@ -44,7 +44,7 @@ function emailLayout(params: {
           <tr>
             <td style="background-color: #6B1F3D; padding: 24px 32px; text-align: center;">
               <img src="${APP_URL}/brand/wordmark-email.png" alt="Plan with Genie" width="150" height="50" style="display: block; margin: 0 auto; max-width: 100%; height: auto;">
-              <p style="margin: 0; padding: 0; font-size: 13px; line-height: 1; color: #FCD34D;">Academic planning, granted.</p>
+              <p style="margin: 0; padding: 12px; font-size: 13px; line-height: 1; color: #FCD34D;">Academic planning, granted.</p>
             </td>
           </tr>
           <!-- Body -->
@@ -69,11 +69,12 @@ function emailLayout(params: {
           </tr>
           <!-- Footer -->
           <tr>
-            <td style="padding: 0 32px 24px; border-top: 1px solid #e4e4e7;">
-              <p style="margin: 16px 0 4px; font-size: 11px; color: #a1a1aa; text-align: center;">
+            <td style="padding: 16px 32px 24px; border-top: 1px solid #e4e4e7; text-align: center;">
+              <img src="${APP_URL}/favicon-96x96.png" alt="" width="32" height="32" style="display: block; margin: 0 auto 8px; border-radius: 6px;">
+              <p style="margin: 0 0 4px; font-size: 11px; color: #a1a1aa;">
                 <a href="${APP_URL}" style="color: #a1a1aa; text-decoration: underline;">Plan with Genie</a> &mdash; Academic planning, granted.
               </p>
-              <p style="margin: 0; font-size: 11px; color: #a1a1aa; text-align: center;">
+              <p style="margin: 0; font-size: 11px; color: #a1a1aa;">
                 ${params.contextLine}
               </p>
             </td>

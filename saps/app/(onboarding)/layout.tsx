@@ -32,7 +32,7 @@ export default async function OnboardingLayout({ children }: { children: React.R
         <Link href="/" className="flex flex-col items-center gap-2 hover:opacity-90 transition-opacity">
           <SapsLogo size="lg" />
           <GenieWordmark size="xl" />
-          <p className="text-sm text-muted-foreground">Student Academic Planning System</p>
+          <p className="text-sm text-muted-foreground">Academic planning, granted.</p>
         </Link>
       </header>
 

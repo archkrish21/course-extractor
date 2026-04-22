@@ -3,7 +3,7 @@ import { BackButton } from "@/components/back-button";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Privacy Policy — SAPS",
+  title: "Privacy Policy — Plan with Genie",
 };
 
 /**
@@ -43,7 +43,7 @@ export default function PrivacyPage() {
         <section>
           <h2 className="text-lg font-semibold">4. Children's Privacy (COPPA)</h2>
           <p className="mt-2">
-            SAPS does not knowingly collect information from children under 13. Users must be at least 13 years old to
+            Plan with Genie does not knowingly collect information from children under 13. Users must be at least 13 years old to
             create an account. Users aged 13-17 are minors; parents can monitor their academic data through the parent
             role within the same account.
           </p>
@@ -52,8 +52,8 @@ export default function PrivacyPage() {
         <section>
           <h2 className="text-lg font-semibold">5. FERPA Statement</h2>
           <p className="mt-2">
-            SAPS is <strong>not a school official</strong> and does not receive education records from Stevenson High School
-            or any educational institution. All academic information in SAPS is self-reported by users. SAPS is not subject
+            Plan with Genie is <strong>not a school official</strong> and does not receive education records from Stevenson High School
+            or any educational institution. All academic information in Plan with Genie is self-reported by users. Plan with Genie is not subject
             to FERPA as it does not access school systems or official student records.
           </p>
         </section>
@@ -93,7 +93,7 @@ export default function PrivacyPage() {
         <section>
           <h2 className="text-lg font-semibold">9. Cookies</h2>
           <p className="mt-2">
-            SAPS uses essential session cookies for authentication. We do not use advertising or tracking cookies.
+            Plan with Genie uses essential session cookies for authentication. We do not use advertising or tracking cookies.
           </p>
         </section>
 

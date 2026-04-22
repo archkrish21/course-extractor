@@ -77,7 +77,7 @@ export function FeedbackWidget() {
                   </svg>
                 </div>
                 <p className="mt-3 text-sm font-semibold text-foreground">Thanks for your feedback!</p>
-                <p className="mt-1 text-xs text-muted-foreground">Your input helps us improve SAPS.</p>
+                <p className="mt-1 text-xs text-muted-foreground">Your input helps us improve Genie.</p>
               </div>
             ) : (
               /* Form */

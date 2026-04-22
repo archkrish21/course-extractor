@@ -497,7 +497,7 @@ export default function DashboardPage() {
                   ? (currentAccount?.role === "counselor"
                     ? "Plans will appear here once a student shares their plan with you."
                     : (!onboardingCompleted
-                      ? "Set up your profile, add past courses, and create your first plan to get the most out of SAPS."
+                      ? "Set up your profile, add past courses, and create your first plan to get the most out of Genie."
                       : "Head to the planner to build your four-year course plan."))
                   : "Add your name and details to personalize your experience."}
               </p>

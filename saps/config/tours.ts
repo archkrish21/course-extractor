@@ -11,7 +11,7 @@ export type TourId = (typeof TOUR_IDS)[keyof typeof TOUR_IDS];
 export const welcomeTourSteps: DriveStep[] = [
   {
     popover: {
-      title: "Welcome to SAPS! 🎓",
+      title: "Welcome to Genie! 🎓",
       description: "Let's take a quick tour to help you get started with your academic planning journey.",
     },
   },
@@ -51,7 +51,7 @@ export const welcomeTourSteps: DriveStep[] = [
     element: "[aria-label='Send feedback']",
     popover: {
       title: "We'd Love Your Feedback!",
-      description: "Rate your experience and help us improve SAPS. Click the Feedback button anytime.",
+      description: "Rate your experience and help us improve Genie. Click the Feedback button anytime.",
       side: "left",
     },
   },

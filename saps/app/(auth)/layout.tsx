@@ -8,7 +8,7 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
       <Link href="/" className="mb-8 flex flex-col items-center gap-2 hover:opacity-90 transition-opacity">
         <SapsLogo size="xl" />
         <GenieWordmark size="xl" />
-        <p className="text-sm text-muted-foreground">Student Academic Planning System</p>
+        <p className="text-sm text-muted-foreground">Academic planning, granted.</p>
       </Link>
 
       <div className="w-full max-w-lg rounded-xl border border-border bg-card p-6 shadow-sm sm:p-8">

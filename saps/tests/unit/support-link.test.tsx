@@ -36,42 +36,42 @@ describe("SupportLink", () => {
   });
 
   it("renders an anchor when SUPPORT_URL is set", async () => {
-    setSupportUrl("https://ko-fi.com/saps");
+    setSupportUrl("https://ko-fi.com/planwithgenie");
     const SupportLink = await importComponent();
     render(<SupportLink />);
-    const link = screen.getByRole("link", { name: /support saps/i });
+    const link = screen.getByRole("link", { name: /support us/i });
     expect(link).toBeInTheDocument();
     expect(link.tagName).toBe("A");
   });
 
   it("uses SUPPORT_URL as href", async () => {
-    setSupportUrl("https://ko-fi.com/saps");
+    setSupportUrl("https://ko-fi.com/planwithgenie");
     const SupportLink = await importComponent();
     render(<SupportLink />);
-    expect(screen.getByRole("link", { name: /support saps/i })).toHaveAttribute(
+    expect(screen.getByRole("link", { name: /support us/i })).toHaveAttribute(
       "href",
-      "https://ko-fi.com/saps",
+      "https://ko-fi.com/planwithgenie",
     );
   });
 
   it("opens in a new tab with safe rel attributes", async () => {
-    setSupportUrl("https://ko-fi.com/saps");
+    setSupportUrl("https://ko-fi.com/planwithgenie");
     const SupportLink = await importComponent();
     render(<SupportLink />);
-    const link = screen.getByRole("link", { name: /support saps/i });
+    const link = screen.getByRole("link", { name: /support us/i });
     expect(link).toHaveAttribute("target", "_blank");
     expect(link).toHaveAttribute("rel", "noopener noreferrer");
   });
 
-  it("renders the 'Support SAPS' label", async () => {
-    setSupportUrl("https://ko-fi.com/saps");
+  it("renders the 'Support Us' label", async () => {
+    setSupportUrl("https://ko-fi.com/planwithgenie");
     const SupportLink = await importComponent();
     render(<SupportLink />);
-    expect(screen.getByText("Support SAPS")).toBeInTheDocument();
+    expect(screen.getByText("Support Us")).toBeInTheDocument();
   });
 
   it("renders a decorative SVG icon marked aria-hidden", async () => {
-    setSupportUrl("https://ko-fi.com/saps");
+    setSupportUrl("https://ko-fi.com/planwithgenie");
     const SupportLink = await importComponent();
     const { container } = render(<SupportLink />);
     const svg = container.querySelector("svg");
@@ -80,19 +80,19 @@ describe("SupportLink", () => {
   });
 
   it("applies default classes when no className is provided", async () => {
-    setSupportUrl("https://ko-fi.com/saps");
+    setSupportUrl("https://ko-fi.com/planwithgenie");
     const SupportLink = await importComponent();
     render(<SupportLink />);
-    const link = screen.getByRole("link", { name: /support saps/i });
+    const link = screen.getByRole("link", { name: /support us/i });
     expect(link.className).toContain("inline-flex");
     expect(link.className).toContain("text-muted-foreground");
   });
 
   it("uses custom className when provided (overrides defaults)", async () => {
-    setSupportUrl("https://ko-fi.com/saps");
+    setSupportUrl("https://ko-fi.com/planwithgenie");
     const SupportLink = await importComponent();
     render(<SupportLink className="custom-class" />);
-    const link = screen.getByRole("link", { name: /support saps/i });
+    const link = screen.getByRole("link", { name: /support us/i });
     expect(link.className).toBe("custom-class");
   });
 });

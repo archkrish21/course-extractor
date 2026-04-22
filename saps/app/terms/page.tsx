@@ -3,7 +3,7 @@ import { BackButton } from "@/components/back-button";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Terms of Service — SAPS",
+  title: "Terms of Service — Plan with Genie",
 };
 
 /**
@@ -20,7 +20,7 @@ export default function TermsPage() {
         <section>
           <h2 className="text-lg font-semibold">1. Acceptance of Terms</h2>
           <p className="mt-2">
-            By creating an account or using SAPS (Student Academic Planning System), you agree to these Terms of Service.
+            By creating an account or using Plan with Genie, you agree to these Terms of Service.
             You must be at least 13 years old to use this service. If you are between 13 and 17 years old, you represent
             that your parent or legal guardian is aware of your use of this service.
           </p>
@@ -29,8 +29,8 @@ export default function TermsPage() {
         <section>
           <h2 className="text-lg font-semibold">2. Description of Service</h2>
           <p className="mt-2">
-            SAPS is an academic planning tool that helps high school students plan 4-year course schedules, track grades
-            and GPA, and monitor graduation requirements. SAPS is <strong>not affiliated with, endorsed by, or sponsored
+            Plan with Genie is an academic planning tool that helps high school students plan 4-year course schedules, track grades
+            and GPA, and monitor graduation requirements. Plan with Genie is <strong>not affiliated with, endorsed by, or sponsored
             by Adlai E. Stevenson High School</strong> or any educational institution. Course catalog data is sourced
             from publicly available information.
           </p>
@@ -39,7 +39,7 @@ export default function TermsPage() {
         <section>
           <h2 className="text-lg font-semibold">3. User Accounts and Roles</h2>
           <p className="mt-2">
-            SAPS supports three user roles: Student, Parent, and Counselor. You are responsible for maintaining the
+            Plan with Genie supports three user roles: Student, Parent, and Counselor. You are responsible for maintaining the
             confidentiality of your account credentials and for all activities under your account. You agree to provide
             accurate information when creating your account.
           </p>
@@ -48,15 +48,15 @@ export default function TermsPage() {
         <section>
           <h2 className="text-lg font-semibold">4. User Responsibilities</h2>
           <p className="mt-2">
-            You are solely responsible for the accuracy of academic data you enter into SAPS, including grades, course
-            selections, and test scores. SAPS does not verify this information with any school or institution.
+            You are solely responsible for the accuracy of academic data you enter into Plan with Genie, including grades, course
+            selections, and test scores. Plan with Genie does not verify this information with any school or institution.
           </p>
         </section>
 
         <section>
           <h2 className="text-lg font-semibold">5. Subscription and Payments</h2>
           <p className="mt-2">
-            SAPS offers free and paid subscription tiers. Paid subscriptions are processed through Stripe. By subscribing,
+            Plan with Genie offers free and paid subscription tiers. Paid subscriptions are processed through Stripe. By subscribing,
             you agree to Stripe's terms of service. Subscriptions auto-renew unless canceled before the renewal date.
             You may cancel at any time from your billing settings.
           </p>
@@ -65,7 +65,7 @@ export default function TermsPage() {
         <section>
           <h2 className="text-lg font-semibold">6. Intellectual Property</h2>
           <p className="mt-2">
-            The SAPS platform, including its design, code, and features, is owned by SAPS. Academic data you enter
+            The Plan with Genie platform, including its design, code, and features, is owned by Plan with Genie. Academic data you enter
             belongs to you. Course catalog information is sourced from publicly available school publications.
           </p>
         </section>
@@ -73,7 +73,7 @@ export default function TermsPage() {
         <section>
           <h2 className="text-lg font-semibold">7. Disclaimer of Warranties</h2>
           <p className="mt-2">
-            SAPS is provided "as is" without warranties of any kind. SAPS is <strong>not a substitute for professional
+            Plan with Genie is provided "as is" without warranties of any kind. Plan with Genie is <strong>not a substitute for professional
             academic counseling</strong>. We do not guarantee course availability, schedule accuracy, or that following
             a plan will result in meeting graduation requirements. Always consult your school counselor for official
             academic guidance.
@@ -83,9 +83,9 @@ export default function TermsPage() {
         <section>
           <h2 className="text-lg font-semibold">8. Limitation of Liability</h2>
           <p className="mt-2">
-            To the maximum extent permitted by law, SAPS shall not be liable for any indirect, incidental, special, or
+            To the maximum extent permitted by law, Plan with Genie shall not be liable for any indirect, incidental, special, or
             consequential damages arising from your use of the service, including but not limited to academic decisions
-            made based on information provided by SAPS.
+            made based on information provided by Plan with Genie.
           </p>
         </section>
 

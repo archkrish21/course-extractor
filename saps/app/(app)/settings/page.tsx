@@ -400,7 +400,7 @@ export default function SettingsPage() {
               </svg>
               <div>
                 <p className="font-semibold text-primary">Complete your onboarding</p>
-                <p className="text-sm text-muted-foreground">Set up your profile, add past courses, and create your first plan to get the most out of SAPS.</p>
+                <p className="text-sm text-muted-foreground">Set up your profile, add past courses, and create your first plan to get the most out of Genie.</p>
               </div>
             </div>
             <Link href="/onboarding" className="sm:shrink-0">

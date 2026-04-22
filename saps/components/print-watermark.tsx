@@ -13,7 +13,7 @@ export function PrintWatermark({ alwaysVisible = false }: { alwaysVisible?: bool
         className="whitespace-nowrap text-[72px] font-bold uppercase tracking-widest text-foreground/[0.06]"
         style={{ transform: "rotate(-35deg)" }}
       >
-        UNOFFICIAL &mdash; SAPS
+        UNOFFICIAL &mdash; GENIE
       </p>
     </div>
   );

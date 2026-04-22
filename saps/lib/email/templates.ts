@@ -33,7 +33,7 @@ function emailLayout(params: {
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>${params.title} - SAPS</title>
+  <title>${params.title} - Plan with Genie</title>
 </head>
 <body style="margin: 0; padding: 0; background-color: #f4f4f5; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;">
   <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background-color: #f4f4f5; padding: 40px 20px;">
@@ -42,9 +42,9 @@ function emailLayout(params: {
         <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="max-width: 480px; background-color: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
           <!-- Header -->
           <tr>
-            <td style="background-color: #1e40af; padding: 32px 32px 24px; text-align: center;">
-              <h1 style="margin: 0; font-size: 22px; font-weight: 700; color: #ffffff; letter-spacing: -0.3px;">SAPS</h1>
-              <p style="margin: 6px 0 0; font-size: 13px; color: #93c5fd;">Student Academic Planning System</p>
+            <td style="background-color: #6B1F3D; padding: 24px 32px; text-align: center;">
+              <img src="${APP_URL}/brand/wordmark-email.png" alt="Plan with Genie" width="150" height="50" style="display: block; margin: 0 auto; max-width: 100%; height: auto;">
+              <p style="margin: 0; padding: 0; font-size: 13px; line-height: 1; color: #FCD34D;">Academic planning, granted.</p>
             </td>
           </tr>
           <!-- Body -->
@@ -56,7 +56,7 @@ function emailLayout(params: {
               <table role="presentation" width="100%" cellspacing="0" cellpadding="0">
                 <tr>
                   <td align="center" style="padding: 0 0 24px;">
-                    <a href="${params.ctaUrl}" target="_blank" style="display: inline-block; padding: 12px 32px; background-color: #1e40af; color: #ffffff; font-size: 14px; font-weight: 600; text-decoration: none; border-radius: 8px;">
+                    <a href="${params.ctaUrl}" target="_blank" style="display: inline-block; padding: 12px 32px; background-color: #6B1F3D; color: #ffffff; font-size: 14px; font-weight: 600; text-decoration: none; border-radius: 8px;">
                       ${params.ctaText}
                     </a>
                   </td>
@@ -71,7 +71,7 @@ function emailLayout(params: {
           <tr>
             <td style="padding: 0 32px 24px; border-top: 1px solid #e4e4e7;">
               <p style="margin: 16px 0 4px; font-size: 11px; color: #a1a1aa; text-align: center;">
-                <a href="${APP_URL}" style="color: #a1a1aa; text-decoration: underline;">SAPS</a> &mdash; Student Academic Planning System
+                <a href="${APP_URL}" style="color: #a1a1aa; text-decoration: underline;">Plan with Genie</a> &mdash; Academic planning, granted.
               </p>
               <p style="margin: 0; font-size: 11px; color: #a1a1aa; text-align: center;">
                 ${params.contextLine}
@@ -106,14 +106,14 @@ export function newUserInviteEmail(params: {
       : `As a ${safeRole}, you&#39;ll be able to view ${safeStudent}&#39;s course plans, graduation progress, and academic records.`;
 
   return {
-    subject: `You're invited to join ${params.studentName}'s SAPS account`,
+    subject: `You're invited to join ${params.studentName}'s Plan with Genie account`,
     html: emailLayout({
       title: "You're Invited",
       heading: "You've been invited",
       body: `
               <p style="margin: 0 0 16px; font-size: 14px; line-height: 1.6; color: #52525b;">
                 <strong>${safeInviter}</strong> has invited you to join <strong>${safeStudent}'s</strong>
-                academic planning account on SAPS as a <strong>${safeRole}</strong>.
+                academic planning account on Plan with Genie as a <strong>${safeRole}</strong>.
               </p>
               <p style="margin: 0 0 24px; font-size: 14px; line-height: 1.6; color: #52525b;">
                 ${roleDescription}
@@ -121,7 +121,7 @@ export function newUserInviteEmail(params: {
       ctaText: "Create account &amp; join",
       ctaUrl: params.claimUrl,
       footer: "This invite expires in 7 days. If you didn&#39;t expect this email, you can safely ignore it.",
-      contextLine: "You received this because someone invited you to a SAPS account.",
+      contextLine: "You received this because someone invited you to a Plan with Genie account.",
     }),
   };
 }
@@ -141,7 +141,7 @@ export function existingUserInviteEmail(params: {
   const safeRole = escapeHtml(params.role);
 
   return {
-    subject: `You're invited to join ${params.studentName}'s SAPS account`,
+    subject: `You're invited to join ${params.studentName}'s Plan with Genie account`,
     html: emailLayout({
       title: "You're Invited",
       heading: "You've been invited",
@@ -156,7 +156,7 @@ export function existingUserInviteEmail(params: {
       ctaText: "Join account",
       ctaUrl: params.joinUrl,
       footer: "This invite expires in 7 days. If you didn&#39;t expect this email, you can safely ignore it.",
-      contextLine: "You received this because someone invited you to a SAPS account.",
+      contextLine: "You received this because someone invited you to a Plan with Genie account.",
     }),
   };
 }

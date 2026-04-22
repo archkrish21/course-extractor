@@ -224,23 +224,23 @@ otp_expiry = 3600
 # sender_name = "Admin"
 
 [auth.email.template.confirmation]
-subject = "Confirm your email - SAPS"
+subject = "Confirm your email - Plan with Genie"
 content_path = "./supabase/templates/confirmation.html"
 
 [auth.email.template.invite]
-subject = "You've been invited to SAPS"
+subject = "You've been invited to Plan with Genie"
 content_path = "./supabase/templates/invite.html"
 
 [auth.email.template.recovery]
-subject = "Reset your password - SAPS"
+subject = "Reset your password - Plan with Genie"
 content_path = "./supabase/templates/recovery.html"
 
 [auth.email.template.magic_link]
-subject = "Sign in to SAPS"
+subject = "Sign in to Plan with Genie"
 content_path = "./supabase/templates/magic_link.html"
 
 [auth.email.template.email_change]
-subject = "Confirm email change - SAPS"
+subject = "Confirm email change - Plan with Genie"
 content_path = "./supabase/templates/email_change.html"
 
 [auth.sms]

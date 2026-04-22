@@ -106,7 +106,7 @@ export default function PublicLayout({ children }: { children: React.ReactNode }
                 <GenieWordmark size="sm" />
               </div>
               <p className="mt-3 text-xs leading-relaxed text-muted-foreground">
-                Student Academic Planning System. Built by a Stevenson High School student.
+                Academic planning, granted. Built by a Stevenson High School student.
               </p>
               <div className="mt-3">
                 <SupportLink />
@@ -165,7 +165,7 @@ export default function PublicLayout({ children }: { children: React.ReactNode }
           </div>
 
           <div className="mt-10 border-t border-border pt-6 text-center text-xs text-muted-foreground">
-            &copy; {new Date().getFullYear()} SAPS. All rights reserved. Not affiliated with Adlai E. Stevenson High School.
+            &copy; {new Date().getFullYear()} Plan with Genie. All rights reserved. Not affiliated with Adlai E. Stevenson High School.
           </div>
         </div>
       </footer>

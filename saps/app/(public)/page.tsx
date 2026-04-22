@@ -69,17 +69,17 @@ const STEPS = [
 ];
 
 const FAQS = [
-  { q: "Is SAPS free?", a: "Yes! SAPS is completely free during early access. Create your account and start planning today — no credit card required." },
-  { q: "Is SAPS affiliated with Stevenson High School?", a: "No. SAPS is an independent tool built by a Stevenson student. It is not affiliated with, endorsed by, or sponsored by Adlai E. Stevenson High School." },
+  { q: "Is Genie free?", a: "Yes! Genie is completely free during early access. Create your account and start planning today — no credit card required." },
+  { q: "Is Genie affiliated with Stevenson High School?", a: "No. Plan with Genie is an independent tool built by a Stevenson student. It is not affiliated with, endorsed by, or sponsored by Adlai E. Stevenson High School." },
   { q: "How is my data protected?", a: "Your data is encrypted in transit, stored securely, and never sold to third parties. You can delete your account and all data at any time." },
   { q: "Can my parents see my grades?", a: "Only if you invite them. Parents and guardians can be linked to your account with view access. You control who sees your data." },
-  { q: "How much does SAPS cost?", a: "Right now, SAPS is 100% free to use. We're committed to growing with our users and will soon be introducing exciting new tools and enhancements designed to help you achieve even more." },
-  { q: "Can I use SAPS if I go to a different school?", a: "SAPS currently supports Stevenson High School. We're expanding to more schools soon — request yours during signup!" },
-  { q: "Who built SAPS?", a: "SAPS was built by a junior at Stevenson High School who wanted a better way to plan courses and track academic progress." },
+  { q: "How much does Genie cost?", a: "Right now, Genie is 100% free to use. We're committed to growing with our users and will soon be introducing exciting new tools and enhancements designed to help you achieve even more." },
+  { q: "Can I use Genie if I go to a different school?", a: "Genie currently supports Stevenson High School. We're expanding to more schools soon — request yours during signup!" },
+  { q: "Who built Genie?", a: "Genie was built by a junior at Stevenson High School who wanted a better way to plan courses and track academic progress." },
 ];
 
 const TESTIMONIALS = [
-  { name: "Maya S.", role: "Sophomore", quote: "SAPS helped me map out my AP track through senior year. I can finally see how everything connects." },
+  { name: "Maya S.", role: "Sophomore", quote: "Genie helped me map out my AP track through senior year. I can finally see how everything connects." },
   { name: "David P.", role: "Parent", quote: "As a parent, I love being able to see my son's plan and graduation progress without having to ask constantly." },
   { name: "Ms. Chen", role: "Counselor", quote: "Having a shared view of the student's 4-year plan makes our advising sessions so much more productive." },
 ];
@@ -169,13 +169,13 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* ─── Why SAPS? ───────────────────────────────────────────── */}
+      {/* ─── Why Genie? ──────────────────────────────────────────── */}
       <section className="bg-muted/40">
         <div className="mx-auto max-w-6xl px-4 py-16 sm:px-6 sm:py-24">
           <div className="text-center">
             <p className="text-sm font-semibold uppercase tracking-widest text-primary">The Problem</p>
             <h2 className="mt-2 text-2xl font-bold tracking-tight text-foreground sm:text-3xl">
-              Why students need SAPS
+              Why students need Genie
             </h2>
           </div>
 

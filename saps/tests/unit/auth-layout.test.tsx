@@ -21,9 +21,9 @@ describe("Auth Layout", () => {
     expect(screen.getByText("Test content")).toBeInTheDocument();
   });
 
-  it("renders SAPS logo as a link to home", () => {
+  it("renders brand wordmark as a link to home", () => {
     render(<AuthLayout><p>Test</p></AuthLayout>);
-    const logoLink = screen.getByText("SAPS").closest("a");
+    const logoLink = screen.getByLabelText("planwithGenie").closest("a");
     expect(logoLink).toHaveAttribute("href", "/");
   });
 
@@ -50,6 +50,6 @@ describe("Auth Layout", () => {
 
   it("renders subtitle text", () => {
     render(<AuthLayout><p>Test</p></AuthLayout>);
-    expect(screen.getByText("Student Academic Planning System")).toBeInTheDocument();
+    expect(screen.getByText("Academic planning, granted.")).toBeInTheDocument();
   });
 });

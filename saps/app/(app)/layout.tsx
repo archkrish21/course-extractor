@@ -578,7 +578,7 @@ function AppLayoutInner({ children }: { children: React.ReactNode }) {
       <footer className="border-t border-border bg-muted/30">
         <div className="mx-auto flex max-w-7xl flex-col items-center gap-3 px-4 py-4 text-xs text-muted-foreground sm:flex-row sm:justify-between sm:px-6 lg:px-8">
           <span className="text-center sm:text-left">
-            &copy; {new Date().getFullYear()} SAPS. All rights reserved. Not affiliated with Adlai E. Stevenson High School.
+            &copy; {new Date().getFullYear()} Plan with Genie. All rights reserved. Not affiliated with Adlai E. Stevenson High School.
           </span>
           {SUPPORT_URL && <SupportLink />}
         </div>

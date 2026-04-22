@@ -3,24 +3,24 @@ import type { Metadata } from "next";
 import { SUPPORT_URL } from "@/config/support";
 
 export const metadata: Metadata = {
-  title: "About — SAPS",
+  title: "About — Plan with Genie",
 };
 
 export default function AboutPage() {
   return (
     <div className="mx-auto max-w-3xl px-4 py-16 sm:px-6 sm:py-20">
-      <h1 className="text-3xl font-bold tracking-tight text-foreground sm:text-4xl">About SAPS</h1>
+      <h1 className="text-3xl font-bold tracking-tight text-foreground sm:text-4xl">About Plan with Genie</h1>
 
       <div className="mt-8 space-y-6 text-sm leading-relaxed text-muted-foreground">
         <section>
           <h2 className="text-lg font-semibold text-foreground">Our Story</h2>
           <p className="mt-2">
-            SAPS was born out of a simple frustration: planning four years of high school courses shouldn't be this hard.
+            Genie was born out of a simple frustration: planning four years of high school courses shouldn't be this hard.
             As a junior at Adlai E. Stevenson High School, I found myself juggling 300+ course options, complex prerequisite
             chains, graduation credit requirements, and GPA targets — all tracked in spreadsheets and scattered notes.
           </p>
           <p className="mt-3">
-            I built SAPS to solve this problem — not just for myself, but for every student who deserves a clear path
+            I built Genie to solve this problem — not just for myself, but for every student who deserves a clear path
             through high school. What started as a personal project has grown into a comprehensive academic planning
             platform used by students, parents, and counselors.
           </p>
@@ -56,7 +56,7 @@ export default function AboutPage() {
         <section>
           <h2 className="text-lg font-semibold text-foreground">Looking Ahead</h2>
           <p className="mt-2">
-            SAPS currently supports Stevenson High School, but we're building for every high school.
+            Genie currently supports Stevenson High School, but we're building for every high school.
             Our roadmap includes AI-powered course recommendations, career path alignment,
             and support for schools across Illinois and beyond.
           </p>
@@ -74,10 +74,10 @@ export default function AboutPage() {
               <svg aria-hidden="true" className="h-5 w-5 text-red-500" fill="currentColor" viewBox="0 0 24 24">
                 <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" />
               </svg>
-              Support SAPS
+              Support Us
             </h2>
             <p className="mt-2">
-              SAPS is built by a high school student in his spare time. If it&apos;s helped
+              Genie is built by a high school student in his spare time. If it&apos;s helped
               you plan your courses, a small contribution helps cover hosting and keeps it free for everyone.
             </p>
             <a
@@ -97,9 +97,9 @@ export default function AboutPage() {
         <section>
           <h2 className="text-lg font-semibold text-foreground">Important Note</h2>
           <p className="mt-2">
-            SAPS is <strong className="text-foreground">not affiliated with, endorsed by, or sponsored by
+            Plan with Genie is <strong className="text-foreground">not affiliated with, endorsed by, or sponsored by
             Adlai E. Stevenson High School</strong> or any educational institution. Course catalog data is
-            sourced from publicly available information. SAPS is not a substitute for professional academic counseling.
+            sourced from publicly available information. Plan with Genie is not a substitute for professional academic counseling.
           </p>
         </section>
       </div>

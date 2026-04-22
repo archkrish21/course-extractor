@@ -5,7 +5,7 @@ import { test, expect } from "@playwright/test";
  */
 test.use({ storageState: { cookies: [], origins: [] } });
 
-test("homepage shows SAPS hero heading", async ({ page }) => {
+test("homepage shows hero heading", async ({ page }) => {
   await page.goto("/");
   await expect(
     page.getByRole("heading", { name: /Plan Your 4-Year.*High School Journey/i })

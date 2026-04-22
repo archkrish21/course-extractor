@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 -12 170 100" role="img" aria-label="planwithGenie">
+  <path d="M 130 24 C 123 37, 137 52, 130 68"
+        stroke="#FCD34D" stroke-width="9" stroke-linecap="round" fill="none" opacity="0.75" />
+  <circle cx="130" cy="11" r="4" fill="#FCD34D" />
+
+  <text x="123" y="31" text-anchor="end"
+        font-family="Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif"
+        font-size="18" font-weight="600" letter-spacing="1.2"
+        fill="#FFFFFF">planw</text>
+  <text x="137" y="31" text-anchor="start"
+        font-family="Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif"
+        font-size="18" font-weight="600" letter-spacing="1.2"
+        fill="#FFFFFF">th</text>
+
+  <text x="123" y="73" text-anchor="end"
+        font-family="Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif"
+        font-weight="900" letter-spacing="-2"
+        fill="#FCD34D">
+    <tspan font-size="72">G</tspan>
+    <tspan font-size="56">en</tspan>
+  </text>
+  <text x="137" y="73" text-anchor="start"
+        font-family="Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif"
+        font-size="56" font-weight="900" letter-spacing="-2"
+        fill="#FCD34D">e</text>
+</svg>

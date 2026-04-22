@@ -42,10 +42,9 @@ function emailLayout(params: {
         <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="max-width: 480px; background-color: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
           <!-- Header -->
           <tr>
-            <td style="background-color: #6B1F3D; padding: 32px 32px 24px; text-align: center;">
-              <img src="${APP_URL}/favicon-96x96.png" alt="" width="48" height="48" style="display: block; margin: 0 auto 12px; border-radius: 8px;">
-              <h1 style="margin: 0; font-size: 22px; font-weight: 700; color: #ffffff; letter-spacing: -0.3px;">Plan with Genie</h1>
-              <p style="margin: 6px 0 0; font-size: 13px; color: #FCD34D;">Academic planning, granted.</p>
+            <td style="background-color: #6B1F3D; padding: 24px 32px; text-align: center;">
+              <img src="${APP_URL}/brand/wordmark-email.png" alt="Plan with Genie" width="260" height="153" style="display: block; margin: 0 auto; max-width: 100%; height: auto;">
+              <p style="margin: 12px 0 0; font-size: 13px; color: #FCD34D;">Academic planning, granted.</p>
             </td>
           </tr>
           <!-- Body -->

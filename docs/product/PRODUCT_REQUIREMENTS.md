@@ -429,7 +429,7 @@ The rigor score is recomputed nightly by the percentile stats job (Elite tier). 
 | US-100 | As a prospective student or parent, I want to see a clear, compelling homepage that explains what SAPS does, how it works, and how to get started, so I can decide whether to sign up. **Implemented (Phase 3):** Hero with gradient text, animated stats bar, animated trial badge, "Why SAPS?" section, 5 feature cards, 3-step timeline, FAQ accordion, final CTA. | Must | 3 |
 | US-101 | As a visitor, I want a sticky navigation bar with Sign in and Get Started Free buttons on every public page so I can easily navigate to signup or login. **Implemented (Phase 3):** Glass blur sticky navbar with logo, About link, FAQ anchor, Sign in, Get Started Free CTA. Mobile hamburger menu. | Must | 3 |
 | US-102 | As a visitor, I want to read about the team and mission on an About page so I can understand who built SAPS. **Implemented (Phase 3):** `/about` page with story, mission, Plan/Track/Connect cards, looking ahead, disclaimer. | Should | 3 |
-| US-103 | As a visitor, I want to submit a contact form with my name, email, subject, and message so I can ask questions or provide feedback. **Implemented (Phase 3):** `/contact` page with form, stored in `contact_messages` table via `POST /api/v1/contact` (no auth). Feature-flagged dormant for v1. | Should | 3 |
+| US-103 | As a visitor, I want to submit a contact form with my name, email, subject, and message so I can ask questions or provide feedback. **Implemented (Phase 3):** `/contact` page with form, stored in `contact_messages` table via `POST /api/v1/contact` (no auth). Route also sends notification email to `planwithgenie@gmail.com` via Resend with reply-to sender. Enabled in nav + footer. | Should | 3 |
 | US-104 | As a visitor, I want the homepage to have proper SEO metadata so it ranks well in search for "Stevenson High School course planner" and similar terms. **Implemented (Phase 3):** Meta description, keywords, Open Graph tags on root layout. | Must | 3 |
 | US-105 | As a visitor, I want to see a footer with product links, legal pages, and social media links so I can find more information about SAPS. **Implemented (Phase 3):** Footer with Product/Legal/Connect columns, social icons (Instagram, Facebook, Twitter, LinkedIn), feedback link (points to /contact page), school request link. | Should | 3 |
 | US-106 | As a logged-in user, I want to submit feedback from any app page via a floating widget so I can rate my experience and leave comments. **Implemented (Phase 3):** Floating "Feedback" button (bottom-right) on all app pages. Opens panel with 5-star rating + optional comment. Captures current page path. Stores in `feedback` table via `POST /api/v1/feedback` (auth required). Success animation, auto-closes. | Should | 3 |
@@ -457,7 +457,7 @@ The rigor score is recomputed nightly by the percentile stats job (Elite tier). 
 | F-ON-06b | **Welcome banner (Phase 3 — implemented):** Onboarding shows "Account created successfully!" banner with auto-dismiss. | Should |
 | F-ON-06c | **Smart routing after onboarding (Phase 3 — implemented):** After onboarding completion, redirect to dashboard if plans exist, planner otherwise. | Must |
 | F-ON-07 | 14-day Plus trial (trialing status) activated automatically at signup. No credit card required. Accounts API returns "trial" as the plan name when status is trialing. TierBadge shows "Trial" (amber). Billing page shows "Free Trial" with "X days left" badge. Pricing cards do not show "Current Plan" for trialing users. | Must |
-| F-ON-08 | **Consent system (Phase 3 — implemented):** Terms of Service and Privacy Policy acceptance required at signup (checkbox) and enforced via `/consent` interstitial for existing users. `legal_documents` table stores versioned legal documents; `consent_records` table tracks user acceptance with IP address and user agent. `/terms` page (12 sections, Illinois governing law, legal@saps.app) and `/privacy` page (11 sections, COPPA/FERPA/CCPA, essential cookies only, privacy@saps.app) display legal content — both Version 1.0, effective April 6, 2026. **Consent gate** in `(app)/layout.tsx` calls `GET /api/v1/auth/consent` on every authenticated page load; if `consent_required === true`, redirects to `/consent?next=${currentPathname}` and blocks app rendering until resolved. The consent interstitial shows pending documents with View links, a required checkbox, and Accept/Decline buttons. On document version updates, shows "We've Updated Our Terms" header with change summary. OAuth users redirected to `/consent` after first login. | Must |
+| F-ON-08 | **Consent system (Phase 3 — implemented):** Terms of Service and Privacy Policy acceptance required at signup (checkbox) and enforced via `/consent` interstitial for existing users. `legal_documents` table stores versioned legal documents; `consent_records` table tracks user acceptance with IP address and user agent. `/terms` page (12 sections, Illinois governing law, planwithgenie@gmail.com) and `/privacy` page (11 sections, COPPA/FERPA/CCPA, essential cookies only, planwithgenie@gmail.com) display legal content — both Version 1.0, effective April 6, 2026. **Consent gate** in `(app)/layout.tsx` calls `GET /api/v1/auth/consent` on every authenticated page load; if `consent_required === true`, redirects to `/consent?next=${currentPathname}` and blocks app rendering until resolved. The consent interstitial shows pending documents with View links, a required checkbox, and Accept/Decline buttons. On document version updates, shows "We've Updated Our Terms" header with change summary. OAuth users redirected to `/consent` after first login. | Must |
 | F-ON-09 | **Guided tour system (Phase 3 — implemented):** driver.js integration for step-by-step feature walkthroughs. Three adaptive tours: Welcome (dashboard, 6 steps), Planner (2-5 steps — 2 when no plans, 5 when plans exist), Progress (1-3 steps — 1 when no plan data, 3 when data exists). Auto-starts on first visit per page. Tour state persisted in `tourState` JSONB on users table via `PATCH /api/v1/auth/me`. Global "Tour" button in app header nav bar on every page — detects current page and triggers appropriate tour with correct steps. Custom driver.js CSS overrides in `globals.css` matching SAPS brand. `useTour` hook, `config/tours.ts`, `data-tour` attributes on key elements. | Should |
 
 **Plan Templates at Launch:**
@@ -1226,8 +1226,8 @@ A public-facing homepage and supporting pages are required before user acquisiti
 - 3-step timeline how-it-works section
 - FAQ accordion for common questions
 - Final CTA: "Get Started Free"
-- Feature-flagged pricing section (dormant for v1). Controlled via `config/homepage-features.ts` (`showPricing: false`)
-- Testimonials section enabled (`showTestimonials: true`): three placeholder testimonials (student/parent/counselor personas with star ratings)
+- Feature-flagged pricing section (dormant for v1). Controlled via `config/homepage.ts` (`showPricing: false`)
+- Testimonials section dormant (`showTestimonials: false` — no real testimonials yet)
 - Mobile-responsive
 
 **Public layout (shared by homepage, about, contact):**
@@ -1242,10 +1242,11 @@ A public-facing homepage and supporting pages are required before user acquisiti
 - Looking ahead section
 - Disclaimer (personal planning tool, not affiliated with the school)
 
-**Contact page (`/contact`) — implemented (Phase 3, feature-flagged dormant for v1):**
+**Contact page (`/contact`) — implemented (Phase 3, enabled):**
 - Form with name, email, subject, message fields
 - Submissions stored in `contact_messages` table via `POST /api/v1/contact` (no auth required)
-- Hidden from navigation when `showContactPage` is false
+- Route sends notification email to `planwithgenie@gmail.com` via Resend (`lib/email/client.ts`) with `replyTo` set to the submitter's email so one-click Reply responds to the sender; HTML in user input is escaped server-side
+- Shown in nav + footer when `HOME_FEATURES.showContactPage: true` in `config/homepage.ts` (currently enabled)
 
 **In-app feedback widget — implemented (Phase 3):**
 - Floating "Feedback" button on all authenticated app pages (bottom-right corner)

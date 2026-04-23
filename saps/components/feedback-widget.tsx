@@ -58,7 +58,7 @@ export function FeedbackWidget() {
 
             {/* Header */}
             <div className="flex items-center justify-between border-b border-border px-5 py-3.5">
-              <h3 className="text-sm font-semibold text-foreground">Send Feedback</h3>
+              <h3 className="text-sm font-semibold text-foreground">Send feedback</h3>
               <button type="button" onClick={() => setOpen(false)}
                 className="flex h-7 w-7 items-center justify-center rounded-full text-muted-foreground hover:bg-muted transition-colors"
                 aria-label="Close feedback">
@@ -135,7 +135,7 @@ export function FeedbackWidget() {
 
                 {/* Submit */}
                 <Button size="sm" className="mt-3 w-full" onClick={handleSubmit} disabled={rating === 0 || sending}>
-                  {sending ? "Sending..." : "Submit Feedback"}
+                  {sending ? "Sending..." : "Submit feedback"}
                 </Button>
               </div>
             )}

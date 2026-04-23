@@ -81,7 +81,7 @@ export function UpgradeModal({ isOpen, onClose, feature, minimumTier, currentTie
             </svg>
           </div>
           <div>
-            <h2 className="text-lg font-bold text-foreground">Upgrade Required</h2>
+            <h2 className="text-lg font-bold text-foreground">Upgrade required</h2>
             <p className="text-sm text-muted-foreground">
               {feature} requires {minimumTier === "elite" ? "an Elite" : "a Plus"} subscription.
             </p>

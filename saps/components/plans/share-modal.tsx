@@ -184,7 +184,7 @@ export function ShareModal({
               <div className="py-4 text-center text-sm text-muted-foreground">Loading...</div>
             ) : otherMembers.length === 0 ? (
               <div className="py-4 text-center text-sm text-muted-foreground">
-                No other family members to share with. Invite members from Settings.
+                Nobody to share with yet. Add family members from Settings.
               </div>
             ) : (
               <div className="space-y-3">

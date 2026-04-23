@@ -234,7 +234,7 @@ export default function SettingsPage() {
         const json = await res.json();
         setInviteCode(json.data?.invite_code ?? json.data?.code ?? null);
         setInviteSent(true); setInviteEmail(""); setInvitePlanShares({});
-        showToast("Invite sent successfully!");
+        showToast("Invite sent.");
       } else {
         const json = await res.json().catch(() => ({}));
         const msg = json?.error?.message || json?.message || "Failed to send invite.";
@@ -260,9 +260,9 @@ export default function SettingsPage() {
         const json = await res.json();
         const data = json.data ?? json;
         if (data.student_exists) {
-          showToast(`Invite sent to ${addStudentEmail.trim()}! You'll be connected once they accept.`);
+          showToast(`Invite sent to ${addStudentEmail.trim()}. I'll connect you once they accept.`);
         } else {
-          showToast(`Signup invite sent to ${addStudentEmail.trim()}! They can create their account from the link.`);
+          showToast(`Signup invite sent to ${addStudentEmail.trim()}. They can create their account from the link.`);
         }
         setShowAddStudent(false);
         setAddStudentName("");
@@ -343,7 +343,7 @@ export default function SettingsPage() {
       const supabase = createBrowserClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!);
       const { error } = await supabase.auth.updateUser({ password: newPassword });
       if (error) { showToast(error.message || "Failed to update password."); return; }
-      showToast("Password updated successfully.");
+      showToast("Password updated.");
       setShowPasswordForm(false);
       setNewPassword("");
       setConfirmNewPassword("");
@@ -614,7 +614,7 @@ export default function SettingsPage() {
                   <div className="py-6 text-center">
                     <p className="text-sm text-muted-foreground">No students added yet.</p>
                     <Button size="sm" className="mt-4 min-h-[44px]" onClick={() => setShowAddStudent(true)}>
-                      Add Student
+                      Add student
                     </Button>
                   </div>
                 </CardContent>
@@ -977,10 +977,10 @@ export default function SettingsPage() {
         <>
           <div className="fixed inset-0 z-40 bg-black/50" onClick={() => setShowAddStudent(false)} aria-hidden="true" />
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-            <div className="w-full max-w-md rounded-xl bg-card shadow-xl" role="dialog" aria-modal="true" aria-label="Add Student"
+            <div className="w-full max-w-md rounded-xl bg-card shadow-xl" role="dialog" aria-modal="true" aria-label="Add student"
               onClick={(e) => e.stopPropagation()}>
               <div className="p-6">
-                <h3 className="text-base font-semibold text-foreground">Add Student</h3>
+                <h3 className="text-base font-semibold text-foreground">Add student</h3>
                 <p className="mt-1 text-sm text-muted-foreground">Create a student profile. You can invite them to claim their account afterwards.</p>
                 <div className="mt-5 space-y-4">
                   <div>
@@ -1002,7 +1002,7 @@ export default function SettingsPage() {
                 <Button variant="ghost" size="sm" onClick={() => setShowAddStudent(false)}>Cancel</Button>
                 <Button size="sm" onClick={handleAddStudent}
                   disabled={addStudentLoading || !addStudentName.trim() || !addStudentEmail.trim()}>
-                  {addStudentLoading ? "Creating..." : "Add Student"}
+                  {addStudentLoading ? "Creating..." : "Add student"}
                 </Button>
               </div>
             </div>

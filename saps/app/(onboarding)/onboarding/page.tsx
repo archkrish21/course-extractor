@@ -311,7 +311,7 @@ function StepPastCourses({
         <CardContent>
           <div className="rounded-lg border border-border bg-muted/50 p-6 text-center">
             <p className="text-sm text-muted-foreground">
-              No courses to enter for Grade 9 students. Continue to the next step.
+              All clear — nothing to enter yet. Click Next to continue.
             </p>
           </div>
         </CardContent>
@@ -376,7 +376,7 @@ function StepPastCourses({
             className="h-10 rounded-lg border border-border bg-background px-3 text-sm text-foreground focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
             aria-label="Filter by division"
           >
-            <option value="All">All Divisions</option>
+            <option value="All">All divisions</option>
             {divisions.map((d) => (<option key={d} value={d}>{d}</option>))}
           </select>
         </div>

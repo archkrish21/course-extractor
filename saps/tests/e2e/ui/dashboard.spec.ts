@@ -26,11 +26,11 @@ test("dashboard shows GPA Summary card with numeric GPA", async ({ page }) => {
 });
 
 test("dashboard shows Academic Progress card", async ({ page }) => {
-  await expect(page.locator("text=Academic Progress").first()).toBeVisible();
+  await expect(page.locator("text=Your progress").first()).toBeVisible();
 });
 
 test("dashboard shows Attention Required card with status", async ({ page }) => {
-  await expect(page.locator("text=Attention Required").first()).toBeVisible();
+  await expect(page.locator("text=Needs your attention").first()).toBeVisible();
   // Either no-issues or category header must appear
   await expect
     .poll(async () => {

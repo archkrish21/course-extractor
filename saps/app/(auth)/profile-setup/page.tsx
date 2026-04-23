@@ -100,9 +100,9 @@ export default function ProfileSetupPage() {
       <div className="mx-auto max-w-[540px] px-6 py-6 sm:px-8 sm:py-8">
         {/* Header */}
         <div className="mb-6">
-          <h2 className="text-2xl font-bold text-foreground">Complete your profile</h2>
+          <h2 className="text-2xl font-bold text-foreground">Almost there</h2>
           <p className="mt-1 text-sm text-muted-foreground">
-            Tell us a bit about yourself to get started.
+            Tell me a bit about yourself before we get started.
           </p>
         </div>
 

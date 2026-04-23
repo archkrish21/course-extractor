@@ -88,7 +88,7 @@ export function ContactForm() {
 
       <div className="mt-8 text-center text-xs text-muted-foreground">
         Or email us directly at{" "}
-        <a href="mailto:support@saps.app" className="text-primary hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring rounded-sm">support@saps.app</a>
+        <a href="mailto:planwithgenie@gmail.com" className="text-primary hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring rounded-sm">planwithgenie@gmail.com</a>
       </div>
     </div>
   );

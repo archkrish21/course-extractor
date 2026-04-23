@@ -109,7 +109,7 @@ export default function PrivacyPage() {
           <h2 className="text-lg font-semibold">11. Contact</h2>
           <p className="mt-2">
             For privacy-related questions or to exercise your data rights, contact us at{" "}
-            <a href="mailto:privacy@saps.app" className="rounded text-primary hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2">privacy@saps.app</a>.
+            <a href="mailto:planwithgenie@gmail.com" className="rounded text-primary hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2">planwithgenie@gmail.com</a>.
           </p>
         </section>
       </div>

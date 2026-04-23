@@ -111,7 +111,11 @@ export default function HomePage() {
                 Free during early access
               </div>
 
-              <h1 className="mt-6 text-4xl font-extrabold tracking-tight text-foreground sm:text-5xl lg:text-6xl">
+              <p className="mt-5 text-xs font-semibold uppercase tracking-[0.2em] text-muted-foreground">
+                For high school students &amp; parents
+              </p>
+
+              <h1 className="mt-3 text-4xl font-extrabold tracking-tight text-foreground sm:text-5xl">
                 Your four-year plan.
                 <br />
                 <span className="bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent [-webkit-text-fill-color:transparent]">

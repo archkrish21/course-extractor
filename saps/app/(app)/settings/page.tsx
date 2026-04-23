@@ -529,7 +529,7 @@ export default function SettingsPage() {
         {/* --- Student Info (parent/guardian/counselor — non-student roles) */}
         {(isParentLike || currentAccount?.role === "counselor") && (
           <section>
-            <h2 className="mb-4 text-xs font-semibold uppercase tracking-wider text-muted-foreground">Student Info</h2>
+            <h2 className="mb-4 text-xs font-semibold uppercase tracking-wider text-muted-foreground">Student info</h2>
             {currentAccount ? (
               <Card>
                 <CardContent>
@@ -633,7 +633,7 @@ export default function SettingsPage() {
         <section>
           <div className="mb-4 flex items-center justify-between">
             <h2 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-              Shared With
+              Shared with
             </h2>
             {otherMembers.length > 0 && (
               <Badge className="bg-muted text-muted-foreground">{otherMembers.length}</Badge>
@@ -844,7 +844,7 @@ export default function SettingsPage() {
 
         {/* --- Danger Zone ------------------------------------------ */}
         <section>
-          <h2 className="mb-4 text-xs font-semibold uppercase tracking-wider text-destructive">Danger Zone</h2>
+          <h2 className="mb-4 text-xs font-semibold uppercase tracking-wider text-destructive">Danger zone</h2>
           <div className="rounded-xl border border-destructive/30 bg-destructive-light/30 p-5">
             <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
               <div>

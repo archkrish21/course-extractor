@@ -112,7 +112,7 @@ export default function PlansPage() {
   if (loading) {
     return (
       <div className="mx-auto max-w-4xl">
-        <h1 className="mb-6 text-2xl font-bold tracking-tight text-foreground">My Plans</h1>
+        <h1 className="mb-6 text-2xl font-bold tracking-tight text-foreground">My plans</h1>
         <div className="animate-pulse space-y-4">
           {[1, 2, 3].map((i) => (
             <div key={i} className="h-24 rounded-xl bg-muted" />
@@ -283,7 +283,7 @@ export default function PlansPage() {
               <path strokeLinecap="round" strokeLinejoin="round" d="M10.5 19.5 3 12m0 0 7.5-7.5M3 12h18" />
             </svg>
           </Link>
-          <h1 className="text-2xl font-bold tracking-tight text-foreground">My Plans</h1>
+          <h1 className="text-2xl font-bold tracking-tight text-foreground">My plans</h1>
         </div>
         {!isCounselor && (
           <Link href="/planner?newPlan=true">
@@ -308,7 +308,7 @@ export default function PlansPage() {
               : "text-muted-foreground hover:text-foreground"
           }`}
         >
-          My Plans ({myPlans.length})
+          My plans ({myPlans.length})
         </button>
         <button
           type="button"
@@ -335,7 +335,7 @@ export default function PlansPage() {
                   </svg>
                 </div>
                 <p className="mt-4 text-base font-semibold text-foreground">
-                  {isCounselor ? "No Plans Shared Yet" : "No plans yet"}
+                  {isCounselor ? "No plans shared yet" : "No plans yet"}
                 </p>
                 <p className="mt-1 text-sm text-muted-foreground">
                   {isCounselor
@@ -348,7 +348,7 @@ export default function PlansPage() {
                       <svg aria-hidden="true" className="mr-1.5 h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
                       </svg>
-                      Create First Plan
+                      Create first plan
                     </Button>
                   </Link>
                 )}

@@ -240,7 +240,7 @@ export default function ProgressPage() {
   if (loading) {
     return (
       <div className="mx-auto max-w-6xl">
-        <h1 className="mb-1 text-2xl font-bold tracking-tight text-foreground sm:text-3xl">Academic Progress</h1>
+        <h1 className="mb-1 text-2xl font-bold tracking-tight text-foreground sm:text-3xl">Your progress</h1>
         <p className="mb-6 text-sm text-muted-foreground">Track your graduation requirements, credits, and GPA over time.</p>
         <div className="animate-pulse space-y-4">
           <div className="h-24 rounded-xl bg-muted" />
@@ -255,7 +255,7 @@ export default function ProgressPage() {
   if (isParentLike && !currentAccount) {
     return (
       <div className="mx-auto max-w-6xl">
-        <h1 className="mb-1 text-2xl font-bold tracking-tight text-foreground sm:text-3xl">Academic Progress</h1>
+        <h1 className="mb-1 text-2xl font-bold tracking-tight text-foreground sm:text-3xl">Your progress</h1>
         <p className="mb-6 text-sm text-muted-foreground">Track your graduation requirements, credits, and GPA over time.</p>
         <Card>
           <CardContent>
@@ -265,10 +265,10 @@ export default function ProgressPage() {
                   <path strokeLinecap="round" strokeLinejoin="round" d="M18 7.5v3m0 0v3m0-3h3m-3 0h-3m-2.25-4.125a3.375 3.375 0 1 1-6.75 0 3.375 3.375 0 0 1 6.75 0ZM3 19.235v-.11a6.375 6.375 0 0 1 12.75 0v.109A12.318 12.318 0 0 1 9.374 21c-2.331 0-4.512-.645-6.374-1.766Z" />
                 </svg>
               </div>
-              <p className="text-base font-semibold text-foreground">Add a Student First</p>
-              <p className="mt-1 text-sm text-muted-foreground">Create a student profile to start tracking their academic progress.</p>
+              <p className="text-base font-semibold text-foreground">Add a student first</p>
+              <p className="mt-1 text-sm text-muted-foreground">Create a student profile to start tracking their progress.</p>
               <Link href="/settings?add-student=1">
-                <Button size="sm" className="mt-4">Add Student</Button>
+                <Button size="sm" className="mt-4">Add student</Button>
               </Link>
             </div>
           </CardContent>
@@ -282,14 +282,14 @@ export default function ProgressPage() {
   if (error || !data) {
     return (
       <div className="mx-auto max-w-6xl">
-        <h1 className="mb-1 text-2xl font-bold tracking-tight text-foreground sm:text-3xl">Academic Progress</h1>
+        <h1 className="mb-1 text-2xl font-bold tracking-tight text-foreground sm:text-3xl">Your progress</h1>
         <p className="mb-6 text-sm text-muted-foreground">Track your graduation requirements, credits, and GPA over time.</p>
         <Card>
           <CardContent>
             <div className="py-8 text-center">
-              <p className="text-muted-foreground">Unable to load requirements.</p>
+              <p className="text-muted-foreground">Couldn&rsquo;t load your requirements.</p>
               <Link href="/planner">
-                <Button size="sm" variant="outline" className="mt-3">Open Planner</Button>
+                <Button size="sm" variant="outline" className="mt-3">Open planner</Button>
               </Link>
             </div>
           </CardContent>
@@ -301,7 +301,7 @@ export default function ProgressPage() {
   if (hasNoPlan) {
     return (
       <div className="mx-auto max-w-6xl">
-        <h1 className="mb-1 text-2xl font-bold tracking-tight text-foreground sm:text-3xl">Academic Progress</h1>
+        <h1 className="mb-1 text-2xl font-bold tracking-tight text-foreground sm:text-3xl">Your progress</h1>
         <p className="mb-6 text-sm text-muted-foreground">Track your graduation requirements, credits, and GPA over time.</p>
         <Card>
           <CardContent>
@@ -325,7 +325,7 @@ export default function ProgressPage() {
     <div className="mx-auto max-w-6xl">
       <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-foreground sm:text-3xl">Academic Progress</h1>
+          <h1 className="text-2xl font-bold tracking-tight text-foreground sm:text-3xl">Your progress</h1>
           <p className="mt-1 text-sm text-muted-foreground">Track your graduation requirements, credits, and GPA over time.</p>
         </div>
         <div className="no-print flex items-center gap-2">

@@ -4,6 +4,6 @@
  */
 export const HOME_FEATURES = {
   showTestimonials: false,   // Disabled — no real testimonials yet
-  showContactPage: false,    // Enable when support volume grows
+  showContactPage: true,     // Enable when support volume grows
   showPricing: false,        // Enable when paid tiers launch
 };

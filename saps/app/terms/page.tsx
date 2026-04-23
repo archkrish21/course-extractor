@@ -117,7 +117,7 @@ export default function TermsPage() {
         <section>
           <h2 className="text-lg font-semibold">12. Contact</h2>
           <p className="mt-2">
-            For questions about these Terms, contact us at <a href="mailto:legal@saps.app" className="rounded text-primary hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2">legal@saps.app</a>.
+            For questions about these Terms, contact us at <a href="mailto:planwithgenie@gmail.com" className="rounded text-primary hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2">planwithgenie@gmail.com</a>.
           </p>
         </section>
       </div>

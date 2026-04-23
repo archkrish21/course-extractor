@@ -29,7 +29,7 @@ export function ContactForm() {
       if (res.ok) {
         setSent(true);
       } else {
-        setError("Failed to send. Please try again or email us directly.");
+        setError("Couldn't send your message. Try again, or email us directly.");
       }
     } catch {
       setError("Something went wrong. Please try again.");
@@ -47,16 +47,16 @@ export function ContactForm() {
           </svg>
         </div>
         <h1 className="mt-4 text-2xl font-bold text-foreground">Message sent!</h1>
-        <p className="mt-2 text-muted-foreground">Thanks for reaching out. We'll get back to you as soon as possible.</p>
+        <p className="mt-2 text-muted-foreground">Thanks for reaching out. We&rsquo;ll get back to you soon.</p>
       </div>
     );
   }
 
   return (
     <div className="mx-auto max-w-lg px-4 py-16 sm:px-6 sm:py-20">
-      <h1 className="text-3xl font-bold tracking-tight text-foreground">Contact Us</h1>
+      <h1 className="text-3xl font-bold tracking-tight text-foreground">Get in touch</h1>
       <p className="mt-2 text-sm text-muted-foreground">
-        Have a question, suggestion, or issue? We'd love to hear from you.
+        Question, suggestion, or issue? We&rsquo;d love to hear from you.
       </p>
 
       <form onSubmit={handleSubmit} className="mt-8 space-y-4">
@@ -82,13 +82,13 @@ export function ContactForm() {
         {error && <p className="text-sm text-destructive">{error}</p>}
 
         <Button type="submit" className="w-full" disabled={sending || !name.trim() || !email.trim() || !message.trim()}>
-          {sending ? "Sending..." : "Send Message"}
+          {sending ? "Sending..." : "Send message"}
         </Button>
       </form>
 
       <div className="mt-8 text-center text-xs text-muted-foreground">
         Or email us directly at{" "}
-        <a href="mailto:support@saps.app" className="text-primary hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring rounded-sm">support@saps.app</a>
+        <a href="mailto:planwithgenie@gmail.com" className="text-primary hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring rounded-sm">planwithgenie@gmail.com</a>
       </div>
     </div>
   );

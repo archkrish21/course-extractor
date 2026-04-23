@@ -10,6 +10,7 @@ export async function sendEmail(params: {
   subject: string;
   html: string;
   from?: string;
+  replyTo?: string;
 }): Promise<boolean> {
   const apiKey = process.env.RESEND_API_KEY;
   if (!apiKey) {
@@ -24,6 +25,7 @@ export async function sendEmail(params: {
       to: params.to,
       subject: params.subject,
       html: params.html,
+      ...(params.replyTo ? { replyTo: params.replyTo } : {}),
     });
     if (error) {
       console.error("[email] Resend error:", JSON.stringify(error));

@@ -245,7 +245,7 @@ export default function SignupPage() {
             </div>
           </div>
           <p className="-mt-3 text-[11px] text-muted-foreground">
-            Currently supporting Stevenson High School. More schools coming soon!{" "}
+            Currently supporting Stevenson High School. More schools coming soon.{" "}
             <button type="button" onClick={() => setShowSchoolRequest(true)} className="text-primary hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring rounded">
               Request yours
             </button>
@@ -267,7 +267,7 @@ export default function SignupPage() {
                   try { await fetch("/api/v1/school-request", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ school: requestSchool.trim(), email: requestEmail.trim() }) }); } catch {}
                   setSchoolRequestSent(true);
                 }}>
-                {schoolRequestSent ? "Sent!" : "Notify Me"}
+                {schoolRequestSent ? "Sent!" : "Notify me"}
               </Button>
               {schoolRequestSent && (
                 <p className="mt-2 text-xs text-success">Thanks! We&apos;ll notify you when your school is supported.</p>

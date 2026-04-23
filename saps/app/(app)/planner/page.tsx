@@ -2069,8 +2069,8 @@ export default function PlannerPage() {
                   <div>
                     <h3 className="text-base font-semibold text-foreground">
                       {clearConfirm.type === "semester"
-                        ? `Clear Semester ${clearConfirm.semester}?`
-                        : `Clear Grade ${clearConfirm.gradeLevel}?`}
+                        ? `Clear semester ${clearConfirm.semester}?`
+                        : `Clear grade ${clearConfirm.gradeLevel}?`}
                     </h3>
                     <p className="mt-1 text-sm text-muted-foreground">
                       This will remove{" "}
@@ -2103,7 +2103,7 @@ export default function PlannerPage() {
                   onClick={executeClear}
                   disabled={clearing}
                 >
-                  {clearing ? "Clearing..." : `Clear ${clearConfirm.courseCount} Course${clearConfirm.courseCount !== 1 ? "s" : ""}`}
+                  {clearing ? "Clearing..." : `Clear ${clearConfirm.courseCount} course${clearConfirm.courseCount !== 1 ? "s" : ""}`}
                 </Button>
               </div>
             </div>
@@ -2152,7 +2152,7 @@ export default function PlannerPage() {
                   onClick={handleDeletePlan}
                   disabled={deletingPlan}
                 >
-                  {deletingPlan ? "Deleting..." : "Delete Plan"}
+                  {deletingPlan ? "Deleting..." : "Delete plan"}
                 </Button>
               </div>
             </div>
@@ -2206,7 +2206,7 @@ export default function PlannerPage() {
                     await doRemoveCourse(id);
                   }}
                 >
-                  Remove Anyway
+                  Remove anyway
                 </Button>
               </div>
             </div>
@@ -2290,7 +2290,7 @@ export default function PlannerPage() {
                   </span>
                   <div>
                     <h3 className="text-base font-semibold text-foreground">
-                      Unlock Grade {unlockConfirm}?
+                      Unlock grade {unlockConfirm}?
                     </h3>
                     <p className="mt-1 text-sm text-muted-foreground">
                       This will allow editing completed courses in Grade {unlockConfirm} — including
@@ -2311,7 +2311,7 @@ export default function PlannerPage() {
                     setUnlockConfirm(null);
                   }}
                 >
-                  Unlock Grade {unlockConfirm}
+                  Unlock grade {unlockConfirm}
                 </Button>
               </div>
             </div>

@@ -172,7 +172,7 @@ export default function ProfileSetupPage() {
             </div>
           </div>
           <p className="-mt-3 text-[11px] text-muted-foreground">
-            Currently supporting Stevenson High School. More schools coming soon!
+            Currently supporting Stevenson High School. More schools coming soon.
           </p>
 
           {/* Age confirmation (COPPA) */}

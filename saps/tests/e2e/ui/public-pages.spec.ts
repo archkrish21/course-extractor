@@ -8,7 +8,7 @@ test.use({ storageState: { cookies: [], origins: [] } });
 test("homepage shows hero heading", async ({ page }) => {
   await page.goto("/");
   await expect(
-    page.getByRole("heading", { name: /Plan Your 4-Year.*High School Journey/i })
+    page.getByRole("heading", { name: /Your four-year plan\.\s*Granted\./i })
   ).toBeVisible({ timeout: 10_000 });
 });
 

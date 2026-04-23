@@ -428,10 +428,10 @@ export default function CourseBrowserPage() {
     <div className="mx-auto max-w-6xl">
       <div className="mb-6">
         <h1 className="text-2xl font-bold tracking-tight text-foreground">
-          Course Browser
+          Course browser
         </h1>
         <p className="mt-1 text-sm text-muted-foreground">
-          Search and explore available courses by division, level, and type
+          Browse every course by division, level, and type.
         </p>
       </div>
 

@@ -76,8 +76,8 @@ function JoinPageInner() {
             <CardContent>
               <div className="py-8 text-center">
                 <div className="mx-auto mb-4 h-10 w-10 animate-spin rounded-full border-4 border-muted border-t-primary" aria-hidden="true" />
-                <p className="text-sm font-medium text-foreground">Joining account...</p>
-                <p className="mt-1 text-xs text-muted-foreground">Please wait while we connect you.</p>
+                <p className="text-sm font-medium text-foreground">Joining account&hellip;</p>
+                <p className="mt-1 text-xs text-muted-foreground">One moment while I connect you.</p>
               </div>
             </CardContent>
           </Card>
@@ -100,10 +100,10 @@ function JoinPageInner() {
                 </div>
                 <h2 className="text-xl font-semibold tracking-tight text-foreground">You&apos;re in!</h2>
                 <p className="mt-2 text-sm text-muted-foreground">
-                  You&apos;ve successfully joined the account. You can now view and manage the student&apos;s course plans.
+                  You&rsquo;ve joined the account. You can now view and manage the student&rsquo;s course plans.
                 </p>
                 <Button className="mt-6 w-full" onClick={() => router.push("/dashboard")}>
-                  Go to Dashboard
+                  Go to dashboard
                 </Button>
               </div>
             </CardContent>
@@ -118,7 +118,7 @@ function JoinPageInner() {
       <div className="w-full max-w-md">
         <Card>
           <CardHeader>
-            <h2 className="text-xl font-semibold tracking-tight text-foreground">Join Account</h2>
+            <h2 className="text-xl font-semibold tracking-tight text-foreground">Join account</h2>
             <p className="text-sm text-muted-foreground">
               Enter your invite code to join a student&apos;s account.
             </p>
@@ -170,7 +170,7 @@ function JoinPageInner() {
                 onClick={() => handleJoin(accId, code)}
                 disabled={joining || !code || !accId}
               >
-                {joining ? "Joining..." : "Join Account"}
+                {joining ? "Joining..." : "Join account"}
               </Button>
             </div>
           </CardContent>

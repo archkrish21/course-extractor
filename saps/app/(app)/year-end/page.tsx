@@ -241,7 +241,7 @@ function YearEndPageInner() {
   if (loading) {
     return (
       <div className="mx-auto max-w-3xl">
-        <h1 className="mb-6 text-2xl font-bold tracking-tight text-foreground">Year-End Review</h1>
+        <h1 className="mb-6 text-2xl font-bold tracking-tight text-foreground">Year-end review</h1>
         <div className="animate-pulse space-y-4">
           <div className="h-12 rounded-full bg-muted" />
           <div className="h-64 rounded-xl bg-muted" />
@@ -252,7 +252,7 @@ function YearEndPageInner() {
 
   return (
     <div className="mx-auto max-w-3xl">
-      <h1 className="mb-2 text-2xl font-bold tracking-tight text-foreground">Year-End Review</h1>
+      <h1 className="mb-2 text-2xl font-bold tracking-tight text-foreground">Year-end review</h1>
       <p className="mb-6 text-sm text-muted-foreground">
         Complete your Grade {gradeLevel} year-end review to advance to {isGraduating ? "graduation" : `Grade ${gradeLevel + 1}`}.
       </p>
@@ -539,7 +539,7 @@ function YearEndPageInner() {
               <div className="rounded-lg border border-border bg-muted/30 p-4 text-center">
                 <p className="text-sm text-muted-foreground">No courses planned for Grade {gradeLevel + 1} yet.</p>
                 <Link href="/planner">
-                  <Button variant="ghost" size="sm" className="mt-2">Open Planner</Button>
+                  <Button variant="ghost" size="sm" className="mt-2">Open planner</Button>
                 </Link>
               </div>
             )}
@@ -562,7 +562,7 @@ function YearEndPageInner() {
               disabled={submitting}
               className={isGraduating ? "bg-warning hover:bg-warning/90" : ""}
             >
-              {submitting ? "Completing..." : isGraduating ? "Complete & Graduate 🎓" : "Complete Year-End Review"}
+              {submitting ? "Completing..." : isGraduating ? "Complete & graduate 🎓" : "Complete year-end review"}
             </Button>
           </CardFooter>
         </Card>

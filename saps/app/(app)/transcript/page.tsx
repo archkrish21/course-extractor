@@ -306,7 +306,7 @@ export default function GradesPage() {
               Complete a year-end review to see your transcript.
             </p>
             <Link href="/planner" className="mt-4">
-              <Button size="sm">Go to Planner</Button>
+              <Button size="sm">Go to planner</Button>
             </Link>
           </CardContent>
         </Card>

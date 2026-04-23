@@ -146,9 +146,9 @@ function StepAboutYou({
   return (
     <Card>
       <CardHeader>
-        <h2 className="text-2xl font-bold text-foreground">About You</h2>
+        <h2 className="text-2xl font-bold text-foreground">About you</h2>
         <p className="text-sm text-muted-foreground">
-          Tell us about your current status so we can personalize your experience.
+          A few quick questions so I can tailor your plan to you.
         </p>
       </CardHeader>
       <CardContent>
@@ -303,9 +303,9 @@ function StepPastCourses({
     return (
       <Card>
         <CardHeader>
-          <h2 className="text-2xl font-bold text-foreground">Past Courses</h2>
+          <h2 className="text-2xl font-bold text-foreground">Past courses</h2>
           <p className="text-sm text-muted-foreground">
-            As an incoming freshman, you don&apos;t have any high school courses to enter yet.
+            You&rsquo;re starting fresh &mdash; no high school courses to enter yet.
           </p>
         </CardHeader>
         <CardContent>
@@ -322,9 +322,9 @@ function StepPastCourses({
   return (
     <Card>
       <CardHeader>
-        <h2 className="text-2xl font-bold text-foreground">Select Past Courses</h2>
+        <h2 className="text-2xl font-bold text-foreground">Your past courses</h2>
         <p className="text-sm text-muted-foreground">
-          Check the courses you&apos;ve completed. You&apos;ll enter final grades in the next step.
+          Check off the ones you&rsquo;ve completed. We&rsquo;ll fill in grades next.
         </p>
       </CardHeader>
       <CardContent>
@@ -445,10 +445,10 @@ function StepChoosePlan({
   return (
     <Card>
       <CardHeader>
-        <h2 className="text-2xl font-bold text-foreground">Choose a Starting Plan</h2>
+        <h2 className="text-2xl font-bold text-foreground">Pick a starting plan</h2>
         <p className="text-sm text-muted-foreground">
-          Pick a plan template that matches your interests — you can customize it later.
-          If none fit, click <span className="font-medium">Complete</span> without selecting one to start from scratch.
+          Choose a template that matches your interests &mdash; you can tweak it later.
+          Nothing fits? Click <span className="font-medium">Complete</span> to start from scratch.
         </p>
       </CardHeader>
       <CardContent>
@@ -609,9 +609,9 @@ function StepAssignGrades({
     return (
       <Card>
         <CardHeader>
-          <h2 className="text-2xl font-bold text-foreground">Assign Grades</h2>
+          <h2 className="text-2xl font-bold text-foreground">Enter your grades</h2>
           <p className="text-sm text-muted-foreground">
-            You didn&apos;t select any past courses. Go back to add some, or continue to finish.
+            No past courses selected yet. Go back to add some, or continue to finish up.
           </p>
         </CardHeader>
       </Card>
@@ -621,9 +621,9 @@ function StepAssignGrades({
   return (
     <Card>
       <CardHeader>
-        <h2 className="text-2xl font-bold text-foreground">Assign Grades</h2>
+        <h2 className="text-2xl font-bold text-foreground">Enter your grades</h2>
         <p className="text-sm text-muted-foreground">
-          Enter the final grade for each past course. These will be locked once onboarding is complete —
+          Enter the final grade for each past course. I&rsquo;ll lock these once you&rsquo;re done &mdash;
           you can unlock them later in the planner if you need to make corrections.
         </p>
       </CardHeader>
@@ -868,7 +868,7 @@ function OnboardingPageInner() {
           <svg aria-hidden="true" className="h-5 w-5 shrink-0 text-success" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" d="m4.5 12.75 6 6 9-13.5" />
           </svg>
-          <p className="flex-1 text-sm font-medium text-success">Account created successfully! Let&apos;s set up your profile.</p>
+          <p className="flex-1 text-sm font-medium text-success">You&rsquo;re in. Let&rsquo;s get your plan started.</p>
           <button
             type="button"
             onClick={() => setShowWelcome(false)}
@@ -887,13 +887,13 @@ function OnboardingPageInner() {
         steps={
           gradeLevel === 9
             ? [
-                { label: "About You", number: 1 },
-                { label: "Starting Plan", number: 2 },
+                { label: "About you", number: 1 },
+                { label: "Starting plan", number: 2 },
               ]
             : [
-                { label: "About You", number: 1 },
-                { label: "Past Courses", number: 2 },
-                { label: "Assign Grades", number: 3 },
+                { label: "About you", number: 1 },
+                { label: "Past courses", number: 2 },
+                { label: "Enter grades", number: 3 },
               ]
         }
       />

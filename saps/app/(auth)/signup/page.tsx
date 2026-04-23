@@ -169,7 +169,7 @@ export default function SignupPage() {
         <div className="mb-6">
           <h2 className="text-2xl font-bold text-foreground">Create your account</h2>
           <p className="mt-1 text-sm text-muted-foreground">
-            Start planning your academic path today.
+            A minute of setup, four years of plans.
           </p>
         </div>
 

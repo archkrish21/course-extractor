@@ -136,9 +136,9 @@ function LoginPageInner() {
 
   return (
     <>
-      <h2 className="mb-1 text-2xl font-bold text-foreground">Sign in to your account</h2>
+      <h2 className="mb-1 text-2xl font-bold text-foreground">Welcome back</h2>
       <p className="mb-6 text-sm text-muted-foreground">
-        Welcome back. Enter your credentials to continue.
+        Sign in to pick up where you left off.
       </p>
 
       {successMessage && (

@@ -31,7 +31,7 @@ export default function AppError({
         Something went wrong
       </h1>
       <p className="mt-2 text-sm text-muted-foreground">
-        An unexpected error occurred. Please try again or return to the dashboard.
+        Something broke on our end. Try again, or head back to your dashboard.
       </p>
       <div className="mt-6 flex items-center gap-3">
         <button
@@ -44,7 +44,7 @@ export default function AppError({
           href="/dashboard"
           className="inline-flex h-10 min-h-[44px] items-center justify-center rounded-lg border border-border bg-background px-4 text-sm font-medium text-foreground hover:bg-muted focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
         >
-          Go to Dashboard
+          Back to dashboard
         </Link>
       </div>
     </div>

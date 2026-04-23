@@ -2,7 +2,12 @@
 
 > **Audience:** engineers building UI, marketing designers producing assets, and anyone adding a new surface that needs brand identity.
 >
-> **Companion docs:** [`brand-exploration/`](./brand-exploration/) holds the design artifacts and iteration history that led to this system.
+> **Scope:** this file owns **brand assets** — mascot, logo mark, wordmark — and how they're used. Color tokens, typography scale, spacing, components, and motion live in [`DESIGN.md`](./DESIGN.md). Voice lives in [`voice-and-tone.md`](./voice-and-tone.md).
+>
+> **Companion docs:**
+> - [`DESIGN.md`](./DESIGN.md) — color tokens, typography, components, deployment rules (source of truth for anything an AI design tool would read)
+> - [`voice-and-tone.md`](./voice-and-tone.md) — how Genie speaks
+> - [`brand-exploration/`](./brand-exploration/) — design artifacts and iteration history
 
 ---
 
@@ -96,11 +101,13 @@ The full icon suite (all sizes, manifest, Apple touch, `.ico`) was generated via
 
 ### Anatomy
 ```
-planw    th       ← small (size 18 bold), maroon
+planw    th       ← small (size 18 bold), --accent token
      │            ← shared tall-i stem (curved, 75% opacity)
      ●            ← i dot
-Gen      e        ← large (G at size 72, "en"/"e" at size 56)
+Gen      e        ← large (G at size 72, "en"/"e" at size 56), --primary token
 ```
+
+Colors are token-driven — see [`DESIGN.md §2`](./DESIGN.md#2-color-system). The component adapts to light/dark automatically.
 
 ### Where it's used
 - **Public nav + footer** — [`saps/app/(public)/layout.tsx`](../../saps/app/(public)/layout.tsx)
@@ -128,19 +135,20 @@ import { GenieWordmark } from "@/components/ui/genie-wordmark";
 
 ## Color Palette
 
-| Name | Hex | Usage |
-|---|---|---|
-| **Maroon** | `#6B1F3D` | Turban, cap, `planwith` text (light mode) |
-| **Gold** | `#FCD34D` | Filigree, band, tassel, `Genie` text (dark mode), theme color |
-| **Ruby** | `#E11D48` | Gem accent |
-| **Emerald** | `#059669` | Mascot skin, `Genie` text (light mode), `theme_color` in webmanifest |
-| **Foreground** | `text-foreground` | `planwith` text (dark mode) — theme-adaptive |
+**Moved.** The full color system — source palette, light/dark UI anchors, token declarations, and usage rules — now lives in [`DESIGN.md §2`](./DESIGN.md#2-color-system). That file is the single source of truth for colors.
 
-### Dark mode behavior
-- `planwith` (maroon in light) → foreground token (white-ish in dark)
-- `Genie` (emerald in light) → gold in dark
+### Summary for asset work
+When producing new brand assets (mascot variants, social cards, print collateral), pull colors from the **illustration & decoration palette** in [`DESIGN.md §2.1`](./DESIGN.md#21-source-palette--illustration--decoration-only) — 31 colors extracted from the mascot itself. Do not use the UI anchor tokens for illustration work; they're a curated subset intended for functional UI, not for painting.
 
-This mirrors the mascot's own palette: the turban's maroon becomes the filigree's gold in inverted/dark contexts.
+### Wordmark dark mode behavior
+The wordmark component adapts automatically:
+- `planwith` uses `--accent` in light mode, `--foreground` in dark
+- `Genie` uses `--primary` in light mode, `--accent` in dark
+
+This role-swap mirrors the brand's dark-mode strategy system-wide (accent color swaps from crimson to antique gold when the theme inverts). See [`DESIGN.md §2.3`](./DESIGN.md#23-ui-anchors--dark-mode) for exact tokens.
+
+### Legacy note
+Earlier versions of this file listed a four-color palette (Maroon / Gold / Ruby / Emerald). That palette has been superseded by the full system in DESIGN.md. The `<GenieWordmark>` component still hardcodes the old hex values and will be refactored to read tokens in the Phase 1 token swap (see commit log for branch `copy/phase-4-public-marketing` and successors).
 
 ---
 
@@ -165,7 +173,9 @@ saps/components/ui/
 └── genie-wordmark.tsx       # <GenieWordmark> — hand-tuned SVG wordmark
 
 docs/design/
-├── brand.md                 # this file
+├── brand.md                 # this file — assets (mascot, logo, wordmark)
+├── DESIGN.md                # color tokens, typography, components, rules
+├── voice-and-tone.md        # how Genie speaks
 └── brand-exploration/       # design history + AI-generated sources
 ```
 

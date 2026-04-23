@@ -8,13 +8,13 @@ export default function PublicNotFound() {
         Page not found
       </h1>
       <p className="mt-2 text-sm text-muted-foreground">
-        The page you are looking for does not exist or has been moved.
+        Even genies lose track sometimes. That page doesn&rsquo;t exist or has moved.
       </p>
       <Link
         href="/"
         className="mt-6 inline-flex h-10 min-h-[44px] items-center justify-center rounded-lg bg-primary px-4 text-sm font-medium text-primary-foreground hover:bg-primary/90 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
       >
-        Go to Homepage
+        Back to home
       </Link>
     </div>
   );

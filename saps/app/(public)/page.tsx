@@ -16,31 +16,31 @@ const STATS = [
 
 const FEATURES = [
   {
-    title: "4-Year Course Planner",
+    title: "Four-year course planner",
     desc: "Drag, drop, and plan across all four years. See your entire academic path at a glance with a visual semester grid.",
     icon: "M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 0 1 2.25-2.25h13.5A2.25 2.25 0 0 1 21 7.5v11.25m-18 0A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75m-18 0v-7.5A2.25 2.25 0 0 1 5.25 9h13.5A2.25 2.25 0 0 1 21 11.25v7.5",
     color: "bg-primary/10 text-primary",
   },
   {
-    title: "GPA & Grade Tracking",
+    title: "GPA & grade tracking",
     desc: "Real-time weighted and unweighted GPA. Projected grades, what-if scenarios, and semester-by-semester trends.",
     icon: "M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 0 1 3 19.875v-6.75ZM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 0 1-1.125-1.125V8.625ZM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 0 1-1.125-1.125V4.125Z",
     color: "bg-success/10 text-success",
   },
   {
-    title: "Graduation Progress",
+    title: "Graduation progress",
     desc: "Track 37 requirements across 4 categories. Visual progress bars show earned, planned, and remaining credits.",
     icon: "M9 12.75 11.25 15 15 9.75M21 12c0 1.268-.63 2.39-1.593 3.068a3.745 3.745 0 0 1-1.043 3.296 3.745 3.745 0 0 1-3.296 1.043A3.745 3.745 0 0 1 12 21c-1.268 0-2.39-.63-3.068-1.593a3.746 3.746 0 0 1-3.296-1.043 3.745 3.745 0 0 1-1.043-3.296A3.745 3.745 0 0 1 3 12c0-1.268.63-2.39 1.593-3.068a3.745 3.745 0 0 1 1.043-3.296 3.746 3.746 0 0 1 3.296-1.043A3.746 3.746 0 0 1 12 3c1.268 0 2.39.63 3.068 1.593a3.746 3.746 0 0 1 3.296 1.043 3.745 3.745 0 0 1 1.043 3.296A3.745 3.745 0 0 1 21 12Z",
     color: "bg-warning/10 text-warning",
   },
   {
-    title: "Prerequisite Intelligence",
+    title: "Prerequisite intelligence",
     desc: "Automatic chain validation catches scheduling conflicts before they happen. Never get blocked from a course again.",
     icon: "M13.19 8.688a4.5 4.5 0 0 1 1.242 7.244l-4.5 4.5a4.5 4.5 0 0 1-6.364-6.364l1.757-1.757m13.35-.622 1.757-1.757a4.5 4.5 0 0 0-6.364-6.364l-4.5 4.5a4.5 4.5 0 0 0 1.242 7.244",
     color: "bg-ap/10 text-ap",
   },
   {
-    title: "Family & Counselor Access",
+    title: "Family & counselor access",
     desc: "Link parents, guardians, and counselors. Everyone stays informed with shared visibility into plans and progress.",
     icon: "M18 18.72a9.094 9.094 0 0 0 3.741-.479 3 3 0 0 0-4.682-2.72m.94 3.198.001.031c0 .225-.012.447-.037.666A11.944 11.944 0 0 1 12 21c-2.17 0-4.207-.576-5.963-1.584A6.062 6.062 0 0 1 6 18.719m12 0a5.971 5.971 0 0 0-.941-3.197m0 0A5.995 5.995 0 0 0 12 12.75a5.995 5.995 0 0 0-5.058 2.772m0 0a3 3 0 0 0-4.681 2.72 8.986 8.986 0 0 0 3.74.477m.94-3.197a5.971 5.971 0 0 0-.94 3.197M15 6.75a3 3 0 1 1-6 0 3 3 0 0 1 6 0Zm6 3a2.25 2.25 0 1 1-4.5 0 2.25 2.25 0 0 1 4.5 0Zm-13.5 0a2.25 2.25 0 1 1-4.5 0 2.25 2.25 0 0 1 4.5 0Z",
     color: "bg-primary/10 text-primary",
@@ -73,8 +73,8 @@ const FAQS = [
   { q: "Is Genie affiliated with Stevenson High School?", a: "No. Plan with Genie is an independent tool built by a Stevenson student. It is not affiliated with, endorsed by, or sponsored by Adlai E. Stevenson High School." },
   { q: "How is my data protected?", a: "Your data is encrypted in transit, stored securely, and never sold to third parties. You can delete your account and all data at any time." },
   { q: "Can my parents see my grades?", a: "Only if you invite them. Parents and guardians can be linked to your account with view access. You control who sees your data." },
-  { q: "How much does Genie cost?", a: "Right now, Genie is 100% free to use. We're committed to growing with our users and will soon be introducing exciting new tools and enhancements designed to help you achieve even more." },
-  { q: "Can I use Genie if I go to a different school?", a: "Genie currently supports Stevenson High School. We're expanding to more schools soon — request yours during signup!" },
+  { q: "How much does Genie cost?", a: "Genie is free during early access. As we grow, we'll add paid features — early users get a heads-up before anything changes." },
+  { q: "Can I use Genie if I go to a different school?", a: "Genie currently supports Stevenson High School. We're expanding to more schools soon — request yours during signup." },
   { q: "Who built Genie?", a: "Genie was built by a junior at Stevenson High School who wanted a better way to plan courses and track academic progress." },
 ];
 
@@ -86,8 +86,8 @@ const TESTIMONIALS = [
 
 const PRICING_TIERS = [
   { name: "Starter", price: "Free", period: "forever", features: ["1 plan", "3 linked accounts", "Course browser", "Prerequisite validation", "GPA tracking"], cta: "Get Started", highlight: false },
-  { name: "Plus", price: "$9.99", period: "/month", features: ["10 plans", "5 linked accounts", "What-if GPA", "Plan comparison", "PDF export/print", "Share links", "Goal tracking"], cta: "Start Free Trial", highlight: true },
-  { name: "Elite", price: "$19.99", period: "/month", features: ["Unlimited plans", "8 linked accounts", "Everything in Plus", "AI suggestions", "AI plan review", "Percentile comparison"], cta: "Start Free Trial", highlight: false },
+  { name: "Plus", price: "$9.99", period: "/month", features: ["10 plans", "5 linked accounts", "What-if GPA", "Plan comparison", "PDF export/print", "Share links", "Goal tracking"], cta: "Start free trial", highlight: true },
+  { name: "Elite", price: "$19.99", period: "/month", features: ["Unlimited plans", "8 linked accounts", "Everything in Plus", "AI suggestions", "AI plan review", "Percentile comparison"], cta: "Start free trial", highlight: false },
 ];
 
 // ── Component ───────────────────────────────────────────────────────────────
@@ -112,15 +112,15 @@ export default function HomePage() {
               </div>
 
               <h1 className="mt-6 text-4xl font-extrabold tracking-tight text-foreground sm:text-5xl lg:text-6xl">
-                Plan Your 4-Year
+                Your four-year plan.
                 <br />
                 <span className="bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent [-webkit-text-fill-color:transparent]">
-                  High School Journey
+                  Granted.
                 </span>
               </h1>
 
               <p className="mx-auto mt-6 max-w-xl text-lg leading-relaxed text-muted-foreground lg:mx-0">
-                Track courses, grades, and GPA. Monitor graduation requirements. Keep parents and counselors in the loop — all in one place.
+                Tell Genie what you want from four years &mdash; AP tracks, a balanced load, a clean path to graduation. We&rsquo;ll help you map it, share it with family, and keep it on course.
               </p>
 
               <div className="mt-8 flex flex-col items-center gap-3 sm:flex-row sm:justify-center lg:justify-start">
@@ -133,7 +133,7 @@ export default function HomePage() {
                 </Link>
                 <a href="#how-it-works"
                   className="flex w-full min-h-[44px] items-center justify-center rounded-xl border border-border px-8 py-3.5 text-base font-semibold text-foreground hover:bg-muted focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring transition-colors sm:w-auto">
-                  See How It Works
+                  See how it works
                 </a>
               </div>
             </div>
@@ -173,7 +173,7 @@ export default function HomePage() {
       <section className="bg-muted/40">
         <div className="mx-auto max-w-6xl px-4 py-16 sm:px-6 sm:py-24">
           <div className="text-center">
-            <p className="text-sm font-semibold uppercase tracking-widest text-primary">The Problem</p>
+            <p className="text-sm font-semibold uppercase tracking-widest text-primary">The problem</p>
             <h2 className="mt-2 text-2xl font-bold tracking-tight text-foreground sm:text-3xl">
               Why students need Genie
             </h2>
@@ -213,7 +213,7 @@ export default function HomePage() {
           <div className="text-center">
             <p className="text-sm font-semibold uppercase tracking-widest text-primary">Features</p>
             <h2 className="mt-2 text-2xl font-bold tracking-tight text-foreground sm:text-3xl">
-              Everything you need to plan ahead
+              Everything you&rsquo;d wish for
             </h2>
             <p className="mx-auto mt-3 max-w-xl text-muted-foreground">
               Built specifically for high school academic planning — from course selection to graduation day.
@@ -240,9 +240,9 @@ export default function HomePage() {
       <section id="how-it-works" className="bg-muted/40">
         <div className="mx-auto max-w-6xl px-4 py-16 sm:px-6 sm:py-24">
           <div className="text-center">
-            <p className="text-sm font-semibold uppercase tracking-widest text-primary">How It Works</p>
+            <p className="text-sm font-semibold uppercase tracking-widest text-primary">How it works</p>
             <h2 className="mt-2 text-2xl font-bold tracking-tight text-foreground sm:text-3xl">
-              Get started in 3 simple steps
+              Three steps. No incantations.
             </h2>
           </div>
 
@@ -270,7 +270,7 @@ export default function HomePage() {
           <div className="mt-10 text-center">
             <Link href="/signup"
               className="inline-flex min-h-[44px] items-center gap-2 rounded-xl bg-primary px-8 py-3 text-sm font-semibold text-primary-foreground shadow-lg shadow-primary/25 hover:bg-primary-hover focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring transition-all">
-              Create Your Free Account
+              Create your free account
               <svg aria-hidden="true" className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5 21 12m0 0-7.5 7.5M21 12H3" />
               </svg>
@@ -293,7 +293,7 @@ export default function HomePage() {
             <div className="mt-12 grid grid-cols-1 gap-6 sm:grid-cols-3">
               {PRICING_TIERS.map((tier) => (
                 <div key={tier.name} className={`flex flex-col rounded-2xl border p-6 ${tier.highlight ? "border-primary shadow-lg shadow-primary/10 ring-1 ring-primary/20" : "border-border"}`}>
-                  {tier.highlight && <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-primary">Most Popular</p>}
+                  {tier.highlight && <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-primary">Most popular</p>}
                   <h3 className="text-lg font-bold text-foreground">{tier.name}</h3>
                   <div className="mt-2">
                     <span className="text-3xl font-extrabold text-foreground">{tier.price}</span>
@@ -397,10 +397,10 @@ export default function HomePage() {
         <div className="mx-auto max-w-6xl px-4 py-16 text-center sm:px-6 sm:py-24">
           <p className="text-sm font-semibold uppercase tracking-widest text-primary">Ready?</p>
           <h2 className="mt-2 text-2xl font-bold tracking-tight text-foreground sm:text-3xl lg:text-4xl">
-            Start planning your future today
+            Make the wish. Map the path.
           </h2>
           <p className="mx-auto mt-4 max-w-xl text-muted-foreground">
-            Join students who are taking control of their high school academic journey. It's free, fast, and takes under a minute.
+            Free during early access. Sign up in under a minute.
           </p>
           <div className="mt-8 flex flex-col items-center gap-3 sm:flex-row sm:justify-center">
             <Link href="/signup"
@@ -412,7 +412,7 @@ export default function HomePage() {
             </Link>
             <a href="#faq"
               className="flex w-full min-h-[44px] items-center justify-center rounded-xl border border-border px-8 py-3.5 text-base font-semibold text-foreground hover:bg-muted focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring transition-colors sm:w-auto">
-              Read FAQ
+              Read the FAQ
             </a>
           </div>
         </div>

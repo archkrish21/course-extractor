@@ -197,7 +197,7 @@ export default function HomePage() {
               },
               {
                 title: "Everyone's in the dark",
-                desc: "Parents ask the same questions. Counselors lack context. There's no shared source of truth.",
+                desc: "Parents ask the same questions over and over. There's no shared source of truth.",
                 emoji: "🔦",
               },
             ].map((item, i) => (

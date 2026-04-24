@@ -99,16 +99,16 @@ Background is `#1C191D` Deep Charcoal (warm maroon-tinted, not neutral). Dark mo
 |---|---|---|---|---|---|
 | Background | `--background` | `#1C191D` | Deep Charcoal | — | Page background |
 | Surface muted | `--surface-muted` | `#262128` | Dark Purple-Grey | — | Subtle section backgrounds |
-| Surface elevated | `--surface-elevated` | `#301A1E` | Dark Brown-Red | — | Cards, dialogs — maroon undertone |
+| Surface elevated | `--surface-elevated` | `#262128` | Dark Purple-Grey | — | Cards, dialogs — same family as background, one step lighter. Cards differentiate via border, not hue |
 | Foreground | `--foreground` | `#FFFFFE` | Magic Smoke | 16:1 ✓AAA | Headlines, body text |
 | Foreground muted | `--foreground-muted` | `#A89D96` | derived (warm gray) | 6.8:1 ✓AA | Secondary text |
 | Border | `--border` | `#3A2930` | derived (warm dark hairline) | — | Dividers, input borders |
 | Primary | `--primary` | `#38A876` | Vibrant Green (skin tone) | 6.1:1 ✓AA | Primary CTAs — mascot's own green becomes primary on dark |
 | Primary hover | `--primary-hover` | `#45936D` | Muted Mint | 5.2:1 ✓AA | Hover state |
 | Primary soft | `--primary-soft` | `#203314` | Dark Forest Green | — | Subtle backgrounds, selected states |
-| Accent (**role-swapped**) | `--accent` | `#B18D48` | Antique Gold | 6.4:1 ✓AA | Wordmark `Genie` text, footer, premium moments. **Crimson demoted to decoration** |
+| Accent (**role-swapped**) | `--accent` | `#B18D48` | Antique Gold | 6.4:1 ✓AA | Footer brand band, hero halo role-swap target, one premium moment per page. **Crimson demoted to decoration** |
 | Accent soft | `--accent-soft` | `#491C1E` | Deep Burgundy | — | Card tints, footer backgrounds |
-| Highlight | `--highlight` | `#E0A956` | Golden Yellow | 9.1:1 ✓AAA | Premium ribbons, testimonial stars, large ornament |
+| Highlight | `--highlight` | `#E0A956` | Golden Yellow | 9.1:1 ✓AAA | Wordmark `Genie` text (lifted from `--accent` so the brand mark keeps punch on dark), premium ribbons, testimonial stars, large ornament |
 | Destructive | `--destructive` | `#C3335A` | Rose Red | 5.2:1 ✓AA | Destructive buttons, errors |
 | Success | `--success` | `#38A876` | (same as primary) | 6.1:1 ✓AA | Reuses primary |
 | Warning | `--warning` | `#C79C4E` | Mustard Gold | 7.3:1 ✓AA | Warnings |
@@ -119,7 +119,7 @@ Background is `#1C191D` Deep Charcoal (warm maroon-tinted, not neutral). Dark mo
 
 - **Maximum two brand colors per surface**, outside the mascot illustration itself. A hero may use Sea Green + Antique Gold. It may not also use Crimson. Crimson lives in the footer and the wordmark, never stacked with other brand colors on the same viewport.
 - **Primary is the default for any interactive element.** Buttons, links, focus rings, tab indicators, checkbox fills, progress bars → all Sea Green (light) / Vibrant Green (dark).
-- **Accent is an anchor, not a tool.** Reserve Crimson (light) / Antique Gold (dark) for the wordmark, footer brand band, and one premium-tier moment per marketing page. Never a button, border, or body-text color.
+- **Accent is an anchor, not a tool.** Reserve Crimson (light) / Antique Gold (dark) for the footer brand band, the hero halo's dark-mode role-swap, and one premium-tier moment per marketing page. Never a button, border, or body-text color. *Note:* the wordmark's `Genie` glyph uses `--primary` in light and `--highlight` (Golden Yellow, brighter than Antique Gold) in dark — a deliberate exception so the brand mark keeps visual punch on the dark background.
 - **Highlight is a garnish.** Use once per screen, max. Ribbons, stars, one "Granted" brand beat. Never fill a button or an input.
 - **Destructive is destructive.** Never decorative.
 
@@ -127,43 +127,96 @@ Background is `#1C191D` Deep Charcoal (warm maroon-tinted, not neutral). Dark mo
 
 ### 2.5 CSS variable declaration
 
-Tailwind 4 `@theme` block in `saps/app/globals.css`. Dark mode via `prefers-color-scheme: dark` media query (no `.dark` class, no toggle).
+Tailwind 4 `@theme` block in [`saps/app/globals.css`](../../saps/app/globals.css). Dark mode via `prefers-color-scheme: dark` media query overriding variables on `:root` (no `.dark` class, no toggle).
 
 ```css
 @theme {
+  /* Semantic UI tokens — light mode defaults */
   --color-background: #FFFFFE;
-  --color-surface-muted: #F5EFE8;
   --color-foreground: #141215;
+  --color-muted: #F5EFE8;
+  --color-muted-foreground: #6B6460;
   --color-foreground-muted: #6B6460;
+  --color-surface-muted: #F5EFE8;
+  --color-surface-elevated: #FFFFFE;
   --color-border: #E8DED5;
+  --color-card: #FFFFFE;
+  --color-card-foreground: #141215;
+  --color-ring: #317052;
+
   --color-primary: #317052;
   --color-primary-hover: #274C13;
   --color-primary-soft: #E3F0E8;
+  --color-primary-foreground: #FFFFFE;
+
   --color-accent: #661517;
   --color-accent-soft: #FCE8EF;
+
   --color-highlight: #B18D48;
+
   --color-destructive: #A32B4A;
   --color-success: #317052;
   --color-warning: #864C31;
+
+  /* Course-type colors — planner/app-shell only; see §2.4 */
+  --color-ap: #7c3aed;
+  --color-honors: #0891b2;
+  --color-dual-credit: #0d9488;
+  --color-accelerated: #ea580c;
+
+  --font-sans: var(--font-inter), -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
 }
 
 @media (prefers-color-scheme: dark) {
-  @theme {
+  :root {
     --color-background: #1C191D;
-    --color-surface-muted: #262128;
-    --color-surface-elevated: #301A1E;
     --color-foreground: #FFFFFE;
+    --color-muted: #262128;
+    --color-muted-foreground: #A89D96;
     --color-foreground-muted: #A89D96;
+    --color-surface-muted: #262128;
+    --color-surface-elevated: #262128;
     --color-border: #3A2930;
+    --color-card: #262128;
+    --color-card-foreground: #FFFFFE;
+    --color-ring: #38A876;
+
     --color-primary: #38A876;
     --color-primary-hover: #45936D;
     --color-primary-soft: #203314;
+    --color-primary-foreground: #141215;
+
     --color-accent: #B18D48;
     --color-accent-soft: #491C1E;
+
     --color-highlight: #E0A956;
+
     --color-destructive: #C3335A;
     --color-success: #38A876;
     --color-warning: #C79C4E;
+  }
+}
+```
+
+The hero halo role-swaps via a dedicated utility (see §10.1):
+
+```css
+.hero-glow {
+  background: radial-gradient(
+    ellipse at center,
+    color-mix(in srgb, var(--color-primary) 22%, transparent) 0%,
+    color-mix(in srgb, var(--color-primary) 8%, transparent) 45%,
+    transparent 70%
+  );
+}
+@media (prefers-color-scheme: dark) {
+  .hero-glow {
+    background: radial-gradient(
+      ellipse at center,
+      color-mix(in srgb, var(--color-accent) 28%, transparent) 0%,
+      color-mix(in srgb, var(--color-accent) 12%, transparent) 45%,
+      transparent 70%
+    );
   }
 }
 ```
@@ -235,23 +288,22 @@ The app uses shadcn-style primitives. AI tools generating new surfaces should **
 
 ### 5.1 Button
 
-Import: `@/components/ui/button`
+Import: [`@/components/ui/button`](../../saps/components/ui/button.tsx)
 
 | Variant | Appearance | Use for |
 |---|---|---|
-| `default` | Filled primary, white text | Primary CTA, form submit |
-| `secondary` | Outlined, foreground text | Secondary action |
-| `ghost` | No background, foreground text, hover tint | Tertiary, nav items |
-| `destructive` | Filled destructive, white text | Delete, remove |
-| `link` | Underlined, primary text, no chrome | Inline links in prose |
+| `default` | Filled `--color-primary`, `--color-primary-foreground` text, hover to `--color-primary-hover` | Primary CTA, form submit |
+| `outline` | `border border-border`, transparent bg, `text-foreground`, hover `bg-muted` | Secondary action, Google OAuth button, "See how it works" |
+| `ghost` | No background, `text-foreground`, hover `bg-muted` | Tertiary, nav-style actions |
+| `destructive` | Filled `--color-destructive`, white text, hover `--color-destructive-hover` | Delete, remove |
 
-**Sizes:** `sm` (32px), `default` (40px), `lg` (48px).
+**Sizes:** `sm` (32px height, `h-9`), `default` (40px, `h-11`, `min-h-[44px]` for mobile tap target), `lg` (48px, `h-12`, `min-h-[44px]`).
 
 **Rules:**
-- One `default` button per view or section — the primary action. Everything else is `secondary` or `ghost`.
+- One `default` button per view or section — the primary action. Everything else is `outline` or `ghost`.
 - No gradient fills. Flat color + one hover state.
 - Icons go left of label, 16px, same color as text.
-- CTA text uses **proven patterns** ("Get Started Free", "Start Free Trial") — not themed copy ("Grant My Wish"). See voice-and-tone.md §wish-language.
+- **Primary CTA text uses title case** — proven patterns like "Get Started Free", "Start Free Trial". Secondary and nav actions stay sentence case ("See how it works", "Read the FAQ", "Sign in"). See voice-and-tone.md.
 
 ### 5.2 Card
 
@@ -265,14 +317,24 @@ Import: `@/components/ui/card`
 
 ### 5.3 Badge
 
-Import: `@/components/ui/badge`
+Import: [`@/components/ui/badge`](../../saps/components/ui/badge.tsx)
+
+The Badge primitive is currently scoped to **planner/app-shell** usage — the variants encode course categorization, not marketing states.
 
 | Variant | Fill | Text | Use for |
 |---|---|---|---|
-| `default` | `--primary-soft` | `--primary` | Neutral status, tags |
-| `accent` | `--accent-soft` | `--accent` | Premium moments — sparingly |
-| `gold` | Antique Gold fill | Near-black text | "Most popular", earned moments — once per page |
-| `destructive` | Destructive tint | Destructive text | Error states |
+| `default` | `--color-muted` | `--color-muted-foreground` | Neutral status, tags |
+| `ap` | `--color-ap-light` | `--color-ap` | AP course chips |
+| `honors` | `--color-honors-light` | `--color-honors` | Honors course chips |
+| `dual-credit` | `--color-dual-credit-light` | `--color-dual-credit` | Dual-credit chips |
+| `accelerated` | `--color-accelerated-light` | `--color-accelerated` | Accelerated-track chips |
+| `success` | `--color-success-light` | `--color-success` | Positive state, earned credits |
+| `warning` | `--color-warning-light` | `--color-warning` | Conflicts, attention |
+| `destructive` | `--color-destructive-light` | `--color-destructive` | Error states |
+
+**Future additions (not yet shipped):** marketing-only variants `accent` (`--accent-soft` fill + `--accent` text — premium moments) and `gold` (Antique Gold fill + near-black text — "Most popular", once-per-page earned moments). Both would be additive, not replacements. File the issue when a marketing surface needs one.
+
+Shape: `inline-flex` pill, 9999px border-radius, `text-xs font-semibold`, `px-2.5 py-0.5`, `whitespace-nowrap`.
 
 ### 5.4 Input
 
@@ -363,7 +425,7 @@ If you squint at the page and see more than **four distinct colors** (not counti
 Full details: [`brand.md`](./brand.md). Quick reference:
 
 - **Mascot** (`/brand/genie-mascot.png`): hero illustration on landing and key marketing surfaces. 512px+ render size. Clean background (`--background` or `--surface-muted`). Never on photographs.
-- **Wordmark** (`<GenieWordmark>` component): nav bars, footer, auth/onboarding headers. Adapts to light/dark automatically — `planwith` uses `--foreground`, `Genie` uses `--primary` in light / `--accent` in dark.
+- **Wordmark** (`<GenieWordmark>` component): nav bars, footer, auth/onboarding headers. Adapts to light/dark automatically — `planwith` uses `--color-accent` in light / `--color-foreground` in dark; `Genie` uses `--color-primary` in light / `--color-highlight` (Golden Yellow) in dark. See [`brand.md`](./brand.md#wordmark-dark-mode-behavior) for the rationale on the dark-mode exception.
 - **Logo mark** (`<SapsLogo>` component): favicon-sized contexts only. Paired with wordmark in nav.
 
 **Do not** use the mascot at favicon size, on crowded backgrounds, or alter its palette.
@@ -375,13 +437,19 @@ Full details: [`brand.md`](./brand.md). Quick reference:
 Canonical shapes for common surfaces. AI tools can treat these as templates.
 
 ### 10.1 Marketing landing hero
-- Full-bleed section, `min-h-screen` on desktop
-- Two-column grid on desktop (headline left, mascot right), stacked on mobile
-- Headline: `display-2xl`, foreground color, with **one word** in `--primary` accent
-- Subhead: `body-lg`, `--foreground-muted`, max 2 lines
-- CTA row: primary Sea Green button + ghost secondary button, 16px gap
-- Optional "Early access" badge above headline: `--primary-soft` fill, `--primary` text, `body-sm`
-- Mascot column: `--surface-muted` radial glow (8% opacity Sea Green → transparent) behind mascot, no other decoration
+
+Shipped in [`saps/app/(public)/page.tsx`](../../saps/app/(public)/page.tsx). Reference.
+
+- Section contained within `max-w-6xl` + horizontal padding; **not** full-bleed or `min-h-screen` (keeps the how-it-works strip on or near the fold)
+- Asymmetric two-column grid on desktop: `lg:grid-cols-[1.1fr_1fr]` with `lg:gap-16`; stacked on mobile
+- "Early access" badge above the headline: `bg-primary-soft` fill, `text-primary`, `text-sm`, with a small `bg-primary` dot
+- Headline: **inline** `text-[clamp(2.25rem,5vw,4rem)]` with `font-bold`, `leading-[1.05]`, `tracking-[-0.025em]` — **not** the `.display-2xl` utility class, because the hero needs a specific responsive clamp. One word in `--primary` accent (the earned brand beat — "Granted.")
+- Headline stability: wrap the first phrase in `whitespace-nowrap` so it never breaks at the hyphen in "four-year" and becomes 3 lines
+- Subhead: `text-lg`, `text-foreground-muted`, `max-w-xl`, approved copy from [`voice-and-tone.md`](./voice-and-tone.md)
+- CTA row: primary `<Link>` styled as `bg-primary` filled button + secondary anchor styled as outline button (`border border-border`). **Not** a ghost button. Gap: 12px mobile / 16px desktop
+- Proof row below CTAs: 3 short proof-points separated by `bg-primary` dots, in `text-foreground-muted text-sm`
+- Mascot column: radial halo behind the mascot — **role-swaps with the accent**: `--color-primary` in light mode (Sea Green), `--color-accent` in dark mode (Antique Gold). No other decoration. Implemented as the `.hero-glow` utility in [`saps/app/globals.css`](../../saps/app/globals.css) so the swap happens at the CSS layer, not per-component
+- Section background rhythm across the whole landing page: `W-M-W-M-W-M-W-W` (W = `--color-background`, M = `bg-surface-muted`). The hero is W, the immediately-following how-it-works strip is M
 
 ### 10.2 Feature grid
 - 3-column on desktop, 2 on tablet, 1 on mobile
@@ -428,6 +496,9 @@ Canonical shapes for common surfaces. AI tools can treat these as templates.
 
 ## 12. Change log
 
-| Date | Change | By |
+| Date | Change | PR |
 |---|---|---|
-| 2026-04-23 | Initial DESIGN.md — replaces legacy blue `#2563eb` primary with Sea Green palette; introduces warm maroon-tinted dark mode with crimson→gold role-swap | redesign for brand alignment |
+| 2026-04-23 | Initial DESIGN.md — replaces legacy blue `#2563eb` primary with Sea Green palette; introduces warm maroon-tinted dark mode with crimson→gold role-swap | #81 |
+| 2026-04-24 | Phase 1 lands tokens in `globals.css`; Inter ships via `next/font/google`; wordmark refactored to read tokens | #83 |
+| 2026-04-24 | Phase 2 — landing hero V1 + how-it-works V3 strip implemented; section background alternation normalized | #84 |
+| 2026-04-24 | Dark-mode polish: surface-elevated `#301A1E` → `#262128` (remove maroon clash); wordmark `Genie` uses `--highlight` in dark (was `--accent`) for visual punch; hero halo role-swaps via `.hero-glow`; tour popover theming fixed (combined-selector bug); Google button `bg-white` dropped. Plus doc sync: DESIGN.md §2.3, §2.5, §5.1, §5.3, §9, §10.1 and brand.md wordmark section reconciled with the code shipped in #83, #84, #85 | #85 |

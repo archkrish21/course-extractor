@@ -114,9 +114,9 @@
     --color-muted-foreground: #A89D96;
     --color-foreground-muted: #A89D96;
     --color-surface-muted: #262128;
-    --color-surface-elevated: #301A1E;
+    --color-surface-elevated: #262128;
     --color-border: #3A2930;
-    --color-card: #301A1E;
+    --color-card: #262128;
     --color-card-foreground: #FFFFFE;
     --color-ring: #38A876;
 
@@ -198,6 +198,29 @@ body {
   background-color: var(--color-background);
 }
 
+/* =========================================================================
+   Hero radial halo — behind the mascot on the landing page
+   Role-swaps between modes: primary in light, accent in dark
+   ========================================================================= */
+.hero-glow {
+  background: radial-gradient(
+    ellipse at center,
+    color-mix(in srgb, var(--color-primary) 22%, transparent) 0%,
+    color-mix(in srgb, var(--color-primary) 8%, transparent) 45%,
+    transparent 70%
+  );
+}
+@media (prefers-color-scheme: dark) {
+  .hero-glow {
+    background: radial-gradient(
+      ellipse at center,
+      color-mix(in srgb, var(--color-accent) 28%, transparent) 0%,
+      color-mix(in srgb, var(--color-accent) 12%, transparent) 45%,
+      transparent 70%
+    );
+  }
+}
+
 /* Driver.js tour overrides */
 .saps-tour-popover {
   --driver-bg-color: var(--color-card);
@@ -206,18 +229,28 @@ body {
   --driver-btn-bg: var(--color-primary);
   --driver-btn-text: #fff;
 }
-.saps-tour-popover .driver-popover {
+.driver-popover.saps-tour-popover {
+  background-color: var(--color-card);
+  color: var(--color-foreground);
+  border: 1px solid var(--color-border);
   border-radius: 16px;
-  box-shadow: 0 20px 60px rgba(0,0,0,0.15);
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.25);
 }
 .saps-tour-popover .driver-popover-title {
   font-size: 16px;
   font-weight: 700;
+  color: var(--color-foreground);
 }
 .saps-tour-popover .driver-popover-description {
   font-size: 14px;
   color: var(--color-muted-foreground);
   line-height: 1.6;
+}
+.saps-tour-popover .driver-popover-arrow-side-top.driver-popover-arrow,
+.saps-tour-popover .driver-popover-arrow-side-bottom.driver-popover-arrow,
+.saps-tour-popover .driver-popover-arrow-side-left.driver-popover-arrow,
+.saps-tour-popover .driver-popover-arrow-side-right.driver-popover-arrow {
+  border-color: var(--color-card);
 }
 .saps-tour-popover .driver-popover-footer button {
   border-radius: 8px;

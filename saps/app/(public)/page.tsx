@@ -134,15 +134,11 @@ export default function HomePage() {
               </div>
             </div>
 
-            {/* Right — mascot with radial primary glow */}
+            {/* Right — mascot with radial halo (primary light, accent dark) */}
             <div className="relative flex items-center justify-center lg:justify-end">
               <div
                 aria-hidden="true"
-                className="pointer-events-none absolute left-1/2 top-1/2 h-[110%] w-[110%] -translate-x-1/2 -translate-y-1/2"
-                style={{
-                  background:
-                    "radial-gradient(ellipse at center, color-mix(in srgb, var(--color-primary) 22%, transparent) 0%, color-mix(in srgb, var(--color-primary) 8%, transparent) 45%, transparent 70%)",
-                }}
+                className="hero-glow pointer-events-none absolute left-1/2 top-1/2 h-[110%] w-[110%] -translate-x-1/2 -translate-y-1/2"
               />
               <Image
                 src="/brand/genie-mascot.png"

@@ -30,13 +30,13 @@ export function GenieWordmark({ size = "md", className = "" }: GenieWordmarkProp
         strokeLinecap="round"
         fill="none"
         opacity="0.75"
-        className="stroke-primary dark:stroke-accent"
+        className="stroke-primary dark:stroke-highlight"
       />
       <circle
         cx="130"
         cy="11"
         r="4"
-        className="fill-primary dark:fill-accent"
+        className="fill-primary dark:fill-highlight"
       />
 
       <text
@@ -71,7 +71,7 @@ export function GenieWordmark({ size = "md", className = "" }: GenieWordmarkProp
         fontFamily="Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif"
         fontWeight="900"
         letterSpacing="-2"
-        className="fill-primary dark:fill-accent"
+        className="fill-primary dark:fill-highlight"
       >
         <tspan fontSize="72">G</tspan>
         <tspan fontSize="56">en</tspan>
@@ -84,7 +84,7 @@ export function GenieWordmark({ size = "md", className = "" }: GenieWordmarkProp
         fontSize="56"
         fontWeight="900"
         letterSpacing="-2"
-        className="fill-primary dark:fill-accent"
+        className="fill-primary dark:fill-highlight"
       >
         e
       </text>

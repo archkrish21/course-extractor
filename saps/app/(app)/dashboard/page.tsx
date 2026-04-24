@@ -865,25 +865,18 @@ export default function DashboardPage() {
               </div>
             ) : primaryPlan ? (
               <div className="flex flex-col gap-3">
-                <div className="flex items-start justify-between">
-                  <div>
-                    <div className="flex items-center gap-2">
-                      <p className="text-sm font-semibold text-foreground">
-                        {primaryPlan.name}
-                      </p>
-                      <Badge variant="success" className="text-[10px]">
-                        ★ Primary
-                      </Badge>
-                    </div>
-                    <p className="mt-1 text-xs text-muted-foreground">
-                      {gpaData?.plan?.totalCourses ?? primaryPlan.courseCount} course{(gpaData?.plan?.totalCourses ?? primaryPlan.courseCount) !== 1 ? "s" : ""}
+                <div>
+                  <div className="flex flex-wrap items-center gap-2">
+                    <p className="text-sm font-semibold text-foreground">
+                      {primaryPlan.name}
                     </p>
+                    <Badge variant="success" className="text-[10px]">
+                      ★ Primary
+                    </Badge>
                   </div>
-                  <Link href="/planner">
-                    <Button size="sm" variant="outline">
-                      Open planner
-                    </Button>
-                  </Link>
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    {gpaData?.plan?.totalCourses ?? primaryPlan.courseCount} course{(gpaData?.plan?.totalCourses ?? primaryPlan.courseCount) !== 1 ? "s" : ""}
+                  </p>
                 </div>
 
                 {/* Credits + GPA summary */}
@@ -916,6 +909,14 @@ export default function DashboardPage() {
                     </span>
                   )}
 
+                </div>
+
+                <div className="mt-3 flex justify-end">
+                  <Link href="/planner">
+                    <Button size="sm" variant="outline">
+                      Open planner
+                    </Button>
+                  </Link>
                 </div>
               </div>
             ) : (

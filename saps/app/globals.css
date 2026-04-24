@@ -1,27 +1,56 @@
 @import "tailwindcss";
 
 @theme {
-  --color-primary: #2563eb;
-  --color-primary-hover: #1d4ed8;
-  --color-primary-light: #dbeafe;
-  --color-primary-foreground: #ffffff;
-  --color-secondary: #6b7280;
-  --color-secondary-hover: #4b5563;
-  --color-destructive: #dc2626;
-  --color-destructive-hover: #b91c1c;
-  --color-destructive-light: #fef2f2;
-  --color-background: #ffffff;
-  --color-foreground: #111827;
-  --color-muted: #f3f4f6;
-  --color-muted-foreground: #6b7280;
-  --color-border: #e5e7eb;
-  --color-ring: #2563eb;
-  --color-card: #ffffff;
-  --color-card-foreground: #111827;
-  --color-success: #16a34a;
-  --color-success-light: #f0fdf4;
-  --color-warning: #d97706;
-  --color-warning-light: #fffbeb;
+  /* =========================================================================
+     Brand system — Plan with Genie
+     Spec: docs/design/DESIGN.md §2
+     Source palette: 31-color illustration/decoration set (§2.1)
+     UI anchors: 10 contrast-verified tokens (§2.2 / §2.3)
+     ========================================================================= */
+
+  /* Semantic UI tokens — LIGHT MODE (default) */
+  --color-background: #FFFFFE;
+  --color-foreground: #141215;
+  --color-muted: #F5EFE8;
+  --color-muted-foreground: #6B6460;
+  --color-foreground-muted: #6B6460;
+  --color-surface-muted: #F5EFE8;
+  --color-surface-elevated: #FFFFFE;
+  --color-border: #E8DED5;
+  --color-card: #FFFFFE;
+  --color-card-foreground: #141215;
+  --color-ring: #317052;
+
+  /* Primary — Sea Green. All interactive chrome. */
+  --color-primary: #317052;
+  --color-primary-hover: #274C13;
+  --color-primary-light: #E3F0E8;
+  --color-primary-soft: #E3F0E8;
+  --color-primary-foreground: #FFFFFE;
+
+  /* Accent — Rich Crimson. Wordmark, footer, earned premium only. */
+  --color-accent: #661517;
+  --color-accent-soft: #FCE8EF;
+  --color-accent-foreground: #FFFFFE;
+
+  /* Highlight — Antique Gold. Once per screen. */
+  --color-highlight: #B18D48;
+  --color-highlight-foreground: #141215;
+
+  /* Secondary — back-compat for existing components */
+  --color-secondary: #6B6460;
+  --color-secondary-hover: #4A423F;
+
+  /* Semantic state */
+  --color-destructive: #A32B4A;
+  --color-destructive-hover: #8B2340;
+  --color-destructive-light: #FCE8EF;
+  --color-success: #317052;
+  --color-success-light: #E3F0E8;
+  --color-warning: #864C31;
+  --color-warning-light: #FBEFE6;
+
+  /* Course-type colors — planner/app-shell only, out of scope for rebrand */
   --color-ap: #7c3aed;
   --color-ap-light: #f5f3ff;
   --color-honors: #0891b2;
@@ -30,7 +59,134 @@
   --color-dual-credit-light: #f0fdfa;
   --color-accelerated: #ea580c;
   --color-accelerated-light: #fff7ed;
-  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+
+  /* Typography — Inter supplied by next/font/google in app/layout.tsx */
+  --font-sans: var(--font-inter), -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+}
+
+/* =========================================================================
+   Source palette — ILLUSTRATION & DECORATION ONLY
+   Do NOT use on chrome. Reference: docs/design/DESIGN.md §2.1
+   ========================================================================= */
+:root {
+  --src-black:           #000000;
+  --src-near-black:      #141215;
+  --src-charcoal:        #1C191D;
+  --src-purple-grey:     #262128;
+  --src-maroon-shadow:   #2F1B1E;
+  --src-brown-red:       #301A1E;
+  --src-burgundy:        #491C1E;
+  --src-crimson:         #661517;
+  --src-deep-magenta:    #A32B4A;
+  --src-bright-pink-red: #B7355B;
+  --src-rose-red:        #C3335A;
+  --src-forest-green:    #203314;
+  --src-olive:           #274C13;
+  --src-grass-green:     #3C7624;
+  --src-mid-green:       #4F8534;
+  --src-light-olive:     #60933C;
+  --src-teal-grey:       #2F5C5C;
+  --src-sea-green:       #317052;
+  --src-vibrant-green:   #38A876;
+  --src-muted-mint:      #45936D;
+  --src-dark-brown:      #4A2C1F;
+  --src-warm-brown:      #5F3827;
+  --src-chestnut:        #6D402D;
+  --src-copper:          #864C31;
+  --src-tan:             #93623D;
+  --src-antique-gold:    #B18D48;
+  --src-mustard-gold:    #C79C4E;
+  --src-golden-yellow:   #E0A956;
+  --src-pale-gold:       #E5B359;
+  --src-bright-yellow:   #F7BE5C;
+  --src-magic-smoke:     #FFFFFE;
+}
+
+/* =========================================================================
+   Dark mode — follows system preference (no toggle, per DESIGN.md §2.3)
+   Accent role-swaps: Crimson → Antique Gold
+   ========================================================================= */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --color-background: #1C191D;
+    --color-foreground: #FFFFFE;
+    --color-muted: #262128;
+    --color-muted-foreground: #A89D96;
+    --color-foreground-muted: #A89D96;
+    --color-surface-muted: #262128;
+    --color-surface-elevated: #301A1E;
+    --color-border: #3A2930;
+    --color-card: #301A1E;
+    --color-card-foreground: #FFFFFE;
+    --color-ring: #38A876;
+
+    --color-primary: #38A876;
+    --color-primary-hover: #45936D;
+    --color-primary-light: #203314;
+    --color-primary-soft: #203314;
+    --color-primary-foreground: #141215;
+
+    --color-accent: #B18D48;
+    --color-accent-soft: #491C1E;
+    --color-accent-foreground: #141215;
+
+    --color-highlight: #E0A956;
+    --color-highlight-foreground: #141215;
+
+    --color-secondary: #A89D96;
+    --color-secondary-hover: #D1C6C0;
+
+    --color-destructive: #C3335A;
+    --color-destructive-hover: #D74974;
+    --color-destructive-light: #491C1E;
+    --color-success: #38A876;
+    --color-success-light: #203314;
+    --color-warning: #C79C4E;
+    --color-warning-light: #301A1E;
+
+    --color-ap: #A78BFA;
+    --color-ap-light: #2E1065;
+    --color-honors: #22D3EE;
+    --color-honors-light: #083344;
+    --color-dual-credit: #2DD4BF;
+    --color-dual-credit-light: #042F2E;
+    --color-accelerated: #FB923C;
+    --color-accelerated-light: #431407;
+  }
+}
+
+/* =========================================================================
+   Type scale — semantic classes per DESIGN.md §3
+   ========================================================================= */
+.display-2xl,
+.display-xl,
+.display-lg,
+.display-md {
+  letter-spacing: -0.02em;
+  text-wrap: balance;
+}
+
+.display-2xl { font-size: 4.5rem;  line-height: 1.05; font-weight: 700; }
+.display-xl  { font-size: 3.5rem;  line-height: 1.10; font-weight: 700; }
+.display-lg  { font-size: 2.75rem; line-height: 1.15; font-weight: 700; }
+.display-md  { font-size: 2.25rem; line-height: 1.20; font-weight: 600; }
+
+.heading-lg { font-size: 1.75rem;  line-height: 1.25; font-weight: 600; }
+.heading-md { font-size: 1.375rem; line-height: 1.30; font-weight: 600; }
+.heading-sm { font-size: 1.125rem; line-height: 1.40; font-weight: 600; }
+
+.body-lg { font-size: 1.125rem; line-height: 1.60; font-weight: 400; }
+.body-md { font-size: 1rem;     line-height: 1.55; font-weight: 400; }
+.body-sm { font-size: 0.875rem; line-height: 1.50; font-weight: 400; }
+.body-xs { font-size: 0.75rem;  line-height: 1.40; font-weight: 500; }
+
+/* Respect reduced motion — DESIGN.md §6 */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
 }
 
 * {

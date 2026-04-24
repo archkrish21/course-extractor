@@ -120,7 +120,7 @@ export default function ProfileSetupPage() {
           {/* Role selector */}
           <fieldset>
             <legend className="mb-2 text-sm font-medium text-foreground">I am a</legend>
-            <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+            <div className="grid grid-cols-3 gap-2">
               {ROLES.map((r) => (
                 <button
                   key={r.value}

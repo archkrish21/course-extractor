@@ -249,7 +249,7 @@ function LoginPageInner() {
       <Button
         type="button"
         variant="outline"
-        className="w-full bg-white hover:bg-muted"
+        className="w-full"
         onClick={handleGoogleSignIn}
       >
         <svg aria-hidden="true" className="h-5 w-5" viewBox="0 0 24 24">

@@ -381,7 +381,7 @@ Canonical shapes for common surfaces. AI tools can treat these as templates.
 - Subhead: `body-lg`, `--foreground-muted`, max 2 lines
 - CTA row: primary Sea Green button + ghost secondary button, 16px gap
 - Optional "Early access" badge above headline: `--primary-soft` fill, `--primary` text, `body-sm`
-- Mascot column: `--surface-muted` radial glow (8% opacity Sea Green → transparent) behind mascot, no other decoration
+- Mascot column: radial halo behind the mascot — **role-swaps with the accent**: `--color-primary` in light mode (Sea Green), `--color-accent` in dark mode (Antique Gold). No other decoration. Implemented as the `.hero-glow` utility in [`saps/app/globals.css`](../../saps/app/globals.css) so the swap happens at the CSS layer, not per-component.
 
 ### 10.2 Feature grid
 - 3-column on desktop, 2 on tablet, 1 on mobile

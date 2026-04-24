@@ -142,10 +142,10 @@ When producing new brand assets (mascot variants, social cards, print collateral
 
 ### Wordmark dark mode behavior
 The wordmark component adapts automatically:
-- `planwith` uses `--accent` in light mode, `--foreground` in dark
-- `Genie` uses `--primary` in light mode, `--accent` in dark
+- `planwith` uses `--color-accent` in light mode (Rich Crimson `#661517`), `--color-foreground` in dark (Magic Smoke `#FFFFFE`)
+- `Genie` uses `--color-primary` in light mode (Sea Green `#317052`), `--color-highlight` in dark (Golden Yellow `#E0A956`)
 
-This role-swap mirrors the brand's dark-mode strategy system-wide (accent color swaps from crimson to antique gold when the theme inverts). See [`DESIGN.md §2.3`](./DESIGN.md#23-ui-anchors--dark-mode) for exact tokens.
+The `Genie` glyph uses `--color-highlight` rather than `--color-accent` in dark — a deliberate exception to the brand's general crimson→gold role-swap. Antique Gold (`--color-accent` in dark) read as mustard-brown on the Deep Charcoal background and stripped the wordmark of visual punch, so we lift the wordmark specifically to Golden Yellow. Other dark-mode accent usages (footer band, hero halo, premium moments) continue to use `--color-accent`. See [`DESIGN.md §2.3`](./DESIGN.md#23-ui-anchors--dark-mode) for the full token map.
 
 ### Legacy note
 Earlier versions of this file listed a four-color palette (Maroon / Gold / Ruby / Emerald). That palette has been superseded by the full system in DESIGN.md. The `<GenieWordmark>` component still hardcodes the old hex values and will be refactored to read tokens in the Phase 1 token swap (see commit log for branch `copy/phase-4-public-marketing` and successors).

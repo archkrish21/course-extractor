@@ -99,16 +99,16 @@ Background is `#1C191D` Deep Charcoal (warm maroon-tinted, not neutral). Dark mo
 |---|---|---|---|---|---|
 | Background | `--background` | `#1C191D` | Deep Charcoal | — | Page background |
 | Surface muted | `--surface-muted` | `#262128` | Dark Purple-Grey | — | Subtle section backgrounds |
-| Surface elevated | `--surface-elevated` | `#301A1E` | Dark Brown-Red | — | Cards, dialogs — maroon undertone |
+| Surface elevated | `--surface-elevated` | `#262128` | Dark Purple-Grey | — | Cards, dialogs — same family as background, one step lighter. Cards differentiate via border, not hue |
 | Foreground | `--foreground` | `#FFFFFE` | Magic Smoke | 16:1 ✓AAA | Headlines, body text |
 | Foreground muted | `--foreground-muted` | `#A89D96` | derived (warm gray) | 6.8:1 ✓AA | Secondary text |
 | Border | `--border` | `#3A2930` | derived (warm dark hairline) | — | Dividers, input borders |
 | Primary | `--primary` | `#38A876` | Vibrant Green (skin tone) | 6.1:1 ✓AA | Primary CTAs — mascot's own green becomes primary on dark |
 | Primary hover | `--primary-hover` | `#45936D` | Muted Mint | 5.2:1 ✓AA | Hover state |
 | Primary soft | `--primary-soft` | `#203314` | Dark Forest Green | — | Subtle backgrounds, selected states |
-| Accent (**role-swapped**) | `--accent` | `#B18D48` | Antique Gold | 6.4:1 ✓AA | Wordmark `Genie` text, footer, premium moments. **Crimson demoted to decoration** |
+| Accent (**role-swapped**) | `--accent` | `#B18D48` | Antique Gold | 6.4:1 ✓AA | Footer brand band, hero halo role-swap target, one premium moment per page. **Crimson demoted to decoration** |
 | Accent soft | `--accent-soft` | `#491C1E` | Deep Burgundy | — | Card tints, footer backgrounds |
-| Highlight | `--highlight` | `#E0A956` | Golden Yellow | 9.1:1 ✓AAA | Premium ribbons, testimonial stars, large ornament |
+| Highlight | `--highlight` | `#E0A956` | Golden Yellow | 9.1:1 ✓AAA | Wordmark `Genie` text (lifted from `--accent` so the brand mark keeps punch on dark), premium ribbons, testimonial stars, large ornament |
 | Destructive | `--destructive` | `#C3335A` | Rose Red | 5.2:1 ✓AA | Destructive buttons, errors |
 | Success | `--success` | `#38A876` | (same as primary) | 6.1:1 ✓AA | Reuses primary |
 | Warning | `--warning` | `#C79C4E` | Mustard Gold | 7.3:1 ✓AA | Warnings |
@@ -119,7 +119,7 @@ Background is `#1C191D` Deep Charcoal (warm maroon-tinted, not neutral). Dark mo
 
 - **Maximum two brand colors per surface**, outside the mascot illustration itself. A hero may use Sea Green + Antique Gold. It may not also use Crimson. Crimson lives in the footer and the wordmark, never stacked with other brand colors on the same viewport.
 - **Primary is the default for any interactive element.** Buttons, links, focus rings, tab indicators, checkbox fills, progress bars → all Sea Green (light) / Vibrant Green (dark).
-- **Accent is an anchor, not a tool.** Reserve Crimson (light) / Antique Gold (dark) for the wordmark, footer brand band, and one premium-tier moment per marketing page. Never a button, border, or body-text color.
+- **Accent is an anchor, not a tool.** Reserve Crimson (light) / Antique Gold (dark) for the footer brand band, the hero halo's dark-mode role-swap, and one premium-tier moment per marketing page. Never a button, border, or body-text color. *Note:* the wordmark's `Genie` glyph uses `--primary` in light and `--highlight` (Golden Yellow, brighter than Antique Gold) in dark — a deliberate exception so the brand mark keeps visual punch on the dark background.
 - **Highlight is a garnish.** Use once per screen, max. Ribbons, stars, one "Granted" brand beat. Never fill a button or an input.
 - **Destructive is destructive.** Never decorative.
 
@@ -127,43 +127,96 @@ Background is `#1C191D` Deep Charcoal (warm maroon-tinted, not neutral). Dark mo
 
 ### 2.5 CSS variable declaration
 
-Tailwind 4 `@theme` block in `saps/app/globals.css`. Dark mode via `prefers-color-scheme: dark` media query (no `.dark` class, no toggle).
+Tailwind 4 `@theme` block in [`saps/app/globals.css`](../../saps/app/globals.css). Dark mode via `prefers-color-scheme: dark` media query overriding variables on `:root` (no `.dark` class, no toggle).
 
 ```css
 @theme {
+  /* Semantic UI tokens — light mode defaults */
   --color-background: #FFFFFE;
-  --color-surface-muted: #F5EFE8;
   --color-foreground: #141215;
+  --color-muted: #F5EFE8;
+  --color-muted-foreground: #6B6460;
   --color-foreground-muted: #6B6460;
+  --color-surface-muted: #F5EFE8;
+  --color-surface-elevated: #FFFFFE;
   --color-border: #E8DED5;
+  --color-card: #FFFFFE;
+  --color-card-foreground: #141215;
+  --color-ring: #317052;
+
   --color-primary: #317052;
   --color-primary-hover: #274C13;
   --color-primary-soft: #E3F0E8;
+  --color-primary-foreground: #FFFFFE;
+
   --color-accent: #661517;
   --color-accent-soft: #FCE8EF;
+
   --color-highlight: #B18D48;
+
   --color-destructive: #A32B4A;
   --color-success: #317052;
   --color-warning: #864C31;
+
+  /* Course-type colors — planner/app-shell only; see §2.4 */
+  --color-ap: #7c3aed;
+  --color-honors: #0891b2;
+  --color-dual-credit: #0d9488;
+  --color-accelerated: #ea580c;
+
+  --font-sans: var(--font-inter), -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
 }
 
 @media (prefers-color-scheme: dark) {
-  @theme {
+  :root {
     --color-background: #1C191D;
-    --color-surface-muted: #262128;
-    --color-surface-elevated: #301A1E;
     --color-foreground: #FFFFFE;
+    --color-muted: #262128;
+    --color-muted-foreground: #A89D96;
     --color-foreground-muted: #A89D96;
+    --color-surface-muted: #262128;
+    --color-surface-elevated: #262128;
     --color-border: #3A2930;
+    --color-card: #262128;
+    --color-card-foreground: #FFFFFE;
+    --color-ring: #38A876;
+
     --color-primary: #38A876;
     --color-primary-hover: #45936D;
     --color-primary-soft: #203314;
+    --color-primary-foreground: #141215;
+
     --color-accent: #B18D48;
     --color-accent-soft: #491C1E;
+
     --color-highlight: #E0A956;
+
     --color-destructive: #C3335A;
     --color-success: #38A876;
     --color-warning: #C79C4E;
+  }
+}
+```
+
+The hero halo role-swaps via a dedicated utility (see §10.1):
+
+```css
+.hero-glow {
+  background: radial-gradient(
+    ellipse at center,
+    color-mix(in srgb, var(--color-primary) 22%, transparent) 0%,
+    color-mix(in srgb, var(--color-primary) 8%, transparent) 45%,
+    transparent 70%
+  );
+}
+@media (prefers-color-scheme: dark) {
+  .hero-glow {
+    background: radial-gradient(
+      ellipse at center,
+      color-mix(in srgb, var(--color-accent) 28%, transparent) 0%,
+      color-mix(in srgb, var(--color-accent) 12%, transparent) 45%,
+      transparent 70%
+    );
   }
 }
 ```
@@ -428,6 +481,9 @@ Canonical shapes for common surfaces. AI tools can treat these as templates.
 
 ## 12. Change log
 
-| Date | Change | By |
+| Date | Change | PR |
 |---|---|---|
-| 2026-04-23 | Initial DESIGN.md — replaces legacy blue `#2563eb` primary with Sea Green palette; introduces warm maroon-tinted dark mode with crimson→gold role-swap | redesign for brand alignment |
+| 2026-04-23 | Initial DESIGN.md — replaces legacy blue `#2563eb` primary with Sea Green palette; introduces warm maroon-tinted dark mode with crimson→gold role-swap | #81 |
+| 2026-04-24 | Phase 1 lands tokens in `globals.css`; Inter ships via `next/font/google`; wordmark refactored to read tokens | #83 |
+| 2026-04-24 | Phase 2 — landing hero V1 + how-it-works V3 strip implemented; section background alternation normalized | #84 |
+| 2026-04-24 | Dark-mode polish: surface-elevated `#301A1E` → `#262128` (remove maroon clash); wordmark `Genie` uses `--highlight` in dark (was `--accent`) for visual punch; hero halo role-swaps via `.hero-glow`; tour popover theming fixed (combined-selector bug); Google button `bg-white` dropped | #85 |

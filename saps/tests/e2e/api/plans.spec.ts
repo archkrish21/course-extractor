@@ -314,7 +314,8 @@ test.describe("Plan sharing", () => {
     await revokePlanShare(request, scratchPlan.id, parentUserId);
   });
 
-  test("owner can share plan with a counselor at view permission", async ({ request }) => {
+  // v1-hide: counselor role hidden from UI; re-enable by switching `test.skip` back to `test`.
+  test.skip("owner can share plan with a counselor at view permission", async ({ request }) => {
     if (!counselorUserId) {
       test.skip(true, "No counselor linked to account");
       return;

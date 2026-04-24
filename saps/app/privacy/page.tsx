@@ -19,7 +19,7 @@ export default function PrivacyPage() {
       <div className="mt-8 space-y-6 text-base leading-relaxed text-foreground">
         <section>
           <h2 className="text-lg font-semibold">1. Information We Collect</h2>
-          <p className="mt-2"><strong>Information you provide:</strong> Email address, date of birth, name, role (student/parent/counselor), grades, course selections, GPA goals, college targets, and test scores.</p>
+          <p className="mt-2"><strong>Information you provide:</strong> Email address, date of birth, name, role (student/parent), grades, course selections, GPA goals, college targets, and test scores.</p>
           <p className="mt-2"><strong>Automatically collected:</strong> IP address, browser type, device information, and usage analytics.</p>
           <p className="mt-2"><strong>Payment information:</strong> Processed by Stripe. We do not store credit card numbers.</p>
         </section>

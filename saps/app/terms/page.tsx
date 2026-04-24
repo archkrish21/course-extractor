@@ -39,7 +39,7 @@ export default function TermsPage() {
         <section>
           <h2 className="text-lg font-semibold">3. User Accounts and Roles</h2>
           <p className="mt-2">
-            Plan with Genie supports three user roles: Student, Parent, and Counselor. You are responsible for maintaining the
+            Plan with Genie supports two user roles: Student and Parent. You are responsible for maintaining the
             confidentiality of your account credentials and for all activities under your account. You agree to provide
             accurate information when creating your account.
           </p>

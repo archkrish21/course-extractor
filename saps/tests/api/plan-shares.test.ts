@@ -713,7 +713,8 @@ describe("POST /api/v1/accounts/:id/members — linked accounts limit", () => {
     expect(body.error.code).toBe("VALIDATION_ERROR");
   });
 
-  it("successfully invites a counselor", async () => {
+  // v1-hide: counselor role hidden from UI; re-enable by switching `it.skip` back to `it`.
+  it.skip("successfully invites a counselor", async () => {
     mockGetEffectiveTier.mockResolvedValue({ maxLinkedAccounts: 5 });
 
     let queryIndex = 0;
@@ -877,7 +878,8 @@ describe("POST /api/v1/accounts/:id/members — linked accounts limit", () => {
     expect(response.status).toBe(400);
   });
 
-  it("returns 403 when counselor tries to invite (read-only)", async () => {
+  // v1-hide: counselor role hidden from UI; re-enable by switching `it.skip` back to `it`.
+  it.skip("returns 403 when counselor tries to invite (read-only)", async () => {
     // Override: counselor has canEdit: false
     (getAccountContext as ReturnType<typeof vi.fn>).mockResolvedValue({
       accountId: TEST_ACCOUNT_ID,

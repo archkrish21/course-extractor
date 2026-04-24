@@ -6,7 +6,7 @@ import "./globals.css";
 export const metadata: Metadata = {
   title: "Plan with Genie — Academic planning, granted",
   description:
-    "Plan your 4-year high school course path, track grades and GPA, monitor graduation requirements, and keep parents and counselors in the loop. Free for Stevenson High School students.",
+    "Plan your 4-year high school course path, track grades and GPA, monitor graduation requirements, and keep your family in the loop. Free for Stevenson High School students.",
   keywords: ["academic planning", "high school", "course planner", "GPA tracker", "graduation requirements", "Stevenson High School"],
   icons: {
     icon: [

@@ -5,6 +5,8 @@
 **Status:** Phase 3 In Progress — Active Development
 **Last updated:** 2026-04-09
 
+> **v1 scope note:** The **Counselor** role is **UI-hidden for v1** and postponed to a post-v1 release. The backend (`users.role` enum, `counselor_student_links` table, RLS policies, Zod schemas, permission gates) is unchanged — this is a soft-hide only. Counselor UI behavior documented below (3/4-role signup selector, invite dropdown, view-only dashboard, counselor-specific RLS) describes the eventual post-v1 state. Re-enable checklist: [docs/plans/v2-reenable-counselor.md](../plans/v2-reenable-counselor.md).
+
 ---
 
 ## Table of Contents

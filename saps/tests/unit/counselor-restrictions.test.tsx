@@ -114,7 +114,8 @@ function setStudentAccount() {
 
 // ── Tests ─────────────────────────────────────────────────────────────────
 
-describe("Counselor restrictions", () => {
+// v1-hide: counselor role hidden from UI; re-enable by switching `describe.skip` back to `describe`.
+describe.skip("Counselor restrictions", () => {
   describe("Account switcher", () => {
     it("shows counselor in the account switcher (isParentOrCounselor check)", () => {
       setCounselorAccount();

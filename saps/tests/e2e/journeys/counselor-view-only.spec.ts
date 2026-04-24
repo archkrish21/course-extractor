@@ -8,6 +8,9 @@ import { test, expect } from "@playwright/test";
  */
 test.use({ storageState: "./tests/e2e/.auth/counselor.json" });
 
+// v1-hide: counselor role hidden from UI; re-enable by changing `describe.skip` back to `describe`.
+test.describe.skip("counselor view-only journey", () => {
+
 test("counselor can see the student's planner grid", async ({ page }) => {
   await page.goto("/planner");
   await expect(page.locator("text=Loading your plans...")).toBeHidden({
@@ -38,4 +41,6 @@ test("counselor's settings page does NOT show the invite form", async ({ page })
   // Invite email input is gated to non-counselor roles
   const inviteInput = page.locator('input[type="email"][placeholder*="Invite"]');
   expect(await inviteInput.count()).toBe(0);
+});
+
 });

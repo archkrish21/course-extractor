@@ -1,5 +1,7 @@
 # Student Academic Planning System (SAPS) — Feature Analysis
 
+> **v1 scope note:** **Counselor** features in this document (counselor persona, counselor dashboard, counselor invites, view-only advisory access) are **postponed to a post-v1 release**. Backend permissions and schema are unchanged — only UI entry points are hidden. See [docs/plans/v2-reenable-counselor.md](../plans/v2-reenable-counselor.md).
+
 ## Overview
 
 A full-featured student academic planning platform built on top of the Stevenson High School course catalog extractor. The system helps students and parents plan four-year academic paths, track grades, validate graduation requirements, and receive AI-driven career/GPA guidance.

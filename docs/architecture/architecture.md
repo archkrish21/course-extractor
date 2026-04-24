@@ -5,6 +5,8 @@
 > **Level:** C4 Model — Container level. One level up from the code; one level down from the system context diagram. Shows the major runtime pieces and how they talk to each other.
 >
 > **Companion docs:** [`TECH_DESIGN_DOC.md`](./TECH_DESIGN_DOC.md) (implementation details), [`PRODUCTION_SETUP.md`](../operations/PRODUCTION_SETUP.md) (provisioning), [`LAUNCH_CHECKLIST.md`](../operations/LAUNCH_CHECKLIST.md) (go-live).
+>
+> **v1 scope note:** The **Counselor** persona in the container diagram below is **UI-hidden for v1** (postponed to a later release). Backend role model, RLS, and `counselor_student_links` are unchanged. See [docs/plans/v2-reenable-counselor.md](../plans/v2-reenable-counselor.md).
 
 ---
 

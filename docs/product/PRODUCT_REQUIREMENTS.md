@@ -5,6 +5,8 @@
 **Date:** April 2026
 **Status:** Phase 3 In Progress — Active Development
 
+> **v1 scope note:** The **Counselor** persona and all counselor-facing requirements in this document are **postponed to a post-v1 release**. Counselor-related user stories, role selection, and dashboards are not in scope for v1 shipping. Backend data model and permissions remain in place for later re-enable. See [docs/plans/v2-reenable-counselor.md](../plans/v2-reenable-counselor.md).
+
 ---
 
 ## Table of Contents

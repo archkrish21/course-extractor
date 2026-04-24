@@ -5,6 +5,8 @@
 **Date:** April 2026
 **Status:** Phase 3 In Progress — Active Development
 
+> **v1 scope note:** The **Counselor** role and all counselor-facing features (4-role signup card, counselor invite, view-only dashboard, counselor dashboard, counselor comments) are **postponed to a post-v1 release**. The backend (schema, permissions, counselor_student_links) remains in place; only the UI entry points are hidden. See [docs/plans/v2-reenable-counselor.md](../plans/v2-reenable-counselor.md). References to counselor behavior below describe the eventual post-v1 state.
+
 ---
 
 ## The Opportunity

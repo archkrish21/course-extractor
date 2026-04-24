@@ -22,7 +22,7 @@ export default function AboutPage() {
           <p className="mt-3">
             I built Genie to solve this problem — not just for myself, but for every student who deserves a clear path
             through high school. What started as a personal project has grown into a comprehensive academic planning
-            platform used by students, parents, and counselors.
+            platform used by students and their families.
           </p>
         </section>
 
@@ -48,7 +48,7 @@ export default function AboutPage() {
             </div>
             <div className="rounded-2xl border border-border p-4">
               <p className="font-semibold text-foreground">Connect</p>
-              <p className="mt-1 text-xs">Link parents, guardians, and counselors for shared visibility into your plan.</p>
+              <p className="mt-1 text-xs">Link parents and guardians for shared visibility into your plan.</p>
             </div>
           </div>
         </section>

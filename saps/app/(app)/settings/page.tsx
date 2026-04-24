@@ -697,9 +697,9 @@ export default function SettingsPage() {
                         <select value={inviteRole} onChange={(e) => setInviteRole(e.target.value)}
                           disabled={inviteDisabled}
                           className={`min-h-[44px] rounded-lg border border-border bg-background px-3 text-sm focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring ${inviteDisabled ? "opacity-50" : ""}`}>
+                          {/* v1-hide: counselor option removed; re-add <option value="counselor">Counselor</option> to restore. */}
                           <option value="parent">Parent</option>
                           <option value="guardian">Guardian</option>
-                          <option value="counselor">Counselor</option>
                         </select>
                         <input type="email" value={inviteEmail} onChange={(e) => setInviteEmail(e.target.value)}
                           placeholder="Invite by email..."

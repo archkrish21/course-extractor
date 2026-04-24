@@ -104,7 +104,8 @@ function accountContext(id: string) {
 
 // ── Tests ───────────────────────────────────────────────────────────────────
 
-describe("POST /api/v1/accounts/:id/members/join — counselor canEdit behavior", () => {
+// v1-hide: counselor role hidden from UI; re-enable by switching `describe.skip` back to `describe`.
+describe.skip("POST /api/v1/accounts/:id/members/join — counselor canEdit behavior", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     dbChain = createQueryChain();

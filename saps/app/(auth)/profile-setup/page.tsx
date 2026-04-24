@@ -9,11 +9,11 @@ import { Checkbox } from "@/components/ui/checkbox";
 
 type Role = "student" | "parent" | "guardian" | "counselor";
 
+// v1-hide: counselor role removed from UI; re-add { value: "counselor", ... } to restore.
 const ROLES: { value: Role; label: string; desc: string }[] = [
   { value: "student", label: "Student", desc: "Plan your courses" },
   { value: "parent", label: "Parent", desc: "Monitor progress" },
   { value: "guardian", label: "Guardian", desc: "Support your student" },
-  { value: "counselor", label: "Counselor", desc: "Guide students" },
 ];
 
 export default function ProfileSetupPage() {

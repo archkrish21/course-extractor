@@ -100,7 +100,7 @@ export function FeedbackWidget() {
                           className={`h-8 w-8 transition-colors ${
                             star <= (hoveredRating || rating)
                               ? "fill-warning text-warning"
-                              : "fill-none text-border"
+                              : "fill-none text-muted-foreground/60"
                           }`}
                           viewBox="0 0 24 24"
                           strokeWidth={1.5}

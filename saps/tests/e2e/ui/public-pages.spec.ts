@@ -31,17 +31,25 @@ test("homepage hero shows Early access badge, CTAs, and proof row", async ({ pag
   await expect(page.getByText("No credit card", { exact: true })).toBeVisible();
 });
 
-test("homepage shows how-it-works strip with V3 copy", async ({ page }) => {
+test("homepage shows how-it-works strip with all four V1 steps", async ({ page }) => {
   await page.goto("/");
+  // PR #96 reworked the strip to reflect V1 reality: grade-level entry,
+  // grad-progress tracking, what-if GPA, and family linking.
   await expect(
-    page.getByRole("heading", { name: "Tell Genie your goals" })
+    page.getByRole("heading", { name: "Pick your grade level" })
   ).toBeVisible();
   await expect(
-    page.getByRole("heading", { name: "See your path mapped" })
+    page.getByRole("heading", { name: "Track grad progress" })
   ).toBeVisible();
   await expect(
-    page.getByRole("heading", { name: "Adjust as you grow" })
+    page.getByRole("heading", { name: "Run what-if scenarios" })
   ).toBeVisible();
+  await expect(
+    page.getByRole("heading", { name: "Loop in your family" })
+  ).toBeVisible();
+  // The pre-V1 "Tell Genie your goals" copy referred to a flow that's
+  // hidden in V1 — make sure it doesn't sneak back in.
+  await expect(page.getByText("Tell Genie your goals")).toHaveCount(0);
 });
 
 test("homepage final CTA reads 'Map the path.' (no stacked brand beats)", async ({ page }) => {

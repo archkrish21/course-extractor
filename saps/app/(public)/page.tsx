@@ -10,18 +10,23 @@ import { HOME_FEATURES } from "@/config/homepage";
 const HOW_IT_WORKS_STEPS = [
   {
     n: "01",
-    t: "Tell Genie your goals",
-    d: `College track, trade school, or just "I don't know yet" — all valid starts.`,
+    t: "Pick your grade level",
+    d: "9th, 10th, 11th, or 12th — Genie maps the right credits, prereqs, and four-year layout.",
   },
   {
     n: "02",
-    t: "See your path mapped",
-    d: "Every graduation requirement, course by course, across all four years.",
+    t: "Track grad progress",
+    d: "37 requirements across 4 categories — see what's done, planned, and remaining.",
   },
   {
     n: "03",
-    t: "Adjust as you grow",
-    d: "Swap courses, explore AP routes, keep your plan in sync with real life.",
+    t: "Run what-if scenarios",
+    d: "Project your GPA, swap in an AP, explore alternatives — see the impact before you commit.",
+  },
+  {
+    n: "04",
+    t: "Loop in your family",
+    d: "Invite parents and guardians — same plan, same progress, no constant check-ins.",
   },
 ];
 
@@ -156,7 +161,7 @@ export default function HomePage() {
       {/* ─── How it works — V3 strip, per DESIGN.md §10 ──────────── */}
       <section id="how-it-works" className="border-y border-border bg-surface-muted">
         <div className="mx-auto max-w-6xl px-4 py-10 sm:px-6 sm:py-12">
-          <div className="grid items-start gap-10 sm:grid-cols-3 sm:gap-12">
+          <div className="grid grid-cols-1 items-start gap-10 sm:grid-cols-2 sm:gap-12 lg:grid-cols-4">
             {HOW_IT_WORKS_STEPS.map((s) => (
               <div key={s.n} className="flex items-start gap-5">
                 <div

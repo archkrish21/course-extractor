@@ -6,15 +6,15 @@ const isDev = process.env.NODE_ENV === "development";
 const cspHeader = [
   "default-src 'self'",
   isDev
-    ? "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://hcaptcha.com https://*.hcaptcha.com"
-    : "script-src 'self' 'unsafe-inline' https://js.stripe.com https://us-assets.i.posthog.com https://hcaptcha.com https://*.hcaptcha.com",
-  "style-src 'self' 'unsafe-inline' https://hcaptcha.com https://*.hcaptcha.com",
+    ? "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://hcaptcha.com https://*.hcaptcha.com https://accounts.google.com/gsi/client"
+    : "script-src 'self' 'unsafe-inline' https://js.stripe.com https://us-assets.i.posthog.com https://hcaptcha.com https://*.hcaptcha.com https://accounts.google.com/gsi/client",
+  "style-src 'self' 'unsafe-inline' https://hcaptcha.com https://*.hcaptcha.com https://accounts.google.com/gsi/style",
   "img-src 'self' data: https:",
   "font-src 'self'",
   isDev
-    ? "connect-src 'self' ws://localhost:* http://localhost:* http://127.0.0.1:* https://*.supabase.co https://hcaptcha.com https://*.hcaptcha.com https://*.ingest.us.sentry.io https://*.ingest.sentry.io https://*.i.posthog.com"
-    : "connect-src 'self' https://*.supabase.co https://api.stripe.com https://*.i.posthog.com https://*.upstash.io https://hcaptcha.com https://*.hcaptcha.com https://*.ingest.us.sentry.io https://*.ingest.sentry.io",
-  "frame-src https://js.stripe.com https://hcaptcha.com https://*.hcaptcha.com",
+    ? "connect-src 'self' ws://localhost:* http://localhost:* http://127.0.0.1:* https://*.supabase.co https://hcaptcha.com https://*.hcaptcha.com https://*.ingest.us.sentry.io https://*.ingest.sentry.io https://*.i.posthog.com https://accounts.google.com/gsi/"
+    : "connect-src 'self' https://*.supabase.co https://api.stripe.com https://*.i.posthog.com https://*.upstash.io https://hcaptcha.com https://*.hcaptcha.com https://*.ingest.us.sentry.io https://*.ingest.sentry.io https://accounts.google.com/gsi/",
+  "frame-src https://js.stripe.com https://hcaptcha.com https://*.hcaptcha.com https://accounts.google.com/gsi/",
   "object-src 'none'",
   "base-uri 'self'",
 ].join("; ");

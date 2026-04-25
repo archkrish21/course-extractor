@@ -428,7 +428,7 @@ The rigor score is recomputed nightly by the percentile stats job (Elite tier). 
 
 | ID | Story | Priority | Phase |
 |---|---|---|---|
-| US-100 | As a prospective student or parent, I want to see a clear, compelling homepage that explains what SAPS does, how it works, and how to get started, so I can decide whether to sign up. **Implemented (Phase 3):** Hero with gradient text, animated stats bar, animated trial badge, "Why SAPS?" section, 5 feature cards, 3-step timeline, FAQ accordion, final CTA. | Must | 3 |
+| US-100 | As a prospective student or parent, I want to see a clear, compelling homepage that explains what SAPS does, how it works, and how to get started, so I can decide whether to sign up. **Implemented (Phase 3):** Hero with gradient text, animated stats bar, animated trial badge, "Why SAPS?" section, 5 feature cards, 4-step timeline (Pick your grade level / Track grad progress / Run what-if scenarios / Loop in your family), FAQ accordion, final CTA. | Must | 3 |
 | US-101 | As a visitor, I want a sticky navigation bar with Sign in and Get Started Free buttons on every public page so I can easily navigate to signup or login. **Implemented (Phase 3):** Glass blur sticky navbar with logo, About link, FAQ anchor, Sign in, Get Started Free CTA. Mobile hamburger menu. | Must | 3 |
 | US-102 | As a visitor, I want to read about the team and mission on an About page so I can understand who built SAPS. **Implemented (Phase 3):** `/about` page with story, mission, Plan/Track/Connect cards, looking ahead, disclaimer. | Should | 3 |
 | US-103 | As a visitor, I want to submit a contact form with my name, email, subject, and message so I can ask questions or provide feedback. **Implemented (Phase 3):** `/contact` page with form, stored in `contact_messages` table via `POST /api/v1/contact` (no auth). Route also sends notification email to `planwithgenie@gmail.com` via Resend with reply-to sender. Enabled in nav + footer. | Should | 3 |
@@ -1225,7 +1225,7 @@ A public-facing homepage and supporting pages are required before user acquisiti
 - Hero section with gradient text, animated stats bar (courses, prerequisites, requirements tracked), animated trial badge ("14-day free trial")
 - "Why SAPS?" problem section highlighting the planning challenge
 - 5 feature cards with unique color accents (one per key capability)
-- 3-step timeline how-it-works section
+- 4-step timeline how-it-works section: Pick your grade level / Track grad progress / Run what-if scenarios / Loop in your family
 - FAQ accordion for common questions
 - Final CTA: "Get Started Free"
 - Feature-flagged pricing section (dormant for v1). Controlled via `config/homepage.ts` (`showPricing: false`)

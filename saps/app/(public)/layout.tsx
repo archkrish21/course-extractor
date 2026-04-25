@@ -95,53 +95,54 @@ export default function PublicLayout({ children }: { children: React.ReactNode }
       {/* Page content */}
       <main className="flex-1">{children}</main>
 
-      {/* Footer */}
-      <footer className="border-t border-border bg-muted/30">
-        <div className="mx-auto max-w-6xl px-4 py-12 sm:px-6">
-          <div className="grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-4">
-            {/* Brand */}
-            <div className="sm:col-span-2 lg:col-span-1">
-              <div className="flex items-center gap-2">
-                <SapsLogo size="sm" />
-                <GenieWordmark size="sm" />
-              </div>
-              <p className="mt-3 text-xs leading-relaxed text-muted-foreground">
-                Academic planning, granted. Built by a Stevenson High School student.
-              </p>
-              <div className="mt-3">
-                <SupportLink />
-              </div>
+      {/* Footer — per DESIGN.md §10.4 */}
+      <footer className="bg-accent-soft">
+        <div className="mx-auto max-w-6xl px-4 py-10 sm:px-6">
+          {/* Brand row — wordmark top, subtitle below */}
+          <div className="flex flex-col gap-2">
+            <div className="flex items-center gap-2">
+              <SapsLogo size="md" />
+              <GenieWordmark size="md" />
             </div>
+            <p className="max-w-lg text-sm leading-relaxed text-foreground-muted">
+              Built by a Stevenson High School student. Currently supporting Stevenson —{" "}
+              <Link
+                href="/request-school"
+                className="text-primary underline-offset-2 hover:underline focus-ring"
+              >
+                more schools coming soon
+              </Link>
+              .
+            </p>
+          </div>
 
-            {/* Product */}
+          {/* 4 columns */}
+          <div className="mt-10 grid grid-cols-2 gap-8 sm:grid-cols-4">
             <div>
-              <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">Product</p>
+              <p className="text-xs font-semibold uppercase tracking-widest text-foreground-muted">Product</p>
               <ul className="mt-3 space-y-2">
-                <li><Link href="/about" className="text-sm text-muted-foreground hover:text-foreground transition-colors focus-ring">About</Link></li>
+                <li><Link href="/about" className="text-sm text-foreground-muted hover:text-foreground transition-colors focus-ring">About</Link></li>
                 {HOME_FEATURES.showPricing && (
-                  <li><Link href="/#pricing" className="text-sm text-muted-foreground hover:text-foreground transition-colors focus-ring">Pricing</Link></li>
+                  <li><Link href="/#pricing" className="text-sm text-foreground-muted hover:text-foreground transition-colors focus-ring">Pricing</Link></li>
                 )}
-                <li><Link href="/#faq" className="text-sm text-muted-foreground hover:text-foreground transition-colors focus-ring">FAQ</Link></li>
-                <li><Link href="/signup" className="text-sm text-muted-foreground hover:text-foreground transition-colors focus-ring">Get Started</Link></li>
+                <li><Link href="/#faq" className="text-sm text-foreground-muted hover:text-foreground transition-colors focus-ring">FAQ</Link></li>
+                <li><Link href="/signup" className="text-sm text-foreground-muted hover:text-foreground transition-colors focus-ring">Get Started</Link></li>
               </ul>
             </div>
 
-            {/* Legal */}
             <div>
-              <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">Legal</p>
+              <p className="text-xs font-semibold uppercase tracking-widest text-foreground-muted">Resources</p>
               <ul className="mt-3 space-y-2">
-                <li><Link href="/terms" className="text-sm text-muted-foreground hover:text-foreground transition-colors focus-ring">Terms of Service</Link></li>
-                <li><Link href="/privacy" className="text-sm text-muted-foreground hover:text-foreground transition-colors focus-ring">Privacy Policy</Link></li>
+                <li><SupportLink /></li>
                 {HOME_FEATURES.showContactPage && (
-                  <li><Link href="/contact" className="text-sm text-muted-foreground hover:text-foreground transition-colors focus-ring">Contact Us</Link></li>
+                  <li><Link href="/contact" className="text-sm text-foreground-muted hover:text-foreground transition-colors focus-ring">Contact</Link></li>
                 )}
               </ul>
             </div>
 
-            {/* Connect */}
             <div>
-              <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">Connect</p>
-              <div className="mt-3 flex gap-3">
+              <p className="text-xs font-semibold uppercase tracking-widest text-foreground-muted">Connect</p>
+              <div className="mt-3 flex gap-2">
                 {SOCIAL_LINKS.map((s) => (
                   <a
                     key={s.label}
@@ -149,7 +150,7 @@ export default function PublicLayout({ children }: { children: React.ReactNode }
                     target="_blank"
                     rel="noopener noreferrer"
                     aria-label={s.label}
-                    className="flex h-8 w-8 items-center justify-center rounded-lg text-muted-foreground hover:bg-muted hover:text-foreground transition-colors focus-ring"
+                    className="flex h-8 w-8 items-center justify-center rounded-lg text-foreground-muted hover:bg-background/40 hover:text-foreground transition-colors focus-ring"
                   >
                     <svg aria-hidden="true" className="h-4 w-4" fill="currentColor" viewBox="0 0 24 24">
                       <path d={s.icon} />
@@ -157,16 +158,23 @@ export default function PublicLayout({ children }: { children: React.ReactNode }
                   </a>
                 ))}
               </div>
-              <p className="mt-4 text-xs text-muted-foreground">
-                Currently supporting Stevenson High School.{" "}
-                <Link href="/signup" className="text-primary hover:underline transition-colors focus-ring">More schools coming soon!</Link>
-              </p>
+            </div>
+
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-widest text-foreground-muted">Legal</p>
+              <ul className="mt-3 space-y-2">
+                <li><Link href="/terms" className="text-sm text-foreground-muted hover:text-foreground transition-colors focus-ring">Terms</Link></li>
+                <li><Link href="/privacy" className="text-sm text-foreground-muted hover:text-foreground transition-colors focus-ring">Privacy</Link></li>
+              </ul>
             </div>
           </div>
 
-          <div className="mt-10 border-t border-border pt-6 text-center text-xs text-muted-foreground">
-            &copy; {new Date().getFullYear()} Plan with Genie. All rights reserved. Not affiliated with Adlai E. Stevenson High School.
+          {/* Bottom bar — tagline left, disclaimer right */}
+          <div className="mt-8 flex flex-col gap-2 border-t border-border/60 pt-5 text-xs text-foreground-muted sm:flex-row sm:items-center sm:justify-between">
+            <p>&copy; {new Date().getFullYear()} Plan with Genie · Academic planning, granted.</p>
+            <p>Not affiliated with Adlai E. Stevenson High School.</p>
           </div>
+
         </div>
       </footer>
     </div>

@@ -29,7 +29,7 @@ export const metadata: Metadata = {
   },
   openGraph: {
     title: "Plan with Genie — Academic planning, granted",
-    description: "Plan your 4-year high school journey. Track grades, GPA, and graduation progress.",
+    description: "Your four-year high school plan, course by course. Track grades, GPA, and graduation progress.",
     type: "website",
   },
 };

@@ -154,11 +154,19 @@ export default function PlannerPage() {
     gpaWaiverWarnings?: string[];
   } | null>(null);
   const [progressLoading, setProgressLoading] = useState(false);
-  const [gapsExpanded, setGapsExpanded] = useState(true);
-  const [semesterIssuesExpanded, setSemesterIssuesExpanded] = useState(true);
-  const [violationsExpanded, setViolationsExpanded] = useState(true);
+  // Validation report sections default to expanded on desktop (≥lg). On
+  // mobile the panel renders above the planner grid, and expanding every
+  // section by default forces the user to scroll through a wall of detail
+  // before reaching their planner — so we collapse everything by default
+  // when the viewport is narrower than the lg breakpoint.
+  const lgDefaultOpen = typeof window !== "undefined"
+    ? window.matchMedia("(min-width: 1024px)").matches
+    : true;
+  const [gapsExpanded, setGapsExpanded] = useState(lgDefaultOpen);
+  const [semesterIssuesExpanded, setSemesterIssuesExpanded] = useState(lgDefaultOpen);
+  const [violationsExpanded, setViolationsExpanded] = useState(lgDefaultOpen);
   const [coveredExpanded, setCoveredExpanded] = useState(false);
-  const [summaryExpanded, setSummaryExpanded] = useState(true);
+  const [summaryExpanded, setSummaryExpanded] = useState(lgDefaultOpen);
   const [showNewPlanModal, setShowNewPlanModal] = useState(false);
   const [newPlanName, setNewPlanName] = useState("");
   const [newPlanTemplateId, setNewPlanTemplateId] = useState<string | null>(null);
@@ -1703,8 +1711,12 @@ export default function PlannerPage() {
         </div>
       )}
 
-      {/* Planner Grid + Validation Side Panel */}
-      <div className="flex flex-col gap-4 lg:flex-row">
+      {/* Planner Grid + Validation Side Panel.
+          flex-col-reverse on mobile pulls the panel above the planner so the
+          report is visible immediately when opened (e.g. via the dashboard
+          ?validation=open deep link). lg:flex-row restores the normal
+          planner-left / panel-right layout on desktop. */}
+      <div className="flex flex-col-reverse gap-4 lg:flex-row">
         {/* Main planner area */}
         <div className={`min-w-0 ${showProgressPanel ? "flex-1" : "w-full"}`}>
 

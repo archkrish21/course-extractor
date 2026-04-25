@@ -148,6 +148,14 @@ export async function POST(request: NextRequest) {
         return errorResponse("AUTH_ERROR", "Failed to create user account.", 500);
       }
 
+      // Supabase returns success with an obfuscated user (empty identities)
+      // when the email already exists — anti-enumeration behavior. Detect
+      // this and bail out before touching the DB; otherwise the insert would
+      // fail and the rollback path would delete the real existing auth user.
+      if (!authData.user.identities || authData.user.identities.length === 0) {
+        return errorResponse("EMAIL_EXISTS", "An account with this email already exists.", 409);
+      }
+
       userId = authData.user.id;
       emailConfirmationPending = !authData.session;
     }

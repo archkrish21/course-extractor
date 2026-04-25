@@ -1577,7 +1577,7 @@ export default function PlannerPage() {
             <span title={printEnabled ? "Print plan" : "Upgrade to Plus to print plans"}>
             <button
               type="button"
-              onClick={() => printEnabled && window.open(`/planner/print?id=${selectedPlanId}`, "_blank")}
+              onClick={() => printEnabled && router.push(`/planner/print?id=${selectedPlanId}`)}
               disabled={!printEnabled}
               className={`min-h-[44px] min-w-[44px] flex items-center justify-center rounded-lg border border-border bg-card focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring ${
                 printEnabled ? "text-muted-foreground hover:bg-muted hover:text-foreground" : "text-muted-foreground/30 cursor-not-allowed"

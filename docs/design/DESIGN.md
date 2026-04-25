@@ -464,18 +464,50 @@ Shipped in [`saps/app/(public)/page.tsx`](../../saps/app/(public)/page.tsx). Ref
 - Feature list: checkmark icons in `--primary`, 8px gap between rows
 
 ### 10.4 Footer
-- `--accent-soft` background in light mode, `--surface-elevated` in dark
-- Wordmark top-left at `md` size
-- 4 link columns (Product, Company, Resources, Legal)
-- Bottom bar: copyright + tagline *"Academic planning, granted."* in `--foreground-muted`
-- Small mascot or filigree ornament lower-right — **optional, once per page total**
+
+Shipped in [`saps/app/(public)/layout.tsx`](../../saps/app/(public)/layout.tsx) (#87). Reference.
+
+- **Background:** `bg-accent-soft` in **both** modes — `#FCE8EF` pale crimson in light, `#491C1E` deep burgundy in dark. Distinct from the page bg in either mode and ties to the email header. *Earlier draft of this spec said `--surface-elevated` for dark; that's now same as `--surface-muted` (`#262128`) so it would blend with section tints. `--accent-soft` is the right choice for a distinctive footer in both modes.*
+- **Wordmark:** top row, `md` size, paired with `<SapsLogo size="md">`. Below it, a `text-foreground-muted` subtitle in one paragraph (no forced break) merging the "Built by a Stevenson HS student" + "Currently supporting Stevenson — more schools coming soon" copy. The "more schools coming soon" phrase is a `text-primary` link to [`/request-school`](../../saps/app/(public)/request-school/page.tsx).
+- **Four columns** below the wordmark row: **Product / Resources / Connect / Legal**. (Replaced the original spec's "Company" column — too thin to populate. Connect now owns social icons.)
+  - Product: About, Pricing, FAQ, Get Started
+  - Resources: Support, Contact
+  - Connect: social icons (Instagram, Facebook, X, LinkedIn)
+  - Legal: Terms, Privacy
+- **Bottom bar:** split layout — `© <year> · Academic planning, granted.` left, `Not affiliated with Adlai E. Stevenson High School.` right. Stacks on mobile. *"All rights reserved." was dropped — no legal effect under the Berne Convention.*
+- **Vertical rhythm:** `py-10` outer, `mt-10` between wordmark row and columns, `mt-8` before bottom bar, `pt-5` above bottom bar text. Lands at ~400px — modern SaaS sweet spot for a 4-column footer.
+- **No ornament.** First pass shipped a decorative mascot in the upper-right; removed because the hero halo already carries the page's earned ornamental moment and a second mascot doubled-down without earning it.
 
 ### 10.5 Error / 404
-- Centered content, `max-w-md`
-- Icon or numeral in `--foreground-muted` at 30% opacity (large, subtle)
-- Headline: plain language, no wish-theming for real errors
-- 404/empty-state exception: one earned wish-language beat is OK here
-- CTA: primary button back to a safe destination
+
+Shipped via shared primitive [`<ErrorState>`](../../saps/components/ui/error-state.tsx) (#88). All six error/404 surfaces use it:
+
+| Surface | File | Type | CTA destination |
+|---------|------|------|-----------------|
+| Public 404 | [`(public)/not-found.tsx`](../../saps/app/(public)/not-found.tsx) | numeral | `/` |
+| Public error | [`(public)/error.tsx`](../../saps/app/(public)/error.tsx) | icon | Try again + `/` |
+| App 404 | [`(app)/not-found.tsx`](../../saps/app/(app)/not-found.tsx) | numeral | `/dashboard` |
+| App error | [`(app)/error.tsx`](../../saps/app/(app)/error.tsx) | icon | Try again + `/dashboard` |
+| Root 404 (catch-all) | [`app/not-found.tsx`](../../saps/app/not-found.tsx) | numeral, fullScreen | auth-aware (`/dashboard` or `/`) |
+| Last-resort error | [`app/global-error.tsx`](../../saps/app/global-error.tsx) | icon | Try again + `/` |
+
+Visual rules:
+
+- **Centered content**, `max-w-md`, `min-h-[60vh]` (or `min-h-screen` for `fullScreen` root catch-all)
+- **Numeral** (404 surfaces): `text-[8rem]` mobile / `sm:text-[10rem]` desktop, `font-bold`, `text-foreground-muted/30`. Large, ambient, subtle — reads as a watermark-style anchor, not a loud declaration
+- **Icon** (error surfaces): 96px, `text-foreground-muted/30`, no decorative wrapper. *Earlier shipped versions used a 32px destructive-red icon in a circle — replaced because "real errors deserve calm" per the voice guide; calm visuals match calm copy*
+- **Headline:** plain language, no wish-theming for real errors. *"Page not found"*, *"Something went wrong"*
+- **404 / empty-state exception:** one earned wish-language beat is OK. Current copy: *"Even genies lose track sometimes."* on 404
+- **Real errors:** plain. Current copy: *"Something broke on our end. Try again, or head back home."*
+- **Actions:**
+  - 404: single primary CTA (back to safe destination)
+  - Error: two actions — `Try again` (primary) + `Back to ...` (outline)
+- **Action implementation:** when `href` is provided, render a styled `<Link>` (wrapping `<Button>` inside `<Link>` produces invalid `<a><button>` markup). When `onClick` is provided, render a `<Button>` from the primitive.
+
+Special case — `global-error.tsx`:
+- Renders **outside** the layout (no shared chrome), so it can't import `<ErrorState>` which assumes layout context
+- Inlines the same visual pattern with its own `<html><body>`
+- Keeps Sentry capture on mount
 
 ---
 
@@ -502,3 +534,5 @@ Shipped in [`saps/app/(public)/page.tsx`](../../saps/app/(public)/page.tsx). Ref
 | 2026-04-24 | Phase 1 lands tokens in `globals.css`; Inter ships via `next/font/google`; wordmark refactored to read tokens | #83 |
 | 2026-04-24 | Phase 2 — landing hero V1 + how-it-works V3 strip implemented; section background alternation normalized | #84 |
 | 2026-04-24 | Dark-mode polish: surface-elevated `#301A1E` → `#262128` (remove maroon clash); wordmark `Genie` uses `--highlight` in dark (was `--accent`) for visual punch; hero halo role-swaps via `.hero-glow`; tour popover theming fixed (combined-selector bug); Google button `bg-white` dropped. Plus doc sync: DESIGN.md §2.3, §2.5, §5.1, §5.3, §9, §10.1 and brand.md wordmark section reconciled with the code shipped in #83, #84, #85 | #85 |
+| 2026-04-24 | Phase 3 marketing polish: footer redesign (--accent-soft bg, 4-column grid, ~400px height); new `/request-school` page; voice cleanup ("journey" → approved vocab; Final CTA stacked beats fixed); pricing "Most popular" upgraded to gold pill ribbon | #87 |
+| 2026-04-24 | Error / 404 redesign per §10.5: shared `<ErrorState>` primitive at [`saps/components/ui/error-state.tsx`](../../saps/components/ui/error-state.tsx); 404 numeral promoted to `text-[8rem]` / `sm:text-[10rem]` at `text-foreground-muted/30`; error icon at 96px subtle (was 32px in destructive red circle); `global-error.tsx` rebranded with inline standalone markup since it renders outside the layout | #88 |

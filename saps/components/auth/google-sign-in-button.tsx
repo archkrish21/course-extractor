@@ -56,7 +56,19 @@ export function GoogleSignInButton({ onError }: Props) {
   const searchParams = useSearchParams();
   const buttonRef = useRef<HTMLDivElement>(null);
   const [scriptLoaded, setScriptLoaded] = useState(false);
+  const [isDark, setIsDark] = useState(false);
   const nonceRef = useRef<string | null>(null);
+
+  // Track OS-level dark mode (the app uses prefers-color-scheme, no toggle)
+  // so we can swap GIS button themes on the fly when the user flips OS theme.
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const mql = window.matchMedia("(prefers-color-scheme: dark)");
+    setIsDark(mql.matches);
+    const handler = (event: MediaQueryListEvent) => setIsDark(event.matches);
+    mql.addEventListener("change", handler);
+    return () => mql.removeEventListener("change", handler);
+  }, []);
 
   const handleCredential = useCallback(
     async (response: { credential: string }) => {
@@ -107,9 +119,12 @@ export function GoogleSignInButton({ onError }: Props) {
         nonce: hashed,
         use_fedcm_for_prompt: true,
       });
+      // GIS has no "update theme" API — clear the previous iframe before
+      // re-rendering when OS theme changes.
+      buttonRef.current.replaceChildren();
       window.google.accounts.id.renderButton(buttonRef.current, {
         type: "standard",
-        theme: "outline",
+        theme: isDark ? "filled_black" : "outline",
         size: "large",
         text: "signin_with",
         shape: "rectangular",
@@ -120,7 +135,7 @@ export function GoogleSignInButton({ onError }: Props) {
     return () => {
       cancelled = true;
     };
-  }, [scriptLoaded, handleCredential]);
+  }, [scriptLoaded, handleCredential, isDark]);
 
   if (!GOOGLE_CLIENT_ID) {
     return null;

@@ -59,8 +59,11 @@ vi.mock("@/lib/api/rate-limit", () => ({
   rateLimit: vi.fn().mockResolvedValue({ success: true }),
 }));
 
+// Supabase signUp() returns user.identities populated for fresh signups.
+// When the email already exists, identities is empty (anti-enumeration).
+// See app/api/v1/auth/signup/route.ts for the duplicate-email detection.
 const mockSupabaseSignUp = vi.fn().mockResolvedValue({
-  data: { user: { id: "new-user-id" } },
+  data: { user: { id: "new-user-id", identities: [{ id: "id-1" }] } },
   error: null,
 });
 
@@ -69,6 +72,12 @@ vi.mock("@/lib/supabase/server", () => ({
     auth: {
       signUp: (...args: unknown[]) => mockSupabaseSignUp(...args),
     },
+  }),
+}));
+
+vi.mock("@/lib/supabase/admin", () => ({
+  createSupabaseAdminClient: vi.fn().mockReturnValue({
+    auth: { admin: { deleteUser: vi.fn().mockResolvedValue({}) } },
   }),
 }));
 
@@ -220,5 +229,100 @@ describe("Signup — role handling", () => {
     expect(response.status).toBe(400);
     const body = await response.json();
     expect(body.error.code).toBe("VALIDATION_ERROR");
+  });
+});
+
+// ── Duplicate-email detection (PR #89) ──────────────────────────────────────
+// Supabase's signUp() doesn't surface an "already registered" error — to
+// prevent email enumeration it returns success with an obfuscated user
+// whose `identities` array is empty. The route must detect this and return
+// 409 EMAIL_EXISTS *before* writing to the DB; the original bug (not
+// detecting it) tried to insert a duplicate users row, then deleted the
+// real existing auth user from the rollback path.
+
+describe("Signup — duplicate email detection", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockInsertValues.length = 0;
+    dbChain = createQueryChain();
+  });
+
+  it("returns 409 EMAIL_EXISTS when signUp returns user with empty identities", async () => {
+    mockSupabaseSignUp.mockResolvedValueOnce({
+      data: { user: { id: "existing-user-id", identities: [] } },
+      error: null,
+    });
+
+    const { POST } = await import("@/app/api/v1/auth/signup/route");
+
+    const request = new NextRequest(new URL("http://localhost:3000/api/v1/auth/signup"), {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        email: "existing@test.com",
+        password: "Password123!",
+        age_confirmed: true,
+        role: "student",
+        tos_accepted: true,
+      }),
+    });
+
+    const response = await POST(request);
+    expect(response.status).toBe(409);
+    const body = await response.json();
+    expect(body.error.code).toBe("EMAIL_EXISTS");
+  });
+
+  it("does not write to the users table when duplicate email is detected", async () => {
+    mockSupabaseSignUp.mockResolvedValueOnce({
+      data: { user: { id: "existing-user-id", identities: [] } },
+      error: null,
+    });
+
+    const { POST } = await import("@/app/api/v1/auth/signup/route");
+
+    const request = new NextRequest(new URL("http://localhost:3000/api/v1/auth/signup"), {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        email: "existing@test.com",
+        password: "Password123!",
+        age_confirmed: true,
+        role: "student",
+        tos_accepted: true,
+      }),
+    });
+
+    await POST(request);
+
+    // The bug we're guarding against: inserting a users row, failing on PK
+    // collision, then the rollback path deleting the real existing user.
+    expect(mockInsertValues).toHaveLength(0);
+  });
+
+  it("returns 409 when identities is missing entirely (defensive)", async () => {
+    mockSupabaseSignUp.mockResolvedValueOnce({
+      data: { user: { id: "existing-user-id" } }, // no identities key at all
+      error: null,
+    });
+
+    const { POST } = await import("@/app/api/v1/auth/signup/route");
+
+    const request = new NextRequest(new URL("http://localhost:3000/api/v1/auth/signup"), {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        email: "existing@test.com",
+        password: "Password123!",
+        age_confirmed: true,
+        role: "student",
+        tos_accepted: true,
+      }),
+    });
+
+    const response = await POST(request);
+    expect(response.status).toBe(409);
+    const body = await response.json();
+    expect(body.error.code).toBe("EMAIL_EXISTS");
   });
 });

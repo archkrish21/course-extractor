@@ -373,7 +373,7 @@ describe("Signup — email confirmation pending flag", () => {
 
   it("returns email_confirmation_pending: true when no session (confirmation enabled)", async () => {
     mockSignUp.mockResolvedValue({
-      data: { user: { id: "new-user-id" }, session: null },
+      data: { user: { id: "new-user-id", identities: [{ id: "id-1" }] }, session: null },
       error: null,
     });
 
@@ -404,7 +404,7 @@ describe("Signup — email confirmation pending flag", () => {
   it("returns email_confirmation_pending: false when session exists (confirmation disabled)", async () => {
     mockSignUp.mockResolvedValue({
       data: {
-        user: { id: "new-user-id" },
+        user: { id: "new-user-id", identities: [{ id: "id-1" }] },
         session: { access_token: "tok", refresh_token: "ref" },
       },
       error: null,
@@ -436,7 +436,7 @@ describe("Signup — email confirmation pending flag", () => {
 
   it("returns email_confirmation_pending for student signup too", async () => {
     mockSignUp.mockResolvedValue({
-      data: { user: { id: "new-user-id" }, session: null },
+      data: { user: { id: "new-user-id", identities: [{ id: "id-1" }] }, session: null },
       error: null,
     });
 

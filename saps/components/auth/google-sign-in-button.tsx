@@ -58,6 +58,12 @@ export function GoogleSignInButton({ onError }: Props) {
   const [scriptLoaded, setScriptLoaded] = useState(false);
   const [isDark, setIsDark] = useState(false);
   const nonceRef = useRef<string | null>(null);
+  // GIS warns "initialize() is called multiple times" if we re-init on every
+  // dep change (Strict Mode mounts twice in dev; theme/searchParams flips
+  // re-run the effect). Initialize once per mount and dispatch the credential
+  // through a ref so the latest handleCredential closure is always used.
+  const initializedRef = useRef(false);
+  const handleCredentialRef = useRef<(response: { credential: string }) => void>(() => {});
 
   // Track OS-level dark mode (the app uses prefers-color-scheme, no toggle)
   // so we can swap GIS button themes on the fly when the user flips OS theme.
@@ -104,21 +110,32 @@ export function GoogleSignInButton({ onError }: Props) {
     [onError, router, searchParams]
   );
 
+  // Keep the ref pointing at the latest handleCredential so the GIS callback,
+  // which is bound exactly once during initialize(), always dispatches to the
+  // current closure (and reads up-to-date searchParams / router).
+  useEffect(() => {
+    handleCredentialRef.current = handleCredential;
+  }, [handleCredential]);
+
   useEffect(() => {
     if (!scriptLoaded || !buttonRef.current || !GOOGLE_CLIENT_ID || !window.google) {
       return;
     }
     let cancelled = false;
     void (async () => {
-      const { raw, hashed } = await generateNonce();
-      if (cancelled || !buttonRef.current || !window.google) return;
-      nonceRef.current = raw;
-      window.google.accounts.id.initialize({
-        client_id: GOOGLE_CLIENT_ID,
-        callback: handleCredential,
-        nonce: hashed,
-        use_fedcm_for_prompt: true,
-      });
+      if (!initializedRef.current) {
+        const { raw, hashed } = await generateNonce();
+        if (cancelled || !buttonRef.current || !window.google) return;
+        nonceRef.current = raw;
+        window.google.accounts.id.initialize({
+          client_id: GOOGLE_CLIENT_ID,
+          callback: (response) => handleCredentialRef.current(response),
+          nonce: hashed,
+          use_fedcm_for_prompt: true,
+        });
+        initializedRef.current = true;
+      }
+      if (!buttonRef.current || !window.google) return;
       // GIS has no "update theme" API — clear the previous iframe before
       // re-rendering when OS theme changes.
       buttonRef.current.replaceChildren();
@@ -135,7 +152,7 @@ export function GoogleSignInButton({ onError }: Props) {
     return () => {
       cancelled = true;
     };
-  }, [scriptLoaded, handleCredential, isDark]);
+  }, [scriptLoaded, isDark]);
 
   if (!GOOGLE_CLIENT_ID) {
     return null;

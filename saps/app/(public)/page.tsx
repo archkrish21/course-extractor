@@ -279,7 +279,7 @@ export default function HomePage() {
                   <Link href="/signup"
                     className={`mt-auto block min-h-[44px] rounded-xl py-2.5 text-center text-sm font-semibold transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring ${
                       tier.highlight
-                        ? "bg-primary text-primary-foreground shadow-lg shadow-primary/25 hover:bg-primary-hover"
+                        ? "bg-primary text-primary-foreground hover:bg-primary-hover"
                         : "border border-border text-foreground hover:bg-muted"
                     }`}>
                     {tier.cta}
@@ -371,7 +371,7 @@ export default function HomePage() {
           </p>
           <div className="mt-8 flex flex-col items-center gap-3 sm:flex-row sm:justify-center">
             <Link href="/signup"
-              className="group flex w-full min-h-[44px] items-center justify-center gap-2 rounded-xl bg-primary px-8 py-3.5 text-base font-semibold text-primary-foreground shadow-lg shadow-primary/25 hover:bg-primary-hover focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring transition-all sm:w-auto">
+              className="group flex w-full min-h-[44px] items-center justify-center gap-2 rounded-xl bg-primary px-8 py-3.5 text-base font-semibold text-primary-foreground hover:bg-primary-hover focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring transition-colors sm:w-auto">
               Get Started Free
               <svg aria-hidden="true" className="h-4 w-4 transition-transform group-hover:translate-x-0.5" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5 21 12m0 0-7.5 7.5M21 12H3" />

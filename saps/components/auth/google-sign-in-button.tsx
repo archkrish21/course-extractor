@@ -129,7 +129,7 @@ export function GoogleSignInButton({ onError }: Props) {
         text: "signin_with",
         shape: "rectangular",
         logo_alignment: "left",
-        width: 320,
+        width: 200,
       });
     })();
     return () => {

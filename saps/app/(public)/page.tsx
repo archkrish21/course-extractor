@@ -256,7 +256,11 @@ export default function HomePage() {
             <div className="mt-12 grid grid-cols-1 gap-6 sm:grid-cols-3">
               {PRICING_TIERS.map((tier) => (
                 <div key={tier.name} className={`flex flex-col rounded-2xl border p-6 ${tier.highlight ? "border-primary shadow-lg shadow-primary/10 ring-1 ring-primary/20" : "border-border"}`}>
-                  {tier.highlight && <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-primary">Most popular</p>}
+                  {tier.highlight && (
+                    <span className="mb-3 inline-flex items-center self-start rounded-full bg-highlight px-3 py-1 text-xs font-semibold uppercase tracking-wide text-highlight-foreground">
+                      Most popular
+                    </span>
+                  )}
                   <h3 className="text-lg font-bold text-foreground">{tier.name}</h3>
                   <div className="mt-2">
                     <span className="text-3xl font-extrabold text-foreground">{tier.price}</span>
@@ -360,7 +364,7 @@ export default function HomePage() {
         <div className="mx-auto max-w-6xl px-4 py-16 text-center sm:px-6 sm:py-24">
           <p className="text-sm font-semibold uppercase tracking-widest text-primary">Ready?</p>
           <h2 className="mt-2 text-2xl font-bold tracking-tight text-foreground sm:text-3xl lg:text-4xl">
-            Make the wish. Map the path.
+            Map the path.
           </h2>
           <p className="mx-auto mt-4 max-w-xl text-muted-foreground">
             Free during early access. Sign up in under a minute.

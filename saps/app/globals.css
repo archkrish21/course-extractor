@@ -155,6 +155,11 @@
   }
 }
 
+/* Anchor jumps land below the sticky public header (h-16, 4rem). */
+html {
+  scroll-padding-top: 5rem;
+}
+
 /* =========================================================================
    Type scale — semantic classes per DESIGN.md §3
    ========================================================================= */

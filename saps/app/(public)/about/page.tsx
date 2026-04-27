@@ -10,62 +10,152 @@ export default function AboutPage() {
   return (
     <div className="mx-auto max-w-3xl px-4 py-16 sm:px-6 sm:py-20">
       <h1 className="text-3xl font-bold tracking-tight text-foreground sm:text-4xl">About Plan with Genie</h1>
+      <p className="mt-3 text-base italic text-muted-foreground">
+        Plan with Genie started as a Google Sheet on my mom&apos;s laptop. This is the rest of the story.
+      </p>
+
+      <div className="mt-6 flex flex-col gap-3 rounded-2xl border border-border bg-muted/30 p-5 sm:flex-row sm:items-center sm:justify-between">
+        <p className="text-sm font-semibold text-foreground">
+          Free for every student and family. No credit card required.
+        </p>
+        <Link
+          href="/signup"
+          className="inline-flex items-center justify-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground hover:bg-primary-hover transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
+        >
+          Start planning →
+        </Link>
+      </div>
 
       <div className="mt-8 space-y-6 text-sm leading-relaxed text-muted-foreground">
         <section>
-          <h2 className="text-lg font-semibold text-foreground">Our story</h2>
+          <h2 className="text-lg font-semibold text-foreground">The story</h2>
           <p className="mt-2">
-            Genie was born out of a simple frustration: planning four years of high school courses shouldn't be this hard.
-            As a junior at Adlai E. Stevenson High School, I found myself juggling 300+ course options, complex prerequisite
-            chains, graduation credit requirements, and GPA targets — all tracked in spreadsheets and scattered notes.
+            In the fall of 2024, I started 9th grade at Stevenson. Within the first few weeks, I was handed a course
+            catalog the size of a small novel — hundreds of classes, prerequisite chains, weighted and unweighted
+            GPAs, graduation credit minimums — and asked to plan out four years of my life.
+          </p>
+          <p className="mt-3">It was a lot.</p>
+          <p className="mt-3">
+            What rescued us — me and my mom, working through it at the kitchen table — was a single Google Sheet. It
+            started as a place to list the classes I was considering, and it kept growing. Columns for each semester.
+            Color-coding by department. A formula that worked out my GPA. Notes on which courses had honors versions
+            and which ones I&apos;d need to talk to a counselor about. Within a few months, that sheet wasn&apos;t a
+            worksheet anymore. It was the tool we used to make every academic decision in our family.
+          </p>
+          <figure className="mt-6 space-y-6">
+            <div>
+              <img
+                src="/about/origin-sheet.png"
+                alt="The original Google Sheet — a four-year course planner with semester columns, course rows, grades, and computed GPA"
+                className="w-full rounded-xl border border-border shadow-sm"
+                loading="lazy"
+              />
+              <figcaption className="mt-2 text-center text-xs text-muted-foreground">
+                Where it started — the Google Sheet, 2024
+              </figcaption>
+            </div>
+            <div>
+              <img
+                src="/about/planner.png"
+                alt="The Plan with Genie planner — the same idea, rebuilt as a real app with prerequisite checks and a validation report"
+                className="w-full rounded-xl border border-border shadow-sm"
+                loading="lazy"
+              />
+              <figcaption className="mt-2 text-center text-xs text-muted-foreground">
+                Where it is today — Plan with Genie
+              </figcaption>
+            </div>
+          </figure>
+          <p className="mt-3">
+            Two years later, two things had changed. My computer science classes had given me the confidence to
+            actually build things, and the idea of turning that Google Sheet into real software started to excite me.
+            Our dinner conversations had also shifted, almost without us noticing, from school-day check-ins to what
+            the latest AI models could do. The technology was moving fast enough that I wanted to stop reading about
+            it and build something with it.
           </p>
           <p className="mt-3">
-            I built Genie to solve this problem — not just for myself, but for every student who deserves a clear path
-            through high school. What started as a personal project has grown into a comprehensive academic planning
-            platform used by students and their families.
-          </p>
-        </section>
-
-        <section>
-          <h2 className="text-lg font-semibold text-foreground">Our mission</h2>
-          <p className="mt-2">
-            To give every high school student the tools to plan their academic journey with confidence. We believe
-            that with the right planning tools, students can make better course decisions, stay on track for graduation,
-            and pursue their academic goals without surprises.
-          </p>
-        </section>
-
-        <section>
-          <h2 className="text-lg font-semibold text-foreground">What we do</h2>
-          <div className="mt-3 grid gap-4 sm:grid-cols-3">
-            <div className="rounded-2xl border border-border p-4">
-              <p className="font-semibold text-foreground">Plan</p>
-              <p className="mt-1 text-xs">4-year course planning with prerequisite validation and graduation tracking.</p>
-            </div>
-            <div className="rounded-2xl border border-border p-4">
-              <p className="font-semibold text-foreground">Track</p>
-              <p className="mt-1 text-xs">Real-time GPA calculation, grade tracking, and academic progress monitoring.</p>
-            </div>
-            <div className="rounded-2xl border border-border p-4">
-              <p className="font-semibold text-foreground">Connect</p>
-              <p className="mt-1 text-xs">Link parents and guardians for shared visibility into your plan.</p>
-            </div>
-          </div>
-        </section>
-
-        <section>
-          <h2 className="text-lg font-semibold text-foreground">Looking ahead</h2>
-          <p className="mt-2">
-            Genie currently supports Stevenson High School, but we're building for every high school.
-            Our roadmap includes AI-powered course recommendations, career path alignment,
-            and support for schools across Illinois and beyond.
+            The problem to solve was already in front of me. The Google Sheet was useful, but it was ours — built for
+            one student, fragile, impossible to share without someone breaking a formula. So I rebuilt it as software.
+            A real database. A real account system. Prerequisite validation, GPA math, graduation tracking, and a way
+            for parents and counselors to be part of the planning instead of CC&apos;d on a screenshot.
           </p>
           <p className="mt-3">
-            <Link href="/signup" className="text-primary hover:underline font-medium focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring rounded-sm">
-              Join us
+            I built Plan with Genie with agentic AI as my engineering partner — not as a gimmick, but as the only way
+            a high school student could ship something this size. The judgment about what to build, and how a
+            planning tool should feel for the family using it, came from being on the other side of it for two years.
+            I&apos;ll keep building it through the rest of high school and beyond — the families using it
+            shouldn&apos;t have to wonder if it&apos;ll still be here when their student is a senior.
+          </p>
+        </section>
+
+        <section>
+          <h2 className="text-lg font-semibold text-foreground">What it actually is</h2>
+          <p className="mt-2">The Google Sheet, but built for the whole family — and built to actually work.</p>
+          <p className="mt-3">
+            Where a spreadsheet breaks the moment a parent edits the wrong cell, Plan with Genie gives every member of
+            the family the right view: students plan, parents follow along, counselors review. Prerequisites are
+            checked automatically. GPA updates in real time. Graduation requirements stop being a thing you hope you
+            got right.
+          </p>
+        </section>
+
+        <section>
+          <h2 className="text-lg font-semibold text-foreground">For students</h2>
+          <ul className="mt-3 list-disc space-y-2 pl-5">
+            <li>Map four years of courses with prerequisites, credits, and graduation requirements checked as you go.</li>
+            <li>Watch your weighted and unweighted GPA update in real time as your plan evolves and grades come in.</li>
+            <li>Try out alternate plans without losing the one you&apos;ve been working on.</li>
+          </ul>
+        </section>
+
+        <section>
+          <h2 className="text-lg font-semibold text-foreground">For parents</h2>
+          <ul className="mt-3 list-disc space-y-2 pl-5">
+            <li>See your student&apos;s plan whenever you want, without asking for a screenshot.</li>
+            <li>Get the full GPA and credit picture without having to learn the catalog yourself.</li>
+            <li>
+              Your family&apos;s data stays private. I don&apos;t sell it, and student records are protected.{" "}
+              <Link
+                href="/privacy"
+                className="text-primary hover:underline font-medium focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring rounded-sm"
+              >
+                Read the privacy policy →
+              </Link>
+            </li>
+          </ul>
+        </section>
+
+        <section>
+          <h2 className="text-lg font-semibold text-foreground">What&apos;s next</h2>
+          <p className="mt-2">
+            Plan with Genie is live for <strong className="text-foreground">Stevenson families today</strong>, with
+            new Illinois high schools onboarding through 2026. If your school isn&apos;t supported yet,{" "}
+            <Link
+              href="/request-school"
+              className="text-primary hover:underline font-medium focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring rounded-sm"
+            >
+              request your school
             </Link>{" "}
-            and be part of the journey.
+            — I add schools based on where demand shows up.
           </p>
+          <p className="mt-3">On the near-term roadmap:</p>
+          <ul className="mt-2 list-disc space-y-2 pl-5">
+            <li>
+              <strong className="text-foreground">Transcript import</strong> for completed coursework — summer 2026
+            </li>
+            <li>
+              <strong className="text-foreground">Counselor review tools</strong> so a counselor can comment on a
+              student&apos;s plan in-app
+            </li>
+            <li>
+              <strong className="text-foreground">AI-assisted course suggestions</strong> tuned to each student&apos;s
+              interests and pace
+            </li>
+            <li>
+              <strong className="text-foreground">Career-path alignment</strong>, so the four-year plan ladders into
+              what comes after
+            </li>
+          </ul>
         </section>
 
         {SUPPORT_URL && (
@@ -74,11 +164,11 @@ export default function AboutPage() {
               <svg aria-hidden="true" className="h-5 w-5 text-red-500" fill="currentColor" viewBox="0 0 24 24">
                 <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" />
               </svg>
-              Support us
+              Help keep it running
             </h2>
             <p className="mt-2">
-              Genie is built by a high school student in his spare time. If it&apos;s helped
-              you plan your courses, a small contribution helps cover hosting and keeps it free for everyone.
+              Plan with Genie is free to use. If it&apos;s helped your family, a small contribution toward hosting
+              and email costs lets me keep building features instead of figuring out a business model.
             </p>
             <a
               href={SUPPORT_URL}
@@ -97,9 +187,12 @@ export default function AboutPage() {
         <section>
           <h2 className="text-lg font-semibold text-foreground">Important note</h2>
           <p className="mt-2">
-            Plan with Genie is <strong className="text-foreground">not affiliated with, endorsed by, or sponsored by
-            Adlai E. Stevenson High School</strong> or any educational institution. Course catalog data is
-            sourced from publicly available information. Plan with Genie is not a substitute for professional academic counseling.
+            Plan with Genie is{" "}
+            <strong className="text-foreground">
+              not affiliated with, endorsed by, or sponsored by Adlai E. Stevenson High School
+            </strong>{" "}
+            or any educational institution. Course catalog data is sourced from publicly available information. Plan
+            with Genie is not a substitute for professional academic counseling.
           </p>
         </section>
       </div>

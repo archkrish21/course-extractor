@@ -1155,6 +1155,11 @@ export const accountInviteCodes = pgTable(
     targetRole: text("target_role", {
       enum: ["student", "parent", "guardian", "counselor"],
     }).notNull(),
+    // Recipient email at invite time. Stored lowercased so list/dedupe
+    // queries match the case-insensitive lookup used elsewhere. Nullable
+    // for backward compatibility — invites created before this column
+    // existed have NULL and surface as "Pending invite" without a name.
+    targetEmail: text("target_email"),
     expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
     createdBy: uuid("created_by")
       .notNull()

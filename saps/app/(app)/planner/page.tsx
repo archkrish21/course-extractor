@@ -75,6 +75,7 @@ export default function PlannerPage() {
   const [violations, setViolations] = useState<Record<string, Violation[]>>({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [planNotFound, setPlanNotFound] = useState(false);
 
   // Guided tour — adapts steps based on whether plans exist (only after loading)
   const hasPlans = !loading && plans.length > 0;
@@ -193,12 +194,21 @@ export default function PlannerPage() {
           if (data.meta?.planLimit) {
             setPlanLimit(data.meta.planLimit);
           }
-          // Restore from URL param or sessionStorage, else select primary plan or first plan
-          const urlPlanId = new URLSearchParams(window.location.search).get("planId")
-            || sessionStorage.getItem("planner:selectedPlanId");
-          const urlPlan = urlPlanId ? planList.find((p: Plan) => p.id === urlPlanId) : null;
+          // Restore from URL param or sessionStorage, else select primary plan or first plan.
+          // An explicit planId in the URL is a deep link — if it doesn't match one of the
+          // user's plans, surface a "Plan not found" state instead of silently swapping
+          // to the primary. A stale sessionStorage value (no URL param) is just a UX
+          // nicety, so we still fall through to the primary in that case.
+          const urlParamPlanId = new URLSearchParams(window.location.search).get("planId");
+          const sessionPlanId = sessionStorage.getItem("planner:selectedPlanId");
+          const requestedId = urlParamPlanId || sessionPlanId;
+          const requestedPlan = requestedId ? planList.find((p: Plan) => p.id === requestedId) : null;
+          if (urlParamPlanId && !requestedPlan) {
+            setPlanNotFound(true);
+            return;
+          }
           const primary = planList.find((p: Plan) => p.isPrimary);
-          const initialId = urlPlan?.id ?? primary?.id ?? planList[0]?.id ?? null;
+          const initialId = requestedPlan?.id ?? primary?.id ?? planList[0]?.id ?? null;
           setSelectedPlanIdState(initialId);
           if (initialId) sessionStorage.setItem("planner:selectedPlanId", initialId);
         } else {
@@ -1320,6 +1330,50 @@ export default function PlannerPage() {
             <div className="mt-8">
               <Link href="/settings?add-student=1">
                 <Button className="px-6 py-2.5 text-base">Add Student</Button>
+              </Link>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  if (planNotFound) {
+    return (
+      <div className="mx-auto max-w-6xl">
+        <div className="mb-6">
+          <h1 className="text-2xl font-bold tracking-tight text-foreground">
+            Course Planner
+          </h1>
+          <p className="mt-1 text-sm text-muted-foreground">Plan your four-year academic path</p>
+        </div>
+        <Card>
+          <CardContent className="flex flex-col items-center px-6 py-16 text-center">
+            <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-muted">
+              <svg
+                aria-hidden="true"
+                className="h-8 w-8 text-muted-foreground"
+                fill="none"
+                viewBox="0 0 24 24"
+                strokeWidth={1.5}
+                stroke="currentColor"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M9.879 7.519c1.171-1.025 3.071-1.025 4.242 0 1.172 1.025 1.172 2.687 0 3.712-.203.179-.43.326-.67.442-.745.361-1.45.999-1.45 1.827v.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Zm-9 5.25h.008v.008H12v-.008Z"
+                />
+              </svg>
+            </div>
+            <h2 className="mt-4 text-xl font-semibold text-foreground">
+              Plan Not Found
+            </h2>
+            <p className="mt-2 max-w-md text-sm text-muted-foreground">
+              The plan you&apos;re looking for doesn&apos;t exist or you don&apos;t have access to it. It may have been deleted, or the link may be incorrect.
+            </p>
+            <div className="mt-8">
+              <Link href="/plans">
+                <Button className="px-6 py-2.5 text-base">Back to Plans</Button>
               </Link>
             </div>
           </CardContent>

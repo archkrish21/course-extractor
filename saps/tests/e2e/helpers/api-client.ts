@@ -276,7 +276,7 @@ export async function listAccountMembers(request: APIRequestContext, accountId: 
   const res = await request.get(`/api/v1/accounts/${accountId}/members`);
   expect(res.ok()).toBeTruthy();
   const data = await res.json();
-  return data.members ?? data.data ?? [];
+  return data.data?.members ?? [];
 }
 
 export async function getCurrentAccount(request: APIRequestContext) {

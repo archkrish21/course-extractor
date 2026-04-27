@@ -10,10 +10,11 @@ import {
   subscriptionPlans,
   accounts,
   accountMembers,
+  accountInviteCodes,
   legalDocuments,
   consentRecords,
 } from "@/lib/db/schema";
-import { eq } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 import { successResponse, errorResponse } from "@/lib/api/response";
 import { requireSameOrigin } from "@/lib/api/require-same-origin";
 import { rateLimit } from "@/lib/api/rate-limit";
@@ -72,15 +73,50 @@ export async function POST(request: NextRequest) {
 
     const { email, password, role: rawRole, name, state, school_name, invite_code, invite_account, captcha_token } = parsed.data;
 
+    const isInviteSignup = !!(invite_code && invite_account);
+
+    // For invite-driven signups, the invite's targetRole is the source of
+    // truth — the form-supplied role is informational. Without this override
+    // a recipient invited as Parent could submit the form as Student and end
+    // up with a bogus self-owned student account *and* parent membership in
+    // the inviter's account. Validate the invite up-front so a stale invite
+    // fails before we touch Supabase Auth.
+    let effectiveRawRole = rawRole;
+    if (isInviteSignup) {
+      const [invite] = await db
+        .select({
+          targetRole: accountInviteCodes.targetRole,
+          expiresAt: accountInviteCodes.expiresAt,
+          claimedBy: accountInviteCodes.claimedBy,
+        })
+        .from(accountInviteCodes)
+        .where(
+          and(
+            eq(accountInviteCodes.code, invite_code!),
+            eq(accountInviteCodes.accountId, invite_account!)
+          )
+        )
+        .limit(1);
+
+      if (!invite || invite.claimedBy || new Date() > new Date(invite.expiresAt)) {
+        return errorResponse(
+          "INVITE_INVALID",
+          "This invite is no longer valid. Ask the sender for a new one.",
+          400
+        );
+      }
+
+      effectiveRawRole = invite.targetRole;
+    }
+
     // Map "guardian" to "parent" for storage — they have identical behavior
-    const role = rawRole === "guardian" ? "parent" : rawRole;
+    const role = effectiveRawRole === "guardian" ? "parent" : effectiveRawRole;
 
     // Create user via Supabase Auth.
     // Invite-based signups use admin.createUser() to skip the confirmation
     // email — the user already proved email ownership by clicking the invite
     // link. Normal signups use signUp() which sends a confirmation email.
     const supabase = await createSupabaseServerClient();
-    const isInviteSignup = !!(invite_code && invite_account);
 
     let userId: string;
     let emailConfirmationPending: boolean;

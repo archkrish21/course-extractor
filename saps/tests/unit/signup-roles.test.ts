@@ -46,6 +46,7 @@ vi.mock("@/lib/db/schema", () => ({
   studentProfiles: { userId: "userId" },
   subscriptions: { id: "id" },
   subscriptionPlans: { id: "id", name: "name" },
+  accountInviteCodes: { code: "code", accountId: "accountId", targetRole: "targetRole", expiresAt: "expiresAt", claimedBy: "claimedBy" },
   legalDocuments: { id: "id", isCurrent: "isCurrent" },
   consentRecords: { id: "id" },
 }));
@@ -71,13 +72,30 @@ vi.mock("@/lib/supabase/server", () => ({
   createSupabaseServerClient: vi.fn().mockResolvedValue({
     auth: {
       signUp: (...args: unknown[]) => mockSupabaseSignUp(...args),
+      verifyOtp: (...args: unknown[]) => mockVerifyOtp(...args),
     },
   }),
 }));
 
+const mockAdminCreateUser = vi.fn().mockResolvedValue({
+  data: { user: { id: "new-user-id" } },
+  error: null,
+});
+const mockAdminGenerateLink = vi.fn().mockResolvedValue({
+  data: { properties: { hashed_token: "tok" } },
+  error: null,
+});
+const mockVerifyOtp = vi.fn().mockResolvedValue({ data: {}, error: null });
+
 vi.mock("@/lib/supabase/admin", () => ({
   createSupabaseAdminClient: vi.fn().mockReturnValue({
-    auth: { admin: { deleteUser: vi.fn().mockResolvedValue({}) } },
+    auth: {
+      admin: {
+        deleteUser: vi.fn().mockResolvedValue({}),
+        createUser: (...args: unknown[]) => mockAdminCreateUser(...args),
+        generateLink: (...args: unknown[]) => mockAdminGenerateLink(...args),
+      },
+    },
   }),
 }));
 
@@ -229,6 +247,158 @@ describe("Signup — role handling", () => {
     expect(response.status).toBe(400);
     const body = await response.json();
     expect(body.error.code).toBe("VALIDATION_ERROR");
+  });
+});
+
+// ── Invite-driven role override ─────────────────────────────────────────────
+// When the signup payload carries an invite (invite_code + invite_account),
+// the invite's targetRole is the source of truth — the form-supplied role
+// is informational. Without this override, a recipient invited as Parent
+// could submit role=student and end up with a bogus self-owned student
+// account *and* parent membership in the inviter's account.
+
+describe("Signup — invite role override", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockInsertValues.length = 0;
+    dbChain = createQueryChain();
+  });
+
+  function inviteSignupBody(role: string) {
+    return {
+      email: "invitee@test.com",
+      password: "Password123!",
+      age_confirmed: true,
+      role,
+      tos_accepted: true,
+      invite_code: "ABC12345",
+      invite_account: "11111111-1111-4111-8111-111111111111",
+    };
+  }
+
+  it("uses the invite's targetRole even when the form posts a different role", async () => {
+    // Invite says "parent"; form posts "student". The user record must end
+    // up as parent — otherwise the student branch creates a self-owned
+    // account, profile and trial subscription that nobody asked for.
+    let queryIndex = 0;
+    dbChain.then = vi.fn().mockImplementation((resolve: (v: unknown) => unknown) => {
+      queryIndex++;
+      if (queryIndex === 1) return Promise.resolve(resolve([
+        {
+          targetRole: "parent",
+          expiresAt: new Date(Date.now() + 86400_000),
+          claimedBy: null,
+        },
+      ]));
+      return Promise.resolve(resolve([])); // legal docs etc.
+    });
+
+    const { POST } = await import("@/app/api/v1/auth/signup/route");
+
+    const response = await POST(new NextRequest(
+      new URL("http://localhost:3000/api/v1/auth/signup"),
+      { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(inviteSignupBody("student")) }
+    ));
+    const body = await response.json();
+
+    expect(response.status).toBe(201);
+    expect(body.data.user.role).toBe("parent");
+    const userInsert = mockInsertValues.find((v) => v.role !== undefined);
+    expect(userInsert?.role).toBe("parent");
+  });
+
+  it("maps invite targetRole=guardian to 'parent' on storage", async () => {
+    let queryIndex = 0;
+    dbChain.then = vi.fn().mockImplementation((resolve: (v: unknown) => unknown) => {
+      queryIndex++;
+      if (queryIndex === 1) return Promise.resolve(resolve([
+        {
+          targetRole: "guardian",
+          expiresAt: new Date(Date.now() + 86400_000),
+          claimedBy: null,
+        },
+      ]));
+      return Promise.resolve(resolve([]));
+    });
+
+    const { POST } = await import("@/app/api/v1/auth/signup/route");
+
+    const response = await POST(new NextRequest(
+      new URL("http://localhost:3000/api/v1/auth/signup"),
+      { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(inviteSignupBody("student")) }
+    ));
+    const body = await response.json();
+
+    expect(response.status).toBe(201);
+    expect(body.data.user.role).toBe("parent");
+  });
+
+  it("returns 400 INVITE_INVALID when the invite code is not found", async () => {
+    dbChain.then = vi.fn().mockImplementation((resolve: (v: unknown) => unknown) =>
+      Promise.resolve(resolve([])) // invite lookup misses
+    );
+
+    const { POST } = await import("@/app/api/v1/auth/signup/route");
+
+    const response = await POST(new NextRequest(
+      new URL("http://localhost:3000/api/v1/auth/signup"),
+      { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(inviteSignupBody("parent")) }
+    ));
+    const body = await response.json();
+
+    expect(response.status).toBe(400);
+    expect(body.error.code).toBe("INVITE_INVALID");
+    // No supabase user created and no DB writes for an invalid invite.
+    expect(mockAdminCreateUser).not.toHaveBeenCalled();
+    expect(mockInsertValues).toHaveLength(0);
+  });
+
+  it("returns 400 INVITE_INVALID when the invite has already been claimed", async () => {
+    dbChain.then = vi.fn().mockImplementation((resolve: (v: unknown) => unknown) =>
+      Promise.resolve(resolve([
+        {
+          targetRole: "parent",
+          expiresAt: new Date(Date.now() + 86400_000),
+          claimedBy: "someone-else",
+        },
+      ]))
+    );
+
+    const { POST } = await import("@/app/api/v1/auth/signup/route");
+
+    const response = await POST(new NextRequest(
+      new URL("http://localhost:3000/api/v1/auth/signup"),
+      { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(inviteSignupBody("parent")) }
+    ));
+    const body = await response.json();
+
+    expect(response.status).toBe(400);
+    expect(body.error.code).toBe("INVITE_INVALID");
+    expect(mockAdminCreateUser).not.toHaveBeenCalled();
+  });
+
+  it("returns 400 INVITE_INVALID when the invite has expired", async () => {
+    dbChain.then = vi.fn().mockImplementation((resolve: (v: unknown) => unknown) =>
+      Promise.resolve(resolve([
+        {
+          targetRole: "parent",
+          expiresAt: new Date(Date.now() - 1000), // expired
+          claimedBy: null,
+        },
+      ]))
+    );
+
+    const { POST } = await import("@/app/api/v1/auth/signup/route");
+
+    const response = await POST(new NextRequest(
+      new URL("http://localhost:3000/api/v1/auth/signup"),
+      { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(inviteSignupBody("parent")) }
+    ));
+    const body = await response.json();
+
+    expect(response.status).toBe(400);
+    expect(body.error.code).toBe("INVITE_INVALID");
+    expect(mockAdminCreateUser).not.toHaveBeenCalled();
   });
 });
 

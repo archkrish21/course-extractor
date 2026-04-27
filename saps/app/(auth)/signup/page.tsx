@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState, type FormEvent } from "react";
+import { useEffect, useRef, useState, type FormEvent } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import HCaptcha from "@hcaptcha/react-hcaptcha";
@@ -37,6 +37,7 @@ export default function SignupPage() {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [ageConfirmed, setAgeConfirmed] = useState(false);
   const [role, setRole] = useState<Role>("student");
+  const [roleLocked, setRoleLocked] = useState(false);
   const [tosAccepted, setTosAccepted] = useState(false);
   const [showSchoolRequest, setShowSchoolRequest] = useState(false);
   const [requestSchool, setRequestSchool] = useState("");
@@ -48,6 +49,19 @@ export default function SignupPage() {
   const [hasInvite, setHasInvite] = useState(false);
   const [captchaToken, setCaptchaToken] = useState<string | null>(null);
   const captchaRef = useRef<HCaptcha | null>(null);
+
+  // Pre-select and lock the role from the invite link (`?role=parent|guardian`).
+  // The invite is the source of truth — disabling the other tabs prevents the
+  // user from accidentally signing up with the wrong role and ending up with a
+  // bogus self-owned account. Set in useEffect rather than initial state to
+  // avoid an SSR/CSR hydration mismatch.
+  useEffect(() => {
+    const param = new URLSearchParams(window.location.search).get("role");
+    if (param && ROLES.some((r) => r.value === param)) {
+      setRole(param as Role);
+      setRoleLocked(true);
+    }
+  }, []);
 
   function validate(): FieldErrors {
     const errs: FieldErrors = {};
@@ -189,28 +203,41 @@ export default function SignupPage() {
           <fieldset>
             <legend className="mb-2 text-sm font-medium text-foreground">I am a</legend>
             <div className="grid grid-cols-3 gap-2">
-              {ROLES.map((r) => (
-                <button
-                  key={r.value}
-                  type="button"
-                  role="radio"
-                  aria-checked={role === r.value}
-                  onClick={() => setRole(r.value)}
-                  className={`
-                    flex h-full flex-col items-center justify-center gap-0.5 rounded-xl border px-3 py-3 text-center
-                    min-h-[44px] cursor-pointer transition-all duration-150
-                    focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring
-                    ${role === r.value
-                      ? "border-primary bg-primary-light text-primary shadow-sm"
-                      : "border-border bg-background text-muted-foreground hover:border-primary/30 hover:bg-muted/50"
-                    }
-                  `}
-                >
-                  <span className="text-sm font-semibold">{r.label}</span>
-                  <span className="text-[10px] leading-tight">{r.desc}</span>
-                </button>
-              ))}
+              {ROLES.map((r) => {
+                const selected = role === r.value;
+                const disabled = roleLocked && !selected;
+                return (
+                  <button
+                    key={r.value}
+                    type="button"
+                    role="radio"
+                    aria-checked={selected}
+                    aria-disabled={disabled}
+                    disabled={disabled}
+                    onClick={() => setRole(r.value)}
+                    className={`
+                      flex h-full flex-col items-center justify-center gap-0.5 rounded-xl border px-3 py-3 text-center
+                      min-h-[44px] transition-all duration-150
+                      focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring
+                      ${selected
+                        ? "border-primary bg-primary-light text-primary shadow-sm cursor-pointer"
+                        : disabled
+                          ? "border-border bg-muted/30 text-muted-foreground/50 cursor-not-allowed"
+                          : "border-border bg-background text-muted-foreground hover:border-primary/30 hover:bg-muted/50 cursor-pointer"
+                      }
+                    `}
+                  >
+                    <span className="text-sm font-semibold">{r.label}</span>
+                    <span className="text-[10px] leading-tight">{r.desc}</span>
+                  </button>
+                );
+              })}
             </div>
+            {roleLocked && (
+              <p className="mt-1.5 text-xs text-muted-foreground">
+                Role set by your invite.
+              </p>
+            )}
             {errors.role && <p className="mt-1.5 text-sm text-destructive" role="alert">{errors.role}</p>}
           </fieldset>
 

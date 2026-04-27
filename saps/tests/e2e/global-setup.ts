@@ -139,20 +139,23 @@ async function warmupRoutes(baseUrl: string) {
     ["GET", "/onboarding"],
   ];
 
+  // Sequential, not Promise.all: bombarding Turbopack with 30 concurrent
+  // compiles dropped work under load and left some routes uncompiled,
+  // producing flaky HTML 404s in tests like "updating a course's status
+  // persists." Sequential adds ~10s of wall clock once per suite — cheap
+  // insurance against the race.
   const start = Date.now();
-  await Promise.all(
-    routes.map(async ([method, path]) => {
-      try {
-        await fetch(`${baseUrl}${path}`, {
-          method,
-          headers: { "content-type": "application/json" },
-          body: method === "POST" || method === "PATCH" ? "{}" : undefined,
-        });
-      } catch {
-        // ignore — only goal is to force route compilation
-      }
-    }),
-  );
+  for (const [method, path] of routes) {
+    try {
+      await fetch(`${baseUrl}${path}`, {
+        method,
+        headers: { "content-type": "application/json" },
+        body: method === "POST" || method === "PATCH" ? "{}" : undefined,
+      });
+    } catch {
+      // ignore — only goal is to force route compilation
+    }
+  }
   console.log(
     `[e2e-setup] Warmed ${routes.length} routes in ${Date.now() - start}ms`,
   );

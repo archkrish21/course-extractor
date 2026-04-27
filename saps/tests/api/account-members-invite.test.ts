@@ -80,9 +80,17 @@ vi.mock("drizzle-orm", () => ({
   and: vi.fn((...args: unknown[]) => ({ type: "and", args })),
   count: vi.fn(() => ({ type: "count" })),
   inArray: vi.fn((...args: unknown[]) => ({ type: "inArray", args })),
+  // `sql` is a tagged template; capture the values so tests can assert that
+  // the lookup email was lowercased before being interpolated.
+  sql: vi.fn((strings: TemplateStringsArray, ...values: unknown[]) => ({
+    type: "sql",
+    strings: Array.from(strings),
+    values,
+  })),
 }));
 
 import { requireAuth, getAccountContext } from "@/lib/auth/get-user";
+import { newUserInviteEmail, existingUserInviteEmail } from "@/lib/email/templates";
 import { POST } from "@/app/api/v1/accounts/[id]/members/route";
 
 // ── Helpers ─────────────────────────────────────────────────────────────────
@@ -156,6 +164,68 @@ describe("POST /api/v1/accounts/:id/members — onboarding gate", () => {
 
     expect(response.status).toBe(201);
     expect(body.data.invite_code).toBe("ABC12345");
+  });
+
+  it("treats the invited email case-insensitively against existing members (already-linked)", async () => {
+    // Stored member email is mixed-case; inviter types it lowercased.
+    // The lookup must find the member and return ALREADY_LINKED, otherwise
+    // a duplicate invite would be created and the user would hit a worse
+    // error later in the join flow.
+    let queryIndex = 0;
+    dbChain.then = vi.fn().mockImplementation((resolve: (v: unknown) => unknown) => {
+      queryIndex++;
+      if (queryIndex === 1) return Promise.resolve(resolve([
+        { role: "student", onboardingCompletedAt: new Date() },
+      ]));
+      if (queryIndex === 2) return Promise.resolve(resolve([
+        {
+          userId: "u-2",
+          email: "John.Doe@Example.com",
+          firstName: "John",
+          lastName: "Doe",
+          role: "parent",
+        },
+      ]));
+      return Promise.resolve(resolve([]));
+    });
+
+    const response = await POST(
+      makeInviteRequest({ target_role: "parent", email: "john.doe@example.com" }),
+      routeContext(TEST_ACCOUNT_ID)
+    );
+    const body = await response.json();
+
+    expect(response.status).toBe(409);
+    expect(body.error.code).toBe("ALREADY_LINKED");
+  });
+
+  it("treats the invited email case-insensitively when picking the email template", async () => {
+    // User exists in `users` (with mixed-case stored email) but isn't yet a
+    // member of this account. The existing-user lookup must hit so we send
+    // the join-link email — not the signup-link email, which would fail at
+    // signup with EMAIL_EXISTS and strand the recipient.
+    let queryIndex = 0;
+    dbChain.then = vi.fn().mockImplementation((resolve: (v: unknown) => unknown) => {
+      queryIndex++;
+      if (queryIndex === 1) return Promise.resolve(resolve([
+        { role: "student", onboardingCompletedAt: new Date() },
+      ]));
+      if (queryIndex === 2) return Promise.resolve(resolve([])); // not yet a member
+      if (queryIndex === 3) return Promise.resolve(resolve([{ count: 1 }])); // tier count
+      if (queryIndex === 4) return Promise.resolve(resolve([{ studentName: "Stu" }])); // account
+      if (queryIndex === 5) return Promise.resolve(resolve([{ email: "student@test.com" }])); // inviter
+      if (queryIndex === 6) return Promise.resolve(resolve([{ id: "u-2" }])); // existing user found
+      return Promise.resolve(resolve([]));
+    });
+
+    const response = await POST(
+      makeInviteRequest({ target_role: "parent", email: "john.doe@example.com" }),
+      routeContext(TEST_ACCOUNT_ID)
+    );
+
+    expect(response.status).toBe(201);
+    expect(existingUserInviteEmail).toHaveBeenCalledTimes(1);
+    expect(newUserInviteEmail).not.toHaveBeenCalled();
   });
 
   it("does not apply the onboarding gate to non-student inviters", async () => {

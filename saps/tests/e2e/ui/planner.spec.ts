@@ -45,3 +45,15 @@ test("new plan button opens the create-plan modal", async ({ page }) => {
   await modal.getByRole("button", { name: /Cancel/i }).click();
   await expect(modal).toBeHidden();
 });
+
+test("invalid planId in URL shows Plan Not Found instead of silently swapping plans", async ({ page }) => {
+  await page.goto("/planner?planId=aaa");
+  await expect(page.locator("text=Loading your plans...")).toBeHidden({ timeout: 15_000 });
+  await expect(page.getByRole("heading", { name: /Plan Not Found/i })).toBeVisible({
+    timeout: 5_000,
+  });
+  // The grid must NOT render — that would mean we silently fell back to the primary plan.
+  await expect(page.locator('[aria-label="Select a plan"]')).toHaveCount(0);
+  // "Back to Plans" link points at /plans
+  await expect(page.getByRole("link", { name: /Back to Plans/i })).toHaveAttribute("href", "/plans");
+});

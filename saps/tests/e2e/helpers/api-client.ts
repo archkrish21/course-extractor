@@ -231,6 +231,14 @@ export async function updatePlanCourse(
   const res = await request.patch(`/api/v1/plans/${planId}/courses/${planCourseId}`, {
     data: body,
   });
+  // Surface the actual failure (e.g. dev-server 404 from Turbopack route race)
+  // instead of letting silent non-2xx leak into a confusing assertion later.
+  if (!res.ok()) {
+    const text = await res.text().catch(() => "");
+    throw new Error(
+      `PATCH /api/v1/plans/${planId}/courses/${planCourseId} failed: ${res.status()} ${text.slice(0, 200)}`,
+    );
+  }
   return res;
 }
 

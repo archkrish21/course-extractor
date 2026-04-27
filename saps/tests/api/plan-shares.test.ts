@@ -122,6 +122,8 @@ vi.mock("drizzle-orm", () => ({
   and: vi.fn((...args: unknown[]) => ({ type: "and", args })),
   or: vi.fn((...args: unknown[]) => ({ type: "or", args })),
   inArray: vi.fn((...args: unknown[]) => ({ type: "inArray", args })),
+  isNull: vi.fn((...args: unknown[]) => ({ type: "isNull", args })),
+  gt: vi.fn((...args: unknown[]) => ({ type: "gt", args })),
   count: vi.fn(() => ({ type: "count" })),
   sql: Object.assign(
     (strings: TemplateStringsArray, ..._values: unknown[]) => ({
@@ -652,10 +654,17 @@ describe("POST /api/v1/accounts/:id/members — linked accounts limit", () => {
   it("returns 402 when at linked accounts limit", async () => {
     mockGetEffectiveTier.mockResolvedValue({ maxLinkedAccounts: 3 });
 
-    // Query 1: member count returns 3 (at limit)
-    dbChain.then = vi.fn().mockImplementation((resolve: (v: unknown) => unknown) =>
-      Promise.resolve(resolve([{ count: 3 }]))
-    );
+    // No email on this invite, so the email-dupe and pending-dupe checks
+    // are skipped. Only queries: inviter lookup, then parallel
+    // members-count + pending-count.
+    let queryIndex = 0;
+    dbChain.then = vi.fn().mockImplementation((resolve: (v: unknown) => unknown) => {
+      queryIndex++;
+      if (queryIndex === 1) return Promise.resolve(resolve([])); // inviter (no row → no onboarding gate)
+      if (queryIndex === 2) return Promise.resolve(resolve([{ count: 3 }])); // members
+      if (queryIndex === 3) return Promise.resolve(resolve([{ count: 0 }])); // pending
+      return Promise.resolve(resolve([]));
+    });
 
     const request = makeJsonRequest(
       `http://localhost:3000/api/v1/accounts/${TEST_ACCOUNT_ID}/members`,
@@ -679,9 +688,11 @@ describe("POST /api/v1/accounts/:id/members — linked accounts limit", () => {
       queryIndex++;
       if (queryIndex === 1) return Promise.resolve(resolve([{ role: "student", onboardingCompletedAt: new Date() }])); // inviter onboarding gate
       if (queryIndex === 2) return Promise.resolve(resolve([])); // duplicate email check — none
-      if (queryIndex === 3) return Promise.resolve(resolve([{ count: 2 }])); // member count — under limit
-      if (queryIndex === 4) return Promise.resolve(resolve([{ studentName: "Test Student" }])); // account lookup for email
-      if (queryIndex === 5) return Promise.resolve(resolve([{ email: "owner@test.com" }])); // inviter lookup
+      if (queryIndex === 3) return Promise.resolve(resolve([])); // pending duplicate check — none
+      if (queryIndex === 4) return Promise.resolve(resolve([{ count: 2 }])); // members count
+      if (queryIndex === 5) return Promise.resolve(resolve([{ count: 0 }])); // pending count
+      if (queryIndex === 6) return Promise.resolve(resolve([{ studentName: "Test Student" }])); // account lookup for email
+      if (queryIndex === 7) return Promise.resolve(resolve([{ email: "owner@test.com" }])); // inviter lookup
       return Promise.resolve(resolve([]));
     });
     mockReturning.mockResolvedValue([{
@@ -753,11 +764,13 @@ describe("POST /api/v1/accounts/:id/members — linked accounts limit", () => {
       queryIndex++;
       if (queryIndex === 1) return Promise.resolve(resolve([{ role: "student", onboardingCompletedAt: new Date() }])); // inviter onboarding gate
       if (queryIndex === 2) return Promise.resolve(resolve([])); // duplicate email check — none
+      if (queryIndex === 3) return Promise.resolve(resolve([])); // pending duplicate check — none
       // Ownership check: return the plan as owned so the handler proceeds
-      if (queryIndex === 3) return Promise.resolve(resolve([{ planId: sharedPlanId }]));
-      if (queryIndex === 4) return Promise.resolve(resolve([{ count: 1 }]));
-      if (queryIndex === 5) return Promise.resolve(resolve([{ studentName: "Test Student" }]));
-      if (queryIndex === 6) return Promise.resolve(resolve([{ email: "owner@test.com" }]));
+      if (queryIndex === 4) return Promise.resolve(resolve([{ planId: sharedPlanId }]));
+      if (queryIndex === 5) return Promise.resolve(resolve([{ count: 1 }])); // members count
+      if (queryIndex === 6) return Promise.resolve(resolve([{ count: 0 }])); // pending count
+      if (queryIndex === 7) return Promise.resolve(resolve([{ studentName: "Test Student" }]));
+      if (queryIndex === 8) return Promise.resolve(resolve([{ email: "owner@test.com" }]));
       return Promise.resolve(resolve([]));
     });
     mockReturning.mockResolvedValue([{

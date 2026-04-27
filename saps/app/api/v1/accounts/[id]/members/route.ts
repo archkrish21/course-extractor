@@ -2,15 +2,16 @@ import { NextRequest } from "next/server";
 import { z } from "zod";
 import { db } from "@/lib/db";
 import { accountMembers, accountInviteCodes, accounts, users, planShares } from "@/lib/db/schema";
-import { eq, and, count, inArray, sql } from "drizzle-orm";
+import { eq, and, count, inArray, isNull, gt, sql } from "drizzle-orm";
 import { getEffectiveTier, invalidateSubscriptionCache } from "@/lib/subscription/middleware";
-import { successResponse, errorResponse } from "@/lib/api/response";
+import { successResponse, errorResponse, serverError } from "@/lib/api/response";
 import { rateLimit } from "@/lib/api/rate-limit";
 import { requireSameOrigin } from "@/lib/api/require-same-origin";
 import { requireAuth, getAccountContext } from "@/lib/auth/get-user";
 import { audit } from "@/lib/audit/log";
 import { sendEmail } from "@/lib/email/client";
 import { newUserInviteEmail, existingUserInviteEmail } from "@/lib/email/templates";
+import { normalizeEmail } from "@/lib/email/normalize";
 
 function generateInviteCode(): string {
   const chars = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789";
@@ -51,26 +52,49 @@ export async function GET(request: NextRequest, context: RouteContext) {
       return errorResponse("FORBIDDEN", "Not a member of this account.", 403);
     }
 
-    const members = await db
-      .select({
-        userId: accountMembers.userId,
-        role: accountMembers.role,
-        canEdit: accountMembers.canEdit,
-        joinedAt: accountMembers.joinedAt,
-        invitedBy: accountMembers.invitedBy,
-        email: users.email,
-        firstName: users.firstName,
-        lastName: users.lastName,
-      })
-      .from(accountMembers)
-      .innerJoin(users, eq(accountMembers.userId, users.id))
-      .where(eq(accountMembers.accountId, accountId));
+    // Pending invites are filtered to unclaimed and not-yet-expired —
+    // expired ones are hidden because the inviter can't act on them
+    // anyway. Pre-target_email rows surface with email=null and render
+    // as "Pending invite" on the client.
+    const [members, pendingInvites] = await Promise.all([
+      db
+        .select({
+          userId: accountMembers.userId,
+          role: accountMembers.role,
+          canEdit: accountMembers.canEdit,
+          joinedAt: accountMembers.joinedAt,
+          invitedBy: accountMembers.invitedBy,
+          email: users.email,
+          firstName: users.firstName,
+          lastName: users.lastName,
+        })
+        .from(accountMembers)
+        .innerJoin(users, eq(accountMembers.userId, users.id))
+        .where(eq(accountMembers.accountId, accountId)),
+      db
+        .select({
+          id: accountInviteCodes.id,
+          targetEmail: accountInviteCodes.targetEmail,
+          targetRole: accountInviteCodes.targetRole,
+          expiresAt: accountInviteCodes.expiresAt,
+          createdBy: accountInviteCodes.createdBy,
+          createdAt: accountInviteCodes.createdAt,
+        })
+        .from(accountInviteCodes)
+        .where(
+          and(
+            eq(accountInviteCodes.accountId, accountId),
+            isNull(accountInviteCodes.claimedBy),
+            gt(accountInviteCodes.expiresAt, new Date())
+          )
+        ),
+    ]);
 
-    // Students can remove anyone; others can only remove members they invited
+    // Students can remove/revoke anything; others only what they created
     const callerRole = accountCtx.role;
 
-    return successResponse(
-      members.map((m) => ({
+    return successResponse({
+      members: members.map((m) => ({
         user_id: m.userId,
         email: m.email,
         first_name: m.firstName,
@@ -81,11 +105,19 @@ export async function GET(request: NextRequest, context: RouteContext) {
         can_remove:
           m.userId !== user.id &&
           (callerRole === "student" || m.invitedBy === user.id),
-      }))
-    );
+      })),
+      pending_invites: pendingInvites.map((inv) => ({
+        invite_id: inv.id,
+        email: inv.targetEmail,
+        role: inv.targetRole,
+        expires_at: inv.expiresAt,
+        invited_by_user_id: inv.createdBy,
+        invited_at: inv.createdAt,
+        can_revoke: callerRole === "student" || inv.createdBy === user.id,
+      })),
+    });
   } catch (error) {
-    console.error("[accounts/:id/members] GET error:", error);
-    return errorResponse("INTERNAL_ERROR", "An unexpected error occurred.", 500);
+    return serverError(error, "accounts/:id/members GET");
   }
 }
 
@@ -100,18 +132,6 @@ export async function POST(request: NextRequest, context: RouteContext) {
 
     const csrf = requireSameOrigin(request);
     if (csrf) return csrf;
-
-    // Rate limit: 20 invites per hour per user. Prevents an invite-spam
-    // abuse pattern where a compromised account blasts out invites.
-    const rl = await rateLimit(`invite:${user.id}`, 20, 3600);
-    if (!rl.success) {
-      return errorResponse(
-        "RATE_LIMITED",
-        "Too many invite attempts. Try again later.",
-        429,
-        { retry_after: rl.resetAt - Math.floor(Date.now() / 1000) }
-      );
-    }
 
     const { id: accountId } = await context.params;
 
@@ -151,11 +171,11 @@ export async function POST(request: NextRequest, context: RouteContext) {
     const { target_role, shared_plans } = parsed.data;
 
     // If an email was provided, block inviting someone already linked to this
-    // account — including the inviter themselves. Invite codes don't store the
-    // target email, so we can only catch already-joined members; pending invite
-    // codes for the same email still pass through.
+    // account (including the inviter themselves) or with an outstanding pending
+    // invite for the same email — duplicate invites just confuse the recipient
+    // and the inviter, and the original code is still revocable from the UI.
     if (parsed.data.email) {
-      const normalizedEmail = parsed.data.email.trim().toLowerCase();
+      const normalizedEmail = normalizeEmail(parsed.data.email);
 
       // Self-invite: friendlier dedicated message
       if (normalizedEmail === user.email.toLowerCase()) {
@@ -167,24 +187,39 @@ export async function POST(request: NextRequest, context: RouteContext) {
         );
       }
 
-      const [existing] = await db
-        .select({
-          userId: users.id,
-          email: users.email,
-          firstName: users.firstName,
-          lastName: users.lastName,
-          role: accountMembers.role,
-        })
-        .from(users)
-        .innerJoin(accountMembers, eq(accountMembers.userId, users.id))
-        .where(
-          and(
-            sql`lower(${users.email}) = ${normalizedEmail}`,
-            eq(accountMembers.accountId, accountId)
+      const [existingRows, pendingDupRows] = await Promise.all([
+        db
+          .select({
+            userId: users.id,
+            email: users.email,
+            firstName: users.firstName,
+            lastName: users.lastName,
+            role: accountMembers.role,
+          })
+          .from(users)
+          .innerJoin(accountMembers, eq(accountMembers.userId, users.id))
+          .where(
+            and(
+              sql`lower(${users.email}) = ${normalizedEmail}`,
+              eq(accountMembers.accountId, accountId)
+            )
           )
-        )
-        .limit(1);
+          .limit(1),
+        db
+          .select({ id: accountInviteCodes.id })
+          .from(accountInviteCodes)
+          .where(
+            and(
+              eq(accountInviteCodes.accountId, accountId),
+              eq(accountInviteCodes.targetEmail, normalizedEmail),
+              isNull(accountInviteCodes.claimedBy),
+              gt(accountInviteCodes.expiresAt, new Date())
+            )
+          )
+          .limit(1),
+      ]);
 
+      const existing = existingRows[0];
       if (existing) {
         const displayName =
           [existing.firstName, existing.lastName].filter(Boolean).join(" ").trim() ||
@@ -194,6 +229,15 @@ export async function POST(request: NextRequest, context: RouteContext) {
           `${displayName} is already linked to this account as ${existing.role === "student" ? "the student" : `a ${existing.role}`}.`,
           409,
           { role: existing.role, email: existing.email }
+        );
+      }
+
+      if (pendingDupRows[0]) {
+        return errorResponse(
+          "ALREADY_INVITED",
+          `${parsed.data.email} already has a pending invite. Wait for them to accept, or revoke it from the list above.`,
+          409,
+          { email: parsed.data.email }
         );
       }
     }
@@ -225,16 +269,45 @@ export async function POST(request: NextRequest, context: RouteContext) {
       }
     }
 
+    // Rate limit: 20 invites per hour per user. Counts only requests that
+    // pass all the cheap pre-checks (validation, dedupe, ownership) so a
+    // user mistyping or hitting a duplicate doesn't burn quota — only
+    // attempts that would actually create a new invite count.
+    const rl = await rateLimit(`invite:${user.id}`, 20, 3600);
+    if (!rl.success) {
+      return errorResponse(
+        "RATE_LIMITED",
+        "Too many invite attempts. Try again later.",
+        429,
+        { retry_after: rl.resetAt - Math.floor(Date.now() / 1000) }
+      );
+    }
+
     // Check linked accounts limit based on subscription tier
     // Invalidate cache first to ensure fresh tier data
     await invalidateSubscriptionCache({ accountId, userId: user.id });
     const tier = await getEffectiveTier({ accountId, userId: user.id });
-    const [memberCount] = await db
-      .select({ count: count() })
-      .from(accountMembers)
-      .where(eq(accountMembers.accountId, accountId));
+    // Count pending invites against the limit too — otherwise a Plus user
+    // (max 5) could queue 50 pending invites that all push past the cap
+    // when accepted. Pending and accepted seats are equivalent for billing.
+    const [memberCount, pendingCount] = await Promise.all([
+      db
+        .select({ count: count() })
+        .from(accountMembers)
+        .where(eq(accountMembers.accountId, accountId)),
+      db
+        .select({ count: count() })
+        .from(accountInviteCodes)
+        .where(
+          and(
+            eq(accountInviteCodes.accountId, accountId),
+            isNull(accountInviteCodes.claimedBy),
+            gt(accountInviteCodes.expiresAt, new Date())
+          )
+        ),
+    ]);
 
-    const currentCount = memberCount?.count ?? 0;
+    const currentCount = (memberCount[0]?.count ?? 0) + (pendingCount[0]?.count ?? 0);
     const maxLinked = tier.maxLinkedAccounts ?? 3;
     if (currentCount >= maxLinked) {
       return errorResponse(
@@ -256,6 +329,7 @@ export async function POST(request: NextRequest, context: RouteContext) {
         accountId,
         code: inviteCode,
         targetRole: target_role,
+        targetEmail: normalizeEmail(parsed.data.email),
         sharedPlans: shared_plans?.map((sp) => ({ planId: sp.plan_id, permission: sp.permission })) ?? null,
         expiresAt,
         createdBy: user.id,
@@ -286,10 +360,9 @@ export async function POST(request: NextRequest, context: RouteContext) {
         .where(eq(users.id, user.id))
         .limit(1);
 
-      // Check if the invited email already has a SAPS account.
       // Compare case-insensitively: `users.email` is stored as the user
       // typed it at signup, while the invited email may use different casing.
-      const lookupEmail = parsed.data.email.trim().toLowerCase();
+      const lookupEmail = normalizeEmail(parsed.data.email);
       const [existingUser] = await db
         .select({ id: users.id })
         .from(users)

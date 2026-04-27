@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -24,12 +24,22 @@ interface AccountMember {
   canRemove: boolean;
 }
 
+interface PendingInvite {
+  inviteId: string;
+  email: string | null;
+  role: string;
+  expiresAt: string;
+  canRevoke: boolean;
+}
+
 export default function SettingsPage() {
   const { currentAccount, refetchAccounts, userEmail, userRole, userFirstName, userLastName, refetchUser, onboardingCompleted } = useAccount();
   const { showToast } = useToast();
 
   // State
   const [members, setMembers] = useState<AccountMember[]>([]);
+  const [pendingInvites, setPendingInvites] = useState<PendingInvite[]>([]);
+  const [revokingInvite, setRevokingInvite] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [editingUserName, setEditingUserName] = useState(false);
   const [editFirstName, setEditFirstName] = useState("");
@@ -38,9 +48,7 @@ export default function SettingsPage() {
   const [removingMember, setRemovingMember] = useState<string | null>(null);
   const [inviteEmail, setInviteEmail] = useState("");
   const [inviteRole, setInviteRole] = useState("parent");
-  const [inviteCode, setInviteCode] = useState<string | null>(null);
   const [generating, setGenerating] = useState(false);
-  const [inviteSent, setInviteSent] = useState(false);
   const [consentInfo, setConsentInfo] = useState<Array<{ type: string; version: string; accepted_at: string }>>([]);
   const [billingCycle, setBillingCycle] = useState<string | null>(null);
   const [nextPayment, setNextPayment] = useState<string | null>(null);
@@ -83,30 +91,39 @@ export default function SettingsPage() {
   }, [isParentLike, searchParams]);
 
   // Fetch data
+  const loadMembers = useCallback(async () => {
+    if (!currentAccount?.id) return;
+    try {
+      const res = await apiFetch(`/api/v1/accounts/${currentAccount.id}/members`);
+      if (res.ok) {
+        const json = await res.json();
+        const data = json.data ?? json;
+        const list = Array.isArray(data) ? data : data.members ?? [];
+        setMembers(list.map((m: Record<string, unknown>) => ({
+          userId: m.user_id ?? m.userId,
+          email: m.email,
+          firstName: m.first_name ?? m.firstName ?? null,
+          lastName: m.last_name ?? m.lastName ?? null,
+          role: m.role,
+          canEdit: m.can_edit ?? m.canEdit ?? false,
+          joinedAt: m.joined_at ?? m.joinedAt ?? "",
+          canRemove: m.can_remove ?? m.canRemove ?? false,
+        })) as AccountMember[]);
+        const invites = Array.isArray(data) ? [] : (data.pending_invites ?? []);
+        setPendingInvites((invites as Record<string, unknown>[]).map((inv) => ({
+          inviteId: inv.invite_id as string,
+          email: (inv.email as string | null) ?? null,
+          role: inv.role as string,
+          expiresAt: (inv.expires_at as string) ?? "",
+          canRevoke: (inv.can_revoke as boolean) ?? false,
+        })));
+      }
+    } catch { /* silent */ }
+    finally { setLoading(false); }
+  }, [currentAccount?.id]);
+
   useEffect(() => {
-    async function fetchMembers() {
-      if (!currentAccount?.id) return;
-      try {
-        const res = await apiFetch(`/api/v1/accounts/${currentAccount.id}/members`);
-        if (res.ok) {
-          const json = await res.json();
-          const data = json.data ?? json;
-          const list = Array.isArray(data) ? data : data.members ?? [];
-          setMembers(list.map((m: Record<string, unknown>) => ({
-            userId: m.user_id ?? m.userId,
-            email: m.email,
-            firstName: m.first_name ?? m.firstName ?? null,
-            lastName: m.last_name ?? m.lastName ?? null,
-            role: m.role,
-            canEdit: m.can_edit ?? m.canEdit ?? false,
-            joinedAt: m.joined_at ?? m.joinedAt ?? "",
-            canRemove: m.can_remove ?? m.canRemove ?? false,
-          })) as AccountMember[]);
-        }
-      } catch { /* silent */ }
-      finally { setLoading(false); }
-    }
-    fetchMembers();
+    loadMembers();
     apiFetch("/api/v1/subscriptions").then((r) => (r.ok ? r.json() : null)).then((json) => {
       const sub = json?.data?.subscription ?? json?.subscription;
       setBillingCycle(sub?.billingCycle ?? null);
@@ -147,7 +164,7 @@ export default function SettingsPage() {
         if (data?.status) setStudentInviteStatus(data);
       }).catch(() => {});
     }
-  }, [currentAccount]);
+  }, [currentAccount, loadMembers]);
 
   const otherMembers = members.filter((m) => {
     if (m.email === userEmail) return false;
@@ -215,29 +232,50 @@ export default function SettingsPage() {
     finally { setRemovingMember(null); setRemoveConfirm(null); }
   };
 
+  const handleRevokePendingMemberInvite = async (inviteId: string, email: string | null) => {
+    if (!currentAccount?.id) return;
+    setRevokingInvite(inviteId);
+    try {
+      const res = await apiFetch(`/api/v1/accounts/${currentAccount.id}/invites/${inviteId}`, { method: "DELETE" });
+      if (res.ok) {
+        showToast(email ? `Invite to ${email} revoked.` : "Pending invite revoked.");
+        loadMembers();
+      } else {
+        const json = await res.json().catch(() => null);
+        showToast(json?.error?.message ?? "Couldn't revoke that invite.");
+      }
+    } catch { showToast("Something went wrong. Please try again."); }
+    finally { setRevokingInvite(null); }
+  };
+
   const handleSendInvite = async () => {
     if (!currentAccount?.id || !inviteEmail.trim()) return;
-    setGenerating(true); setInviteSent(false);
+    const recipient = inviteEmail.trim();
+    setGenerating(true);
     try {
       const res = await apiFetch(`/api/v1/accounts/${currentAccount.id}/members`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           target_role: inviteRole,
-          email: inviteEmail.trim(),
+          email: recipient,
           shared_plans: Object.entries(invitePlanShares)
             .filter(([, perm]) => perm !== "none")
             .map(([planId, permission]) => ({ plan_id: planId, permission })),
         }),
       });
       if (res.ok) {
-        const json = await res.json();
-        setInviteCode(json.data?.invite_code ?? json.data?.code ?? null);
-        setInviteSent(true); setInviteEmail(""); setInvitePlanShares({});
-        showToast("Invite sent.");
+        setInviteEmail(""); setInvitePlanShares({});
+        showToast(`Invite emailed to ${recipient}. They'll show up here once they accept.`);
+        loadMembers();
       } else {
         const json = await res.json().catch(() => ({}));
-        const msg = json?.error?.message || json?.message || "Failed to send invite.";
+        const code = json?.error?.code as string | undefined;
+        const baseMsg = json?.error?.message || json?.message || "Failed to send invite.";
+        const retryAfter = json?.error?.retry_after as number | undefined;
+        const msg = code === "RATE_LIMITED" && typeof retryAfter === "number"
+          ? `Too many invite attempts. Try again ${formatRetryAfter(retryAfter)}.`
+          : baseMsg;
         showToast(msg);
       }
     } catch { showToast("Something went wrong. Please try again."); }
@@ -358,6 +396,23 @@ export default function SettingsPage() {
       case "counselor": return "bg-purple-500/15 text-purple-600";
       default: return "bg-muted text-muted-foreground";
     }
+  };
+
+  const expiresInLabel = (expiresAt: string): string => {
+    const ms = new Date(expiresAt).getTime() - Date.now();
+    if (Number.isNaN(ms)) return "Expires soon";
+    const days = Math.max(0, Math.ceil(ms / (1000 * 60 * 60 * 24)));
+    if (days === 0) return "Expires today";
+    if (days === 1) return "Expires in 1 day";
+    return `Expires in ${days} days`;
+  };
+
+  const formatRetryAfter = (seconds: number): string => {
+    if (seconds <= 60) return "in a moment";
+    const mins = Math.ceil(seconds / 60);
+    if (mins < 60) return `in ${mins} minute${mins === 1 ? "" : "s"}`;
+    const hours = Math.ceil(mins / 60);
+    return `in ${hours} hour${hours === 1 ? "" : "s"}`;
   };
 
   const tierColor = currentAccount?.subscriptionTier === "elite" ? "bg-purple-500/10 text-purple-600" :
@@ -635,8 +690,8 @@ export default function SettingsPage() {
             <h2 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
               Shared with
             </h2>
-            {otherMembers.length > 0 && (
-              <Badge className="bg-muted text-muted-foreground">{otherMembers.length}</Badge>
+            {(otherMembers.length + pendingInvites.length) > 0 && (
+              <Badge className="bg-muted text-muted-foreground">{otherMembers.length + pendingInvites.length}</Badge>
             )}
           </div>
 
@@ -650,7 +705,7 @@ export default function SettingsPage() {
               ) : (
                 <div className="space-y-1">
                   {otherMembers.map((m, idx) => (
-                    <div key={m.userId} className={`flex items-center justify-between rounded-lg px-2 py-2.5 hover:bg-muted/40 transition-colors ${idx < otherMembers.length - 1 ? "border-b border-border/50" : ""}`}>
+                    <div key={m.userId} className={`flex items-center justify-between rounded-lg px-2 py-2.5 hover:bg-muted/40 transition-colors ${idx < otherMembers.length - 1 || pendingInvites.length > 0 ? "border-b border-border/50" : ""}`}>
                       <div className="flex items-center gap-3 min-w-0">
                         <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-muted text-sm font-semibold text-muted-foreground">
                           {(m.firstName ?? m.email).charAt(0).toUpperCase()}
@@ -678,7 +733,40 @@ export default function SettingsPage() {
                     </div>
                   ))}
 
-                  {otherMembers.length === 0 && (
+                  {pendingInvites.map((inv, idx) => {
+                    const label = inv.email ?? "Pending invite";
+                    return (
+                      <div key={inv.inviteId} className={`flex items-center justify-between rounded-lg px-2 py-2.5 hover:bg-muted/40 transition-colors ${idx < pendingInvites.length - 1 ? "border-b border-border/50" : ""}`}>
+                        <div className="flex items-center gap-3 min-w-0">
+                          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-dashed border-border bg-muted/30 text-muted-foreground">
+                            <svg aria-hidden="true" className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" d="M21.75 6.75v10.5a2.25 2.25 0 0 1-2.25 2.25h-15a2.25 2.25 0 0 1-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0 0 19.5 4.5h-15a2.25 2.25 0 0 0-2.25 2.25m19.5 0v.243a2.25 2.25 0 0 1-1.07 1.916l-7.5 4.615a2.25 2.25 0 0 1-2.36 0L3.32 8.91a2.25 2.25 0 0 1-1.07-1.916V6.75" />
+                            </svg>
+                          </div>
+                          <div className="min-w-0">
+                            <div className="flex items-center gap-2">
+                              <p className="truncate text-sm font-medium text-foreground">{label}</p>
+                              <Badge className={`${roleColor(inv.role)} text-[9px]`}>{inv.role}</Badge>
+                              <Badge className="bg-warning/15 text-warning text-[9px]">Pending</Badge>
+                            </div>
+                            <p className="truncate text-[11px] text-muted-foreground">{expiresInLabel(inv.expiresAt)}</p>
+                          </div>
+                        </div>
+                        {inv.canRevoke && (
+                          <button type="button" onClick={() => handleRevokePendingMemberInvite(inv.inviteId, inv.email)}
+                            disabled={revokingInvite === inv.inviteId}
+                            className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-muted-foreground/40 hover:text-destructive hover:bg-destructive-light transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
+                            title="Revoke invite">
+                            <svg aria-hidden="true" className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" d="M6 18 18 6M6 6l12 12" />
+                            </svg>
+                          </button>
+                        )}
+                      </div>
+                    );
+                  })}
+
+                  {otherMembers.length === 0 && pendingInvites.length === 0 && (
                     <p className="py-4 text-center text-sm text-muted-foreground">Not shared with anyone yet.</p>
                   )}
 
@@ -759,14 +847,6 @@ export default function SettingsPage() {
                           </span>
                         )}
                       </div>
-                      {inviteSent && inviteCode && (
-                        <p className="flex items-center gap-1.5 text-xs text-success">
-                          <svg aria-hidden="true" className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" d="m4.5 12.75 6 6 9-13.5" />
-                          </svg>
-                          Sent! Code: <span className="font-mono font-semibold">{inviteCode}</span>
-                        </p>
-                      )}
                     </>
                     );
                   })()}

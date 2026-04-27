@@ -23,8 +23,9 @@ async function cleanup() {
   const emails = cliEmails.length > 0 ? cliEmails : EPHEMERAL_EMAILS;
 
   // Get user IDs first
-  const userIds = await db.execute(
-    sql`SELECT id, email FROM users WHERE email = ANY(${emails})`
+  const userIds = await pool.query(
+    `SELECT id, email FROM users WHERE email = ANY($1)`,
+    [emails],
   );
   const ids = userIds.rows.map((r: any) => r.id);
 
@@ -75,8 +76,9 @@ async function cleanup() {
   }
 
   // Delete users — CASCADE handles account_members, student_profiles, plan_shares, etc.
-  const result = await db.execute(
-    sql`DELETE FROM users WHERE email = ANY(${emails}) RETURNING id, email`
+  const result = await pool.query(
+    `DELETE FROM users WHERE email = ANY($1) RETURNING id, email`,
+    [emails],
   );
   console.log("Deleted:", result.rows);
 
@@ -91,9 +93,10 @@ async function cleanup() {
   console.log("Orphaned accounts removed:", orphans.rows);
 
   // Also delete from Supabase auth.users
-  await db.execute(sql`
-    DELETE FROM auth.users WHERE email = ANY(${emails})
-  `);
+  await pool.query(
+    `DELETE FROM auth.users WHERE email = ANY($1)`,
+    [emails],
+  );
   console.log("Supabase auth users cleaned up");
 
   await pool.end();

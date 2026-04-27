@@ -112,6 +112,23 @@ async function globalSetup() {
     auth: { autoRefreshToken: false, persistSession: false },
   });
 
+  // Safety: refuse to seed test fixtures against a non-local database.
+  // E2E setup writes test users (student@test.com, parent@test.com, etc.)
+  // and would pollute any real environment. Local-only check is the right
+  // guard here — NODE_ENV is unreliable since dev shells rarely set it.
+  const isLocalDb = /^postgres(ql)?:\/\/[^@]*@(127\.0\.0\.1|localhost|host\.docker\.internal)(:|\/)/.test(
+    DATABASE_URL,
+  );
+  if (!isLocalDb) {
+    const redacted = DATABASE_URL.replace(/:[^:@/]*@/, ":***@");
+    console.error(
+      `[e2e-setup] ABORT: DATABASE_URL is not local — refusing to seed test fixtures.\n` +
+        `  Host must be 127.0.0.1, localhost, or host.docker.internal.\n` +
+        `  Got: ${redacted}`,
+    );
+    process.exit(1);
+  }
+
   const client = new pg.Client({ connectionString: DATABASE_URL });
   await client.connect();
 

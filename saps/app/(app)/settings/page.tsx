@@ -772,7 +772,10 @@ export default function SettingsPage() {
 
                   {/* Invite -- hidden for counselors (view-only role) */}
                   {currentAccount?.role !== "counselor" && (() => {
-                    const totalMembers = members.length; // includes self
+                    // Server counts members + pending invites toward the limit
+                    // (see /api/v1/accounts/[id]/members POST). Mirror that here
+                    // so the displayed count and atLimit gate match server reality.
+                    const totalMembers = members.length + pendingInvites.length;
                     const atLimit = totalMembers >= memberLimit;
                     const onboardingBlocked =
                       (currentAccount?.role ?? userRole) === "student" && !onboardingCompleted;
@@ -839,12 +842,16 @@ export default function SettingsPage() {
                           </div>
                         </div>
                       )}
-                      <div className="flex items-center gap-2 pt-1">
-                        <Badge className="bg-muted text-muted-foreground text-[11px]">{totalMembers}/{memberLimit} used</Badge>
-                        {atLimit && (
-                          <span className="text-[11px] text-warning">
-                            Limit reached.{!FREE_LAUNCH_MODE && <>{" "}<Link href="/settings/billing" className="text-primary hover:underline">Upgrade</Link> for more.</>}
-                          </span>
+                      <div className="pt-1">
+                        {atLimit ? (
+                          <p className="text-[11px] text-warning">
+                            All {memberLimit} seats used — remove a member or revoke a pending invite to add another.
+                            {!FREE_LAUNCH_MODE && <>{" "}<Link href="/settings/billing" className="text-primary hover:underline">Upgrade</Link> for more.</>}
+                          </p>
+                        ) : (
+                          <p className="text-[11px] text-muted-foreground">
+                            {totalMembers} of {memberLimit} seats used
+                          </p>
                         )}
                       </div>
                     </>

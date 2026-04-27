@@ -2,7 +2,7 @@ import { NextRequest } from "next/server";
 import { z } from "zod";
 import { db } from "@/lib/db";
 import { accountMembers, accountInviteCodes, accounts, users, planShares } from "@/lib/db/schema";
-import { eq, and, count, inArray } from "drizzle-orm";
+import { eq, and, count, inArray, sql } from "drizzle-orm";
 import { getEffectiveTier, invalidateSubscriptionCache } from "@/lib/subscription/middleware";
 import { successResponse, errorResponse } from "@/lib/api/response";
 import { rateLimit } from "@/lib/api/rate-limit";
@@ -179,7 +179,7 @@ export async function POST(request: NextRequest, context: RouteContext) {
         .innerJoin(accountMembers, eq(accountMembers.userId, users.id))
         .where(
           and(
-            eq(users.email, normalizedEmail),
+            sql`lower(${users.email}) = ${normalizedEmail}`,
             eq(accountMembers.accountId, accountId)
           )
         )
@@ -286,11 +286,14 @@ export async function POST(request: NextRequest, context: RouteContext) {
         .where(eq(users.id, user.id))
         .limit(1);
 
-      // Check if the invited email already has a SAPS account
+      // Check if the invited email already has a SAPS account.
+      // Compare case-insensitively: `users.email` is stored as the user
+      // typed it at signup, while the invited email may use different casing.
+      const lookupEmail = parsed.data.email.trim().toLowerCase();
       const [existingUser] = await db
         .select({ id: users.id })
         .from(users)
-        .where(eq(users.email, parsed.data.email))
+        .where(sql`lower(${users.email}) = ${lookupEmail}`)
         .limit(1);
 
       const origin = request.nextUrl.origin;

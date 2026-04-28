@@ -1366,14 +1366,14 @@ export default function PlannerPage() {
               </svg>
             </div>
             <h2 className="mt-4 text-xl font-semibold text-foreground">
-              Plan Not Found
+              Plan not found
             </h2>
             <p className="mt-2 max-w-md text-sm text-muted-foreground">
               The plan you&apos;re looking for doesn&apos;t exist or you don&apos;t have access to it. It may have been deleted, or the link may be incorrect.
             </p>
             <div className="mt-8">
               <Link href="/plans">
-                <Button className="px-6 py-2.5 text-base">Back to Plans</Button>
+                <Button className="px-6 py-2.5 text-base">Back to plans</Button>
               </Link>
             </div>
           </CardContent>

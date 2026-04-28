@@ -67,8 +67,8 @@ export default function AboutPage() {
             </div>
           </figure>
           <p className="mt-3">
-            Two years later, two things had changed. My computer science classes had given me the confidence to
-            actually build things, and the idea of turning that Google Sheet into real software started to excite me.
+            Two years later, two things had changed. My classes had given me the confidence to actually build
+            things, and the idea of turning that Google Sheet into real software started to excite me.
             Our dinner conversations had also shifted, almost without us noticing, from school-day check-ins to what
             the latest AI models could do. The technology was moving fast enough that I wanted to stop reading about
             it and build something with it.
@@ -93,9 +93,8 @@ export default function AboutPage() {
           <p className="mt-2">The Google Sheet, but built for the whole family — and built to actually work.</p>
           <p className="mt-3">
             Where a spreadsheet breaks the moment a parent edits the wrong cell, Plan with Genie gives every member of
-            the family the right view: students plan, parents follow along, counselors review. Prerequisites are
-            checked automatically. GPA updates in real time. Graduation requirements stop being a thing you hope you
-            got right.
+            the family the right view: students plan, parents follow along. Prerequisites are checked automatically.
+            GPA updates in real time. Graduation requirements stop being a thing you hope you got right.
           </p>
         </section>
 
@@ -129,7 +128,7 @@ export default function AboutPage() {
           <h2 className="text-lg font-semibold text-foreground">What&apos;s next</h2>
           <p className="mt-2">
             Plan with Genie is live for <strong className="text-foreground">Stevenson families today</strong>, with
-            new Illinois high schools onboarding through 2026. If your school isn&apos;t supported yet,{" "}
+            more Illinois high schools coming as demand grows. If your school isn&apos;t supported yet,{" "}
             <Link
               href="/request-school"
               className="text-primary hover:underline font-medium focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring rounded-sm"

@@ -84,16 +84,16 @@ const FAQS: Faq[] = [
   },
   {
     q: "Can my parents see and edit my plan?",
-    a: "Parents and guardians get view access when you invite them. They can also create their own plans (within tier limits) and share them with you — but only you, the student, decide which plan is going to be followed for four years.",
+    a: "Parents and guardians get view access when you invite them. They can also create their own plans (within tier limits) and share them with you — but only you, the student, pick which plan to follow.",
   },
   {
     q: "How is my data protected?",
-    a: "Your data is encrypted, stored securely, and never sold. We treat student data with the care it deserves — only you and the people you invite can see your plans and grades.",
+    a: "Your data is encrypted, stored securely, and never sold. Only you and the people you invite can see your plans and grades.",
     link: { href: "/privacy", label: "Read our Privacy Policy →" },
   },
   {
     q: "Does Genie use AI, and will my data be used to train AI models?",
-    a: "AI-powered features for users are planned for future releases. When they ship, they'll be opt-in, and we won't use your plans, grades, or personal info to train AI models — your data stays yours.",
+    a: "AI features are planned for future releases. When they ship, they'll be opt-in, and we won't use your plans, grades, or personal info to train AI models — your data stays yours.",
   },
   {
     q: "Is Genie affiliated with Stevenson High School?",

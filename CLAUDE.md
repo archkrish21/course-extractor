@@ -2,13 +2,30 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## Response Length
+
+- Keep responses concise; do not exceed ~500 output tokens per turn unless explicitly asked for a long-form artifact.
+
 ## Hard Rules
 
 - **For any git-related actions** (branching, committing, pushing, PRs, conflict resolution), follow the rules in `/git-rules`.
 
+## Git Workflow
+
+- ALL production deploys come from `main` (never from a `prod` branch).
+- ALWAYS rebase feature branches on main before pushing or creating a PR.
+- ALWAYS work on a feature branch + PR; never commit directly to main.
+- After squash-merges, use `git branch -D` (force-delete) for cleanup since hashes won't match.
+
 ## Project Overview
 
-SAPS (Student Academic Planning System) is a Next.js web app for high school students, parents, and counselors to manage four-year academic plans, course selection, grade tracking, and GPA calculation. Currently targets Stevenson High School.
+Plan with Genie (formerly SAPS) is a Next.js web app for high school students, parents, and counselors to manage four-year academic plans, course selection, grade tracking, and GPA calculation. Currently targets Stevenson High School.
+
+## Brand & Copy
+
+- Product name is **Plan with Genie** (rebranded from SAPS); use Plan with Genie voice/tone in all UI copy and emails.
+- The Counselor role is hidden from v1 UI — do a full sweep for counselor references when touching role-related code.
+- Founder copy stays subject-neutral — don't pigeonhole the founder into CS; he's applying to physics/engineering programs too.
 
 ## Repository Layout
 
@@ -114,6 +131,12 @@ Before starting new frontend or backend implementation work, run the correspondi
 - **`/backend`** — Run before adding API routes, DB queries, or business logic. Covers route handler anatomy, auth/permissions, Drizzle ORM query patterns, Zod validation, subscription tier checking, rate limiting, and Stripe/email integration.
 
 These are not needed for small bug fixes or config changes — CLAUDE.md provides enough context for those.
+
+## Testing
+
+- Run E2E tests against a Next.js production build, not dev mode (avoids hydration/HMR flakiness).
+- After fixing a bug, add or update tests in the same PR.
+- When test fixes break existing mocks, update the mocks rather than reverting the fix.
 
 ## Architecture Notes
 

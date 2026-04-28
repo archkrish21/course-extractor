@@ -1,0 +1,42 @@
+name: Voice guardian
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+    paths:
+      - "**.tsx"
+      - "**.md"
+      - "saps/components/emails/**"
+
+jobs:
+  voice-guardian:
+    # Skip if the API key isn't configured yet — keeps PRs unblocked until
+    # the secret is set via `gh secret set ANTHROPIC_API_KEY`.
+    if: ${{ github.event.pull_request.head.repo.full_name == github.repository }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+
+      - name: Skip if no API key
+        id: gate
+        run: |
+          if [ -z "${{ secrets.ANTHROPIC_API_KEY }}" ]; then
+            echo "::warning::ANTHROPIC_API_KEY secret not configured — skipping voice-guardian. Run \`gh secret set ANTHROPIC_API_KEY\` to enable."
+            echo "should_run=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "should_run=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Run voice-guardian
+        if: steps.gate.outputs.should_run == 'true'
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+        run: bash .github/scripts/voice-guardian.sh

@@ -63,14 +63,51 @@ const FEATURES = [
   },
 ];
 
-const FAQS = [
-  { q: "Is Genie free?", a: "Yes! Genie is completely free during early access. Create your account and start planning today — no credit card required." },
-  { q: "Is Genie affiliated with Stevenson High School?", a: "No. Plan with Genie is an independent tool built by a Stevenson student. It is not affiliated with, endorsed by, or sponsored by Adlai E. Stevenson High School." },
-  { q: "How is my data protected?", a: "Your data is encrypted in transit, stored securely, and never sold to third parties. You can delete your account and all data at any time." },
-  { q: "Can my parents see my grades?", a: "Only if you invite them. Parents and guardians can be linked to your account with view access. You control who sees your data." },
-  { q: "How much does Genie cost?", a: "Genie is free during early access. As we grow, we'll add paid features — early users get a heads-up before anything changes." },
-  { q: "Can I use Genie if I go to a different school?", a: "Genie currently supports Stevenson High School. We're expanding to more schools soon — request yours during signup." },
-  { q: "Who built Genie?", a: "Genie was built by a junior at Stevenson High School who wanted a better way to plan courses and track academic progress." },
+type Faq = {
+  q: string;
+  a: string;
+  link?: { href: string; label: string };
+};
+
+const FAQS: Faq[] = [
+  {
+    q: "How much does Genie cost?",
+    a: "Genie is free during early access — no credit card required.",
+  },
+  {
+    q: "Do I have to type in all my courses?",
+    a: "No typing required. Past courses are a filterable checklist — tap to mark completed and pick a letter grade. For your future years, start from a template that matches your interests and tweak from there.",
+  },
+  {
+    q: "Does Genie replace Naviance or PowerSchool?",
+    a: "No — it works alongside them. Naviance and PowerSchool are your school's official systems. Genie is a planning sandbox where you can map your full four years, run what-if scenarios, and share with family. Always verify your plan with your school counselor before registering for courses.",
+  },
+  {
+    q: "Can my parents see and edit my plan?",
+    a: "Parents and guardians get view access when you invite them. They can also create their own plans (within tier limits) and share them with you — but only you, the student, decide which plan is going to be followed for four years.",
+  },
+  {
+    q: "How is my data protected?",
+    a: "Your data is encrypted, stored securely, and never sold. We treat student data with the care it deserves — only you and the people you invite can see your plans and grades.",
+    link: { href: "/privacy", label: "Read our Privacy Policy →" },
+  },
+  {
+    q: "Does Genie use AI, and will my data be used to train AI models?",
+    a: "AI-powered features for users are planned for future releases. When they ship, they'll be opt-in, and we won't use your plans, grades, or personal info to train AI models — your data stays yours.",
+  },
+  {
+    q: "Is Genie affiliated with Stevenson High School?",
+    a: "No. Plan with Genie is an independent tool built by a Stevenson student. It is not affiliated with, endorsed by, or sponsored by Adlai E. Stevenson High School.",
+  },
+  {
+    q: "Can I use Genie if I go to a different school?",
+    a: "Genie currently supports Stevenson High School. We're expanding to more schools soon — submit yours and we'll email you when it's supported.",
+    link: { href: "/request-school", label: "Request your school →" },
+  },
+  {
+    q: "Who built Genie?",
+    a: "Genie was built by a high school junior who wanted a better way to plan courses and track academic progress.",
+  },
 ];
 
 const TESTIMONIALS = [
@@ -355,12 +392,26 @@ export default function HomePage() {
                     <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
                   </svg>
                 </button>
-                <div className={`overflow-hidden transition-[max-height] duration-300 ease-in-out ${openFaq === i ? "max-h-48" : "max-h-0"}`}>
-                  <p className="px-6 pb-5 text-sm leading-relaxed text-muted-foreground">{faq.a}</p>
+                <div className={`overflow-hidden transition-[max-height] duration-300 ease-in-out ${openFaq === i ? "max-h-72" : "max-h-0"}`}>
+                  <div className="px-6 pb-5">
+                    <p className="text-sm leading-relaxed text-muted-foreground">{faq.a}</p>
+                    {faq.link && (
+                      <Link href={faq.link.href} className="mt-3 inline-block text-sm font-medium text-primary hover:text-primary-hover focus-ring">
+                        {faq.link.label}
+                      </Link>
+                    )}
+                  </div>
                 </div>
               </div>
             ))}
           </div>
+
+          <p className="mt-8 text-center text-sm text-muted-foreground">
+            Still have questions?{" "}
+            <Link href="/contact" className="font-medium text-primary hover:text-primary-hover focus-ring">
+              Get in touch →
+            </Link>
+          </p>
         </div>
       </section>
 

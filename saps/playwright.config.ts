@@ -21,6 +21,12 @@ export default defineConfig({
     navigationTimeout: 15_000,
     trace: "retain-on-failure",
     screenshot: "only-on-failure",
+    // Browser navigations send Origin automatically, but Playwright's
+    // APIRequestContext does not — and the prod build's CSRF check rejects
+    // mutations without an allowed Origin. Setting it here covers both.
+    extraHTTPHeaders: {
+      Origin: "http://localhost:3000",
+    },
     ...devices["Desktop Chrome"],
   },
   projects: [
@@ -57,9 +63,19 @@ export default defineConfig({
     },
   ],
   webServer: {
-    command: "npm run dev",
+    // E2E runs against a production build (`next build && next start`) rather
+    // than `next dev`. Dev-mode lazy compile + Turbopack module eviction was
+    // the source of intermittent HTML-404 flakes (see PRs #105, #111). Prod
+    // build serves pre-compiled routes — no eviction, no warmup needed.
+    // Cost: ~1-2 min build on first run; reused via reuseExistingServer.
+    command: "npm run build && npm run start",
     url: "http://localhost:3000",
     reuseExistingServer: !process.env.CI,
-    timeout: 30_000,
+    timeout: 180_000,
+    // Skip Sentry SDK init during E2E so test runs don't pollute the prod
+    // Sentry project. The flag is checked at top of each sentry.*.config.ts.
+    env: {
+      NEXT_PUBLIC_E2E_DISABLE_TELEMETRY: "1",
+    },
   },
 });

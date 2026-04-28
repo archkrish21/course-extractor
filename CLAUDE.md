@@ -147,9 +147,10 @@ These are not needed for small bug fixes or config changes — CLAUDE.md provide
 - `auth.setup.ts` creates `.auth/<role>.json` storageState files (one per role) that all tests inherit — no per-test UI login
 - `global-setup.ts` seeds deterministic DB state; `global-teardown.ts` wipes non-primary scratch plans and orphans after runs
 - Fixture helpers in `tests/e2e/helpers/api-client.ts` — use these to set up state instead of clicking through the UI
-- Single command: `npm run test:e2e:desktop` (74 tests, ~4 min)
+- Single command: `npm run test:e2e:desktop` (78 tests, ~3 min)
 - Detailed guide: `tests/TEST_ORCHESTRATION.md`
-- Dev server auto-started by Playwright if not running
+- Suite runs against a **production build** (`next build && next start`), not the dev server. Eliminates Turbopack route-eviction flakes that plagued earlier dev-mode runs. First run pays a ~1-2 min build cost; subsequent runs reuse the running server (`reuseExistingServer: true` outside CI).
+- Telemetry (Sentry, PostHog) is gated by `NEXT_PUBLIC_E2E_DISABLE_TELEMETRY=1`, set only by Playwright's webServer block — production deploys never see this flag, and `next.config.ts` fails the build if it's accidentally set in a Vercel production deploy.
 - **Accessibility (a11y)**: NOT in the default gate. Axe scans were removed from the suite for speed and noise reasons. Run axe DevTools manually before merging a new page; a `test:a11y` nightly job is planned post-v1. See `tests/TEST_ORCHESTRATION.md#accessibility-a11y` for details.
 
 ### Path Alias

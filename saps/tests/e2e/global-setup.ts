@@ -98,69 +98,6 @@ async function ensureConsent(client: pg.Client, userId: string) {
   }
 }
 
-// Pre-compile every API route + page the suite hits. Next 16 / Turbopack
-// compiles routes lazily on first request, and per HTTP verb — a cold PATCH
-// to a nested dynamic route can race the compiler and 404 to /_not-found.
-// Firing each method+path once here forces compilation upfront so the actual
-// test requests always hit a registered handler. Auth/payload don't matter;
-// any response (401, 404, 422) means the route is now compiled.
-async function warmupRoutes(baseUrl: string) {
-  const STUB = "00000000-0000-0000-0000-000000000000";
-  const routes: Array<[string, string]> = [
-    ["GET", "/api/v1/plans"],
-    ["POST", "/api/v1/plans"],
-    ["GET", `/api/v1/plans/${STUB}`],
-    ["PATCH", `/api/v1/plans/${STUB}`],
-    ["DELETE", `/api/v1/plans/${STUB}`],
-    ["PATCH", `/api/v1/plans/${STUB}/visibility`],
-    ["PATCH", `/api/v1/plans/${STUB}/set-primary`],
-    ["GET", `/api/v1/plans/${STUB}/courses`],
-    ["POST", `/api/v1/plans/${STUB}/courses`],
-    ["PATCH", `/api/v1/plans/${STUB}/courses/${STUB}`],
-    ["DELETE", `/api/v1/plans/${STUB}/courses/${STUB}`],
-    ["GET", `/api/v1/plans/${STUB}/shares`],
-    ["POST", `/api/v1/plans/${STUB}/shares`],
-    ["DELETE", `/api/v1/plans/${STUB}/shares/${STUB}`],
-    ["GET", "/api/v1/accounts"],
-    ["GET", `/api/v1/accounts/${STUB}`],
-    ["GET", `/api/v1/accounts/${STUB}/members`],
-    ["POST", `/api/v1/accounts/${STUB}/members`],
-    ["DELETE", `/api/v1/accounts/${STUB}/members/${STUB}`],
-    ["GET", `/api/v1/accounts/${STUB}/invites`],
-    ["DELETE", `/api/v1/accounts/${STUB}/invites/${STUB}`],
-    ["GET", "/api/v1/courses"],
-    ["GET", "/api/v1/gpa"],
-    ["GET", "/api/v1/transcript"],
-    ["GET", "/planner"],
-    ["GET", "/dashboard"],
-    ["GET", "/transcript"],
-    ["GET", "/plans"],
-    ["GET", "/login"],
-    ["GET", "/onboarding"],
-  ];
-
-  // Sequential, not Promise.all: bombarding Turbopack with 30 concurrent
-  // compiles dropped work under load and left some routes uncompiled,
-  // producing flaky HTML 404s in tests like "updating a course's status
-  // persists." Sequential adds ~10s of wall clock once per suite — cheap
-  // insurance against the race.
-  const start = Date.now();
-  for (const [method, path] of routes) {
-    try {
-      await fetch(`${baseUrl}${path}`, {
-        method,
-        headers: { "content-type": "application/json" },
-        body: method === "POST" || method === "PATCH" ? "{}" : undefined,
-      });
-    } catch {
-      // ignore — only goal is to force route compilation
-    }
-  }
-  console.log(
-    `[e2e-setup] Warmed ${routes.length} routes in ${Date.now() - start}ms`,
-  );
-}
-
 // ── Main ─────────────────────────────────────────────────────────────────────
 
 async function globalSetup() {
@@ -654,9 +591,6 @@ async function globalSetup() {
       `${v.snapshots} snapshots, ${v.consent} consent records, ${v.shares} plan shares, ` +
       `parent linked to ${parentAccounts.rows[0].n} child account(s)`
     );
-
-    await warmupRoutes("http://localhost:3000");
-
   } catch (error) {
     console.error("[e2e-setup] Setup failed:", error);
     throw error;

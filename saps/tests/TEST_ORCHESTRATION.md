@@ -1,6 +1,6 @@
 # SAPS E2E Test Suite
 
-Single-command test gate for the SAPS v1 release. Verifies business logic, UI smoke coverage, and cross-role journeys in **~4 minutes** with **100% pass rate**.
+Single-command test gate for the SAPS v1 release. Verifies business logic, UI smoke coverage, and cross-role journeys in **~3 minutes** with **100% pass rate**.
 
 ## Run it
 
@@ -9,7 +9,9 @@ cd saps
 npm run test:e2e:desktop
 ```
 
-That's it. The command wipes auth cache, starts the dev server if not running, and runs the full suite. Expected output: **74 passed, 0 failed, 0 skipped**.
+That's it. The command wipes auth cache, starts a production build (`next build && next start`) if not already running, and executes the full suite. Expected output: **78 passed, 0 failed, 4 skipped**.
+
+> **First run pays a ~1-2 min build cost.** Subsequent runs reuse the running server thanks to `reuseExistingServer: true` outside CI. To skip the build between iterations, leave `npm run start` running in another terminal.
 
 ### Related commands
 
@@ -94,7 +96,17 @@ The old suite had 500+ tests with pervasive `if (noPlan) test.skip()` conditiona
 
 ### Why single-worker serialization
 
-The shared `student@test.com` account is subject to a 3-plan launch-tier cap. Multiple parallel workers creating scratch plans trip the cap. `workers: 1` + `fullyParallel: false` trades raw speed for determinism (still hits ~4 min since most tests are API-tier and sub-second).
+The shared `student@test.com` account is subject to a 3-plan launch-tier cap. Multiple parallel workers creating scratch plans trip the cap. `workers: 1` + `fullyParallel: false` trades raw speed for determinism (still hits ~3 min since most tests are API-tier and sub-second).
+
+### Why a production build, not `next dev`
+
+Earlier suite runs against `next dev --turbopack` had a non-deterministic flake: under sustained sequential load, Turbopack would evict compiled API route modules from its dev cache, returning HTML 404s for routes that had already served successfully. We tried serial route warmup (PR #105, #111), helper-level retries, and Playwright `retries: 1` — each helped but none eliminated it. Production builds serve pre-compiled routes with no eviction, no lazy compile, no warmup. The class of flake is gone. Cost is a one-time ~1-2 min build per cold run.
+
+Three small adaptations are required so the prod build can be pointed at the local Supabase emulator (only relevant for E2E and local prod previews):
+
+- **CSP carveout** in `next.config.ts` — when `NEXT_PUBLIC_SUPABASE_URL` is `http://*` (i.e., the local emulator), it gets added to `connect-src`. Real prod uses `https://*.supabase.co` which is already wildcarded.
+- **Origin header** in `playwright.config.ts` `extraHTTPHeaders` — Playwright's `APIRequestContext` doesn't send Origin by default; the prod CSRF check in `lib/api/csrf.ts` rejects mutations without one.
+- **Telemetry gate** — `NEXT_PUBLIC_E2E_DISABLE_TELEMETRY=1` (set only by `webServer.env`) skips `Sentry.init` and `posthog.init` so test runs don't pollute prod analytics. `next.config.ts` fails the build if this flag leaks into a Vercel production deploy.
 
 ### Why per-role storageState instead of per-test login
 
@@ -266,15 +278,24 @@ The test takes a soft path when `legal_documents` is empty. To exercise the full
 npx tsx scripts/seed-legal-documents.ts
 ```
 
-### Cold Next.js dev server makes tests time out
+### First run takes ~5 min instead of ~3
 
-The first few tests hit a cold server and trigger route compilation (5–15s per route). Subsequent runs use the warm cache. If consistently slow, check that the dev server is running before the test:
+Playwright runs `npm run build && npm run start` for its webServer; the build adds 1-2 min on the first invocation. To skip the build on subsequent iterations, leave a server running in another terminal:
 
 ```bash
-npm run dev &
-sleep 10
-npm run test:e2e:desktop
+cd saps
+npm run build && npm run start    # leave this running
+# in another terminal:
+npm run test:e2e:desktop          # reuses the running server, ~3 min
 ```
+
+### Auth setup fails with "Invalid email or password" against a manually-built server
+
+Your manual `npm run start` was built without `NEXT_PUBLIC_E2E_DISABLE_TELEMETRY=1`, so Sentry inits and likely also without the Origin header set. Either let Playwright spawn the build itself, or rebuild with the env vars Playwright would have used (see `webServer.env` in `playwright.config.ts`).
+
+### "Connecting to '127.0.0.1:54321' violates Content Security Policy" in the browser console
+
+The CSP carveout in `next.config.ts` only fires when `NEXT_PUBLIC_SUPABASE_URL` starts with `http://`. Confirm `.env.local` has `NEXT_PUBLIC_SUPABASE_URL=http://127.0.0.1:54321` (not `https://`).
 
 ---
 

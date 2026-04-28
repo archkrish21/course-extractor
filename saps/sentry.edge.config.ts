@@ -5,6 +5,7 @@
 
 import * as Sentry from "@sentry/nextjs";
 
+if (!process.env.NEXT_PUBLIC_E2E_DISABLE_TELEMETRY) {
 Sentry.init({
   dsn: "https://fc2aa07e939254dd4db1d69fae31d2d1@o4511225622953984.ingest.us.sentry.io/4511225634488320",
 
@@ -15,3 +16,4 @@ Sentry.init({
   // https://docs.sentry.io/platforms/javascript/guides/nextjs/configuration/options/#sendDefaultPii
   sendDefaultPii: true,
 });
+}

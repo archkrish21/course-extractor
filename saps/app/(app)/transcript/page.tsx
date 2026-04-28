@@ -80,6 +80,7 @@ export default function GradesPage() {
 
   const [courses, setCourses] = useState<PlanCourse[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [planName, setPlanName] = useState<string>("");
   const [lockedGradeLevels, setLockedGradeLevels] = useState<number[]>([]);
   const [expandedGrades, setExpandedGrades] = useState<Set<number>>(new Set());
@@ -91,10 +92,15 @@ export default function GradesPage() {
   useEffect(() => {
     async function fetchData() {
       setLoading(true);
+      setLoadError(null);
       try {
         // Get primary plan
         const plansRes = await apiFetch("/api/v1/plans");
-        if (!plansRes.ok) { setLoading(false); return; }
+        if (!plansRes.ok) {
+          setLoadError(`Failed to load plans (${plansRes.status})`);
+          setLoading(false);
+          return;
+        }
         const plansData = await plansRes.json();
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const planList = (plansData.plans ?? plansData.data ?? []) as any[];
@@ -105,7 +111,11 @@ export default function GradesPage() {
 
         // Get plan courses
         const coursesRes = await apiFetch(`/api/v1/plans/${primary.id}/courses`);
-        if (!coursesRes.ok) { setLoading(false); return; }
+        if (!coursesRes.ok) {
+          setLoadError(`Failed to load courses (${coursesRes.status})`);
+          setLoading(false);
+          return;
+        }
         const coursesJson = await coursesRes.json();
         const grouped = coursesJson.data ?? coursesJson;
 
@@ -141,8 +151,9 @@ export default function GradesPage() {
           }
         }
         setCourses(flat);
-      } catch {
+      } catch (err) {
         setCourses([]);
+        setLoadError(err instanceof Error ? err.message : "Failed to load transcript");
       } finally {
         setLoading(false);
       }
@@ -287,8 +298,18 @@ export default function GradesPage() {
         </div>
       )}
 
+      {/* Load error (e.g., API 404 / network failure) */}
+      {!loading && loadError && (
+        <Card>
+          <CardContent className="py-6 text-center">
+            <p className="text-sm font-medium text-destructive">Couldn&apos;t load transcript</p>
+            <p className="mt-1 text-sm text-muted-foreground">{loadError}</p>
+          </CardContent>
+        </Card>
+      )}
+
       {/* No completed courses */}
-      {!loading && completedCourses.length === 0 && (
+      {!loading && !loadError && completedCourses.length === 0 && (
         <Card>
           <CardContent className="flex flex-col items-center py-12 text-center">
             <svg

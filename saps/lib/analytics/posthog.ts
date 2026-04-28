@@ -6,7 +6,8 @@ export function initPostHog() {
   if (
     typeof window === "undefined" ||
     initialized ||
-    !process.env.NEXT_PUBLIC_POSTHOG_KEY
+    !process.env.NEXT_PUBLIC_POSTHOG_KEY ||
+    process.env.NEXT_PUBLIC_E2E_DISABLE_TELEMETRY
   ) {
     return;
   }

@@ -172,7 +172,7 @@ export default function PublicLayout({ children }: { children: React.ReactNode }
           {/* Bottom bar — tagline left, disclaimer right */}
           <div className="mt-8 flex flex-col gap-2 border-t border-border/60 pt-5 text-xs text-foreground-muted sm:flex-row sm:items-center sm:justify-between">
             <p>&copy; {new Date().getFullYear()} Plan with Genie · Academic planning, granted.</p>
-            <p>Not affiliated with Adlai E. Stevenson High School.</p>
+            <p>Not affiliated with any school or school district.</p>
           </div>
 
         </div>

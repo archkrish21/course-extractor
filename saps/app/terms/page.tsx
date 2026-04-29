@@ -31,8 +31,7 @@ export default function TermsPage() {
           <p className="mt-2">
             Plan with Genie is an academic planning tool that helps high school students plan 4-year course schedules, track grades
             and GPA, and monitor graduation requirements. Plan with Genie is <strong>not affiliated with, endorsed by, or sponsored
-            by Adlai E. Stevenson High School</strong> or any educational institution. Course catalog data is sourced
-            from publicly available information.
+            by any school or school district</strong>. Course catalog data is sourced from publicly available information.
           </p>
         </section>
 

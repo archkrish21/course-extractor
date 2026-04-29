@@ -12,47 +12,55 @@ export type TourId = (typeof TOUR_IDS)[keyof typeof TOUR_IDS];
 export const welcomeTourSteps: DriveStep[] = [
   {
     popover: {
-      title: "Welcome to Genie! 🎓",
-      description: "Let's take a quick tour to help you get started with your academic planning journey.",
+      title: "Welcome aboard.",
+      description: "Let me show you the four spots you'll use most.",
     },
   },
   {
     element: "nav[aria-label='Main navigation'] a[href='/dashboard']",
     popover: {
       title: "Dashboard",
-      description: "Your home base. See your active plan, GPA, graduation progress, and alerts at a glance.",
+      description: "Your snapshot — GPA, graduation progress, and anything that needs your attention, all in one place.",
+      side: "bottom",
+    },
+  },
+  {
+    element: "nav[aria-label='Main navigation'] a[href='/courses']",
+    popover: {
+      title: "Courses",
+      description: "Browse 300+ courses, see prereqs, and add the right ones to your plan in one click.",
       side: "bottom",
     },
   },
   {
     element: "nav[aria-label='Main navigation'] a[href='/planner']",
     popover: {
-      title: "Course Planner",
-      description: "Build your 4-year course plan. Add courses, track prerequisites, and organize by semester.",
+      title: "Course planner",
+      description: "Map every course from now through senior year. I'll flag prereq conflicts before you commit.",
       side: "bottom",
     },
   },
   {
     element: "nav[aria-label='Main navigation'] a[href='/progress']",
     popover: {
-      title: "Academic Progress",
-      description: "Monitor 37 graduation requirements across 4 categories. See what's earned, planned, and remaining.",
+      title: "Academic progress",
+      description: "Every graduation requirement, tracked — so you'll always know what's left.",
       side: "bottom",
     },
   },
   {
     element: "[aria-label='User menu'], [aria-label='Switch account']",
     popover: {
-      title: "Your Profile",
-      description: "Access settings, billing, and sign out from here. Parents can switch between children's accounts.",
+      title: "Your account",
+      description: "Settings, billing, sign out. Parents — switch between kids' accounts here.",
       side: "left",
     },
   },
   {
     element: "[aria-label='Send feedback']",
     popover: {
-      title: "We'd Love Your Feedback!",
-      description: "Rate your experience and help us improve Genie. Click the Feedback button anytime.",
+      title: "Feedback",
+      description: "Drop a note anytime — what's working, what isn't, what's missing.",
       side: "left",
     },
   },
@@ -64,15 +72,15 @@ export function getPlannerTourSteps(hasPlans: boolean): DriveStep[] {
     return [
       {
         popover: {
-          title: "Course Planner 📋",
-          description: "This is where you'll build your 4-year course plan. Let's create your first one!",
+          title: "Course planner",
+          description: "Where your four-year plan comes together. Let's start one.",
         },
       },
       {
         element: "[data-tour='create-first-plan']",
         popover: {
-          title: "Create Your First Plan",
-          description: "Click here to start. Pick a template like STEM Focus or Pre-Med, or start from scratch.",
+          title: "Start a plan",
+          description: "Pick a template like STEM Focus or Pre-Med — or start blank and build it your way.",
           side: "bottom",
         },
       },
@@ -82,39 +90,39 @@ export function getPlannerTourSteps(hasPlans: boolean): DriveStep[] {
   return [
     {
       popover: {
-        title: "Course Planner Tour 📋",
-        description: "Let's explore how to build and manage your 4-year course plan.",
+        title: "Course planner",
+        description: "A quick walk through the tools you'll use most.",
       },
     },
     {
       element: "[aria-label='Select a plan']",
       popover: {
-        title: "Plan Selector",
-        description: "Switch between your plans here. The star (★) marks your primary plan.",
+        title: "Switch plans",
+        description: "If you've got more than one path in mind, flip between them here. The star marks your primary.",
         side: "bottom",
       },
     },
     {
       element: "[data-grade='9'], [data-grade='10'], [data-grade='11']",
       popover: {
-        title: "Grade Rows",
-        description: "Each row represents a school year. Click to expand and see your courses by semester.",
+        title: "Your four years, side by side",
+        description: "One row per year. Expand any row to see fall, spring, and summer.",
         side: "bottom",
       },
     },
     {
       element: "[title='New Plan']",
       popover: {
-        title: "Create New Plan",
-        description: "Start a blank plan or choose from 6 templates like STEM Focus or Pre-Med Track.",
+        title: "New plan",
+        description: "Spin up another path — useful for comparing a STEM-focused plan against a humanities-focused one.",
         side: "bottom",
       },
     },
     {
       element: "[title='Manage Plans']",
       popover: {
-        title: "Manage Plans",
-        description: "Share plans with family, hide/show plans, and control who can view or edit.",
+        title: "Manage plans",
+        description: "Share with family, hide drafts, or control who can view or edit.",
         side: "bottom",
       },
     },
@@ -122,11 +130,56 @@ export function getPlannerTourSteps(hasPlans: boolean): DriveStep[] {
 }
 
 /**
- * Returns courses tour steps. Stub for PR 1 — populated in the courses-tour PR
- * once data-tour selectors are added to the Courses page and add-to-plan modal.
+ * Returns courses tour steps. Adapts to viewport (mobile filter button vs.
+ * desktop sidebar) and to whether the result list has anything to point at.
  */
-export function getCoursesTourSteps(_hasResults: boolean, _isMobile: boolean): DriveStep[] {
-  return [];
+export function getCoursesTourSteps(hasResults: boolean, isMobile: boolean): DriveStep[] {
+  const intro: DriveStep = {
+    popover: {
+      title: "Courses",
+      description: "300+ to choose from. Let me help you narrow it down.",
+    },
+  };
+
+  const search: DriveStep = {
+    element: "[data-tour='course-search']",
+    popover: {
+      title: "Search",
+      description: "Type any course name or code. Results update as you type.",
+      side: "bottom",
+    },
+  };
+
+  const filters: DriveStep = isMobile
+    ? {
+        element: "[data-tour='mobile-filters-button']",
+        popover: {
+          title: "Filters",
+          description: "Tap to narrow by department, grade level, or AP/honors rigor.",
+          side: "bottom",
+        },
+      }
+    : {
+        element: "[data-tour='course-filters']",
+        popover: {
+          title: "Filters",
+          description: "Narrow by department, grade level, or AP/honors. The fastest way to browse a subject.",
+          side: "right",
+        },
+      };
+
+  const card: DriveStep = {
+    element: "[data-tour='course-results'] > li:first-child",
+    popover: {
+      title: "Course details",
+      description: isMobile
+        ? "Tap any course for prerequisites, what it unlocks, and a one-click add to your plan."
+        : "Click any course for prerequisites, what it unlocks, and a one-click add to your plan.",
+      side: "top",
+    },
+  };
+
+  return hasResults ? [intro, search, filters, card] : [intro, search, filters];
 }
 
 /** Returns progress tour steps based on whether a plan exists */
@@ -135,8 +188,8 @@ export function getProgressTourSteps(hasPlan: boolean): DriveStep[] {
     return [
       {
         popover: {
-          title: "Academic Progress 📊",
-          description: "This page tracks your graduation requirements. Create a plan first to see your progress here.",
+          title: "Academic progress",
+          description: "Once you've got a plan started, this is where you'll track every graduation requirement.",
         },
       },
     ];
@@ -145,23 +198,23 @@ export function getProgressTourSteps(hasPlan: boolean): DriveStep[] {
   return [
     {
       popover: {
-        title: "Academic Progress Tour 📊",
-        description: "See how you're tracking toward graduation requirements.",
+        title: "Academic progress",
+        description: "Here's how you're tracking toward graduation.",
       },
     },
     {
       element: "[data-tour='progress-filter']",
       popover: {
-        title: "Filter by Status",
-        description: "Filter requirements by status: All, Met, In Progress, Gaps, or Not Started.",
+        title: "Spot the gaps",
+        description: "Filter to see what's met, what's in progress, and what's still missing.",
         side: "bottom",
       },
     },
     {
       element: "[data-tour='progress-requirements']",
       popover: {
-        title: "Requirement Groups",
-        description: "Requirements are organized by category: Graduation, Course Load, IL Public University, and Non-Course.",
+        title: "Grouped by category",
+        description: "Graduation, course load, IL public university, non-course — every category that counts toward graduation.",
         side: "right",
       },
     },

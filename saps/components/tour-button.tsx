@@ -3,7 +3,7 @@
 import { usePathname } from "next/navigation";
 import { driver } from "driver.js";
 import "driver.js/dist/driver.css";
-import { welcomeTourSteps, getPlannerTourSteps, getProgressTourSteps } from "@/config/tours";
+import { welcomeTourSteps, getPlannerTourSteps, getProgressTourSteps, getCoursesTourSteps } from "@/config/tours";
 
 export function TourButton() {
   const pathname = usePathname();
@@ -16,6 +16,10 @@ export function TourButton() {
     } else if (pathname.startsWith("/progress")) {
       const hasPlan = !!document.querySelector("[data-tour='progress-filter']");
       steps = getProgressTourSteps(hasPlan);
+    } else if (pathname.startsWith("/courses")) {
+      const hasResults = !!document.querySelector("[data-tour='course-results'] > li");
+      const isMobile = window.matchMedia("(max-width: 1023px)").matches;
+      steps = getCoursesTourSteps(hasResults, isMobile);
     } else {
       steps = welcomeTourSteps;
     }

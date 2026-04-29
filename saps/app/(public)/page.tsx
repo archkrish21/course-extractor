@@ -97,7 +97,7 @@ const FAQS: Faq[] = [
   },
   {
     q: "Is Genie affiliated with Stevenson High School?",
-    a: "No. Plan with Genie is an independent tool built by a Stevenson student. It is not affiliated with, endorsed by, or sponsored by Adlai E. Stevenson High School.",
+    a: "No. Plan with Genie is an independent tool built by a Stevenson student. It is not affiliated with, endorsed by, or sponsored by any school or school district.",
   },
   {
     q: "Can I use Genie if I go to a different school?",

@@ -922,7 +922,7 @@ export default function ProgressPage() {
       <TourInvite
         visible={shouldOfferProgressTour && !loading}
         title="Tour your progress page?"
-        description="See how I track every Stevenson graduation requirement, so you'll always know what's left."
+        description="See how I track every graduation requirement, so you'll always know what's left."
         onStart={startProgressTour}
         onSkip={declineProgressTour}
       />

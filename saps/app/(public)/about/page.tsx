@@ -188,10 +188,10 @@ export default function AboutPage() {
           <p className="mt-2">
             Plan with Genie is{" "}
             <strong className="text-foreground">
-              not affiliated with, endorsed by, or sponsored by Adlai E. Stevenson High School
-            </strong>{" "}
-            or any educational institution. Course catalog data is sourced from publicly available information. Plan
-            with Genie is not a substitute for professional academic counseling.
+              not affiliated with, endorsed by, or sponsored by any school or school district
+            </strong>
+            . Course catalog data is sourced from publicly available information. Plan with Genie is not a substitute
+            for professional academic counseling.
           </p>
         </section>
       </div>

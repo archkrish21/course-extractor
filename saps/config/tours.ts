@@ -1,4 +1,4 @@
-import type { DriveStep } from "driver.js";
+import type { TourStep } from "@/lib/hooks/tour-state";
 
 export const TOUR_IDS = {
   welcome: "welcome_completed",
@@ -9,7 +9,7 @@ export const TOUR_IDS = {
 
 export type TourId = (typeof TOUR_IDS)[keyof typeof TOUR_IDS];
 
-export const welcomeTourSteps: DriveStep[] = [
+export const welcomeTourSteps: TourStep[] = [
   {
     popover: {
       title: "Welcome aboard.",
@@ -63,11 +63,12 @@ export const welcomeTourSteps: DriveStep[] = [
       description: "Drop a note anytime — what's working, what isn't, what's missing.",
       side: "left",
     },
+    finalCta: { label: "Start planning →", href: "/planner" },
   },
 ];
 
 /** Returns planner tour steps based on whether plans exist */
-export function getPlannerTourSteps(hasPlans: boolean): DriveStep[] {
+export function getPlannerTourSteps(hasPlans: boolean): TourStep[] {
   if (!hasPlans) {
     return [
       {
@@ -83,6 +84,7 @@ export function getPlannerTourSteps(hasPlans: boolean): DriveStep[] {
           description: "Pick a template like STEM Focus or Pre-Med — or start blank and build it your way.",
           side: "bottom",
         },
+        finalCta: { label: "Browse courses →", href: "/courses" },
       },
     ];
   }
@@ -125,6 +127,7 @@ export function getPlannerTourSteps(hasPlans: boolean): DriveStep[] {
         description: "Share with family, hide drafts, or control who can view or edit.",
         side: "bottom",
       },
+      finalCta: { label: "Browse courses →", href: "/courses" },
     },
   ];
 }
@@ -133,24 +136,25 @@ export function getPlannerTourSteps(hasPlans: boolean): DriveStep[] {
  * Returns courses tour steps. Adapts to viewport (mobile filter button vs.
  * desktop sidebar) and to whether the result list has anything to point at.
  */
-export function getCoursesTourSteps(hasResults: boolean, isMobile: boolean): DriveStep[] {
-  const intro: DriveStep = {
+export function getCoursesTourSteps(hasResults: boolean, isMobile: boolean): TourStep[] {
+  const intro: TourStep = {
     popover: {
       title: "Courses",
       description: "300+ to choose from. Let me help you narrow it down.",
     },
   };
 
-  const search: DriveStep = {
+  const search: TourStep = {
     element: "[data-tour='course-search']",
     popover: {
       title: "Search",
-      description: "Type any course name or code. Results update as you type.",
+      description: "Try it — type any course name or code. Results update as you type.",
       side: "bottom",
     },
+    waitFor: { event: "input", selector: "[data-tour='course-search']", minLength: 2 },
   };
 
-  const filters: DriveStep = isMobile
+  const filters: TourStep = isMobile
     ? {
         element: "[data-tour='mobile-filters-button']",
         popover: {
@@ -168,7 +172,7 @@ export function getCoursesTourSteps(hasResults: boolean, isMobile: boolean): Dri
         },
       };
 
-  const card: DriveStep = {
+  const card: TourStep = {
     element: "[data-tour='course-results'] > li:first-child",
     popover: {
       title: "Course details",
@@ -177,13 +181,18 @@ export function getCoursesTourSteps(hasResults: boolean, isMobile: boolean): Dri
         : "Click any course for prerequisites, what it unlocks, and a one-click add to your plan.",
       side: "top",
     },
+    finalCta: { label: "See your progress →", href: "/progress" },
   };
 
-  return hasResults ? [intro, search, filters, card] : [intro, search, filters];
+  // When the result list is empty (no card to point at), the filters step
+  // becomes the last step and carries the forward CTA instead.
+  const filtersAsFinal: TourStep = { ...filters, finalCta: { label: "See your progress →", href: "/progress" } };
+
+  return hasResults ? [intro, search, filters, card] : [intro, search, filtersAsFinal];
 }
 
 /** Returns progress tour steps based on whether a plan exists */
-export function getProgressTourSteps(hasPlan: boolean): DriveStep[] {
+export function getProgressTourSteps(hasPlan: boolean): TourStep[] {
   if (!hasPlan) {
     return [
       {
@@ -191,6 +200,7 @@ export function getProgressTourSteps(hasPlan: boolean): DriveStep[] {
           title: "Academic progress",
           description: "Once you've got a plan started, this is where you'll track every graduation requirement.",
         },
+        finalCta: { label: "Start a plan →", href: "/planner" },
       },
     ];
   }
@@ -206,9 +216,10 @@ export function getProgressTourSteps(hasPlan: boolean): DriveStep[] {
       element: "[data-tour='progress-filter']",
       popover: {
         title: "Spot the gaps",
-        description: "Filter to see what's met, what's in progress, and what's still missing.",
+        description: "Try it — pick a status to see what's met, what's in progress, and what's still missing.",
         side: "bottom",
       },
+      waitFor: { event: "click", selector: "[data-tour='progress-filter'] button" },
     },
     {
       element: "[data-tour='progress-requirements']",
@@ -217,6 +228,7 @@ export function getProgressTourSteps(hasPlan: boolean): DriveStep[] {
         description: "Graduation, course load, IL public university, non-course — every category that counts toward graduation.",
         side: "right",
       },
+      finalCta: { label: "Refine your plan →", href: "/planner" },
     },
   ];
 }

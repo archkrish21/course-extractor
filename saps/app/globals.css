@@ -240,6 +240,8 @@ body {
   border: 1px solid var(--color-border);
   border-radius: 16px;
   box-shadow: 0 20px 60px rgba(0, 0, 0, 0.25);
+  /* Cap width on phones so popovers don't get cropped or cover tap targets */
+  max-width: min(90vw, 320px);
 }
 .saps-tour-popover .driver-popover-title {
   font-size: 16px;

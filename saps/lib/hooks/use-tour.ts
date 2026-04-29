@@ -1,50 +1,54 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { driver } from "driver.js";
 import "driver.js/dist/driver.css";
 import type { DriveStep } from "driver.js";
 import { apiFetch } from "@/lib/api-client";
+import { readTourValue, type TourValue, type TourStateMap } from "./tour-state";
 
 interface UseTourOptions {
   tourId: string;
   steps: DriveStep[];
-  autoStart?: boolean; // Auto-start on first visit
-  delay?: number; // Delay before starting (ms)
 }
 
 /**
- * Hook to manage guided tours.
- * Checks tour state from server, starts tour if not completed, and marks as completed.
+ * Manages a guided tour's state. Tours no longer auto-fire — pages render
+ * <TourInvite /> when `shouldOffer` is true, and the user opts in.
  */
-export function useTour({ tourId, steps, autoStart = true, delay = 500 }: UseTourOptions) {
-  const [completed, setCompleted] = useState<boolean | null>(null);
-  const startedRef = useRef(false);
+export function useTour({ tourId, steps }: UseTourOptions) {
+  const [tourState, setTourState] = useState<TourStateMap | null>(null);
 
-  // Check tour state on mount
   useEffect(() => {
     apiFetch("/api/v1/auth/me")
       .then((r) => (r.ok ? r.json() : null))
       .then((json) => {
-        const tourState = json?.data?.tour_state ?? json?.tour_state ?? {};
-        setCompleted(!!tourState[tourId]);
+        const state = (json?.data?.tour_state ?? json?.tour_state ?? {}) as TourStateMap;
+        setTourState(state);
       })
-      .catch(() => setCompleted(true)); // On error, assume completed (don't annoy user)
-  }, [tourId]);
+      .catch(() => setTourState({}));
+  }, []);
 
-  const markCompleted = useCallback(async () => {
-    setCompleted(true);
-    try {
-      // Send only the delta — the server merges into existing tour_state
-      await apiFetch("/api/v1/auth/me", {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          tour_state: { [tourId]: true },
-        }),
-      });
-    } catch { /* silent */ }
-  }, [tourId]);
+  const { completed, declined } = readTourValue(tourState?.[tourId]);
+  const isLoaded = tourState !== null;
+  const shouldOffer = isLoaded && !completed && !declined && steps.length > 0;
+
+  const persistTourValue = useCallback(
+    async (value: TourValue) => {
+      setTourState((prev) => ({ ...(prev ?? {}), [tourId]: value }));
+      try {
+        await apiFetch("/api/v1/auth/me", {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ tour_state: { [tourId]: value } }),
+        });
+      } catch { /* silent */ }
+    },
+    [tourId],
+  );
+
+  const markCompleted = useCallback(() => persistTourValue({ completed: true }), [persistTourValue]);
+  const decline = useCallback(() => persistTourValue({ declined: true }), [persistTourValue]);
 
   const startTour = useCallback(() => {
     if (steps.length === 0) return;
@@ -70,26 +74,12 @@ export function useTour({ tourId, steps, autoStart = true, delay = 500 }: UseTou
     driverObj.drive();
   }, [steps, markCompleted]);
 
-  // Reset started flag when steps change (e.g., plans loaded, different step count)
-  const stepCountRef = useRef(steps.length);
-  useEffect(() => {
-    if (steps.length !== stepCountRef.current) {
-      stepCountRef.current = steps.length;
-      startedRef.current = false;
-    }
-  }, [steps.length]);
-
-  // Auto-start tour after delay if not completed
-  useEffect(() => {
-    if (!autoStart || completed !== false || startedRef.current) return;
-    startedRef.current = true;
-    const timer = setTimeout(startTour, delay);
-    return () => clearTimeout(timer);
-  }, [autoStart, completed, delay, startTour]);
-
   return {
     startTour,
+    shouldOffer,
     completed,
+    declined,
+    decline,
     markCompleted,
   };
 }

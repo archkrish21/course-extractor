@@ -9,6 +9,7 @@ import { useAccount } from "@/lib/account-context";
 import { apiFetch } from "@/lib/api-client";
 import { useTour } from "@/lib/hooks/use-tour";
 import { TOUR_IDS, welcomeTourSteps } from "@/config/tours";
+import { TourInvite } from "@/components/tour-invite";
 import { canPrint } from "@/lib/subscription/can-print";
 
 interface DashboardPlan {
@@ -78,11 +79,9 @@ interface RequirementsData {
 
 export default function DashboardPage() {
   const { currentAccount, loading: accountLoading, userFirstName, userLastName, userRole, onboardingCompleted } = useAccount();
-  useTour({
+  const { startTour, shouldOffer: shouldOfferTour, decline: declineTour } = useTour({
     tourId: TOUR_IDS.welcome,
     steps: welcomeTourSteps,
-    autoStart: true,
-    delay: 1000,
   });
   const [showProfileBanner, setShowProfileBanner] = useState(false);
   const [profileBannerTarget, setProfileBannerTarget] = useState<"settings" | "planner">("settings");
@@ -1337,6 +1336,14 @@ export default function DashboardPage() {
         </CardContent>
         </Card>
       </div>
+
+      <TourInvite
+        visible={shouldOfferTour}
+        title="New here? Take the quick tour."
+        description="I'll show you how to plan your four years, track grades, and stay on course toward graduation."
+        onStart={startTour}
+        onSkip={declineTour}
+      />
     </div>
   );
 }

@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { useAccount } from "@/lib/account-context";
 import { useTour } from "@/lib/hooks/use-tour";
 import { TOUR_IDS, getProgressTourSteps } from "@/config/tours";
+import { TourInvite } from "@/components/tour-invite";
 import { UNOFFICIAL_DISCLAIMER } from "@/config/disclaimers";
 import { canPrint } from "@/lib/subscription/can-print";
 import { PrintWatermark } from "@/components/print-watermark";
@@ -122,7 +123,10 @@ export default function ProgressPage() {
   // Guided tour — adapts based on whether data has content
   const hasPlanData = !loading && data !== null && (data.totalEarned > 0 || data.totalPlanned > 0);
   const progressTourSteps = useMemo(() => getProgressTourSteps(hasPlanData), [hasPlanData]);
-  useTour({ tourId: TOUR_IDS.progress, steps: progressTourSteps, autoStart: !loading, delay: 800 });
+  const { startTour: startProgressTour, shouldOffer: shouldOfferProgressTour, decline: declineProgressTour } = useTour({
+    tourId: TOUR_IDS.progress,
+    steps: progressTourSteps,
+  });
 
   const matchesFilter = (status: string) => {
     if (statusFilter === "all") return true;
@@ -914,6 +918,14 @@ export default function ProgressPage() {
       </div>
 
       <PrintWatermark />
+
+      <TourInvite
+        visible={shouldOfferProgressTour && !loading}
+        title="Tour your progress page?"
+        description="See how I track every Stevenson graduation requirement, so you'll always know what's left."
+        onStart={startProgressTour}
+        onSkip={declineProgressTour}
+      />
     </div>
   );
 }

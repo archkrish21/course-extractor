@@ -25,6 +25,14 @@ export const welcomeTourSteps: DriveStep[] = [
     },
   },
   {
+    element: "nav[aria-label='Main navigation'] a[href='/courses']",
+    popover: {
+      title: "Courses",
+      description: "Browse 300+ courses, see prereqs, and add the right ones to your plan in one click.",
+      side: "bottom",
+    },
+  },
+  {
     element: "nav[aria-label='Main navigation'] a[href='/planner']",
     popover: {
       title: "Course planner",
@@ -36,7 +44,7 @@ export const welcomeTourSteps: DriveStep[] = [
     element: "nav[aria-label='Main navigation'] a[href='/progress']",
     popover: {
       title: "Academic progress",
-      description: "Every Stevenson graduation requirement, tracked — so you'll always know what's left.",
+      description: "Every graduation requirement, tracked — so you'll always know what's left.",
       side: "bottom",
     },
   },
@@ -181,7 +189,7 @@ export function getProgressTourSteps(hasPlan: boolean): DriveStep[] {
       {
         popover: {
           title: "Academic progress",
-          description: "Once you've got a plan started, this is where you'll track every Stevenson graduation requirement.",
+          description: "Once you've got a plan started, this is where you'll track every graduation requirement.",
         },
       },
     ];
@@ -206,7 +214,7 @@ export function getProgressTourSteps(hasPlan: boolean): DriveStep[] {
       element: "[data-tour='progress-requirements']",
       popover: {
         title: "Grouped by category",
-        description: "Graduation, course load, IL public university, non-course — every category Stevenson tracks.",
+        description: "Graduation, course load, IL public university, non-course — every category that counts toward graduation.",
         side: "right",
       },
     },

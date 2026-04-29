@@ -7,10 +7,22 @@ import { successResponse, errorResponse } from "@/lib/api/response";
 import { requireSameOrigin } from "@/lib/api/require-same-origin";
 import { requireAuth } from "@/lib/auth/get-user";
 
+// tour_state values can be a legacy boolean (true = completed) or an object
+// carrying completed/declined/lastStep flags. Object form is forward-compatible
+// for resume + consent without migrating existing rows.
+const tourValueSchema = z.union([
+  z.boolean(),
+  z.object({
+    completed: z.boolean().optional(),
+    declined: z.boolean().optional(),
+    lastStep: z.number().int().nonnegative().optional(),
+  }),
+]);
+
 const updateNameSchema = z.object({
   first_name: z.string().min(1).max(100).optional(),
   last_name: z.string().max(100).optional(),
-  tour_state: z.record(z.string(), z.boolean()).optional(),
+  tour_state: z.record(z.string(), tourValueSchema).optional(),
 });
 
 /**

@@ -4,6 +4,7 @@ export const TOUR_IDS = {
   welcome: "welcome_completed",
   planner: "planner_completed",
   progress: "progress_completed",
+  courses: "courses_completed",
 } as const;
 
 export type TourId = (typeof TOUR_IDS)[keyof typeof TOUR_IDS];
@@ -118,6 +119,14 @@ export function getPlannerTourSteps(hasPlans: boolean): DriveStep[] {
       },
     },
   ];
+}
+
+/**
+ * Returns courses tour steps. Stub for PR 1 — populated in the courses-tour PR
+ * once data-tour selectors are added to the Courses page and add-to-plan modal.
+ */
+export function getCoursesTourSteps(_hasResults: boolean, _isMobile: boolean): DriveStep[] {
+  return [];
 }
 
 /** Returns progress tour steps based on whether a plan exists */

@@ -13,6 +13,7 @@ import { CourseDetailModal } from "@/components/course-detail-modal";
 import { useAccount } from "@/lib/account-context";
 import { useTour } from "@/lib/hooks/use-tour";
 import { TOUR_IDS, getPlannerTourSteps } from "@/config/tours";
+import { TourInvite } from "@/components/tour-invite";
 import { apiFetch } from "@/lib/api-client";
 import { calculateGPA, formatGPA } from "@/lib/gpa/calc";
 import { useUndoStack } from "@/lib/hooks/use-undo-stack";
@@ -80,7 +81,10 @@ export default function PlannerPage() {
   // Guided tour — adapts steps based on whether plans exist (only after loading)
   const hasPlans = !loading && plans.length > 0;
   const plannerTourSteps = useMemo(() => getPlannerTourSteps(hasPlans), [hasPlans]);
-  useTour({ tourId: TOUR_IDS.planner, steps: plannerTourSteps, autoStart: !loading, delay: 1000 });
+  const { startTour: startPlannerTour, shouldOffer: shouldOfferPlannerTour, decline: declinePlannerTour } = useTour({
+    tourId: TOUR_IDS.planner,
+    steps: plannerTourSteps,
+  });
   const [pickerTarget, setPickerTarget] = useState<PickerTarget>(null);
   const [detailCourseId, setDetailCourseId] = useState<string | null>(null);
   const [lastViewedCourseId, setLastViewedCourseId] = useState<string | null>(null);
@@ -2388,6 +2392,14 @@ export default function PlannerPage() {
         feature={upgradeModal.feature}
         minimumTier={upgradeModal.minimumTier}
         currentTier={upgradeModal.currentTier}
+      />
+
+      <TourInvite
+        visible={shouldOfferPlannerTour && !loading}
+        title="Tour the planner?"
+        description="A quick walkthrough of how to map every course from now through senior year."
+        onStart={startPlannerTour}
+        onSkip={declinePlannerTour}
       />
     </div>
   );

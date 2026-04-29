@@ -1,12 +1,15 @@
 "use client";
 
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { CourseDetail } from "@/components/course-detail";
 import { creditTypeBadgeVariant } from "@/lib/badge-utils";
 import { apiFetch } from "@/lib/api-client";
+import { useTour } from "@/lib/hooks/use-tour";
+import { TOUR_IDS, getCoursesTourSteps } from "@/config/tours";
+import { TourInvite } from "@/components/tour-invite";
 
 interface Course {
   id: string;
@@ -99,6 +102,26 @@ export default function CourseBrowserPage() {
 
   const searchInputRef = useRef<HTMLInputElement>(null);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Guided tour — adapts copy + selectors to viewport, and skips the card
+  // step when nothing matches the current search/filters.
+  const [isMobile, setIsMobile] = useState(false);
+  useEffect(() => {
+    const mql = window.matchMedia("(max-width: 1023px)");
+    setIsMobile(mql.matches);
+    const handler = (e: MediaQueryListEvent) => setIsMobile(e.matches);
+    mql.addEventListener("change", handler);
+    return () => mql.removeEventListener("change", handler);
+  }, []);
+  const hasResults = !initialLoad && courses.length > 0;
+  const coursesTourSteps = useMemo(
+    () => getCoursesTourSteps(hasResults, isMobile),
+    [hasResults, isMobile],
+  );
+  const { startTour: startCoursesTour, shouldOffer: shouldOfferCoursesTour, decline: declineCoursesTour } = useTour({
+    tourId: TOUR_IDS.courses,
+    steps: coursesTourSteps,
+  });
 
   const fetchCourses = useCallback(async (cursor?: string) => {
     setLoading(true);
@@ -437,7 +460,11 @@ export default function CourseBrowserPage() {
 
       <div className="flex gap-6">
         {/* Desktop sidebar filters */}
-        <aside className="hidden lg:block w-64 shrink-0" aria-label="Course filters">
+        <aside
+          className="hidden lg:block w-64 shrink-0"
+          aria-label="Course filters"
+          data-tour="course-filters"
+        >
           {filterPanel}
         </aside>
 
@@ -466,6 +493,7 @@ export default function CourseBrowserPage() {
               <input
                 ref={searchInputRef}
                 id="course-search"
+                data-tour="course-search"
                 type="search"
                 placeholder="Search 300+ courses..."
                 value={search}
@@ -489,6 +517,7 @@ export default function CourseBrowserPage() {
             {/* Mobile filter button */}
             <button
               type="button"
+              data-tour="mobile-filters-button"
               className="flex items-center gap-2 rounded-lg border border-border px-3 py-2 text-sm font-medium text-foreground min-h-[44px] lg:hidden hover:bg-muted focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
               onClick={() => setFiltersOpen(true)}
               aria-label="Open filters"
@@ -514,7 +543,12 @@ export default function CourseBrowserPage() {
           )}
 
           {/* Course list — single column by default, two columns on wide screens */}
-          <ul className="grid grid-cols-1 md:grid-cols-2 gap-3" role="list" aria-label="Course results">
+          <ul
+            className="grid grid-cols-1 md:grid-cols-2 gap-3"
+            role="list"
+            aria-label="Course results"
+            data-tour="course-results"
+          >
             {courses.map((course) => (
               <li key={course.id}>
                 <button
@@ -822,6 +856,14 @@ export default function CourseBrowserPage() {
           </div>
         </>
       )}
+
+      <TourInvite
+        visible={shouldOfferCoursesTour && !initialLoad}
+        title="Tour the course browser?"
+        description="I'll show you how to filter 300+ courses and add them to your plan in one click."
+        onStart={startCoursesTour}
+        onSkip={declineCoursesTour}
+      />
     </div>
   );
 }

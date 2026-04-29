@@ -1,11 +1,11 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { driver } from "driver.js";
-import "driver.js/dist/driver.css";
+import { useRouter } from "next/navigation";
 import type { DriveStep } from "driver.js";
 import { apiFetch } from "@/lib/api-client";
 import { readTourValue, type TourValue, type TourStateMap } from "./tour-state";
+import { runTour } from "./run-tour";
 
 interface UseTourOptions {
   tourId: string;
@@ -17,6 +17,7 @@ interface UseTourOptions {
  * <TourInvite /> when `shouldOffer` is true, and the user opts in.
  */
 export function useTour({ tourId, steps }: UseTourOptions) {
+  const router = useRouter();
   const [tourState, setTourState] = useState<TourStateMap | null>(null);
 
   useEffect(() => {
@@ -51,28 +52,15 @@ export function useTour({ tourId, steps }: UseTourOptions) {
   const decline = useCallback(() => persistTourValue({ declined: true }), [persistTourValue]);
 
   const startTour = useCallback(() => {
-    if (steps.length === 0) return;
-
-    const driverObj = driver({
-      showProgress: true,
-      animate: true,
-      allowClose: true,
-      overlayColor: "rgba(0, 0, 0, 0.5)",
-      stagePadding: 8,
-      stageRadius: 12,
-      popoverClass: "saps-tour-popover",
-      nextBtnText: "Next →",
-      prevBtnText: "← Back",
-      doneBtnText: "Done!",
-      progressText: "{{current}} of {{total}}",
+    runTour({
       steps,
-      onDestroyed: () => {
+      onComplete: () => markCompleted(),
+      onNavigate: (href) => {
         markCompleted();
+        router.push(href);
       },
     });
-
-    driverObj.drive();
-  }, [steps, markCompleted]);
+  }, [steps, markCompleted, router]);
 
   return {
     startTour,

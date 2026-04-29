@@ -194,7 +194,7 @@ User → Next.js frontend → API routes → PostgreSQL (Supabase + RLS)
 │   ├── analytics/              # event tracking utilities
 │   ├── gpa/  # calc.ts — GPA calculation engine
 │   ├── prereq/  # validator.ts — prerequisite DAG validation
-│   ├── hooks/  # use-undo-stack.ts, use-tour.ts (guided tour state + driver.js orchestration)
+│   ├── hooks/  # use-undo-stack.ts; tour stack: use-tour.ts + run-tour.ts + tour-state.ts (consent gate, driver.js orchestration, waitFor + finalCta semantics)
 │   ├── account-context.tsx  # React context for account switching
 │   ├── api-client.ts  # apiFetch with X-Account-Id header
 │   ├── alerts/                 # (empty — planned for Phase 3+)
@@ -460,7 +460,7 @@ CREATE TABLE users (
   email                    TEXT UNIQUE NOT NULL,
   first_name               TEXT,              -- set from email prefix at signup; editable via PATCH /api/v1/auth/me
   last_name                TEXT,              -- editable via PATCH /api/v1/auth/me
-  tour_state               JSONB DEFAULT '{}',  -- tracks completed tours {"welcome":true,"planner":true}; updated via PATCH /api/v1/auth/me
+  tour_state               JSONB DEFAULT '{}',  -- tracks tour completion + decline + last-step. Per-tour value is either legacy `true` (completed) or `{ "completed": true, "declined": false, "lastStep": 0 }`. Updated via PATCH /api/v1/auth/me with jsonb merge.
   role                     TEXT NOT NULL CHECK (role IN ('student','parent','counselor','admin')),
   is_email_verified        BOOLEAN DEFAULT FALSE,
   date_of_birth            DATE,
@@ -605,7 +605,7 @@ CREATE TABLE feedback (
 
 > **In-app feedback widget (Phase 3):** Floating "Feedback" button on all authenticated app pages (bottom-right). Opens panel with 5-star rating + optional comment. Captures current page path. Stores in `feedback` table via `POST /api/v1/feedback` (auth required). Success animation, auto-closes.
 
-> **Guided tour system (Phase 3):** driver.js integration (5KB) for step-by-step feature walkthroughs. Three adaptive tours: Welcome (dashboard, 6 steps), Planner (2-5 steps — 2 when no plans, 5 when plans exist), Progress (1-3 steps — 1 when no plan data, 3 when data exists). Auto-starts on first visit per page. Global "Tour" button in app header nav bar on every page — detects current page and triggers appropriate tour with correct steps (checks DOM for plan elements). Tour state persisted in `tourState` JSONB column on `users` table via `PATCH /api/v1/auth/me`. Custom driver.js CSS overrides in `globals.css` matching SAPS brand (rounded popovers, primary color buttons, custom progress text). Key files: `lib/hooks/use-tour.ts` (tour hook), `config/tours.ts` (step definitions), `components/tour-button.tsx` (global nav button). `data-tour` attributes added to key elements on dashboard, planner, and progress pages.
+> **Guided tour system (Phase 3, refreshed in tour-UX rework):** driver.js (5KB) plus shared orchestration in `lib/hooks/run-tour.ts`. Four adaptive tours: Welcome (dashboard, 7 steps including a Courses nav step), Courses (3-4 steps; mobile vs. desktop selector swap; card step dropped when filters yield no results), Planner (2-5 steps — 2 when no plans, 5 when plans exist), Progress (1-3 steps — 1 when no plan data, 3 when data exists). **Consent-first:** tours don't auto-fire — `<TourInvite />` (`components/tour-invite.tsx`) renders a bottom-right card asking the user to opt in. Skip persists per-tour (`{ declined: true }`) so the card stays dismissed. **Forward-action endings:** the last step's "Done!" is replaced by a labelled CTA — Welcome → "Start planning →" `/planner`, Planner → "Browse courses →" `/courses`, Courses → "See your progress →" `/progress`, Progress → "Refine your plan →" / "Start a plan →" `/planner`. Implemented via `onNextClick` interception in the runner. **Interactive moments:** courses search auto-advances on input (minLength 2); progress filter auto-advances on click. The runner's `attachWaitForListener` handles single + multi-target click via querySelectorAll, single-fire input via querySelector. **Mobile:** Tour button visible on every page (icon-only on `< sm`); popover capped at `min(90vw, 320px)` in `globals.css`. **Tour state:** `users.tourState` JSONB accepts the legacy `boolean` (`true` = completed) or the object form `{ completed, declined, lastStep }`. Reads/writes go through `lib/hooks/tour-state.ts` for back-compat normalization. PATCH `/api/v1/auth/me` merges deltas via jsonb `||`. Files: `lib/hooks/use-tour.ts`, `lib/hooks/run-tour.ts`, `lib/hooks/tour-state.ts`, `config/tours.ts`, `components/tour-invite.tsx`, `components/tour-button.tsx`. `data-tour` attributes on dashboard / courses / planner / progress. Tests: `tests/unit/tour-state.test.ts`, `tests/unit/tour-config.test.ts`, `tests/unit/run-tour.test.ts`, `tests/unit/tour-invite.test.tsx`.
 
 > **School request system (Phase 3):** Signup page includes frozen state/school fields with a "Request yours" link. The school request form submits to `POST /api/v1/school-request` (no auth required) and stores requests in the `school_requests` table for future outreach and multi-school expansion.
 
@@ -1438,7 +1438,7 @@ All routes: `/api/v1/...`. Version from day one.
 | POST | `/api/v1/auth/google-provision` | session-only | Called by the client after Google Identity Services issues an ID token and `signInWithIdToken` establishes the session. Inserts a minimal `users` row for first-time Google users and returns `{ next: '/profile-setup', new_user: true }`; returning users get `{ next: requestedRedirect ?? '/dashboard', new_user: false }`. Body: `{ redirect?: string \| null }`. |
 | ~~GET~~ | ~~`/api/v1/auth/callback`~~ | — | _Legacy Supabase OAuth code-exchange callback. Unused in V1 since the switch to GIS in PR #90; kept in the tree for safety._ |
 | GET | `/api/v1/auth/me` | any authenticated | Returns logged-in user's email, role, first_name, last_name, and tourState. | Phase 3 |
-| PATCH | `/api/v1/auth/me` | any authenticated | Update first_name, last_name, and/or tourState on the logged-in user. tourState is a JSONB object tracking completed tours (e.g., `{"welcome":true,"planner":true}`). | Phase 3 |
+| PATCH | `/api/v1/auth/me` | any authenticated | Update first_name, last_name, and/or tourState on the logged-in user. tourState values are per-tour and accept either the legacy `boolean` (`true` = completed) or the object form `{ completed, declined, lastStep }`. Server merges deltas via jsonb `\|\|` so partial updates are safe. | Phase 3 |
 | GET | `/api/v1/auth/consent` | any authenticated | Returns pending legal documents requiring user consent (documents not yet accepted by user). | Phase 3 |
 | POST | `/api/v1/auth/consent` | any authenticated | Records user acceptance of a legal document version. Stores IP address and user agent in `consent_records`. Updates `users.tosAcceptedAt` / `ppAcceptedAt`. | Phase 3 |
 | GET | `/api/v1/plans` | member | List student's plans |

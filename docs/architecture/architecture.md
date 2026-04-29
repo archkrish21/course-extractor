@@ -195,6 +195,7 @@ Stripe → POST /api/v1/stripe/webhook (Stripe-Signature header, raw body)
 - **Auth role hierarchy** (student / parent / counselor; lives in schema docs)
 - **Internal module boundaries** (`lib/gpa/`, `lib/prereq/`, etc.) — all inside the API Routes container
 - **Testing infrastructure** (Vitest + Playwright are dev-time, not runtime)
+- **CI / PR-review automation** (e.g. voice-guardian copy review at [`.github/workflows/voice-guardian.yml`](../../.github/workflows/voice-guardian.yml); CI lives outside the runtime trust boundary)
 - **Python extractor** (`saps/extractor/`) — build-time only; outputs JSON consumed by `db:setup`
 
 ---

@@ -135,7 +135,7 @@ User → Next.js frontend → API routes → PostgreSQL (Supabase + RLS)
 | Guided tours | driver.js | 1.x | Lightweight (5KB) step-by-step feature walkthroughs; adaptive step counts; CSS-customizable popovers |
 | PDF extractor | Python + pdfplumber | 3.12 / 0.11 | Standalone CLI; independent of web stack |
 | Source control | GitHub | — | PR-based workflow; branch protection on `main` |
-| CI/CD | GitHub Actions → AWS | — | Tests on every PR; deploy to Amplify + ECS on merge to `main` |
+| CI/CD | GitHub Actions → AWS | — | Tests + voice-guardian copy review on every PR; deploy to Amplify + ECS on merge to `main` |
 | Hosting (frontend/API) | AWS Amplify | — | Managed Next.js SSR hosting on AWS; preview deployments per PR |
 | Hosting (BullMQ worker) | AWS ECS Fargate | — | Persistent containerised process; not serverless-compatible |
 | Container registry | Amazon ECR | — | Docker images for ECS Fargate tasks |

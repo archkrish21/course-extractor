@@ -324,6 +324,12 @@ The CSP carveout in `next.config.ts` only fires when `NEXT_PUBLIC_SUPABASE_URL` 
 - Adding a new API endpoint helper → extend `helpers/api-client.ts` with a typed wrapper
 - Always use `forceDeletePlan` in `afterAll`/`finally` for scratch plans to avoid completed-course delete blocks
 
+## Discipline
+
+- **After fixing a bug, add or update tests in the same PR.** A fix that ships without coverage is a fix the suite can't defend.
+- **When a fix breaks an existing mock, update the mock — don't revert the fix.** The mock is the thing that's wrong if it diverges from real behavior.
+- **Run E2E against the production build, not `next dev`.** This is enforced by the suite (`reuseExistingServer` only outside CI), but worth restating since dev-mode runs surface Turbopack-specific flakes that don't exist in prod.
+
 ## Philosophy
 
 Tests should verify **behavior** (the user gets what they expect when they do X), not **existence** (the DOM has a button with text Y). If a test can pass while the feature is broken, delete it.

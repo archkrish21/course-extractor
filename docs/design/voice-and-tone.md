@@ -327,3 +327,9 @@ When new surfaces get added (new pages, new email templates, new error types), u
 When you find copy that's wrong, fix it — and if the fix illustrates a principle not yet captured, add it to the **Examples** section.
 
 Voice is a product of iteration, not a single pass. Expect to revisit this doc after the first real A/B test on the hero.
+
+### Enforcement
+
+User-visible copy in `.tsx` files, public markdown, and email templates is reviewed automatically on every PR by **voice-guardian** ([`.github/workflows/voice-guardian.yml`](../../.github/workflows/voice-guardian.yml)). It loads this doc and [`brand.md`](./brand.md) on every run, evaluates changed strings against the rubric, and posts findings as a non-blocking PR review with severity labels (`error` / `warn` / `info`). The skill rubric lives at [`.claude/skills/voice-guardian/SKILL.md`](../../.claude/skills/voice-guardian/SKILL.md); invoke it as `/voice-guardian` in Claude Code to dry-run against the working diff before pushing.
+
+Voice-guardian does not block merges. It is a second pair of eyes, not a gate. When the rubric is wrong, fix the rubric — don't ignore the finding.

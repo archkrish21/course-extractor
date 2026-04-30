@@ -421,7 +421,7 @@ All plan mutation endpoints (POST/PATCH/DELETE on `/plans/:id/courses`, `lock-gr
 | Feature requires higher tier | `402` | `{ "upgrade_required": true, "feature": "ai_suggestions", "minimum_tier": "elite" }` |
 | Account frozen (any write) | `403` | `{ "account_frozen": true, "reason": "payment_lapsed", "reactivate_url": "..." }` |
 
-> **Feature flag-based gating (Phase 2 update):** Subscription middleware exposes 8 feature flags: `canWhatIf`, `canExportPdf`, `canComparePlans`, `canSharePlans`, `canUseAi`, `canViewPercentile`, `canParentDraft`, `canCreateGoals`. API routes and server components check these flags rather than tier name strings. This decouples feature access from tier naming. Pro tier backward compatibility: middleware maps `pro` to `plus` so any legacy references still resolve correctly. **Print button gating (implemented):** The `canExportPdf` flag gates all print buttons across the app (planner, progress, transcript, dashboard "Print Plan" quick action). Client-side check: `subscriptionTier === "plus" || "elite"`. Disabled buttons wrapped in `<span>` with `title="Upgrade to Plus to print"` tooltip for accessibility.
+> **Feature flag-based gating (Phase 2 update):** Subscription middleware exposes 8 feature flags: `canWhatIf`, `canExportPdf`, `canComparePlans`, `canSharePlans`, `canUseAi`, `canViewPercentile`, `canParentDraft`, `canCreateGoals`. API routes and server components check these flags rather than tier name strings. This decouples feature access from tier naming. Pro tier backward compatibility: middleware maps `pro` to `plus` so any legacy references still resolve correctly. **Print button gating (implemented):** The `canExportPdf` flag gates all print buttons across the app (planner, progress, transcript, dashboard "Print plan" quick action). Client-side check: `subscriptionTier === "plus" || "elite"`. Disabled buttons wrapped in `<span>` with `title="Upgrade to Plus to print"` tooltip for accessibility.
 
 ---
 
@@ -623,7 +623,7 @@ CREATE TABLE feedback (
 
 > **Linked accounts tier limits (Phase 3):** Starter/Trial: 3, Plus: 5, Elite: 8. Enforced in invite API (402 UPGRADE_REQUIRED with code `UPGRADE_REQUIRED`). `maxLinkedAccounts` added to `SubscriptionContext` and tier config in `subscription_plans.features` JSONB.
 
-> **Counselor role (Phase 3):** Counselors join accounts with `canEdit: false` (view-only). Can view plans, progress, grades but cannot modify. Cannot create plans, delete plans, share plans, invite others, or access billing. Sees "View" instead of "Edit" on plans; "No Plans Shared Yet" empty states shown. Account switcher shows "Managing: Student Name · Gr X" like parents. Settings page hides subscription/billing for counselors, shows separate "Student Information" section for non-student roles. Invite form hidden for counselor role. Future: will be able to add comments/suggestions on shared plans.
+> **Counselor role (Phase 3):** Counselors join accounts with `canEdit: false` (view-only). Can view plans, progress, grades but cannot modify. Cannot create plans, delete plans, share plans, invite others, or access billing. Sees "View" instead of "Edit" on plans; "No plans shared yet" empty states shown. Account switcher shows "Managing: Student Name · Gr X" like parents. Settings page hides subscription/billing for counselors, shows separate "Student Information" section for non-student roles. Invite form hidden for counselor role. Future: will be able to add comments/suggestions on shared plans.
 
 > **Billing updates (Phase 3):** Pricing cards updated to show linked accounts per tier and PDF/print for Plus. 4-year subscription display shows "Expires" instead of "Renews" since it is a one-time payment (Stripe payment mode).
 
@@ -939,7 +939,7 @@ CREATE INDEX idx_plan_history_plan_id_at ON plan_history (plan_id, changed_at DE
 
 ### Table: `grade_entries`
 
-> **Phase 2 update:** The `midterm_grade` and `grade_type` columns have been removed. Stevenson uses a single final grade per semester (proficiency-based grading model) — there is no midterm grade. The primary grade source is now `plan_courses.planned_grade`, set via the planner page. The `grade_entries` table is retained for future use (e.g., onboarding bulk import, historical records) but is **not** the authoritative source for GPA calculation or transcript display. The Transcript page includes a Print button (printer icon) next to "Edit in Planner" that triggers `window.print()`; the Progress page includes a Print button next to "Edit Plan" with the same behavior. All print buttons are gated by `canExportPdf` (Plus+ only); Trial and Starter users see disabled buttons with "Upgrade to Plus to print" tooltip.
+> **Phase 2 update:** The `midterm_grade` and `grade_type` columns have been removed. Stevenson uses a single final grade per semester (proficiency-based grading model) — there is no midterm grade. The primary grade source is now `plan_courses.planned_grade`, set via the planner page. The `grade_entries` table is retained for future use (e.g., onboarding bulk import, historical records) but is **not** the authoritative source for GPA calculation or transcript display. The Transcript page includes a Print button (printer icon) next to "Edit in planner" that triggers `window.print()`; the Progress page includes a Print button next to "Edit plan" with the same behavior. All print buttons are gated by `canExportPdf` (Plus+ only); Trial and Starter users see disabled buttons with "Upgrade to Plus to print" tooltip.
 
 ```sql
 CREATE TABLE grade_entries (
@@ -1450,7 +1450,7 @@ All routes: `/api/v1/...`. Version from day one.
 | GET | `/api/v1/gpa` | student | Compute live GPA |
 | POST | `/api/v1/gpa/snapshot` | student | Take manual GPA snapshot |
 | POST | `/api/v1/gpa/what-if` | student (Plus+) | What-if GPA simulation (read-only); body: `{ "swaps": [{ "remove_course_id": "...", "add_course_id": "...", "planned_grade": "B+" }] }` |
-| GET | `/api/v1/transcript` | student | Read-only transcript: completed courses from primary plan with grades, semester GPA, grade-level GPA, cumulative GPA, credits earned. Frontend has Print button (printer icon) next to "Edit in Planner" that triggers `window.print()`. Print gated by `canExportPdf` (Plus+ only). | Phase 2 |
+| GET | `/api/v1/transcript` | student | Read-only transcript: completed courses from primary plan with grades, semester GPA, grade-level GPA, cumulative GPA, credits earned. Frontend has Print button (printer icon) next to "Edit in planner" that triggers `window.print()`. Print gated by `canExportPdf` (Plus+ only). | Phase 2 |
 | POST | `/api/v1/transcript` | student | Bulk upsert grade entries (for onboarding import) | Phase 2 |
 | GET | `/api/v1/gpa` | student | Live GPA from `plan_courses` on primary plan: cumulative (completed only), projected (all graded), plan totals (`totalCredits`, `earnedCredits`, `totalCourses`), `hasGrades` flag | Phase 2 |
 | GET | `/api/v1/gpa/snapshots` | student | List GPA snapshot history (used by trend chart on Progress page; returns array of snapshots with unweighted + weighted GPA, ordered by date) | Phase 2 |
@@ -2278,7 +2278,7 @@ A complete visual consistency sweep was performed across all 22 pages:
 | **Page headers** | Standardized across all pages using consistent heading hierarchy and spacing |
 | **Component usage** | Card, Button, Badge, and Input components from shadcn/ui used consistently everywhere |
 | **Loading states** | Proper loading skeletons added to all data-dependent pages |
-| **Empty states** | Meaningful empty state messages with CTAs on all pages (e.g., "No Plans Shared Yet" for counselors) |
+| **Empty states** | Meaningful empty state messages with CTAs on all pages (e.g., "No plans shared yet" for counselors) |
 | **Error states** | Error handling with user-friendly messages on all pages |
 | **Responsive grids** | 1-column on mobile, 2/3-column on desktop grids applied consistently |
 | **Focus rings** | Visible focus indicators on all interactive elements |

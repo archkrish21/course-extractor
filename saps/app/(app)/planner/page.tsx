@@ -1417,10 +1417,10 @@ export default function PlannerPage() {
             </div>
             <h2 className="mt-4 text-xl font-semibold text-foreground">
               {isCounselor
-                ? "No Plans Shared Yet"
+                ? "No plans shared yet"
                 : userRole === "student" && !onboardingCompleted
-                ? "Complete Your Onboarding"
-                : "Create Your First Plan"}
+                ? "Complete onboarding"
+                : "Create your first plan"}
             </h2>
             <p className="mt-2 max-w-md text-sm text-muted-foreground">
               {isCounselor

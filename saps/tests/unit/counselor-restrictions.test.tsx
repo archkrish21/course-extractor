@@ -320,18 +320,18 @@ describe.skip("Counselor restrictions", () => {
   });
 
   describe("Planner empty state", () => {
-    it("shows 'No Plans Shared Yet' for counselor", () => {
+    it("shows 'No plans shared yet' for counselor", () => {
       setCounselorAccount();
       const isCounselor = mockAccountContext.currentAccount?.role === "counselor";
-      const title = isCounselor ? "No Plans Shared Yet" : "Create Your First Plan";
-      expect(title).toBe("No Plans Shared Yet");
+      const title = isCounselor ? "No plans shared yet" : "Create your first plan";
+      expect(title).toBe("No plans shared yet");
     });
 
-    it("shows 'Create Your First Plan' for student", () => {
+    it("shows 'Create your first plan' for student", () => {
       setStudentAccount();
       const isCounselor = mockAccountContext.currentAccount?.role === "counselor";
-      const title = isCounselor ? "No Plans Shared Yet" : "Create Your First Plan";
-      expect(title).toBe("Create Your First Plan");
+      const title = isCounselor ? "No plans shared yet" : "Create your first plan";
+      expect(title).toBe("Create your first plan");
     });
 
     it("hides create button in empty state for counselor", () => {

@@ -1195,7 +1195,7 @@ export default function PlannerPage() {
           <div className="border-b border-border px-6 py-4">
             <div className="flex items-start justify-between gap-3">
               <div>
-                <h3 className="text-lg font-semibold text-foreground">Create New Plan</h3>
+                <h3 className="text-lg font-semibold text-foreground">Create new plan</h3>
                 <p className="mt-0.5 text-sm text-muted-foreground">
                   Name your plan and optionally start from a template.
                 </p>
@@ -1216,7 +1216,7 @@ export default function PlannerPage() {
           <div className="px-6 py-4 flex flex-col gap-4">
             <div>
               <label htmlFor="new-plan-name" className="mb-1 block text-sm font-medium text-foreground">
-                Plan Name
+                Plan name
               </label>
               <input
                 id="new-plan-name"
@@ -1234,7 +1234,7 @@ export default function PlannerPage() {
 
             <div>
               <label className="mb-1 block text-sm font-medium text-foreground">
-                Start From
+                Start from
               </label>
               <div className="flex flex-col gap-1.5">
                 <button
@@ -1293,7 +1293,7 @@ export default function PlannerPage() {
               onClick={handleCreatePlan}
               disabled={!newPlanName.trim() || creatingPlan || (planLimit ? !planLimit.canCreate : false)}
             >
-              {creatingPlan ? "Creating..." : "Create Plan"}
+              {creatingPlan ? "Creating..." : "Create plan"}
             </Button>
           </div>
         </div>
@@ -1307,7 +1307,7 @@ export default function PlannerPage() {
       <div className="mx-auto max-w-6xl">
         <div className="mb-6">
           <h1 className="text-2xl font-bold tracking-tight text-foreground">
-            Course Planner
+            Course planner
           </h1>
           <p className="mt-1 text-sm text-muted-foreground">Plan your four-year academic path</p>
         </div>
@@ -1333,7 +1333,7 @@ export default function PlannerPage() {
             </p>
             <div className="mt-8">
               <Link href="/settings?add-student=1">
-                <Button className="px-6 py-2.5 text-base">Add Student</Button>
+                <Button className="px-6 py-2.5 text-base">Add student</Button>
               </Link>
             </div>
           </CardContent>
@@ -1347,7 +1347,7 @@ export default function PlannerPage() {
       <div className="mx-auto max-w-6xl">
         <div className="mb-6">
           <h1 className="text-2xl font-bold tracking-tight text-foreground">
-            Course Planner
+            Course planner
           </h1>
           <p className="mt-1 text-sm text-muted-foreground">Plan your four-year academic path</p>
         </div>
@@ -1393,7 +1393,7 @@ export default function PlannerPage() {
       <div className="mx-auto max-w-6xl">
         <div className="mb-6">
           <h1 className="text-2xl font-bold tracking-tight text-foreground">
-            Course Planner
+            Course planner
           </h1>
           <p className="mt-1 text-sm text-muted-foreground">Plan your four-year academic path</p>
         </div>
@@ -1433,11 +1433,11 @@ export default function PlannerPage() {
               <div className="mt-8">
                 {userRole === "student" && !onboardingCompleted ? (
                   <Link href="/onboarding">
-                    <Button className="px-6 py-2.5 text-base">Complete Onboarding</Button>
+                    <Button className="px-6 py-2.5 text-base">Complete onboarding</Button>
                   </Link>
                 ) : (
                   <Button onClick={openNewPlanModal} data-tour="create-first-plan" className="px-6 py-2.5 text-base">
-                    Get Started
+                    Get started
                   </Button>
                 )}
               </div>
@@ -1466,7 +1466,7 @@ export default function PlannerPage() {
       <div className="mb-6 flex flex-wrap items-start justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold tracking-tight text-foreground">
-            Course Planner
+            Course planner
           </h1>
           {selectedPlan && (() => {
             const creatorName = selectedPlan.creatorEmail
@@ -1556,7 +1556,7 @@ export default function PlannerPage() {
                     <svg aria-hidden="true" className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" d="M11.48 3.499a.562.562 0 0 1 1.04 0l2.125 5.111a.563.563 0 0 0 .475.345l5.518.442c.499.04.701.663.321.988l-4.204 3.602a.563.563 0 0 0-.182.557l1.285 5.385a.562.562 0 0 1-.84.61l-4.725-2.885a.562.562 0 0 0-.586 0L6.982 20.54a.562.562 0 0 1-.84-.61l1.285-5.386a.562.562 0 0 0-.182-.557l-4.204-3.602a.562.562 0 0 1 .321-.988l5.518-.442a.563.563 0 0 0 .475-.345L11.48 3.5Z" />
                     </svg>
-                    Set Primary
+                    Set primary
                   </button>
                 )}
               </div>
@@ -1672,8 +1672,8 @@ export default function PlannerPage() {
                 planLimit && !planLimit.canCreate
                   ? `Plan limit reached (${planLimit.count}/${planLimit.maxPlans}). Delete a plan or upgrade to create more.`
                   : planLimit && planLimit.maxPlans !== null
-                  ? `New Plan (${planLimit.count}/${planLimit.maxPlans} used)`
-                  : "New Plan"
+                  ? `New plan (${planLimit.count}/${planLimit.maxPlans} used)`
+                  : "New plan"
               }
             >
               <svg aria-hidden="true" className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
@@ -1687,7 +1687,7 @@ export default function PlannerPage() {
               variant="outline"
               onClick={() => router.push("/plans")}
               aria-label="Manage plans"
-              title="Manage Plans"
+              title="Manage plans"
             >
               <svg aria-hidden="true" className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M10.5 6h9.75M10.5 6a1.5 1.5 0 1 1-3 0m3 0a1.5 1.5 0 1 0-3 0M3.75 6H7.5m3 12h9.75m-9.75 0a1.5 1.5 0 0 1-3 0m3 0a1.5 1.5 0 0 0-3 0m-3.75 0H7.5m9-6h3.75m-3.75 0a1.5 1.5 0 0 1-3 0m3 0a1.5 1.5 0 0 0-3 0m-9.75 0h9.75" />
@@ -1855,7 +1855,7 @@ export default function PlannerPage() {
                           {/* Sticky header */}
                           {/* Sticky title */}
                           <div className="shrink-0 border-b border-border bg-card px-5 py-3">
-                            <h3 className="text-sm font-semibold text-foreground">Validation Report</h3>
+                            <h3 className="text-sm font-semibold text-foreground">Validation report</h3>
                           </div>
 
                           {/* Scrollable body */}

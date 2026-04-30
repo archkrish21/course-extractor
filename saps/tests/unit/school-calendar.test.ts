@@ -1,5 +1,8 @@
 import { describe, it, expect } from "vitest";
-import { isYearEndBannerActive } from "@/config/school-calendar";
+import {
+  isYearEndBannerActive,
+  nextYearEndBannerOpenDate,
+} from "@/config/school-calendar";
 
 /** Create a date in local time (avoiding UTC midnight timezone shift issues). */
 function localDate(year: number, month: number, day: number): Date {
@@ -27,5 +30,35 @@ describe("isYearEndBannerActive", () => {
     expect(isYearEndBannerActive(localDate(2026, 8, 1))).toBe(false);
     expect(isYearEndBannerActive(localDate(2026, 9, 15))).toBe(false);
     expect(isYearEndBannerActive(localDate(2026, 12, 25))).toBe(false);
+  });
+});
+
+describe("nextYearEndBannerOpenDate", () => {
+  it("returns May 15 of the same year when called before May 15", () => {
+    const result = nextYearEndBannerOpenDate(localDate(2026, 4, 29));
+    expect(result.getFullYear()).toBe(2026);
+    expect(result.getMonth()).toBe(4); // May
+    expect(result.getDate()).toBe(15);
+  });
+
+  it("returns May 15 of the same year when the window is currently open", () => {
+    const result = nextYearEndBannerOpenDate(localDate(2026, 6, 10));
+    expect(result.getFullYear()).toBe(2026);
+    expect(result.getMonth()).toBe(4);
+    expect(result.getDate()).toBe(15);
+  });
+
+  it("returns May 15 of next year when called after July 31", () => {
+    const result = nextYearEndBannerOpenDate(localDate(2026, 8, 1));
+    expect(result.getFullYear()).toBe(2027);
+    expect(result.getMonth()).toBe(4);
+    expect(result.getDate()).toBe(15);
+  });
+
+  it("returns May 15 of next year when called in late fall", () => {
+    const result = nextYearEndBannerOpenDate(localDate(2026, 11, 20));
+    expect(result.getFullYear()).toBe(2027);
+    expect(result.getMonth()).toBe(4);
+    expect(result.getDate()).toBe(15);
   });
 });

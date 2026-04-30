@@ -16,7 +16,7 @@ test("counselor can see the student's planner grid", async ({ page }) => {
   await expect(page.locator("text=Loading your plans...")).toBeHidden({
     timeout: 15_000,
   });
-  await expect(page.locator("text=/Course Planner/")).toBeVisible({ timeout: 10_000 });
+  await expect(page.locator("text=/Course planner/")).toBeVisible({ timeout: 10_000 });
 
   // The grade-level grid must render
   await expect(page.locator("text=Grade 10").first()).toBeVisible();
@@ -27,7 +27,7 @@ test("counselor does NOT see the 'Create new plan' button", async ({ page }) => 
   await expect(page.locator("text=Loading your plans...")).toBeHidden({
     timeout: 15_000,
   });
-  await expect(page.locator("text=/Course Planner/")).toBeVisible({ timeout: 10_000 });
+  await expect(page.locator("text=/Course planner/")).toBeVisible({ timeout: 10_000 });
 
   const createBtn = page.locator('button[aria-label="Create new plan"]');
   expect(await createBtn.count()).toBe(0);

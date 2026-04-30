@@ -267,7 +267,7 @@ function DetailGrid({ course, onCourseClick, onDivisionClick, onDepartmentClick 
 
       {/* What this unlocks */}
       <div>
-        <h4 className="mb-2 text-sm font-semibold text-foreground">What This Unlocks</h4>
+        <h4 className="mb-2 text-sm font-semibold text-foreground">What this unlocks</h4>
         {loadingDetail ? (
           <p className="text-sm text-muted-foreground">Loading...</p>
         ) : (detail?.unlocks ?? []).length === 0 ? (
@@ -531,7 +531,7 @@ export function CourseDetail({ course, onCourseClick, onDivisionClick, onDepartm
                 <svg aria-hidden="true" className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
                 </svg>
-                Add to Plan
+                Add to plan
               </Button>
             </div>
           ) : !showAddForm ? (
@@ -552,12 +552,12 @@ export function CourseDetail({ course, onCourseClick, onDivisionClick, onDepartm
                 <svg aria-hidden="true" className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
                 </svg>
-                Add to Plan
+                Add to plan
               </Button>
             </div>
           ) : (
             <div className="rounded-lg border border-border bg-muted/30 p-4">
-              <h4 className="mb-3 text-sm font-semibold text-foreground">Add to Plan</h4>
+              <h4 className="mb-3 text-sm font-semibold text-foreground">Add to plan</h4>
 
               {loadingPlans ? (
                 <div className="flex items-center justify-center py-4">
@@ -698,7 +698,7 @@ export function CourseDetail({ course, onCourseClick, onDivisionClick, onDepartm
                           Added
                         </>
                       ) : (
-                        "Add to Plan"
+                        "Add to plan"
                       )}
                     </Button>
                   </div>

@@ -346,7 +346,7 @@ export function CoursePicker({
             </button>
             <div className="shrink-0">
               <h2 className="text-lg font-semibold text-foreground">
-                {semester < 0 ? "Add Summer Course" : "Add Course"}
+                {semester < 0 ? "Add summer course" : "Add course"}
               </h2>
               <p className={`text-xs ${semester < 0 ? "text-warning" : "text-muted-foreground"}`}>
                 Grade {gradeLevel}{semester === -2 ? ", Pre-Summer Session 1" : semester === -1 ? ", Pre-Summer Session 2" : `, Semester ${semester}`}
@@ -413,7 +413,7 @@ export function CoursePicker({
                 }
               `}
             >
-              Full Year
+              Full year
             </button>
             <button
               type="button"
@@ -429,7 +429,7 @@ export function CoursePicker({
                 }
               `}
             >
-              Sem Only
+              Sem only
             </button>
 
             {/* Divider */}
@@ -450,7 +450,7 @@ export function CoursePicker({
                 }
               `}
             >
-              Early Bird
+              Early bird
             </button>
             <button
               type="button"
@@ -607,7 +607,7 @@ export function CoursePicker({
                             <span className="text-border">|</span>
                             <span>
                               {course.duration === "full_year"
-                                ? "Full Year"
+                                ? "Full year"
                                 : course.semestersOffered && course.semestersOffered.length === 1
                                   ? `Sem ${course.semestersOffered[0]} only`
                                   : "Sem 1 & 2"}
@@ -630,7 +630,7 @@ export function CoursePicker({
                               Added!
                             </span>
                           ) : (
-                            "Add to Plan"
+                            "Add to plan"
                           )}
                         </Button>
                       </div>
@@ -655,7 +655,7 @@ export function CoursePicker({
                             </svg>
                             <div className="flex-1 min-w-0">
                               <p className="text-xs font-semibold text-warning">
-                                Validation Warnings
+                                Validation warnings
                               </p>
                               <ul className="mt-1 space-y-0.5">
                                 {validationPreview.preview.violations.map(
@@ -676,7 +676,7 @@ export function CoursePicker({
                                 onClick={(e) => { e.stopPropagation(); handleAdd(course.id, true, course.duration); }}
                                 disabled={isAdding}
                               >
-                                Add Anyway
+                                Add anyway
                               </Button>
                             </div>
                           </div>

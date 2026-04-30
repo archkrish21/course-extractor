@@ -9,7 +9,7 @@ test.beforeEach(async ({ page }) => {
   await expect(page.locator("text=Loading your plans...")).toBeHidden({
     timeout: 15_000,
   });
-  await expect(page.locator("text=/Course Planner/")).toBeVisible({
+  await expect(page.locator("text=/Course planner/")).toBeVisible({
     timeout: 10_000,
   });
 });
@@ -31,7 +31,7 @@ test("plan selector shows current plan name", async ({ page }) => {
 test("validation report button opens the validation panel", async ({ page }) => {
   const validateBtn = page.locator('[aria-label="Validation report"]');
   await validateBtn.click();
-  await expect(page.locator("text=Validation Report")).toBeVisible({
+  await expect(page.locator("text=Validation report")).toBeVisible({
     timeout: 10_000,
   });
 });

@@ -12,6 +12,10 @@ import { calculateGPA, formatGPA } from "@/lib/gpa/calc";
 import { UNOFFICIAL_DISCLAIMER } from "@/config/disclaimers";
 import { canPrint } from "@/lib/subscription/can-print";
 import { PrintWatermark } from "@/components/print-watermark";
+import {
+  isYearEndBannerActive,
+  nextYearEndBannerOpenDate,
+} from "@/config/school-calendar";
 import Link from "next/link";
 
 // ---------------------------------------------------------------------------
@@ -69,6 +73,70 @@ function calcGPA(courses: PlanCourse[]) {
     credits: result.totalCredits,
     coursesUsed: result.coursesUsed,
   };
+}
+
+// ---------------------------------------------------------------------------
+// Empty state
+// ---------------------------------------------------------------------------
+
+function TranscriptEmptyState() {
+  const yearEndOpen = isYearEndBannerActive();
+  const nextOpen = nextYearEndBannerOpenDate();
+  const formattedNextOpen = nextOpen.toLocaleDateString(undefined, {
+    month: "long",
+    day: "numeric",
+    year: "numeric",
+  });
+
+  return (
+    <Card>
+      <CardContent className="flex flex-col items-center py-12 text-center">
+        <svg
+          aria-hidden="true"
+          className="mb-3 h-12 w-12 text-muted-foreground/30"
+          fill="none"
+          viewBox="0 0 24 24"
+          strokeWidth={1.5}
+          stroke="currentColor"
+        >
+          <path strokeLinecap="round" strokeLinejoin="round" d="M4.26 10.147a60.438 60.438 0 0 0-.491 6.347A48.62 48.62 0 0 1 12 20.904a48.62 48.62 0 0 1 8.232-4.41 60.46 60.46 0 0 0-.491-6.347m-15.482 0a50.636 50.636 0 0 0-2.658-.813A59.906 59.906 0 0 1 12 3.493a59.903 59.903 0 0 1 10.399 5.84c-.896.248-1.783.52-2.658.814m-15.482 0A50.717 50.717 0 0 1 12 13.489a50.702 50.702 0 0 1 7.74-3.342" />
+        </svg>
+        <p className="text-sm font-medium text-foreground">No transcript data yet</p>
+        {yearEndOpen ? (
+          <>
+            <p className="mt-1 max-w-md text-sm text-muted-foreground">
+              Your year-end review is open. Confirm grades for this year&apos;s courses
+              and they&apos;ll appear here.
+            </p>
+            <Link href="/year-end" className="mt-4">
+              <Button size="sm">Start year-end review</Button>
+            </Link>
+          </>
+        ) : (
+          <>
+            <p className="mt-1 max-w-md text-sm text-muted-foreground">
+              Your transcript fills in at the end of each school year. The year-end
+              review opens on <span className="font-medium text-foreground">{formattedNextOpen}</span>—you&apos;ll
+              confirm final grades for this year&apos;s courses and they&apos;ll show up here.
+            </p>
+            <Link href="/planner" className="mt-4">
+              <Button size="sm">Open planner</Button>
+            </Link>
+          </>
+        )}
+        <details className="mt-4 text-left text-sm text-muted-foreground max-w-md">
+          <summary className="cursor-pointer font-medium text-foreground hover:underline">
+            What&apos;s a year-end review?
+          </summary>
+          <p className="mt-2">
+            Once a school year wraps up, you&apos;ll confirm the final grades you earned,
+            advance to the next grade level, and lock that year as part of your record.
+            Locked years show up here as your running transcript.
+          </p>
+        </details>
+      </CardContent>
+    </Card>
+  );
 }
 
 // ---------------------------------------------------------------------------
@@ -275,7 +343,7 @@ export default function GradesPage() {
             <CardContent className="flex items-center justify-between p-4">
               <div>
                 <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                  Credits Earned
+                  Credits earned
                 </p>
                 <p className="mt-1 text-2xl font-bold text-foreground">
                   {totalCreditsEarned} <span className="text-base font-normal text-muted-foreground">/ 45</span>
@@ -310,27 +378,7 @@ export default function GradesPage() {
 
       {/* No completed courses */}
       {!loading && !loadError && completedCourses.length === 0 && (
-        <Card>
-          <CardContent className="flex flex-col items-center py-12 text-center">
-            <svg
-              aria-hidden="true"
-              className="mb-3 h-12 w-12 text-muted-foreground/30"
-              fill="none"
-              viewBox="0 0 24 24"
-              strokeWidth={1.5}
-              stroke="currentColor"
-            >
-              <path strokeLinecap="round" strokeLinejoin="round" d="M4.26 10.147a60.438 60.438 0 0 0-.491 6.347A48.62 48.62 0 0 1 12 20.904a48.62 48.62 0 0 1 8.232-4.41 60.46 60.46 0 0 0-.491-6.347m-15.482 0a50.636 50.636 0 0 0-2.658-.813A59.906 59.906 0 0 1 12 3.493a59.903 59.903 0 0 1 10.399 5.84c-.896.248-1.783.52-2.658.814m-15.482 0A50.717 50.717 0 0 1 12 13.489a50.702 50.702 0 0 1 7.74-3.342" />
-            </svg>
-            <p className="text-sm font-medium text-foreground">No transcript data yet</p>
-            <p className="mt-1 text-sm text-muted-foreground">
-              Complete a year-end review to see your transcript.
-            </p>
-            <Link href="/planner" className="mt-4">
-              <Button size="sm">Go to planner</Button>
-            </Link>
-          </CardContent>
-        </Card>
+        <TranscriptEmptyState />
       )}
 
       {/* Grade sections */}

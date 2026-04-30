@@ -22,7 +22,7 @@ test("progress page shows Graduation Requirements group", async ({ page }) => {
   await expect(page.locator("text=Graduation Requirements").first()).toBeVisible();
 });
 
-test("progress page has Edit Plan button linking to planner", async ({ page }) => {
-  const editBtn = page.locator("text=Edit Plan").first();
+test("progress page has Edit plan button linking to planner", async ({ page }) => {
+  const editBtn = page.locator("text=Edit plan").first();
   await expect(editBtn).toBeVisible();
 });

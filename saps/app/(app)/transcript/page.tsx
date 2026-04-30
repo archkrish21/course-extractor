@@ -120,7 +120,7 @@ function TranscriptEmptyState() {
               confirm final grades for this year&apos;s courses and they&apos;ll show up here.
             </p>
             <Link href="/planner" className="mt-4">
-              <Button size="sm" variant="outline">Open planner</Button>
+              <Button size="sm">Open planner</Button>
             </Link>
           </>
         )}
@@ -343,7 +343,7 @@ export default function GradesPage() {
             <CardContent className="flex items-center justify-between p-4">
               <div>
                 <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                  Credits Earned
+                  Credits earned
                 </p>
                 <p className="mt-1 text-2xl font-bold text-foreground">
                   {totalCreditsEarned} <span className="text-base font-normal text-muted-foreground">/ 45</span>

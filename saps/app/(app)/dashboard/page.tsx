@@ -457,7 +457,7 @@ export default function DashboardPage() {
             </div>
           </div>
           <Link href="/settings?add-student=1" className="sm:shrink-0">
-            <Button size="sm">Add Student</Button>
+            <Button size="sm">Add student</Button>
           </Link>
         </div>
       )}
@@ -506,7 +506,7 @@ export default function DashboardPage() {
             {profileBannerTarget === "planner" && currentAccount?.role === "counselor" ? null : (
               <Link href={profileBannerTarget === "planner" ? (onboardingCompleted ? "/planner" : "/onboarding") : "/settings"}>
                 <Button size="sm">
-                  {profileBannerTarget === "planner" ? (onboardingCompleted ? "Go to Planner" : "Start Onboarding") : "Complete profile"}
+                  {profileBannerTarget === "planner" ? (onboardingCompleted ? "Go to planner" : "Start onboarding") : "Complete profile"}
                 </Button>
               </Link>
             )}
@@ -627,7 +627,7 @@ export default function DashboardPage() {
                 </p>
                 <Link href="/transcript">
                   <Button size="sm" variant="outline" className="mt-2">
-                    View Transcript
+                    View transcript
                   </Button>
                 </Link>
               </div>
@@ -672,7 +672,7 @@ export default function DashboardPage() {
                 <div className="mt-4">
                   <Link href="/transcript">
                     <Button size="sm" variant="outline">
-                      View Transcript
+                      View transcript
                     </Button>
                   </Link>
                 </div>
@@ -703,7 +703,7 @@ export default function DashboardPage() {
                   Enter your grades to see GPA calculations.
                 </p>
                 <Link href="/transcript" className="mt-4">
-                  <Button size="sm">View Transcript</Button>
+                  <Button size="sm">View transcript</Button>
                 </Link>
               </div>
             )}
@@ -752,7 +752,7 @@ export default function DashboardPage() {
               <div className="py-4 text-center">
                 <p className="text-sm text-muted-foreground">Create a plan to track academic progress.</p>
                 <Link href="/planner" className="mt-2 inline-block text-sm font-medium text-primary hover:text-primary-hover">
-                  Go to Planner
+                  Go to planner
                 </Link>
               </div>
             ) : reqError ? (
@@ -822,7 +822,7 @@ export default function DashboardPage() {
                     <div className="mt-3 flex justify-end">
                       <Link href="/progress">
                         <Button size="sm" variant="outline">
-                          View Progress
+                          View progress
                         </Button>
                       </Link>
                     </div>
@@ -943,7 +943,7 @@ export default function DashboardPage() {
                   Create a plan to start tracking your courses.
                 </p>
                 <Link href="/planner" className="mt-4">
-                  <Button size="sm">Create Plan</Button>
+                  <Button size="sm">Create plan</Button>
                 </Link>
               </div>
             )}
@@ -991,7 +991,7 @@ export default function DashboardPage() {
                       d="M12 6.042A8.967 8.967 0 0 0 6 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 0 1 6 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 0 1 6-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0 0 18 18a8.967 8.967 0 0 0-6 2.292m0-14.25v14.25"
                     />
                   </svg>
-                  Browse Courses
+                  Browse courses
                 </Button>
               </Link>
               <Link href="/planner">
@@ -1021,7 +1021,7 @@ export default function DashboardPage() {
                       <svg aria-hidden="true" className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" d="M6.72 13.829c-.24.03-.48.062-.72.096m.72-.096a42.415 42.415 0 0 1 10.56 0m-10.56 0L6.34 18m10.94-4.171c.24.03.48.062.72.096m-.72-.096L17.66 18m0 0 .229 2.523a1.125 1.125 0 0 1-1.12 1.227H7.231c-.662 0-1.18-.568-1.12-1.227L6.34 18m11.318 0h1.091A2.25 2.25 0 0 0 21 15.75V9.456c0-1.081-.768-2.015-1.837-2.175a48.055 48.055 0 0 0-1.913-.247M6.34 18H5.25A2.25 2.25 0 0 1 3 15.75V9.456c0-1.081.768-2.015 1.837-2.175a48.041 48.041 0 0 1 1.913-.247m10.5 0a48.536 48.536 0 0 0-10.5 0m10.5 0V3.375c0-.621-.504-1.125-1.125-1.125h-8.25c-.621 0-1.125.504-1.125 1.125v3.659M9.75 8.25h.008v.008H9.75V8.25Zm.375 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Z" />
                       </svg>
-                      Print Plan
+                      Print plan
                     </Button>
                   </Link>
                 ) : (
@@ -1030,7 +1030,7 @@ export default function DashboardPage() {
                       <svg aria-hidden="true" className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" d="M6.72 13.829c-.24.03-.48.062-.72.096m.72-.096a42.415 42.415 0 0 1 10.56 0m-10.56 0L6.34 18m10.94-4.171c.24.03.48.062.72.096m-.72-.096L17.66 18m0 0 .229 2.523a1.125 1.125 0 0 1-1.12 1.227H7.231c-.662 0-1.18-.568-1.12-1.227L6.34 18m11.318 0h1.091A2.25 2.25 0 0 0 21 15.75V9.456c0-1.081-.768-2.015-1.837-2.175a48.055 48.055 0 0 0-1.913-.247M6.34 18H5.25A2.25 2.25 0 0 1 3 15.75V9.456c0-1.081.768-2.015 1.837-2.175a48.041 48.041 0 0 1 1.913-.247m10.5 0a48.536 48.536 0 0 0-10.5 0m10.5 0V3.375c0-.621-.504-1.125-1.125-1.125h-8.25c-.621 0-1.125.504-1.125 1.125v3.659M9.75 8.25h.008v.008H9.75V8.25Zm.375 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Z" />
                       </svg>
-                      Print Plan
+                      Print plan
                     </Button>
                   </span>
                 );
@@ -1051,7 +1051,7 @@ export default function DashboardPage() {
                       d="M9 12.75 11.25 15 15 9.75M21 12c0 1.268-.63 2.39-1.593 3.068a3.745 3.745 0 0 1-1.043 3.296 3.745 3.745 0 0 1-3.296 1.043A3.745 3.745 0 0 1 12 21c-1.268 0-2.39-.63-3.068-1.593a3.746 3.746 0 0 1-3.296-1.043 3.745 3.745 0 0 1-1.043-3.296A3.745 3.745 0 0 1 3 12c0-1.268.63-2.39 1.593-3.068a3.745 3.745 0 0 1 1.043-3.296 3.746 3.746 0 0 1 3.296-1.043A3.746 3.746 0 0 1 12 3c1.268 0 2.39.63 3.068 1.593a3.746 3.746 0 0 1 3.296 1.043 3.745 3.745 0 0 1 1.043 3.296A3.745 3.745 0 0 1 21 12Z"
                     />
                   </svg>
-                  View Progress
+                  View progress
                 </Button>
               </Link>
               <Link href="/transcript">
@@ -1070,7 +1070,7 @@ export default function DashboardPage() {
                       d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0 1 15.75 21H5.25A2.25 2.25 0 0 1 3 18.75V8.25A2.25 2.25 0 0 1 5.25 6H10"
                     />
                   </svg>
-                  View Transcript
+                  View transcript
                 </Button>
               </Link>
             </div>
@@ -1111,7 +1111,7 @@ export default function DashboardPage() {
             <div className="py-4 text-center">
               <p className="text-sm text-muted-foreground">Create a plan to see requirement status.</p>
               <Link href="/planner" className="mt-2 inline-block text-sm font-medium text-primary hover:text-primary-hover">
-                Go to Planner
+                Go to planner
               </Link>
             </div>
           ) : (() => {
@@ -1180,7 +1180,7 @@ export default function DashboardPage() {
                 <div className="mt-3 flex justify-end">
                   <Link href={`/planner?planId=${primaryPlan?.id ?? ""}&validation=open`}>
                     <Button size="sm" variant="outline">
-                      View Report
+                      View report
                     </Button>
                   </Link>
                 </div>

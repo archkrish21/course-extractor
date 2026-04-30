@@ -236,7 +236,7 @@ export default function BillingPage() {
             </div>
             {subscription?.hasStripeCustomer && (
               <Button variant="outline" size="sm" onClick={handleManageBilling}>
-                Manage Billing
+                Manage billing
               </Button>
             )}
           </div>
@@ -253,7 +253,7 @@ export default function BillingPage() {
                 </p>
               </div>
               <Button size="sm" onClick={() => { const el = document.getElementById("pricing-cards"); el?.scrollIntoView({ behavior: "smooth" }); }}>
-                Upgrade Now
+                Upgrade now
               </Button>
             </div>
           )}
@@ -347,7 +347,7 @@ export default function BillingPage() {
                 <div className="mt-5 pt-4 border-t border-border">
                   {isCurrent ? (
                     <Button variant="outline" className="w-full cursor-default opacity-60" disabled>
-                      Current Plan
+                      Current plan
                     </Button>
                   ) : isUpgrade ? (
                     <Button
@@ -359,7 +359,7 @@ export default function BillingPage() {
                     </Button>
                   ) : (
                     <Button variant="ghost" className="w-full text-muted-foreground cursor-default" disabled>
-                      Free Forever
+                      Free forever
                     </Button>
                   )}
                 </div>

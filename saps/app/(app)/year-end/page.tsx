@@ -24,7 +24,7 @@ interface CourseEntry {
 }
 
 const STEPS = [
-  { label: "Confirm Grades", number: 1 },
+  { label: "Confirm grades", number: 1 },
   { label: "Advance", number: 2 },
   { label: "Review", number: 3 },
 ] as const;
@@ -333,7 +333,7 @@ function YearEndPageInner() {
       {step === 1 && (
         <Card>
           <CardHeader>
-            <h2 className="text-lg font-semibold text-foreground">Confirm Final Grades — Grade {gradeLevel}</h2>
+            <h2 className="text-lg font-semibold text-foreground">Confirm final grades — Grade {gradeLevel}</h2>
             <p className="text-sm text-muted-foreground">
               Review and confirm your final grades for each course. Courses will be locked after confirmation.
             </p>
@@ -426,7 +426,7 @@ function YearEndPageInner() {
                   You've completed Grade 12! Your courses and grades will be locked as a permanent record.
                 </p>
                 <div className="rounded-lg border border-warning/40 bg-warning/5 p-4">
-                  <p className="font-bold text-warning">Graduation Complete</p>
+                  <p className="font-bold text-warning">Graduation complete</p>
                   <p className="mt-1 text-sm text-muted-foreground">
                     Your account will remain accessible as a read-only archive.
                   </p>

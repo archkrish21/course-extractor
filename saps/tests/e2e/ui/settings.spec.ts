@@ -29,8 +29,8 @@ test("settings shows Legal section with Terms and Privacy links", async ({ page 
   await expect(page.locator('a[href="/privacy"]').first()).toBeVisible();
 });
 
-test("Delete Account dialog opens and closes via Cancel", async ({ page }) => {
-  const deleteBtn = page.getByRole("button", { name: "Delete Account", exact: true });
+test("Delete account dialog opens and closes via Cancel", async ({ page }) => {
+  const deleteBtn = page.getByRole("button", { name: "Delete account", exact: true });
   await expect(deleteBtn).toBeVisible();
   await deleteBtn.click();
   const dialog = page.locator('[role="alertdialog"]');

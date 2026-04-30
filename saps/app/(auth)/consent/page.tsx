@@ -172,7 +172,7 @@ function ConsentPageInner() {
           </span>
           {error.includes("sign up") && (
             <Link href="/signup" className="mt-2 inline-block text-primary hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring">
-              Go to Sign Up
+              Go to sign up
             </Link>
           )}
         </div>

@@ -459,7 +459,7 @@ export default function SettingsPage() {
               </div>
             </div>
             <Link href="/onboarding" className="sm:shrink-0">
-              <Button size="sm">Start Onboarding</Button>
+              <Button size="sm">Start onboarding</Button>
             </Link>
           </div>
         )}
@@ -627,7 +627,7 @@ export default function SettingsPage() {
                               <svg aria-hidden="true" className="mr-1 h-3 w-3" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor">
                                 <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
                               </svg>
-                              Invite Pending
+                              Invite pending
                             </Badge>
                             {isParentLike && (
                               <button type="button" onClick={handleRevokeInvite}
@@ -641,7 +641,7 @@ export default function SettingsPage() {
                             <svg aria-hidden="true" className="mr-1 h-3 w-3" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor">
                               <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m9-.75a9 9 0 1 1-18 0 9 9 0 0 1 18 0Zm-9 3.75h.008v.008H12v-.008Z" />
                             </svg>
-                            Invite Expired
+                            Invite expired
                           </Badge>
                         ) : (
                           <span className="text-sm text-muted-foreground">Not invited</span>
@@ -657,7 +657,7 @@ export default function SettingsPage() {
                         <svg aria-hidden="true" className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
                           <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
                         </svg>
-                        Add Another Student
+                        Add another student
                       </button>
                     </div>
                   )}
@@ -797,7 +797,7 @@ export default function SettingsPage() {
                           disabled={inviteDisabled}
                           className={`min-h-[44px] flex-1 rounded-lg border border-border bg-background px-3 text-sm placeholder:text-muted-foreground focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring ${inviteDisabled ? "opacity-50" : ""}`} />
                         <Button size="sm" className="min-h-[44px] w-full shrink-0 sm:w-auto" onClick={handleSendInvite} disabled={generating || !inviteEmail.trim() || inviteDisabled}>
-                          {generating ? "Sending..." : "Send Invite"}
+                          {generating ? "Sending..." : "Send invite"}
                         </Button>
                       </div>
 
@@ -939,7 +939,7 @@ export default function SettingsPage() {
                 <p className="mt-0.5 text-xs text-muted-foreground">Permanently remove your account and all data. This cannot be undone.</p>
               </div>
               <Button variant="destructive" size="sm" className="min-h-[44px] shrink-0" onClick={() => setDeleteConfirm(true)}>
-                Delete Account
+                Delete account
               </Button>
             </div>
           </div>

@@ -265,14 +265,38 @@ body {
   font-size: 13px;
   padding: 6px 16px;
 }
-.saps-tour-popover .driver-popover-next-btn,
-.saps-tour-popover .driver-popover-close-btn-text {
-  background: var(--color-primary);
-  color: #fff;
+/* Driver.js's default rule (.driver-popover-footer button:hover/:focus →
+   background-color: #f7f7f7) flips our green Next/Done button to grey while
+   our white text stays — so we explicitly pin every interactive state and
+   use !important to guarantee the override regardless of cascade order. */
+.driver-popover.saps-tour-popover .driver-popover-next-btn,
+.driver-popover.saps-tour-popover .driver-popover-next-btn:hover,
+.driver-popover.saps-tour-popover .driver-popover-next-btn:focus,
+.driver-popover.saps-tour-popover .driver-popover-next-btn:focus-visible,
+.driver-popover.saps-tour-popover .driver-popover-next-btn:active {
+  background-color: var(--color-primary) !important;
+  color: #fff !important;
+  border-color: var(--color-primary) !important;
+  text-shadow: none !important;
 }
-.saps-tour-popover .driver-popover-prev-btn {
-  background: transparent;
-  color: var(--color-muted-foreground);
+.driver-popover.saps-tour-popover .driver-popover-next-btn:hover,
+.driver-popover.saps-tour-popover .driver-popover-next-btn:focus,
+.driver-popover.saps-tour-popover .driver-popover-next-btn:focus-visible {
+  background-color: var(--color-primary-hover) !important;
+  border-color: var(--color-primary-hover) !important;
+}
+.driver-popover.saps-tour-popover .driver-popover-prev-btn {
+  background-color: transparent !important;
+  color: var(--color-muted-foreground) !important;
+  border-color: var(--color-border) !important;
+  text-shadow: none !important;
+}
+.driver-popover.saps-tour-popover .driver-popover-prev-btn:hover,
+.driver-popover.saps-tour-popover .driver-popover-prev-btn:focus,
+.driver-popover.saps-tour-popover .driver-popover-prev-btn:focus-visible {
+  background-color: var(--color-muted) !important;
+  color: var(--color-foreground) !important;
+  border-color: var(--color-border) !important;
 }
 .saps-tour-popover .driver-popover-progress-text {
   font-size: 11px;

@@ -31,3 +31,22 @@ export function isYearEndBannerActive(now: Date = new Date()): boolean {
 
   return true;
 }
+
+/**
+ * Returns the next date the year-end banner will open, relative to `now`.
+ * Used by surfaces like the empty-state transcript to tell users when the
+ * window opens so they aren't stranded waiting on a feature they can't see.
+ *
+ * - Before May 15 (same year) → May 15 of the current calendar year
+ * - May 15 – Jul 31 → window is currently open; returns today's May 15 anchor
+ * - After Jul 31 → May 15 of the next calendar year
+ */
+export function nextYearEndBannerOpenDate(now: Date = new Date()): Date {
+  const year = now.getFullYear();
+  const month = now.getMonth() + 1;
+  const { month: startMonth, day: startDay } = YEAR_END_BANNER_START;
+
+  // After July 31 → next calendar year's opening
+  const targetYear = month > 7 ? year + 1 : year;
+  return new Date(targetYear, startMonth - 1, startDay, 12);
+}

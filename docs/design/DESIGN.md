@@ -303,7 +303,7 @@ Import: [`@/components/ui/button`](../../saps/components/ui/button.tsx)
 - One `default` button per view or section — the primary action. Everything else is `outline` or `ghost`.
 - No gradient fills. Flat color + one hover state.
 - Icons go left of label, 16px, same color as text.
-- **Primary CTA text uses title case** — proven patterns like "Get Started Free", "Start Free Trial". Secondary and nav actions stay sentence case ("See how it works", "Read the FAQ", "Sign in"). See voice-and-tone.md.
+- **Button label casing:** Sentence case across the authenticated app — buttons, link buttons, page titles, modal headings, and form labels (e.g. "Add to plan", "Delete account", "Course planner"). Public marketing pages keep title case for proven CTA patterns ("Get Started Free", "Start Free Trial"). Brand/category labels stay capitalized: AP, GPA Waiver, Dual Credit, and product tier names (Plus, Elite, Starter). See voice-and-tone.md §Capitalization.
 
 ### 5.2 Card
 

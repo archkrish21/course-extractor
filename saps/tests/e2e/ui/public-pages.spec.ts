@@ -71,9 +71,10 @@ test("homepage footer shows wordmark, tagline, disclaimer, and request-school li
   // Tagline (the earned brand beat in the bottom bar)
   await expect(footer.getByText(/Academic planning, granted/i)).toBeVisible();
 
-  // Legal disclaimer (load-bearing, must not regress)
+  // Legal disclaimer (load-bearing, must not regress). Wording was
+  // genericized in PR #119 — assert the school-agnostic form.
   await expect(
-    footer.getByText(/Not affiliated with Adlai E\. Stevenson High School/i)
+    footer.getByText(/Not affiliated with any school or school district/i)
   ).toBeVisible();
 
   // Subtitle link to /request-school

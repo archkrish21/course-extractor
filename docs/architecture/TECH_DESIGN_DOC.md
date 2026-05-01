@@ -904,6 +904,7 @@ CREATE TABLE plan_courses (
   display_order SMALLINT DEFAULT 0,
   notes         TEXT,
   gpa_waiver_applied BOOLEAN NOT NULL DEFAULT FALSE,
+  prereq_overridden  BOOLEAN NOT NULL DEFAULT FALSE,
   UNIQUE (plan_id, course_id, grade_level, semester)
   -- Allows retakes in different years; prevents duplicates within same grade/semester
 );
@@ -916,6 +917,8 @@ CREATE INDEX idx_plan_courses_plan_id ON plan_courses (plan_id);
 > **Grade-level locking (replaces per-course completed-status locking):** After completing a grade via the year-end wizard, the grade level is added to `four_year_plans.locked_grade_levels`. When a grade is locked, the API enforces: `POST /api/v1/plans/:id/courses` returns 409 for that grade, `DELETE /api/v1/plans/:id/courses/:planCourseId` returns 409, `PATCH /api/v1/plans/:id/courses/:planCourseId` returns 409 for any change except `gpa_waiver_applied`. GPA waiver toggles are the only permitted modification on locked grades. The "current grade" in the planner is the first unlocked grade level. Lock/unlock is managed via `POST /api/v1/plans/:id/lock-grade` with body `{ grade_level, locked }`. Locking redirects to `/year-end?grade=X`; unlocking requires a confirmation dialog.
 
 > **Full-year course storage (Phase 1b update):** Full-year courses are now stored as two rows (`semester=1` and `semester=2`) instead of one row with `semester=null`. This change was made to enable independent per-semester status and grade tracking. The `UNIQUE (plan_id, course_id, grade_level, semester)` constraint accommodates this pattern — each semester gets its own row. Adding a full-year course creates both rows; removing either semester removes both.
+
+> **Cross-grade selection + warning override (Phase 3 update):** The course picker exposes an "All grades" toggle (planner + Grade 10+ onboarding past-courses) that drops the slot's grade-level filter, letting students place a course at a non-standard grade (e.g., Algebra 2 in Grade 9, or recording an 8th-grade Algebra 1 prereq). When `POST /api/v1/plans/:id/courses` is called with `force_add: true` AND the warning set contains a `prerequisite` or `grade_level` violation, the row is persisted with `prereq_overridden = true`. `validatePlanIntegrity()` routes those two violation types into a separate `ignoredViolations` array on overridden rows so plan-level revalidation does not re-flag the warnings as active issues — they surface instead under a clickable "Excused" affordance on the course card. Other violation types (`corequisite`, `enrollment_rule`, `duplicate`) still fire as active. `onboarding-complete` sets the flag automatically when a recorded course's `gradeLevels` does not include the target grade.
 
 ### Table: `plan_history`
 

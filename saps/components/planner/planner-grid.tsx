@@ -24,6 +24,7 @@ interface PlannerGridProps {
   onBulkStatusChange?: (planCourseIds: string[], status: PlanCourse["status"]) => void;
   onBulkGradeChange?: (planCourseIds: string[], grade: string | null) => void;
   onGpaWaiverToggle?: (planCourseId: string, applied: boolean) => void;
+  onPrereqOverrideToggle?: (planCourseId: string, overridden: boolean) => void;
   onToggleGradeLock?: (gradeLevel: number, locked: boolean) => void;
   violations: Record<string, Violation[]>;
   ignoredViolations?: Record<string, Violation[]>;
@@ -37,7 +38,7 @@ const GRADE_LEVELS = [9, 10, 11, 12];
 // Sort order for courses within a semester cell:
 // 1. Early Bird  2. Language Arts (Communication Arts)  3. Math  4. Science
 // 5. World Language (Multilingual Learning)  6. Electives  7. PE (Physical Welfare)
-function getCourseSortOrder(course: PlanCourse): number {
+export function getCourseSortOrder(course: PlanCourse): number {
   const name = (course.name ?? "").toLowerCase();
   const code = (course.code ?? "").toUpperCase();
   const div = (course.divisionName ?? "").toLowerCase();
@@ -112,6 +113,7 @@ function DesktopGrid({
   onBulkStatusChange,
   onBulkGradeChange,
   onGpaWaiverToggle,
+  onPrereqOverrideToggle,
   onToggleGradeLock,
   violations,
   ignoredViolations = {},
@@ -266,11 +268,12 @@ function DesktopGrid({
 
         // Prerequisite violations for courses in this grade (deduplicate full-year courses)
         const prereqWarnings: string[] = [];
-        const seenCourseIds = new Set<string>();
+        const seenMessages = new Set<string>();
         for (const c of courses.filter((c) => c.gradeLevel === grade)) {
-          if (seenCourseIds.has(c.courseId)) continue;
-          seenCourseIds.add(c.courseId);
-          for (const v of violations[c.courseId] ?? []) {
+          for (const v of violations[c.id] ?? []) {
+            const dedupeKey = `${c.courseId}|${v.type}|${v.message}`;
+            if (seenMessages.has(dedupeKey)) continue;
+            seenMessages.add(dedupeKey);
             prereqWarnings.push(`Gr ${grade} Sem ${c.semester}: ${c.code ?? c.name} — ${v.message}`);
           }
         }
@@ -467,13 +470,14 @@ function DesktopGrid({
                                 <PlanCourseCard
                                   key={course.id}
                                   course={course}
-                                  violations={violations[course.courseId]}
-                                  ignoredViolations={ignoredViolations[course.courseId]}
+                                  violations={violations[course.id]}
+                                  ignoredViolations={ignoredViolations[course.id]}
                                   onRemove={!readOnly && !isGradeLocked ? () => onRemoveCourse(course.id) : undefined}
                                   onClick={onViewDetails ? () => onViewDetails(course.courseId) : () => onCourseClick(course)}
                                   onStatusChange={isGradeLocked ? undefined : (onStatusChange ? (status) => onStatusChange(course.id, status) : undefined)}
                                   onGradeChange={isGradeLocked ? undefined : (onGradeChange ? (g) => onGradeChange(course.id, g) : undefined)}
                                   onGpaWaiverToggle={onGpaWaiverToggle ? (applied) => onGpaWaiverToggle(course.id, applied) : undefined}
+                                  onPrereqOverrideToggle={!isGradeLocked && onPrereqOverrideToggle ? (overridden) => onPrereqOverrideToggle(course.id, overridden) : undefined}
                                   readOnly={readOnly}
                                 />
                               ))}
@@ -510,7 +514,7 @@ function DesktopGrid({
                 {REGULAR_SEMESTERS.map((sem, colIdx) => {
                   const cellCourses = sortCourses(getSemesterCourses(courses, grade, sem));
                   const cellViolationCount = cellCourses.reduce(
-                    (count, c) => count + (violations[c.courseId]?.length ?? 0),
+                    (count, c) => count + (violations[c.id]?.length ?? 0),
                     0
                   );
 
@@ -637,13 +641,14 @@ function DesktopGrid({
                           <PlanCourseCard
                             key={course.id}
                             course={course}
-                            violations={violations[course.courseId]}
-                                  ignoredViolations={ignoredViolations[course.courseId]}
+                            violations={violations[course.id]}
+                                  ignoredViolations={ignoredViolations[course.id]}
                             onRemove={isGradeLocked ? undefined : () => onRemoveCourse(course.id)}
                             onClick={onViewDetails ? () => onViewDetails(course.courseId) : () => onCourseClick(course)}
                             onStatusChange={isGradeLocked ? undefined : (onStatusChange ? (s) => onStatusChange(course.id, s) : undefined)}
                             onGradeChange={isGradeLocked ? undefined : (onGradeChange ? (g) => onGradeChange(course.id, g) : undefined)}
                             onGpaWaiverToggle={onGpaWaiverToggle ? (applied) => onGpaWaiverToggle(course.id, applied) : undefined}
+                            onPrereqOverrideToggle={!isGradeLocked && onPrereqOverrideToggle ? (overridden) => onPrereqOverrideToggle(course.id, overridden) : undefined}
                             readOnly={readOnly}
                           />
                         ))}
@@ -720,6 +725,7 @@ function MobileAccordion({
   onBulkStatusChange,
   onBulkGradeChange,
   onGpaWaiverToggle,
+  onPrereqOverrideToggle,
   onToggleGradeLock,
   violations,
   ignoredViolations = {},
@@ -751,7 +757,7 @@ function MobileAccordion({
         const isCurrentGrade = grade === effectiveGrade;
         const gradeCoursesAll = courses.filter((c) => c.gradeLevel === grade);
         const gradeViolationCount = gradeCoursesAll.reduce(
-          (count, c) => count + (violations[c.courseId]?.length ?? 0),
+          (count, c) => count + (violations[c.id]?.length ?? 0),
           0
         );
         const gradeSemGaps = [
@@ -842,7 +848,7 @@ function MobileAccordion({
                   const cellCourses = getCoursesForCell(courses, grade, sem);
                   const cellViolationCount = cellCourses.reduce(
                     (count, c) =>
-                      count + (violations[c.courseId]?.length ?? 0),
+                      count + (violations[c.id]?.length ?? 0),
                     0
                   );
 
@@ -868,13 +874,14 @@ function MobileAccordion({
                             <PlanCourseCard
                               key={course.id}
                               course={course}
-                              violations={violations[course.courseId]}
-                                  ignoredViolations={ignoredViolations[course.courseId]}
+                              violations={violations[course.id]}
+                                  ignoredViolations={ignoredViolations[course.id]}
                               onRemove={mobileGradeLocked ? undefined : () => onRemoveCourse(course.id)}
                               onClick={onViewDetails ? () => onViewDetails(course.courseId) : () => onCourseClick(course)}
                               onStatusChange={mobileGradeLocked ? undefined : (onStatusChange ? (s) => onStatusChange(course.id, s) : undefined)}
                               onGradeChange={mobileGradeLocked ? undefined : (onGradeChange ? (g) => onGradeChange(course.id, g) : undefined)}
                               onGpaWaiverToggle={onGpaWaiverToggle ? (applied) => onGpaWaiverToggle(course.id, applied) : undefined}
+                              onPrereqOverrideToggle={!mobileGradeLocked && onPrereqOverrideToggle ? (overridden) => onPrereqOverrideToggle(course.id, overridden) : undefined}
                               readOnly={readOnly}
                             />
                           );

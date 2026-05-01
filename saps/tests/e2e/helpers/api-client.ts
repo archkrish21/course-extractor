@@ -222,6 +222,7 @@ export async function updatePlanCourse(
     status: "planned" | "enrolled" | "completed" | "dropped";
     gpaWaiverApplied: boolean;
     semester: number;
+    prereqOverridden: boolean;
   }>
 ) {
   const body: Record<string, unknown> = {};
@@ -229,6 +230,7 @@ export async function updatePlanCourse(
   if (updates.status !== undefined) body.status = updates.status;
   if (updates.gpaWaiverApplied !== undefined) body.gpa_waiver_applied = updates.gpaWaiverApplied;
   if (updates.semester !== undefined) body.semester = updates.semester;
+  if (updates.prereqOverridden !== undefined) body.prereq_overridden = updates.prereqOverridden;
 
   const res = await request.patch(`/api/v1/plans/${planId}/courses/${planCourseId}`, {
     data: body,
@@ -253,6 +255,25 @@ export async function removePlanCourse(
   return res;
 }
 
+export async function bulkOverridePrereqs(
+  request: APIRequestContext,
+  planId: string,
+  planCourseIds: string[],
+  overridden: boolean
+): Promise<{ updatedCount: number; overridden: boolean }> {
+  const res = await request.post(`/api/v1/plans/${planId}/courses/bulk-override`, {
+    data: { plan_course_ids: planCourseIds, overridden },
+  });
+  if (!res.ok()) {
+    const text = await res.text().catch(() => "");
+    throw new Error(
+      `POST /api/v1/plans/${planId}/courses/bulk-override failed: ${res.status()} ${text.slice(0, 200)}`,
+    );
+  }
+  const body = await res.json();
+  return body.data ?? body;
+}
+
 // ── Validation ─────────────────────────────────────────────────────────────
 
 export async function validatePlan(
@@ -261,6 +282,7 @@ export async function validatePlan(
 ): Promise<{
   valid: boolean;
   courseViolations: Array<{ courseId: string; violations: Array<{ type: string }> }>;
+  ignoredCourseViolations: Array<{ courseId: string; violations: Array<{ type: string }> }>;
 }> {
   const res = await request.get(`/api/v1/plans/${planId}/validate`);
   expect(res.ok()).toBeTruthy();
@@ -269,6 +291,7 @@ export async function validatePlan(
   return {
     valid: v.valid ?? false,
     courseViolations: v.courseViolations ?? v.violations ?? [],
+    ignoredCourseViolations: v.ignoredCourseViolations ?? [],
   };
 }
 

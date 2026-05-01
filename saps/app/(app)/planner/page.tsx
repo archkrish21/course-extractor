@@ -2,7 +2,8 @@
 
 import { useState, useEffect, useCallback, useRef, useMemo } from "react";
 import { useRouter } from "next/navigation";
-import { PlannerGrid } from "@/components/planner/planner-grid";
+import { PlannerGrid, getCourseSortOrder } from "@/components/planner/planner-grid";
+import { semesterLabel } from "@/config/semesters";
 import { CoursePicker } from "@/components/planner/course-picker";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -111,6 +112,15 @@ export default function PlannerPage() {
   const [showProgressPanel, setShowProgressPanel] = useState(false);
   const showProgressPanelRef = useRef(false);
   useEffect(() => { showProgressPanelRef.current = showProgressPanel; }, [showProgressPanel]);
+  const [reportFullscreen, setReportFullscreen] = useState(false);
+  useEffect(() => {
+    if (!reportFullscreen) return;
+    function onKey(e: KeyboardEvent) {
+      if (e.key === "Escape") setReportFullscreen(false);
+    }
+    document.addEventListener("keydown", onKey);
+    return () => document.removeEventListener("keydown", onKey);
+  }, [reportFullscreen]);
   // Auto-open validation panel if URL has ?validation=open
   // Auto-open new plan modal if URL has ?newPlan=true
   useEffect(() => {
@@ -171,6 +181,12 @@ export default function PlannerPage() {
   const [gapsExpanded, setGapsExpanded] = useState(lgDefaultOpen);
   const [semesterIssuesExpanded, setSemesterIssuesExpanded] = useState(lgDefaultOpen);
   const [violationsExpanded, setViolationsExpanded] = useState(lgDefaultOpen);
+  // Per-group collapse state in the violation report. Groups whose
+  // violations are all excused start collapsed; the user can manually
+  // override either way and that override persists across refreshes.
+  const [groupCollapseOverrides, setGroupCollapseOverrides] = useState<
+    Map<string, boolean>
+  >(new Map());
   const [coveredExpanded, setCoveredExpanded] = useState(false);
   const [summaryExpanded, setSummaryExpanded] = useState(lgDefaultOpen);
   const [showNewPlanModal, setShowNewPlanModal] = useState(false);
@@ -281,22 +297,28 @@ export default function PlannerPage() {
       if (validationRes.ok) {
         const json = await validationRes.json();
         // API returns { data: { valid, totalViolations, courseViolations: [...] } }
-        // Convert courseViolations array to a Record<courseId, Violation[]>
+        // Each violation carries planCourseId (the plan_courses row that
+        // produced it). We key the map by planCourseId — not courseId — so
+        // paired full-year courses route to the correct cell, and a dropped
+        // sibling row doesn't pick up the active row's bell icon.
         const validationData = json.data ?? json;
         const violationsMap: Record<string, Violation[]> = {};
+        const fallbackKey = "unknown";
         const courseViolations = validationData.courseViolations ?? validationData.violations ?? [];
         if (Array.isArray(courseViolations)) {
           for (const cv of courseViolations) {
-            const key = cv.courseId ?? cv.course_id ?? "unknown";
-            // Each courseViolation has a nested violations array with the actual Violation objects
             const innerViolations = cv.violations ?? [cv];
-            if (!violationsMap[key]) violationsMap[key] = [];
             for (const v of innerViolations) {
+              const key = v.planCourseId ?? v.plan_course_id ?? cv.planCourseId ?? cv.courseId ?? fallbackKey;
+              if (!violationsMap[key]) violationsMap[key] = [];
               violationsMap[key].push({
                 type: v.type ?? "unknown",
                 message: v.message ?? "Validation issue",
                 severity: v.severity ?? "warning",
                 relatedCourseId: v.relatedCourseId,
+                missingPrerequisites: v.details?.missingPrerequisites?.map(
+                  (p: { code: string; name: string }) => ({ code: p.code, name: p.name })
+                ),
               });
             }
           }
@@ -307,15 +329,18 @@ export default function PlannerPage() {
         const ignoredCourseViolations = validationData.ignoredCourseViolations ?? [];
         if (Array.isArray(ignoredCourseViolations)) {
           for (const cv of ignoredCourseViolations) {
-            const key = cv.courseId ?? cv.course_id ?? "unknown";
             const inner = cv.violations ?? [cv];
-            if (!ignoredMap[key]) ignoredMap[key] = [];
             for (const v of inner) {
+              const key = v.planCourseId ?? v.plan_course_id ?? cv.planCourseId ?? cv.courseId ?? fallbackKey;
+              if (!ignoredMap[key]) ignoredMap[key] = [];
               ignoredMap[key].push({
                 type: v.type ?? "unknown",
                 message: v.message ?? "Validation issue",
                 severity: v.severity ?? "warning",
                 relatedCourseId: v.relatedCourseId,
+                missingPrerequisites: v.details?.missingPrerequisites?.map(
+                  (p: { code: string; name: string }) => ({ code: p.code, name: p.name })
+                ),
               });
             }
           }
@@ -704,6 +729,92 @@ export default function PlannerPage() {
       }
     },
     [selectedPlanId, courses, showToast, fetchPlanData]
+  );
+
+  const bulkSetPrereqOverridden = useCallback(
+    async (planCourseIds: string[], overridden: boolean) => {
+      if (!selectedPlanId || planCourseIds.length === 0) return false;
+      try {
+        await apiFetch(`/api/v1/plans/${selectedPlanId}/courses/bulk-override`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ plan_course_ids: planCourseIds, overridden }),
+        });
+        await fetchPlanData(selectedPlanId);
+        return true;
+      } catch {
+        setError("Failed to update warning state.");
+        return false;
+      }
+    },
+    [selectedPlanId, fetchPlanData]
+  );
+
+  // Per-card excuse/reflag. Expands to sibling rows in the same grade
+  // (full-year courses are stored as two rows sharing courseId) so paired
+  // courses don't end up in mixed states — the validator emits violations
+  // per row, so leaving one row unflagged would keep the warning visible.
+  const handlePrereqOverrideToggle = useCallback(
+    async (planCourseId: string, overridden: boolean) => {
+      const target = courses.find((c) => c.id === planCourseId);
+      if (!target) return;
+      const ids = courses
+        .filter(
+          (c) =>
+            c.courseId === target.courseId &&
+            c.gradeLevel === target.gradeLevel
+        )
+        .map((c) => c.id);
+      const ok = await bulkSetPrereqOverridden(ids, overridden);
+      if (ok) {
+        showToast(
+          overridden
+            ? `Warnings excused for ${target.name}`
+            : `Warnings reflagged for ${target.name}`
+        );
+      }
+    },
+    [courses, bulkSetPrereqOverridden, showToast]
+  );
+
+  // "Excuse all" on a (grade, semester) cell. Only targets rows that
+  // Toggle every plan_course row referenced by a validation-report group.
+  // Caller passes the planCourseIds it cares about; we expand to full-year
+  // siblings in the same grade so paired courses flip together. Both
+  // "Excuse all" and "Reflag" share this path — the direction is in
+  // `overridden`.
+  const handleGroupOverrideToggle = useCallback(
+    async (
+      planCourseIds: string[],
+      overridden: boolean,
+      gradeLevel: number,
+      semester: number
+    ) => {
+      const idSet = new Set<string>();
+      for (const id of planCourseIds) {
+        const target = courses.find((c) => c.id === id);
+        if (!target) continue;
+        for (const sibling of courses) {
+          if (
+            sibling.courseId === target.courseId &&
+            sibling.gradeLevel === target.gradeLevel
+          ) {
+            idSet.add(sibling.id);
+          }
+        }
+      }
+      const ids = Array.from(idSet);
+      if (ids.length === 0) return;
+      const ok = await bulkSetPrereqOverridden(ids, overridden);
+      if (ok) {
+        showToast(
+          overridden
+            ? `Excused warnings in Gr ${gradeLevel} Sem ${semester}`
+            : `Reflagged warnings in Gr ${gradeLevel} Sem ${semester}`
+        );
+      }
+    },
+    [courses, bulkSetPrereqOverridden, showToast]
   );
 
   const executeClear = useCallback(async () => {
@@ -1100,8 +1211,6 @@ export default function PlannerPage() {
     setFocusGradeTarget({ grade, semester });
   }, []);
   const totalCourses = courses.length;
-  // Count all warnings: API violations + course load gaps from API
-  const apiViolationCount = Object.values(violations).flat().length;
   const courseLoadGroup = progressData?.groups?.find((g) => g.group === "course_load");
 
   // Build semester gaps map for PlannerGrid grade headers: "grade-semester" → messages[]
@@ -1132,18 +1241,211 @@ export default function PlannerPage() {
   const gpaWaiverWarnings = (progressData?.gpaWaiverWarnings ?? []).map((msg) =>
     msg.startsWith("Grade") ? msg.replace(/^Grade (\d+) Sem (\d)/, "Gr $1 Sem $2") : msg
   );
-  // planWarnings = only prerequisite violations
-  const planWarnings: string[] = [];
-  for (const [courseId, vList] of Object.entries(violations)) {
-    const course = courses.find((c) => c.courseId === courseId);
-    const gl = course?.gradeLevel ?? 0;
-    const sem = course?.semester ?? 0;
-    const code = course?.code ?? course?.name ?? "";
-    for (const v of vList) {
-      planWarnings.push(`Gr ${gl} Sem ${sem}: ${code} — ${v.message}`);
+  // Build the deduped + grouped + sorted violation report. Pre-summer comes
+  // before regular semesters so the order matches how the planner renders
+  // each grade row (Pre-Summer 1 → Pre-Summer 2 → Sem 1 → Sem 2). Groups
+  // include BOTH active and already-excused entries so the report keeps
+  // the row visible after excusing — that's how a user reflags later.
+  const semesterRank = (s: number) =>
+    s === -2 ? 0 : s === -1 ? 1 : s === 1 ? 2 : 3;
+  const violationReportGroups = (() => {
+    interface Entry {
+      planCourseId: string;
+      courseId: string;
+      code: string;
+      name: string;
+      type: string;
+      message: string;
+      sortOrder: number;
+      excused: boolean;
+      // Map of "course code" → "course name" for any prereq referenced in
+      // the message. Drives the inline tooltip on prereq codes.
+      prereqNames: Record<string, string>;
     }
-  }
-  const totalViolations = apiViolationCount;
+    interface Group {
+      gradeLevel: number;
+      semester: number;
+      key: string;
+      entries: Entry[];
+      activeCount: number;
+      excusedCount: number;
+    }
+    const seen = new Set<string>();
+    const byKey = new Map<string, Group>();
+
+    const ingest = (
+      source: Record<string, Violation[]>,
+      excused: boolean
+    ) => {
+      for (const [planCourseId, vList] of Object.entries(source)) {
+        const course = courses.find((c) => c.id === planCourseId);
+        if (!course) continue;
+        const gl = course.gradeLevel ?? 0;
+        const sem = course.semester ?? 0;
+        const code = course.code ?? course.name ?? "";
+        const key = `${gl}-${sem}`;
+        for (const v of vList) {
+          // Paired full-year courses produce one violation per side; both
+          // sides share the same (courseId, gradeLevel, semester slot)
+          // textually, but each is a distinct planCourseId. Dedupe on the
+          // semantic identity (course + cell + message) so the report shows
+          // each issue once.
+          const dedupeKey = `${course.courseId}|${gl}|${sem}|${v.type}|${v.message}`;
+          if (seen.has(dedupeKey)) continue;
+          seen.add(dedupeKey);
+          let group = byKey.get(key);
+          if (!group) {
+            group = {
+              gradeLevel: gl,
+              semester: sem,
+              key,
+              entries: [],
+              activeCount: 0,
+              excusedCount: 0,
+            };
+            byKey.set(key, group);
+          }
+          const prereqNames: Record<string, string> = {};
+          for (const p of v.missingPrerequisites ?? []) {
+            if (p.code && p.name) prereqNames[p.code] = p.name;
+          }
+          group.entries.push({
+            planCourseId,
+            courseId: course.courseId,
+            code,
+            name: course.name ?? "",
+            type: v.type,
+            message: v.message,
+            sortOrder: getCourseSortOrder(course),
+            excused,
+            prereqNames,
+          });
+          if (excused) group.excusedCount++;
+          else group.activeCount++;
+        }
+      }
+    };
+    // Active first so they sort to the top within a group; excused second.
+    ingest(violations, false);
+    ingest(ignoredViolations, true);
+
+    for (const g of byKey.values()) {
+      g.entries.sort((a, b) => {
+        if (a.excused !== b.excused) return a.excused ? 1 : -1;
+        return a.sortOrder - b.sortOrder || a.code.localeCompare(b.code);
+      });
+    }
+    return Array.from(byKey.values()).sort((a, b) => {
+      if (a.gradeLevel !== b.gradeLevel) return a.gradeLevel - b.gradeLevel;
+      return semesterRank(a.semester) - semesterRank(b.semester);
+    });
+  })();
+  // Semester gaps grouped by (grade, semester) — same shape and sort as
+  // the violation report groups so the UI can use the same chevron/collapse
+  // affordance. No "excuse" toggle: per the current scope, gap warnings
+  // can't be dismissed yet.
+  const semesterGapReportGroups = (() => {
+    interface GapEntry {
+      message: string;
+    }
+    interface GapGroup {
+      gradeLevel: number;
+      semester: number;
+      key: string;
+      entries: GapEntry[];
+    }
+    const byKey = new Map<string, GapGroup>();
+    const ingest = (list: string[]) => {
+      for (const raw of list) {
+        const m = raw.match(/^Gr (\d+) Sem (-?\d+):\s*(.*)$/);
+        const gl = m ? Number(m[1]) : 0;
+        const sem = m ? Number(m[2]) : 0;
+        const message = m ? m[3] : raw;
+        const key = `${gl}-${sem}`;
+        let group = byKey.get(key);
+        if (!group) {
+          group = { gradeLevel: gl, semester: sem, key, entries: [] };
+          byKey.set(key, group);
+        }
+        group.entries.push({ message });
+      }
+    };
+    ingest(courseLoadWarnings);
+    ingest(gpaWaiverWarnings);
+    return Array.from(byKey.values()).sort((a, b) => {
+      if (a.gradeLevel !== b.gradeLevel) return a.gradeLevel - b.gradeLevel;
+      return semesterRank(a.semester) - semesterRank(b.semester);
+    });
+  })();
+  const totalSemesterGaps = semesterGapReportGroups.reduce(
+    (n, g) => n + g.entries.length,
+    0
+  );
+
+  const totalActiveViolations = violationReportGroups.reduce(
+    (n, g) => n + g.activeCount,
+    0
+  );
+  const totalReportEntries = violationReportGroups.reduce(
+    (n, g) => n + g.entries.length,
+    0
+  );
+  // Count used by the section toggle and the issues badge — only active
+  // violations matter for "do I have problems to fix?".
+  const totalViolations = totalActiveViolations;
+
+  // Course-code chip used in the validation report. Renders the code in
+  // brand-blue and shows a CSS-only popup with the full course name on
+  // hover/focus — no React state per chip, so the report stays cheap to
+  // re-render.
+  const CodeWithTooltip = ({ code, name }: { code: string; name?: string }) => (
+    <span className="group relative inline-block">
+      <span
+        className="font-mono text-primary cursor-help"
+        tabIndex={name ? 0 : -1}
+      >
+        {code}
+      </span>
+      {name && (
+        <span
+          role="tooltip"
+          className="pointer-events-none absolute left-0 bottom-full z-50 mb-1 max-w-[16rem] rounded-md bg-foreground px-2.5 py-1.5 text-xs font-medium text-background shadow-lg break-words opacity-0 transition-opacity duration-150 group-hover:opacity-100 group-focus-within:opacity-100"
+        >
+          {name}
+        </span>
+      )}
+    </span>
+  );
+
+  // Render a violation message with two transformations:
+  //   1. Strip the leading "{code} " prefix (already shown in the entry's
+  //      code column) and replace it with "It " — keeps the message readable
+  //      without restating the course code.
+  //   2. Wrap any referenced prereq codes in CodeWithTooltip so hovering
+  //      reveals the prereq's full course name.
+  const renderViolationMessage = (entry: { code: string; message: string; prereqNames: Record<string, string> }) => {
+    const stripped = entry.message.startsWith(`${entry.code} `)
+      ? `It ${entry.message.slice(entry.code.length + 1)}`
+      : entry.message;
+    const codes = Object.keys(entry.prereqNames);
+    if (codes.length === 0) return stripped;
+    // Match longest codes first so "SPA101/SPA102" wins over a hypothetical
+    // "SPA101" entry. Escape regex metacharacters in codes (codes contain `/`).
+    const sorted = [...codes].sort((a, b) => b.length - a.length);
+    const escaped = sorted.map((c) => c.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"));
+    const re = new RegExp(`(${escaped.join("|")})`, "g");
+    const parts = stripped.split(re);
+    return parts.map((part, i) => {
+      const name = entry.prereqNames[part];
+      if (name) {
+        return <CodeWithTooltip key={i} code={part} name={name} />;
+      }
+      return part;
+    });
+  };
+
+  const isReadOnly =
+    selectedPlan?.status === "archived" || selectedPlan?.permission === "view";
   const gradReqGapCount = progressData
     ? progressData.requirements.filter((r) => (r.earnedCredits ?? 0) + (r.plannedCredits ?? 0) < r.requiredCredits).length
     : 0;
@@ -1817,6 +2119,7 @@ export default function PlannerPage() {
           onBulkStatusChange={handleBulkStatusChange}
           onBulkGradeChange={handleBulkGradeChange}
           onGpaWaiverToggle={handleGpaWaiverToggle}
+          onPrereqOverrideToggle={handlePrereqOverrideToggle}
           lockedGradeLevels={selectedPlan?.lockedGradeLevels ?? []}
           onToggleGradeLock={(gradeLevel, locked) => {
             if (!locked) {
@@ -1839,9 +2142,42 @@ export default function PlannerPage() {
         {/* Validation Side Panel — full-width below the planner on mobile,
             sticky 380px sidebar on desktop. */}
         {showProgressPanel && selectedPlanId && (
-          <div className="w-full lg:w-[380px] lg:shrink-0">
-            <div className="flex flex-col lg:sticky lg:top-4 lg:max-h-[calc(100vh-6rem)]">
-              <Card className="flex flex-col overflow-hidden">
+          <div
+            className={
+              reportFullscreen
+                ? "fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-foreground/40 p-4 sm:p-8"
+                : "w-full lg:w-[380px] lg:shrink-0"
+            }
+            onClick={reportFullscreen ? () => setReportFullscreen(false) : undefined}
+          >
+            <div
+              className={
+                reportFullscreen
+                  ? "w-full max-w-4xl"
+                  : "flex flex-col lg:sticky lg:top-4 lg:max-h-[calc(100vh-6rem)]"
+              }
+              onClick={reportFullscreen ? (e) => e.stopPropagation() : undefined}
+            >
+              <Card className={`relative flex flex-col overflow-hidden ${reportFullscreen ? "max-h-[calc(100vh-4rem)]" : ""}`}>
+                {/* Fullscreen toggle — absolute so it sits over the Card's
+                    scrolling content without consuming layout space. */}
+                <button
+                  type="button"
+                  onClick={() => setReportFullscreen((v) => !v)}
+                  className="absolute right-2 top-2 z-10 flex h-7 w-7 items-center justify-center rounded-md bg-card/80 text-muted-foreground hover:bg-muted hover:text-foreground transition-colors backdrop-blur-sm focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
+                  title={reportFullscreen ? "Exit fullscreen (Esc)" : "Open fullscreen"}
+                  aria-label={reportFullscreen ? "Exit fullscreen" : "Open report fullscreen"}
+                >
+                  {reportFullscreen ? (
+                    <svg aria-hidden="true" className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M9 9V4.5M9 9H4.5M9 9 3.75 3.75M9 15v4.5M9 15H4.5M9 15l-5.25 5.25M15 9h4.5M15 9V4.5M15 9l5.25-5.25M15 15h4.5M15 15v4.5m0-4.5 5.25 5.25" />
+                    </svg>
+                  ) : (
+                    <svg aria-hidden="true" className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 3.75v4.5m0-4.5h4.5m-4.5 0L9 9M3.75 20.25v-4.5m0 4.5h4.5m-4.5 0L9 15M20.25 3.75h-4.5m4.5 0v4.5m0-4.5L15 9m5.25 11.25h-4.5m4.5 0v-4.5m0 4.5L15 15" />
+                    </svg>
+                  )}
+                </button>
                 <CardContent className="flex flex-col overflow-hidden p-0">
                   {progressLoading ? (
                     <div className="animate-pulse space-y-2 p-5 py-2">
@@ -2017,56 +2353,213 @@ export default function PlannerPage() {
                             </div>
                           )}
 
-                          {/* Semester Requirement Gaps */}
-                          {(courseLoadWarnings.length > 0 || gpaWaiverWarnings.length > 0) && (
+                          {/* Semester Gaps — grouped by grade+semester with the
+                              same chevron/collapse affordance as the violation
+                              report. Group keys are prefixed "gap:" so they
+                              don't collide with violation group keys in the
+                              shared collapse-override map. */}
+                          {totalSemesterGaps > 0 && (
                             <div className="mb-3 rounded-lg border border-warning/30 bg-warning/5">
                               <button type="button" onClick={() => setSemesterIssuesExpanded((v) => !v)} className="flex w-full items-center justify-between rounded-lg p-2.5 text-left focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring">
-                                <span className="text-xs font-semibold text-warning">Semester Gaps ({courseLoadWarnings.length + gpaWaiverWarnings.length})</span>
+                                <span className="text-xs font-semibold text-warning">Semester Gaps ({totalSemesterGaps})</span>
                                 <svg aria-hidden="true" className={`h-3.5 w-3.5 text-warning transition-transform ${semesterIssuesExpanded ? "rotate-180" : ""}`} fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
                                   <path strokeLinecap="round" strokeLinejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" />
                                 </svg>
                               </button>
                               {semesterIssuesExpanded && (
-                                <ul className="space-y-1 px-2.5 pb-2.5">
-                                  {[...courseLoadWarnings, ...gpaWaiverWarnings].map((msg, i) => {
-                                    const grMatch = msg.match(/^(Gr (\d+) Sem (\d+):)\s*(.*)/);
+                                <div className="space-y-2 px-2.5 pb-2.5">
+                                  {semesterGapReportGroups.map((group) => {
+                                    const overrideKey = `gap:${group.key}`;
+                                    const override = groupCollapseOverrides.get(overrideKey);
+                                    const collapsed = override ?? true;
+                                    const toggleCollapse = () => {
+                                      setGroupCollapseOverrides((prev) => {
+                                        const next = new Map(prev);
+                                        next.set(overrideKey, !collapsed);
+                                        return next;
+                                      });
+                                    };
                                     return (
-                                      <li key={i} className="flex items-start gap-1 text-xs text-foreground">
-                                        <span className="mt-1 h-1 w-1 shrink-0 rounded-full bg-warning" />
-                                        {grMatch ? (
-                                          <span className="inline"><button type="button" onClick={() => navigateToGrade(Number(grMatch[2]), Number(grMatch[3]))} className="shrink-0 whitespace-nowrap font-medium text-primary hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring rounded">{grMatch[1]}</button> {grMatch[4]}</span>
-                                        ) : msg}
-                                      </li>
+                                      <div
+                                        key={group.key}
+                                        className="rounded-md border border-warning/20 bg-card"
+                                      >
+                                        <div className={`flex items-center gap-2 px-2.5 py-1.5 ${collapsed ? "" : "border-b border-warning/15"}`}>
+                                          <button
+                                            type="button"
+                                            onClick={toggleCollapse}
+                                            aria-expanded={!collapsed}
+                                            aria-controls={`gap-group-${group.key}`}
+                                            className="flex h-5 w-5 shrink-0 items-center justify-center rounded text-warning hover:bg-muted transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
+                                            title={collapsed ? "Expand" : "Collapse"}
+                                          >
+                                            <svg
+                                              aria-hidden="true"
+                                              className={`h-3 w-3 transition-transform ${collapsed ? "" : "rotate-90"}`}
+                                              fill="none"
+                                              viewBox="0 0 24 24"
+                                              strokeWidth={2.5}
+                                              stroke="currentColor"
+                                            >
+                                              <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
+                                            </svg>
+                                          </button>
+                                          <button
+                                            type="button"
+                                            onClick={() => navigateToGrade(group.gradeLevel, group.semester)}
+                                            className="flex-1 text-left text-[11px] font-semibold text-warning hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring rounded"
+                                          >
+                                            Gr {group.gradeLevel} · {semesterLabel(group.semester)} ({group.entries.length})
+                                          </button>
+                                        </div>
+                                        {!collapsed && (
+                                          <ul id={`gap-group-${group.key}`} className="space-y-1 px-2.5 py-1.5">
+                                            {group.entries.map((entry, i) => (
+                                              <li
+                                                key={i}
+                                                className="flex items-start gap-1 text-xs text-foreground"
+                                              >
+                                                <span className="mt-1 h-1 w-1 shrink-0 rounded-full bg-warning" />
+                                                <span className="leading-relaxed">{entry.message}</span>
+                                              </li>
+                                            ))}
+                                          </ul>
+                                        )}
+                                      </div>
                                     );
                                   })}
-                                </ul>
+                                </div>
                               )}
                             </div>
                           )}
 
-                          {/* Prerequisite Violations */}
-                          {planWarnings.length > 0 && (
+                          {/* Prerequisite Violations — grouped by grade+semester
+                              with a per-cell "Excuse all" / "Reflag" toggle.
+                              Already-excused groups stay visible so the user
+                              can reverse the decision from the same place. */}
+                          {totalReportEntries > 0 && (
                             <div className="mb-3 rounded-lg border border-warning/30 bg-warning/5">
                               <button type="button" onClick={() => setViolationsExpanded((v) => !v)} className="flex w-full items-center justify-between rounded-lg p-2.5 text-left focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring">
-                                <span className="text-xs font-semibold text-warning">Prerequisite Violations ({planWarnings.length})</span>
+                                <span className="text-xs font-semibold text-warning">
+                                  Prerequisite Violations ({totalActiveViolations}
+                                  {totalReportEntries > totalActiveViolations
+                                    ? ` · ${totalReportEntries - totalActiveViolations} excused`
+                                    : ""})
+                                </span>
                                 <svg aria-hidden="true" className={`h-3.5 w-3.5 text-warning transition-transform ${violationsExpanded ? "rotate-180" : ""}`} fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
                                   <path strokeLinecap="round" strokeLinejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" />
                                 </svg>
                               </button>
                               {violationsExpanded && (
-                                <ul className="space-y-1 px-2.5 pb-2.5">
-                                  {planWarnings.map((msg, i) => {
-                                    const grMatch = msg.match(/^(Gr (\d+) Sem (\d+):)\s*(.*)/);
+                                <div className="space-y-2 px-2.5 pb-2.5">
+                                  {violationReportGroups.map((group) => {
+                                    const allExcused = group.activeCount === 0;
+                                    const override = groupCollapseOverrides.get(group.key);
+                                    const collapsed = override ?? allExcused;
+                                    const headerColor = allExcused
+                                      ? "text-muted-foreground"
+                                      : "text-warning";
+                                    const toggleCollapse = () => {
+                                      setGroupCollapseOverrides((prev) => {
+                                        const next = new Map(prev);
+                                        next.set(group.key, !collapsed);
+                                        return next;
+                                      });
+                                    };
                                     return (
-                                      <li key={i} className="flex items-start gap-1 text-xs text-foreground">
-                                        <span className="mt-1 h-1 w-1 shrink-0 rounded-full bg-warning" />
-                                        {grMatch ? (
-                                          <span className="inline"><button type="button" onClick={() => navigateToGrade(Number(grMatch[2]), Number(grMatch[3]))} className="shrink-0 whitespace-nowrap font-medium text-primary hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring rounded">{grMatch[1]}</button> {grMatch[4]}</span>
-                                        ) : msg}
-                                      </li>
+                                      <div
+                                        key={group.key}
+                                        className={`rounded-md border bg-card ${allExcused ? "border-border" : "border-warning/20"}`}
+                                      >
+                                        <div className={`flex items-center gap-2 px-2.5 py-1.5 ${collapsed ? "" : `border-b ${allExcused ? "border-border" : "border-warning/15"}`}`}>
+                                          <button
+                                            type="button"
+                                            onClick={toggleCollapse}
+                                            aria-expanded={!collapsed}
+                                            aria-controls={`vio-group-${group.key}`}
+                                            className={`flex h-5 w-5 shrink-0 items-center justify-center rounded hover:bg-muted transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring ${headerColor}`}
+                                            title={collapsed ? "Expand" : "Collapse"}
+                                          >
+                                            <svg
+                                              aria-hidden="true"
+                                              className={`h-3 w-3 transition-transform ${collapsed ? "" : "rotate-90"}`}
+                                              fill="none"
+                                              viewBox="0 0 24 24"
+                                              strokeWidth={2.5}
+                                              stroke="currentColor"
+                                            >
+                                              <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
+                                            </svg>
+                                          </button>
+                                          <button
+                                            type="button"
+                                            onClick={() => navigateToGrade(group.gradeLevel, group.semester)}
+                                            className={`flex-1 text-left text-[11px] font-semibold hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring rounded ${headerColor}`}
+                                          >
+                                            Gr {group.gradeLevel} · {semesterLabel(group.semester)} ({group.entries.length}
+                                            {allExcused ? ", excused" : ""})
+                                          </button>
+                                          {!isReadOnly && (
+                                            allExcused ? (
+                                              <button
+                                                type="button"
+                                                onClick={() =>
+                                                  handleGroupOverrideToggle(
+                                                    group.entries.map((e) => e.planCourseId),
+                                                    false,
+                                                    group.gradeLevel,
+                                                    group.semester
+                                                  )
+                                                }
+                                                className="shrink-0 rounded px-2 py-0.5 text-[10px] font-medium text-primary hover:bg-primary-light transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
+                                                title="Reflag warnings for this cell"
+                                              >
+                                                Reflag
+                                              </button>
+                                            ) : (
+                                              <button
+                                                type="button"
+                                                onClick={() =>
+                                                  handleGroupOverrideToggle(
+                                                    group.entries
+                                                      .filter((e) => !e.excused)
+                                                      .map((e) => e.planCourseId),
+                                                    true,
+                                                    group.gradeLevel,
+                                                    group.semester
+                                                  )
+                                                }
+                                                className="shrink-0 rounded px-2 py-0.5 text-[10px] font-medium text-warning hover:bg-warning-light transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
+                                                title="Excuse remaining warnings in this cell"
+                                              >
+                                                Excuse all
+                                              </button>
+                                            )
+                                          )}
+                                        </div>
+                                        {!collapsed && (
+                                          <ul id={`vio-group-${group.key}`} className="space-y-1 px-2.5 py-1.5">
+                                            {group.entries.map((entry, i) => (
+                                              <li
+                                                key={`${entry.planCourseId}-${i}`}
+                                                className="flex items-start gap-1 text-xs text-foreground"
+                                              >
+                                                <span
+                                                  className={`mt-1 h-1 w-1 shrink-0 rounded-full ${entry.excused ? "bg-muted-foreground/40" : "bg-warning"}`}
+                                                />
+                                                <span
+                                                  className={`leading-relaxed ${entry.excused ? "text-muted-foreground line-through" : ""}`}
+                                                >
+                                                  <CodeWithTooltip code={entry.code} name={entry.name} />{" "}— {renderViolationMessage(entry)}
+                                                </span>
+                                              </li>
+                                            ))}
+                                          </ul>
+                                        )}
+                                      </div>
                                     );
                                   })}
-                                </ul>
+                                </div>
                               )}
                             </div>
                           )}
@@ -2104,7 +2597,7 @@ export default function PlannerPage() {
                           )}
 
                           {/* All clear message */}
-                          {gaps.length === 0 && courseLoadWarnings.length === 0 && gpaWaiverWarnings.length === 0 && planWarnings.length === 0 && (
+                          {gaps.length === 0 && courseLoadWarnings.length === 0 && gpaWaiverWarnings.length === 0 && totalViolations === 0 && (
                             <div className="flex items-center gap-1.5 py-2 text-xs text-success">
                               <svg aria-hidden="true" className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
                                 <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75 11.25 15 15 9.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />

@@ -127,7 +127,8 @@ export async function findCourseByCode(
   request: APIRequestContext,
   code: string
 ): Promise<Course | null> {
-  const res = await request.get(`/api/v1/courses?search=${encodeURIComponent(code)}`);
+  // The catalog API uses `q` (not `search`) and ILIKEs against name+code.
+  const res = await request.get(`/api/v1/courses?q=${encodeURIComponent(code)}&limit=100`);
   if (!res.ok()) return null;
   const data = await res.json();
   const courses: Course[] = data.courses ?? data.data ?? [];

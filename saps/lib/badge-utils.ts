@@ -12,3 +12,8 @@ export function creditTypeBadgeVariant(creditType: string): BadgeVariant {
   if (lower.includes("accelerated")) return "accelerated";
   return "default";
 }
+
+/** Display label for a credit type — collapses "Pass/Fail" to "P/F" for compact badges. */
+export function creditTypeLabel(creditType: string): string {
+  return creditType === "Pass/Fail" ? "P/F" : creditType;
+}

@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { CourseDetail } from "@/components/course-detail";
-import { creditTypeBadgeVariant } from "@/lib/badge-utils";
+import { creditTypeBadgeVariant, creditTypeLabel } from "@/lib/badge-utils";
 import { apiFetch } from "@/lib/api-client";
 import { useTour } from "@/lib/hooks/use-tour";
 import { TOUR_IDS, getCoursesTourSteps } from "@/config/tours";
@@ -19,7 +19,7 @@ interface Course {
   divisionId: string;
   divisionName: string;
   divisionCode: string;
-  creditType: "CP" | "Accelerated" | "Honors" | "AP";
+  creditType: "CP" | "Accelerated" | "Honors" | "AP" | "Pass/Fail";
   creditValue: string;
   duration: "semester" | "full_year";
   gradeLevels: number[];
@@ -574,7 +574,7 @@ export default function CourseBrowserPage() {
                       <div className="flex items-center justify-between gap-2 mt-auto pt-2">
                         <div className="flex flex-wrap items-center gap-1.5 min-w-0">
                           <Badge variant={creditTypeBadgeVariant(course.creditType)}>
-                            {course.creditType}
+                            {creditTypeLabel(course.creditType)}
                           </Badge>
                           {course.semestersOffered?.some((s: number) => s < 0) && (
                             <Badge variant="warning">Summer</Badge>
@@ -827,7 +827,7 @@ export default function CourseBrowserPage() {
                 </div>
                 <div className="mt-2 flex flex-wrap gap-1.5">
                   <Badge variant={creditTypeBadgeVariant(selectedCourse.creditType)}>
-                    {selectedCourse.creditType}
+                    {creditTypeLabel(selectedCourse.creditType)}
                   </Badge>
                   {selectedCourse.semestersOffered?.some((s: number) => s < 0) && (
                     <Badge variant="warning">Summer</Badge>

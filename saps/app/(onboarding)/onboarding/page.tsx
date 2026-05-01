@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardHeader, CardContent } from "@/components/ui/card";
-import { creditTypeBadgeVariant } from "@/lib/badge-utils";
+import { creditTypeBadgeVariant, creditTypeLabel } from "@/lib/badge-utils";
 import { apiFetch } from "@/lib/api-client";
 import { deriveCompletionSemesters } from "@/lib/onboarding/derive-completion-semesters";
 
@@ -18,6 +18,7 @@ interface CompletedCourse {
   grade: string;
   academic_year: string;
   semester: number;
+  creditType: string;
 }
 
 interface PlanTemplateInfo {
@@ -301,9 +302,10 @@ function StepPastCourses({
       const newEntries: CompletedCourse[] = semesters.map((semester) => ({
         code: course.code,
         name: course.name,
-        grade: "A",
+        grade: isPassFailCourse(course.code, course.creditType) ? "P" : "A",
         academic_year: curAcademicYear,
         semester,
+        creditType: course.creditType,
       }));
       setCompletedCourses([...completedCourses, ...newEntries]);
     }
@@ -425,7 +427,7 @@ function StepPastCourses({
                       <input type="checkbox" checked={selected} onChange={() => toggleCourse(course)} className="h-4 w-4 shrink-0 rounded border-border text-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring" />
                       <span className="font-mono text-xs text-muted-foreground w-20 shrink-0">{course.code}</span>
                       <span className="flex-1 text-sm text-foreground min-w-0 truncate">{course.name}</span>
-                      <Badge variant={creditTypeBadgeVariant(course.creditType)} className="shrink-0">{course.creditType}</Badge>
+                      <Badge variant={creditTypeBadgeVariant(course.creditType)} className="shrink-0">{creditTypeLabel(course.creditType)}</Badge>
                     </label>
                   );
                 })}
@@ -688,7 +690,7 @@ function StepAssignGrades({
                         <table className="w-full text-sm">
                           <tbody className="divide-y divide-border">
                             {bySemester[sem].map(({ entry, index }) => {
-                              const options = isPassFailCourse(entry.code)
+                              const options = isPassFailCourse(entry.code, entry.creditType)
                                 ? PASS_FAIL_OPTIONS
                                 : GRADE_OPTIONS;
                               return (

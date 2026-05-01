@@ -675,9 +675,9 @@ export async function GET(request: NextRequest) {
       const semCourses = allPlanCourses.filter(
         (pc) => pc.gradeLevel === gl && pc.semester === sem
       );
-      // GPA-counted = non-waivered, non-dropped, not P/F-only courses (PE, Driver Ed)
+      // GPA-counted = non-waivered, non-dropped, not P/F-only courses (PE, Driver Ed, catalog Pass/Fail)
       const gpaCounted = semCourses.filter(
-        (pc) => !pc.gpaWaiverApplied && pc.status !== "dropped" && !isPassFailCourse(pc.code)
+        (pc) => !pc.gpaWaiverApplied && pc.status !== "dropped" && !isPassFailCourse(pc.code, pc.creditType)
       ).length;
       if (gpaCounted < 4) {
         gpaWaiverWarnings.push(

@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Spinner } from "@/components/ui/spinner";
-import { creditTypeBadgeVariant } from "@/lib/badge-utils";
+import { creditTypeBadgeVariant, creditTypeLabel } from "@/lib/badge-utils";
 import { CourseDetail } from "@/components/course-detail";
 import { apiFetch } from "@/lib/api-client";
 
@@ -38,7 +38,7 @@ export function CourseDetailModal({
     divisionCode: string;
     departmentId?: string;
     departmentName?: string;
-    creditType: "CP" | "Accelerated" | "Honors" | "AP";
+    creditType: "CP" | "Accelerated" | "Honors" | "AP" | "Pass/Fail";
     creditValue: string;
     duration: "semester" | "full_year";
     gradeLevels: number[];
@@ -154,7 +154,7 @@ export function CourseDetailModal({
                 </div>
                 <div className="mt-2 flex flex-wrap gap-1.5">
                   <Badge variant={creditTypeBadgeVariant(c.creditType)}>
-                    {c.creditType}
+                    {creditTypeLabel(c.creditType)}
                   </Badge>
                   {c.semestersOffered?.some((s: number) => s < 0) && (
                     <Badge variant="warning">Summer</Badge>

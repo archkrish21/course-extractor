@@ -5,7 +5,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Spinner } from "@/components/ui/spinner";
-import { creditTypeBadgeVariant } from "@/lib/badge-utils";
+import { creditTypeBadgeVariant, creditTypeLabel } from "@/lib/badge-utils";
 import { useAccount } from "@/lib/account-context";
 import { apiFetch } from "@/lib/api-client";
 import { calculateGPA, formatGPA } from "@/lib/gpa/calc";
@@ -27,7 +27,7 @@ interface PlanCourse {
   courseId: string;
   code: string;
   name: string;
-  creditType: "CP" | "Accelerated" | "Honors" | "AP";
+  creditType: "CP" | "Accelerated" | "Honors" | "AP" | "Pass/Fail";
   creditValue: string;
   duration: "semester" | "full_year";
   gradeLevel: number;
@@ -474,7 +474,7 @@ export default function GradesPage() {
                                 <div className="flex items-center gap-2 mt-0.5">
                                   <span className="text-xs text-muted-foreground">{course.code}</span>
                                   <Badge variant={creditTypeBadgeVariant(course.creditType)} className="text-[10px]">
-                                    {course.creditType}
+                                    {creditTypeLabel(course.creditType)}
                                   </Badge>
                                 </div>
                               </div>
@@ -492,7 +492,7 @@ export default function GradesPage() {
                               {/* Desktop: Type column */}
                               <div className="hidden sm:block">
                                 <Badge variant={creditTypeBadgeVariant(course.creditType)} className="text-[10px]">
-                                  {course.creditType}
+                                  {creditTypeLabel(course.creditType)}
                                 </Badge>
                               </div>
                               {/* Mobile: grade + credits inline */}

@@ -4,7 +4,7 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { creditTypeBadgeVariant } from "@/lib/badge-utils";
+import { creditTypeBadgeVariant, creditTypeLabel } from "@/lib/badge-utils";
 import { Spinner } from "@/components/ui/spinner";
 import { findEquivalentInPlan } from "@/config/summer-equivalents";
 import { isSummerSemester } from "@/config/semesters";
@@ -589,7 +589,7 @@ export function CoursePicker({
                               variant={creditTypeBadgeVariant(course.creditType)}
                               className="text-[10px] px-1.5 py-0"
                             >
-                              {course.creditType}
+                              {creditTypeLabel(course.creditType)}
                             </Badge>
                             {course.semestersOffered?.some((s: number) => s < 0) && (
                               <Badge variant="warning" className="text-[10px] px-1.5 py-0">

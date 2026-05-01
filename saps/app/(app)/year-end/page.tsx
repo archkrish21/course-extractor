@@ -21,6 +21,7 @@ interface CourseEntry {
   status: string;
   plannedGrade: string | null;
   creditValue?: string;
+  creditType?: string;
 }
 
 const STEPS = [
@@ -361,7 +362,7 @@ function YearEndPageInner() {
                           </thead>
                           <tbody className="divide-y divide-border">
                             {semCourses.map((c) => {
-                              const isPF = isPassFailCourse(c.code);
+                              const isPF = isPassFailCourse(c.code, c.creditType);
                               const options = isPF ? PASS_FAIL_OPTIONS : GRADE_OPTIONS;
                               return (
                                 <tr key={c.id} className="bg-card">

@@ -115,6 +115,7 @@ export async function GET(request: NextRequest) {
         status: planCourses.status,
         plannedGrade: planCourses.plannedGrade,
         creditValue: courses.creditValue,
+        creditType: courses.creditType,
       })
       .from(planCourses)
       .innerJoin(courses, eq(planCourses.courseId, courses.id))

@@ -8,6 +8,7 @@ import { calculateGPA, formatGPA } from "@/lib/gpa/calc";
 import { GRADE_OPTIONS } from "@/config/grade-scale";
 import { UNOFFICIAL_DISCLAIMER } from "@/config/disclaimers";
 import { PrintWatermark } from "@/components/print-watermark";
+import { creditTypeLabel } from "@/lib/badge-utils";
 
 interface PlanCourse {
   id: string;
@@ -351,7 +352,7 @@ export default function PrintPlanPage() {
                               {c.gpaWaiverApplied && <span className="ml-1 text-[9px] text-warning/60">(W)</span>}
                             </td>
                             <td className="py-0.5 text-warning/70">{c.code}</td>
-                            <td className="py-0.5 text-center text-warning/70">{c.creditType}</td>
+                            <td className="py-0.5 text-center text-warning/70">{creditTypeLabel(c.creditType)}</td>
                             <td className="py-0.5 text-center text-warning/70">{STATUS_LABELS[c.status] ?? c.status}</td>
                             <td className="py-0.5 text-center font-semibold text-warning">{c.plannedGrade ?? "—"}</td>
                             <td className="py-0.5 text-center text-warning/70">{creditPerRow(c)}</td>
@@ -367,7 +368,7 @@ export default function PrintPlanPage() {
                               {c.gpaWaiverApplied && <span className="ml-1 text-[9px] text-gray-400">(W)</span>}
                             </td>
                             <td className="py-0.5 text-gray-500">{c.code}</td>
-                            <td className="py-0.5 text-center">{c.creditType}</td>
+                            <td className="py-0.5 text-center">{creditTypeLabel(c.creditType)}</td>
                             <td className="py-0.5 text-center">{STATUS_LABELS[c.status] ?? c.status}</td>
                             <td className="py-0.5 text-center font-semibold">{c.plannedGrade ?? "—"}</td>
                             <td className="py-0.5 text-center">{creditPerRow(c)}</td>

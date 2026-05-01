@@ -31,6 +31,7 @@ const patchCourseSchema = z.object({
     .optional(),
   gpa_waiver_applied: z.boolean().optional(),
   status: z.enum(["planned", "enrolled", "completed", "dropped"]).optional(),
+  prereq_overridden: z.boolean().optional(),
 });
 
 interface RouteContext {
@@ -66,7 +67,8 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
       updates.semester === undefined &&
       updates.planned_grade === undefined &&
       updates.status === undefined &&
-      updates.gpa_waiver_applied === undefined
+      updates.gpa_waiver_applied === undefined &&
+      updates.prereq_overridden === undefined
     ) {
       return errorResponse(
         "VALIDATION_ERROR",
@@ -116,15 +118,16 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
       return errorResponse("NOT_FOUND", "Plan course not found.", 404);
     }
 
-    // F-PL-10: Grade-level lock — only GPA waiver toggle allowed
+    // F-PL-10: Grade-level lock — only GPA waiver and prereq-override toggles
+    // are allowed on locked grades. Both are non-structural metadata changes.
     const lockedGrades = (plan.lockedGradeLevels as number[]) ?? [];
     if (lockedGrades.includes(planCourse.gradeLevel)) {
-      const isOnlyGpaWaiver =
+      const isMetadataOnly =
         updates.semester === undefined &&
         updates.status === undefined &&
         updates.planned_grade === undefined &&
-        updates.gpa_waiver_applied !== undefined;
-      if (!isOnlyGpaWaiver) {
+        (updates.gpa_waiver_applied !== undefined || updates.prereq_overridden !== undefined);
+      if (!isMetadataOnly) {
         return errorResponse(
           "CONFLICT",
           `Grade ${planCourse.gradeLevel} is locked. Unlock it first to make changes.`,
@@ -155,6 +158,9 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
     }
     if (updates.gpa_waiver_applied !== undefined) {
       updateValues.gpaWaiverApplied = updates.gpa_waiver_applied;
+    }
+    if (updates.prereq_overridden !== undefined) {
+      updateValues.prereqOverridden = updates.prereq_overridden;
     }
 
     // Update the plan course

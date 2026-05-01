@@ -19,6 +19,7 @@ import {
   lockGrade,
   unlockGrade,
   validatePlan,
+  bulkOverridePrereqs,
   type Course,
   type Plan,
 } from "../helpers/api-client";
@@ -272,6 +273,94 @@ test.describe("Course mutations", () => {
     const cv = validation.courseViolations.find((v) => v.courseId === candidate!.id);
     const prereqViolations = cv?.violations.filter((v) => v.type === "prerequisite") ?? [];
     expect(prereqViolations).toHaveLength(0);
+  });
+
+  test("bulk-override toggles prereq warnings excused → reflagged → excused", async ({ request }) => {
+    // Find a course with a current prereq violation (not yet overridden).
+    // Reuse the same probe pattern as the force-add test above.
+    const candidates = [
+      ...catalog.filter((c) => c.isAp),
+      ...catalog.filter((c) => /MAT|BIO|CHE|PHY/.test(c.code)),
+    ].slice(0, 8);
+
+    let candidate: Course | null = null;
+    for (const c of candidates) {
+      const probe = await addCourseToPlan(request, scratchPlan.id, {
+        courseId: c.id,
+        gradeLevel: 9,
+        semester: 2,
+        forceAdd: false,
+      });
+      if (probe.status() === 422) {
+        const body = await probe.json();
+        const types: string[] = (body.violations ?? []).map((v: { type: string }) => v.type);
+        if (types.includes("prerequisite")) {
+          candidate = c;
+          break;
+        }
+      }
+    }
+
+    test.skip(!candidate, "No course with a prereq violation found in the catalog for grade 9 sem 2");
+    if (!candidate) return;
+
+    // Add the course WITHOUT force_add so prereqOverridden starts false.
+    // We pass force_add=true here to bypass the 422 (since we know there's a
+    // violation and want the row created), then immediately reflag to clear
+    // the auto-override and reach the "active violation" baseline state.
+    const added = await addCourseToPlan(request, scratchPlan.id, {
+      courseId: candidate.id,
+      gradeLevel: 9,
+      semester: 2,
+      forceAdd: true,
+    });
+    expect(added.status()).toBe(201);
+    const placed = (await listPlanCourses(request, scratchPlan.id)).find(
+      (pc) => pc.courseId === candidate!.id
+    );
+    expect(placed).toBeDefined();
+
+    // Step 1: reflag (force_add set the override; flip it off so the warning
+    // is active again — this is the post-add state we want to start from).
+    await bulkOverridePrereqs(request, scratchPlan.id, [placed!.id], false);
+    let validation = await validatePlan(request, scratchPlan.id);
+    let cv = validation.courseViolations.find((v) => v.courseId === candidate!.id);
+    expect(cv?.violations.some((v) => v.type === "prerequisite")).toBe(true);
+
+    // Step 2: excuse via bulk-override → violation moves to ignored
+    const excuseResult = await bulkOverridePrereqs(
+      request,
+      scratchPlan.id,
+      [placed!.id],
+      true
+    );
+    expect(excuseResult.updatedCount).toBe(1);
+    expect(excuseResult.overridden).toBe(true);
+    validation = await validatePlan(request, scratchPlan.id);
+    cv = validation.courseViolations.find((v) => v.courseId === candidate!.id);
+    expect(cv?.violations.filter((v) => v.type === "prerequisite") ?? []).toHaveLength(0);
+    const ignored = validation.ignoredCourseViolations.find(
+      (v) => v.courseId === candidate!.id
+    );
+    expect(ignored?.violations.some((v) => v.type === "prerequisite")).toBe(true);
+
+    // Step 3: reflag again → violation comes back as active, ignored clears
+    const reflagResult = await bulkOverridePrereqs(
+      request,
+      scratchPlan.id,
+      [placed!.id],
+      false
+    );
+    expect(reflagResult.overridden).toBe(false);
+    validation = await validatePlan(request, scratchPlan.id);
+    cv = validation.courseViolations.find((v) => v.courseId === candidate!.id);
+    expect(cv?.violations.some((v) => v.type === "prerequisite")).toBe(true);
+    const ignoredAfterReflag = validation.ignoredCourseViolations.find(
+      (v) => v.courseId === candidate!.id
+    );
+    expect(
+      ignoredAfterReflag?.violations.filter((v) => v.type === "prerequisite") ?? []
+    ).toHaveLength(0);
   });
 });
 

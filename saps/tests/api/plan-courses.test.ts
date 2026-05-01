@@ -88,6 +88,10 @@ vi.mock("@/lib/auth/get-user", () => ({
   getAccountContext: vi.fn(),
 }));
 
+vi.mock("@/lib/api/require-same-origin", () => ({
+  requireSameOrigin: vi.fn().mockReturnValue(null),
+}));
+
 const mockGetPlanAccess = vi.fn();
 vi.mock("@/lib/auth/plan-permissions", () => ({
   getPlanAccess: (...args: unknown[]) => mockGetPlanAccess(...args),
@@ -125,6 +129,7 @@ vi.mock("drizzle-orm", () => ({
   eq: vi.fn((...args: unknown[]) => ({ type: "eq", args })),
   and: vi.fn((...args: unknown[]) => ({ type: "and", args })),
   or: vi.fn((...args: unknown[]) => ({ type: "or", args })),
+  inArray: vi.fn((...args: unknown[]) => ({ type: "inArray", args })),
   sql: Object.assign(
     (strings: TemplateStringsArray, ..._values: unknown[]) => ({
       type: "sql",
@@ -142,6 +147,7 @@ import {
   DELETE as deleteCourse,
 } from "@/app/api/v1/plans/[id]/courses/[courseId]/route";
 import { GET as validatePlan } from "@/app/api/v1/plans/[id]/validate/route";
+import { POST as bulkOverride } from "@/app/api/v1/plans/[id]/courses/bulk-override/route";
 
 // ── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -632,5 +638,167 @@ describe("GET /api/v1/plans/:id/validate", () => {
 
     expect(response.status).toBe(404);
     expect(body.error.code).toBe("NOT_FOUND");
+  });
+});
+
+describe("PATCH /api/v1/plans/:id/courses/:courseId — prereq_overridden", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    dbChain = createQueryChain();
+    (requireAuth as ReturnType<typeof vi.fn>).mockResolvedValue(TEST_USER);
+    (getAccountContext as ReturnType<typeof vi.fn>).mockResolvedValue(TEST_ACCOUNT_CTX);
+    mockGetPlanAccess.mockResolvedValue({ permission: "owner", isHidden: false });
+  });
+
+  it("flips prereq_overridden via PATCH", async () => {
+    let queryIndex = 0;
+    dbChain.then = vi.fn().mockImplementation((resolve: (v: unknown) => unknown) => {
+      queryIndex++;
+      if (queryIndex === 1) return Promise.resolve(resolve([TEST_PLAN]));
+      if (queryIndex === 2) return Promise.resolve(resolve([TEST_PLAN_COURSE]));
+      return Promise.resolve(resolve([]));
+    });
+    mockReturning.mockResolvedValue([
+      { ...TEST_PLAN_COURSE, prereqOverridden: true },
+    ]);
+
+    const request = makeJsonRequest(
+      `http://localhost:3000/api/v1/plans/${TEST_PLAN_ID}/courses/${TEST_PLAN_COURSE_ID}`,
+      { prereq_overridden: true },
+      "PATCH"
+    );
+    const response = await patchCourse(
+      request,
+      planCourseContext(TEST_PLAN_ID, TEST_PLAN_COURSE_ID)
+    );
+    const body = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(mockSet).toHaveBeenCalledWith(
+      expect.objectContaining({ prereqOverridden: true })
+    );
+    expect(body.data.prereqOverridden).toBe(true);
+  });
+});
+
+describe("POST /api/v1/plans/:id/courses/bulk-override", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    dbChain = createQueryChain();
+    (requireAuth as ReturnType<typeof vi.fn>).mockResolvedValue(TEST_USER);
+    mockGetPlanAccess.mockResolvedValue({ permission: "owner", isHidden: false });
+  });
+
+  it("flips prereq_overridden on the listed plan_course rows", async () => {
+    let queryIndex = 0;
+    dbChain.then = vi.fn().mockImplementation((resolve: (v: unknown) => unknown) => {
+      queryIndex++;
+      if (queryIndex === 1) return Promise.resolve(resolve([TEST_PLAN]));
+      // Subsequent .then resolves are the planHistory insert
+      return Promise.resolve(resolve([]));
+    });
+    mockReturning.mockResolvedValue([{ id: "pc-a" }, { id: "pc-b" }]);
+
+    const request = makeJsonRequest(
+      `http://localhost:3000/api/v1/plans/${TEST_PLAN_ID}/courses/bulk-override`,
+      {
+        plan_course_ids: [
+          "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+          "bbbbbbbb-bbbb-4bbb-9bbb-bbbbbbbbbbbb",
+        ],
+        overridden: true,
+      },
+      "POST"
+    );
+    const response = await bulkOverride(request, planContext(TEST_PLAN_ID));
+    const body = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(body.data.updatedCount).toBe(2);
+    expect(body.data.overridden).toBe(true);
+    expect(mockSet).toHaveBeenCalledWith({ prereqOverridden: true });
+  });
+
+  it("supports overridden=false to reflag warnings in bulk", async () => {
+    let queryIndex = 0;
+    dbChain.then = vi.fn().mockImplementation((resolve: (v: unknown) => unknown) => {
+      queryIndex++;
+      if (queryIndex === 1) return Promise.resolve(resolve([TEST_PLAN]));
+      return Promise.resolve(resolve([]));
+    });
+    mockReturning.mockResolvedValue([{ id: "pc-a" }]);
+
+    const request = makeJsonRequest(
+      `http://localhost:3000/api/v1/plans/${TEST_PLAN_ID}/courses/bulk-override`,
+      {
+        plan_course_ids: ["aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa"],
+        overridden: false,
+      },
+      "POST"
+    );
+    const response = await bulkOverride(request, planContext(TEST_PLAN_ID));
+    const body = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(body.data.overridden).toBe(false);
+    expect(mockSet).toHaveBeenCalledWith({ prereqOverridden: false });
+  });
+
+  it("returns 400 when plan_course_ids is empty", async () => {
+    const request = makeJsonRequest(
+      `http://localhost:3000/api/v1/plans/${TEST_PLAN_ID}/courses/bulk-override`,
+      { plan_course_ids: [], overridden: true },
+      "POST"
+    );
+    const response = await bulkOverride(request, planContext(TEST_PLAN_ID));
+    expect(response.status).toBe(400);
+  });
+
+  it("returns 400 when an id is not a UUID", async () => {
+    const request = makeJsonRequest(
+      `http://localhost:3000/api/v1/plans/${TEST_PLAN_ID}/courses/bulk-override`,
+      { plan_course_ids: ["not-a-uuid"], overridden: true },
+      "POST"
+    );
+    const response = await bulkOverride(request, planContext(TEST_PLAN_ID));
+    expect(response.status).toBe(400);
+  });
+
+  it("returns 403 when user lacks edit permission on the plan", async () => {
+    mockGetPlanAccess.mockResolvedValue({ permission: "view", isHidden: false });
+    let queryIndex = 0;
+    dbChain.then = vi.fn().mockImplementation((resolve: (v: unknown) => unknown) => {
+      queryIndex++;
+      if (queryIndex === 1) return Promise.resolve(resolve([TEST_PLAN]));
+      return Promise.resolve(resolve([]));
+    });
+
+    const request = makeJsonRequest(
+      `http://localhost:3000/api/v1/plans/${TEST_PLAN_ID}/courses/bulk-override`,
+      {
+        plan_course_ids: ["aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa"],
+        overridden: true,
+      },
+      "POST"
+    );
+    const response = await bulkOverride(request, planContext(TEST_PLAN_ID));
+    expect(response.status).toBe(403);
+  });
+
+  it("returns 404 when plan does not exist", async () => {
+    dbChain.then = vi.fn().mockImplementation((resolve: (v: unknown) => unknown) =>
+      Promise.resolve(resolve([]))
+    );
+
+    const request = makeJsonRequest(
+      `http://localhost:3000/api/v1/plans/${TEST_PLAN_ID}/courses/bulk-override`,
+      {
+        plan_course_ids: ["aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa"],
+        overridden: true,
+      },
+      "POST"
+    );
+    const response = await bulkOverride(request, planContext(TEST_PLAN_ID));
+    expect(response.status).toBe(404);
   });
 });

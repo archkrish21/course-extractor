@@ -161,4 +161,135 @@ describe("validatePlanIntegrity — prereq override", () => {
     expect(result.violations.some((v) => v.type === "grade_level")).toBe(false);
     expect(result.ignoredViolations.some((v) => v.type === "grade_level")).toBe(true);
   });
+
+  it("respects prereqOverridden for enrollment_rule on full-year courses missing a half", async () => {
+    // Full-year course present in Sem 1 but not Sem 2 — emits enrollment_rule.
+    // When the row is overridden, that warning must end up in ignoredViolations
+    // (regression: this used to push to violations unconditionally, so users
+    // couldn't excuse the warning when they intentionally dropped half a year).
+    const fullYearSem1Only = (overridden: boolean) => ({
+      id: "pc-fy",
+      courseId: "course-tec",
+      gradeLevel: 9,
+      semester: 1,
+      status: "completed",
+      prereqOverridden: overridden,
+      course: {
+        id: "course-tec",
+        code: "TEC151/TEC152",
+        name: "Intro to Engineering",
+        duration: "full_year",
+        gradeLevels: [9, 10, 11, 12],
+        semestersOffered: [1, 2],
+        catalogVersionId: "cv-1",
+      },
+    });
+
+    queryQueue.push([fullYearSem1Only(false)]);
+    queryQueue.push([]);
+    let result = await validatePlanIntegrity("plan-1");
+    expect(result.violations.some((v) => v.type === "enrollment_rule")).toBe(true);
+
+    // Reset and try with override on
+    queryQueue.push([fullYearSem1Only(true)]);
+    queryQueue.push([]);
+    result = await validatePlanIntegrity("plan-1");
+    expect(result.violations.some((v) => v.type === "enrollment_rule")).toBe(false);
+    expect(result.ignoredViolations.some((v) => v.type === "enrollment_rule")).toBe(true);
+  });
+
+  it("emits planCourseId on every violation so the planner can attribute by row", async () => {
+    queryQueue.push([alg2Row(false)]);
+    queryQueue.push([PREREQ_ROW]);
+
+    const result = await validatePlanIntegrity("plan-1");
+
+    const prereq = result.violations.find((v) => v.type === "prerequisite");
+    expect(prereq?.planCourseId).toBe("pc-1");
+  });
+
+  it("respects prereqOverridden for corequisite violations", async () => {
+    // Row with a corequisite that's not satisfied (the coreq isn't in the
+    // plan in the same semester). When the row is overridden, the coreq
+    // miss must end up in ignoredViolations.
+    const row = (overridden: boolean) => ({
+      ...alg2Row(overridden),
+      gradeLevel: 10,
+      semester: 1,
+    });
+    const COREQ_ROW = {
+      courseId: ALG2_ID,
+      prerequisiteId: "course-coreq",
+      relationshipType: "corequisite",
+      requirementGroup: 1,
+      isRecommended: false,
+      prereqCode: "PHY101",
+      prereqName: "Physics 1",
+    };
+
+    queryQueue.push([row(false)]);
+    queryQueue.push([COREQ_ROW]);
+    let result = await validatePlanIntegrity("plan-1");
+    expect(result.violations.some((v) => v.type === "corequisite")).toBe(true);
+
+    queryQueue.push([row(true)]);
+    queryQueue.push([COREQ_ROW]);
+    result = await validatePlanIntegrity("plan-1");
+    expect(result.violations.some((v) => v.type === "corequisite")).toBe(false);
+    expect(result.ignoredViolations.some((v) => v.type === "corequisite")).toBe(true);
+  });
+
+  it("respects prereqOverridden for duplicate violations", async () => {
+    // Two rows for the same course in the same cell — the validator emits a
+    // duplicate violation from the alphabetically-earlier id only. Both
+    // rows share prereqOverridden state here (reflects the bulk-override
+    // behavior the planner uses for paired full-year rows).
+    const dup = (overridden: boolean) => [
+      {
+        id: "pc-a", // earlier alphabetically — emits the violation
+        courseId: ALG2_ID,
+        gradeLevel: 10,
+        semester: 1,
+        status: "planned",
+        prereqOverridden: overridden,
+        course: {
+          id: ALG2_ID,
+          code: "MAT202",
+          name: "Algebra 2",
+          duration: "semester",
+          gradeLevels: [10, 11],
+          semestersOffered: [1, 2],
+          catalogVersionId: "cv-1",
+        },
+      },
+      {
+        id: "pc-b",
+        courseId: ALG2_ID,
+        gradeLevel: 10,
+        semester: 1,
+        status: "planned",
+        prereqOverridden: overridden,
+        course: {
+          id: ALG2_ID,
+          code: "MAT202",
+          name: "Algebra 2",
+          duration: "semester",
+          gradeLevels: [10, 11],
+          semestersOffered: [1, 2],
+          catalogVersionId: "cv-1",
+        },
+      },
+    ];
+
+    queryQueue.push(dup(false));
+    queryQueue.push([]);
+    let result = await validatePlanIntegrity("plan-1");
+    expect(result.violations.some((v) => v.type === "duplicate")).toBe(true);
+
+    queryQueue.push(dup(true));
+    queryQueue.push([]);
+    result = await validatePlanIntegrity("plan-1");
+    expect(result.violations.some((v) => v.type === "duplicate")).toBe(false);
+    expect(result.ignoredViolations.some((v) => v.type === "duplicate")).toBe(true);
+  });
 });

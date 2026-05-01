@@ -294,14 +294,14 @@ export async function POST(request: NextRequest) {
         permission: "owner",
       });
 
-      // Add completed courses to the plan as "completed" status
+      // Add completed courses to the plan as "completed" status. Validation
+      // warnings (prereq, cross-grade, etc.) are surfaced on the planner and
+      // the user excuses them manually per course or per cell — see the
+      // "Excuse warnings" affordance on plan-course-card and the validation
+      // report's per-cell toggle.
       if (courses_completed) {
-        // Pull gradeLevels too so we can mark cross-grade selections as overridden.
-        // When a student records a course at a non-standard grade (e.g. via the
-        // "All grades" toggle in past-courses), the planner would otherwise
-        // permanently flag a grade-level violation on every load.
         const allCourses = await db
-          .select({ id: courses.id, code: courses.code, gradeLevels: courses.gradeLevels })
+          .select({ id: courses.id, code: courses.code })
           .from(courses)
           .where(
             and(
@@ -309,8 +309,8 @@ export async function POST(request: NextRequest) {
               eq(courses.isActive, true)
             )
           );
-        const codeToCourse = new Map<string, { id: string; gradeLevels: number[] }>();
-        for (const c of allCourses) codeToCourse.set(c.code, { id: c.id, gradeLevels: c.gradeLevels ?? [] });
+        const codeToCourse = new Map<string, { id: string }>();
+        for (const c of allCourses) codeToCourse.set(c.code, { id: c.id });
 
         let order = 0;
         for (const entry of courses_completed) {
@@ -319,9 +319,6 @@ export async function POST(request: NextRequest) {
           // Derive grade level from academic year
           const startYear = parseInt(entry.academic_year.split("-")[0], 10);
           const entryGradeLevel = Math.max(9, Math.min(12, 9 + (startYear - (graduation_year - 4))));
-          const isCrossGrade =
-            courseInfo.gradeLevels.length > 0 &&
-            !courseInfo.gradeLevels.includes(entryGradeLevel);
 
           await db
             .insert(planCourses)
@@ -333,7 +330,6 @@ export async function POST(request: NextRequest) {
               status: "completed",
               plannedGrade: entry.grade,
               displayOrder: order++,
-              prereqOverridden: isCrossGrade,
             })
             .onConflictDoNothing();
         }

@@ -22,6 +22,12 @@ export interface Violation {
   courseCode: string;
   message: string;
   severity?: "error" | "warning";
+  // ID of the plan_courses row this violation was emitted from. Lets the
+  // planner attribute warnings to a specific cell — important for paired
+  // full-year courses where the same courseId appears in two cells.
+  // Only populated by validatePlanIntegrity; validateCourseAddition runs
+  // before a row exists.
+  planCourseId?: string;
   details?: {
     missingPrerequisites?: Array<{ code: string; name: string; group: number }>;
     requiredGradeLevels?: number[];
@@ -472,13 +478,16 @@ export async function validatePlanIntegrity(
         courseId: pc.course.id,
         courseName: pc.course.name,
         courseCode: pc.course.code,
+        planCourseId: pc.id,
         message: `${pc.course.code} is not available for grade ${pc.gradeLevel}. Available grades: ${pc.course.gradeLevels.join(", ")}.`,
         details: { requiredGradeLevels: pc.course.gradeLevels },
       };
       (pc.prereqOverridden ? ignoredViolations : violations).push(v);
     }
 
-    // Check enrollment rules: full-year courses must have both semesters present
+    // Check enrollment rules: full-year courses must have both semesters present.
+    // Like prereq/grade_level checks, route to ignoredViolations when the row
+    // is overridden so the user's "Excuse" decision applies uniformly.
     if (pc.course.duration === "full_year" && pc.semester !== null) {
       // Pair semesters: 1↔2 for regular, -2↔-1 for summer
       const otherSem = pc.semester === 1 ? 2 : pc.semester === 2 ? 1 : pc.semester === -2 ? -1 : -2;
@@ -491,23 +500,27 @@ export async function validatePlanIntegrity(
       );
       if (!hasOther) {
         const isSummer = pc.semester < 0;
-        violations.push({
+        const v: Violation = {
           type: "enrollment_rule",
           courseId: pc.course.id,
           courseName: pc.course.name,
           courseCode: pc.course.code,
+          planCourseId: pc.id,
           message: `${pc.course.code} is a full-year course and must span both ${isSummer ? "summer sessions" : "semesters"}.`,
-        });
+        };
+        (pc.prereqOverridden ? ignoredViolations : violations).push(v);
       }
     }
     if (pc.course.duration === "semester" && pc.semester === null) {
-      violations.push({
+      const v: Violation = {
         type: "enrollment_rule",
         courseId: pc.course.id,
         courseName: pc.course.name,
         courseCode: pc.course.code,
+        planCourseId: pc.id,
         message: `${pc.course.code} is a semester course and must be placed in a specific semester.`,
-      });
+      };
+      (pc.prereqOverridden ? ignoredViolations : violations).push(v);
     }
 
     // Check prerequisites. When the row is overridden, prereq misses go into
@@ -553,6 +566,7 @@ export async function validatePlanIntegrity(
           courseId: pc.course.id,
           courseName: pc.course.name,
           courseCode: pc.course.code,
+          planCourseId: pc.id,
           message: `${pc.course.code} requires ${groupPrereqs.length > 1 ? "one of " : ""}${groupPrereqs.map((p) => p.prereqCode).join(" or ")} to be completed in an earlier semester (requirement group ${groupNum}).`,
           details: {
             missingPrerequisites: groupPrereqs.map((p) => ({
@@ -602,11 +616,12 @@ export async function validatePlanIntegrity(
       });
 
       if (!satisfied) {
-        violations.push({
+        const v: Violation = {
           type: "corequisite",
           courseId: pc.course.id,
           courseName: pc.course.name,
           courseCode: pc.course.code,
+          planCourseId: pc.id,
           message: `${pc.course.code} requires ${groupCoreqs.length > 1 ? "one of " : ""}${groupCoreqs.map((c) => c.prereqCode).join(" or ")} to be taken in the same semester (co-requisite group ${groupNum}).`,
           details: {
             missingPrerequisites: groupCoreqs.map((c) => ({
@@ -615,7 +630,8 @@ export async function validatePlanIntegrity(
               group: groupNum,
             })),
           },
-        });
+        };
+        (pc.prereqOverridden ? ignoredViolations : violations).push(v);
       }
     }
 
@@ -631,14 +647,16 @@ export async function validatePlanIntegrity(
     if (duplicates.length > 0) {
       // Only report once per pair (skip if this is the "later" id alphabetically)
       if (pc.id < duplicates[0].id) {
-        violations.push({
+        const v: Violation = {
           type: "duplicate",
           courseId: pc.course.id,
           courseName: pc.course.name,
           courseCode: pc.course.code,
+          planCourseId: pc.id,
           message: `${pc.course.code} appears multiple times at grade ${pc.gradeLevel}, semester ${pc.semester ?? "full year"}.`,
           details: { conflictingCourseId: duplicates[0].id },
-        });
+        };
+        (pc.prereqOverridden ? ignoredViolations : violations).push(v);
       }
     }
   }

@@ -4,6 +4,7 @@ import { useState, useRef, useEffect } from "react";
 import { Badge } from "@/components/ui/badge";
 import { creditTypeBadgeVariant, creditTypeLabel } from "@/lib/badge-utils";
 import { GRADE_OPTIONS, PASS_FAIL_OPTIONS, isPassFailCourse } from "@/config/grade-scale";
+import { dedupeViolations } from "@/lib/planner/dedupe-violations";
 
 export interface PlanCourse {
   id: string;
@@ -32,6 +33,9 @@ export interface Violation {
   message: string;
   severity: "error" | "warning";
   relatedCourseId?: string;
+  // Prereq/coreq violations carry the missing courses' codes + names so the
+  // validation report can show a tooltip with the human name on hover.
+  missingPrerequisites?: Array<{ code: string; name: string }>;
 }
 
 interface PlanCourseCardProps {
@@ -43,6 +47,10 @@ interface PlanCourseCardProps {
   onStatusChange?: (status: PlanCourse["status"]) => void;
   onGradeChange?: (grade: string | null) => void;
   onGpaWaiverToggle?: (applied: boolean) => void;
+  // When provided, the warning/excused icon is interactive: clicking the
+  // warning icon excuses all of this course's prereq violations; clicking
+  // the excused icon reflags them.
+  onPrereqOverrideToggle?: (overridden: boolean) => void;
   readOnly?: boolean;
 }
 
@@ -134,19 +142,23 @@ const STATUS_CONFIG: Record<
 
 export function PlanCourseCard({
   course,
-  violations = [],
-  ignoredViolations = [],
+  violations: rawViolations = [],
+  ignoredViolations: rawIgnoredViolations = [],
   onRemove,
   onClick,
   onStatusChange,
   onGradeChange,
   onGpaWaiverToggle,
+  onPrereqOverrideToggle,
   readOnly = false,
 }: PlanCourseCardProps) {
   const waiverApplied = course.gpaWaiverApplied ?? false;
   const statusConfig = STATUS_CONFIG[course.status];
+  const violations = dedupeViolations(rawViolations);
+  const ignoredViolations = dedupeViolations(rawIgnoredViolations);
   const hasViolations = violations.length > 0;
   const hasIgnored = ignoredViolations.length > 0;
+  const canToggleOverride = !readOnly && !!onPrereqOverrideToggle;
   const isDropped = course.status === "dropped";
   const isCompleted = course.status === "completed";
   const canRemove = !readOnly && onRemove;
@@ -154,33 +166,12 @@ export function PlanCourseCard({
   const [showIgnored, setShowIgnored] = useState(false);
   const [statusMenuOpen, setStatusMenuOpen] = useState(false);
   const [gradeMenuOpen, setGradeMenuOpen] = useState(false);
-  const warningRef = useRef<HTMLDivElement>(null);
-  const ignoredRef = useRef<HTMLDivElement>(null);
   const statusRef = useRef<HTMLDivElement>(null);
   const gradeRef = useRef<HTMLDivElement>(null);
 
-  // Close popover on outside click
-  useEffect(() => {
-    if (!showWarnings) return;
-    function handleClick(e: MouseEvent) {
-      if (warningRef.current && !warningRef.current.contains(e.target as Node)) {
-        setShowWarnings(false);
-      }
-    }
-    document.addEventListener("mousedown", handleClick);
-    return () => document.removeEventListener("mousedown", handleClick);
-  }, [showWarnings]);
-
-  useEffect(() => {
-    if (!showIgnored) return;
-    function handleClick(e: MouseEvent) {
-      if (ignoredRef.current && !ignoredRef.current.contains(e.target as Node)) {
-        setShowIgnored(false);
-      }
-    }
-    document.addEventListener("mousedown", handleClick);
-    return () => document.removeEventListener("mousedown", handleClick);
-  }, [showIgnored]);
+  // Warnings + excused popovers are hover/focus-driven (mouse-enter/leave +
+  // focus/blur on the wrapper), so we don't need the click-outside fallbacks
+  // that the dropdown menus use below.
 
   // Close on Escape
   useEffect(() => {
@@ -482,25 +473,37 @@ export function PlanCourseCard({
               : "Sem 1 & 2"}
         </span>
 
-        {(course.prereqOverridden || hasViolations) && (
+        {/* Show the icons based on what actually exists in the validation
+            response, not on the stored prereq_overridden flag. A course can
+            have prereq_overridden=true with no remaining violations (e.g.,
+            its prereq was completed later) — in that case nothing needs to
+            be surfaced, so we hide the icon entirely. */}
+        {(hasIgnored || hasViolations) && (
           <div className="ml-auto flex items-center gap-1">
-            {course.prereqOverridden && (
-              <div ref={ignoredRef} className="relative inline-flex">
+            {hasIgnored && (
+              <div
+                className="relative inline-flex"
+                onMouseEnter={() => setShowIgnored(true)}
+                onMouseLeave={() => setShowIgnored(false)}
+                onFocus={() => setShowIgnored(true)}
+                onBlur={() => setShowIgnored(false)}
+              >
                 <button
                   type="button"
                   onClick={(e) => {
                     e.stopPropagation();
-                    setShowIgnored((v) => !v);
+                    if (canToggleOverride) onPrereqOverrideToggle!(false);
                   }}
-                  className="flex h-5 w-5 items-center justify-center rounded text-muted-foreground hover:bg-muted transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
-                  aria-haspopup="dialog"
-                  aria-expanded={showIgnored}
+                  disabled={!canToggleOverride}
+                  className="flex h-5 w-5 items-center justify-center rounded text-muted-foreground hover:bg-muted transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring disabled:cursor-default"
                   aria-label={
-                    hasIgnored
-                      ? `${ignoredViolations.length} warning${ignoredViolations.length === 1 ? "" : "s"} excused. Click to view.`
-                      : "Warnings excused when this course was added"
+                    canToggleOverride
+                      ? `${hasIgnored ? `${ignoredViolations.length} warning${ignoredViolations.length === 1 ? "" : "s"} excused — ` : ""}click to reflag`
+                      : hasIgnored
+                        ? `${ignoredViolations.length} warning${ignoredViolations.length === 1 ? "" : "s"} excused`
+                        : "Warnings excused"
                   }
-                  title={hasIgnored ? `${ignoredViolations.length} warning${ignoredViolations.length === 1 ? "" : "s"} excused — click to view` : "Validation warnings were excused when this course was added"}
+                  title={canToggleOverride ? "Click to reflag warnings" : undefined}
                 >
                   <svg
                     aria-hidden="true"
@@ -516,7 +519,7 @@ export function PlanCourseCard({
 
                 {showIgnored && hasIgnored && (
                   <div
-                    role="dialog"
+                    role="tooltip"
                     aria-label="Excused warnings"
                     className="absolute right-0 bottom-full z-50 mb-1 w-72 rounded-xl border border-border bg-card shadow-xl"
                   >
@@ -524,9 +527,11 @@ export function PlanCourseCard({
                       <p className="text-xs font-semibold text-foreground">
                         {ignoredViolations.length} Warning{ignoredViolations.length === 1 ? "" : "s"} excused
                       </p>
-                      <p className="mt-0.5 text-[11px] text-muted-foreground">
-                        Acknowledged when this course was added.
-                      </p>
+                      {canToggleOverride && (
+                        <p className="mt-0.5 text-[11px] text-muted-foreground">
+                          Click the icon to reflag.
+                        </p>
+                      )}
                     </div>
                     <ul className="max-h-48 overflow-y-auto p-2 flex flex-col gap-1.5">
                       {ignoredViolations.map((v, i) => (
@@ -544,16 +549,27 @@ export function PlanCourseCard({
             )}
 
             {hasViolations && (
-              <div ref={warningRef} className="relative inline-flex">
+              <div
+                className="relative inline-flex"
+                onMouseEnter={() => setShowWarnings(true)}
+                onMouseLeave={() => setShowWarnings(false)}
+                onFocus={() => setShowWarnings(true)}
+                onBlur={() => setShowWarnings(false)}
+              >
                 <button
                   type="button"
                   onClick={(e) => {
                     e.stopPropagation();
-                    setShowWarnings((prev) => !prev);
+                    if (canToggleOverride) onPrereqOverrideToggle!(true);
                   }}
-                  className="flex h-5 w-5 items-center justify-center rounded text-warning hover:bg-warning-light transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
-                  aria-label={`${violations.length} warning${violations.length > 1 ? "s" : ""} — click for details`}
-                  aria-expanded={showWarnings}
+                  disabled={!canToggleOverride}
+                  className="flex h-5 w-5 items-center justify-center rounded text-warning hover:bg-warning-light transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring disabled:cursor-default"
+                  aria-label={
+                    canToggleOverride
+                      ? `${violations.length} warning${violations.length > 1 ? "s" : ""} — click to excuse`
+                      : `${violations.length} warning${violations.length > 1 ? "s" : ""}`
+                  }
+                  title={canToggleOverride ? "Click to excuse warnings" : undefined}
                 >
                   <svg aria-hidden="true" className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126ZM12 15.75h.007v.008H12v-.008Z" />
@@ -562,7 +578,7 @@ export function PlanCourseCard({
 
                 {showWarnings && (
                   <div
-                    role="dialog"
+                    role="tooltip"
                     aria-label="Validation warnings"
                     className="absolute right-0 bottom-full z-50 mb-1 w-72 rounded-xl border border-warning/30 bg-card shadow-xl"
                   >
@@ -573,6 +589,11 @@ export function PlanCourseCard({
                         </svg>
                         {violations.length} Warning{violations.length > 1 ? "s" : ""}
                       </p>
+                      {canToggleOverride && (
+                        <p className="mt-0.5 text-[11px] text-warning/80">
+                          Click the icon to excuse.
+                        </p>
+                      )}
                     </div>
                     <ul className="max-h-48 overflow-y-auto p-2 flex flex-col gap-1.5">
                       {violations.map((v, i) => (

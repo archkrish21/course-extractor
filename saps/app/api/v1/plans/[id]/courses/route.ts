@@ -129,6 +129,7 @@ export async function GET(request: NextRequest, context: RouteContext) {
         status: planCourses.status,
         plannedGrade: planCourses.plannedGrade,
         gpaWaiverApplied: planCourses.gpaWaiverApplied,
+        prereqOverridden: planCourses.prereqOverridden,
         displayOrder: planCourses.displayOrder,
         notes: planCourses.notes,
         course: {
@@ -287,7 +288,17 @@ export async function POST(request: NextRequest, context: RouteContext) {
       }
     }
 
-    // Insert the course into the plan
+    // Insert the course into the plan. Mark prereq_overridden when the user
+    // force-added past either a prerequisite OR a grade-level warning, so
+    // plan-level revalidation can suppress the banner on subsequent loads.
+    // Both warnings represent "I'm placing this course in a non-standard slot
+    // and accept the consequences" — the same intent.
+    const prereqOverridden =
+      force_add === true &&
+      warningViolations.some(
+        (v) => v.type === "prerequisite" || v.type === "grade_level"
+      );
+
     const [newPlanCourse] = await db
       .insert(planCourses)
       .values({
@@ -297,6 +308,7 @@ export async function POST(request: NextRequest, context: RouteContext) {
         semester,
         status: requestedStatus ?? "planned",
         plannedGrade: planned_grade ?? null,
+        prereqOverridden,
       })
       .returning();
 

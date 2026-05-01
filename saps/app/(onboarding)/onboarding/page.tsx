@@ -223,6 +223,7 @@ function StepPastCourses({
   const [searchFilter, setSearchFilter] = useState("");
   const [divisionFilter, setDivisionFilter] = useState("All");
   const [activeGrade, setActiveGrade] = useState<number>(gradeLevel > 9 ? gradeLevel - 1 : 9);
+  const [showAllGrades, setShowAllGrades] = useState(false);
 
   // Compute completed grades (grades before current grade)
   const completedGrades: number[] = [];
@@ -238,7 +239,11 @@ function StepPastCourses({
       let cursor: string | null = null;
       try {
         do {
-          const params = new URLSearchParams({ grade_level: String(activeGrade), limit: "100" });
+          // When "Show all grade levels" is on, drop the grade filter so a
+          // student can record courses completed at non-standard grades
+          // (e.g., Algebra 1 taken in 8th grade, or Algebra 2 in 9th).
+          const params = new URLSearchParams({ limit: "100" });
+          if (!showAllGrades) params.set("grade_level", String(activeGrade));
           if (cursor) params.set("cursor", cursor);
           const res = await apiFetch(`/api/v1/courses?${params.toString()}`);
           if (!res.ok) break;
@@ -258,7 +263,7 @@ function StepPastCourses({
       setLoadingCourses(false);
     }
     fetchAllCourses();
-  }, [activeGrade]);
+  }, [activeGrade, showAllGrades]);
 
   // Filter courses by search and division
   const filteredCourses = allCourses.filter((c) => {
@@ -379,6 +384,19 @@ function StepPastCourses({
             <option value="All">All divisions</option>
             {divisions.map((d) => (<option key={d} value={d}>{d}</option>))}
           </select>
+          <button
+            type="button"
+            aria-pressed={showAllGrades}
+            onClick={() => setShowAllGrades(!showAllGrades)}
+            title="Show courses from any grade level (e.g. if you completed it in middle school)"
+            className={`h-10 rounded-lg border px-3 text-sm font-medium transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring ${
+              showAllGrades
+                ? "border-primary bg-primary text-primary-foreground"
+                : "border-border bg-background text-muted-foreground hover:bg-muted"
+            }`}
+          >
+            All grades
+          </button>
         </div>
 
         {/* Course checklist */}

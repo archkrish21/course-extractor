@@ -74,6 +74,7 @@ export default function PlannerPage() {
   }, []);
   const [courses, setCourses] = useState<PlanCourse[]>([]);
   const [violations, setViolations] = useState<Record<string, Violation[]>>({});
+  const [ignoredViolations, setIgnoredViolations] = useState<Record<string, Violation[]>>({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [planNotFound, setPlanNotFound] = useState(false);
@@ -264,6 +265,7 @@ export default function PlannerPage() {
                 isDualCredit: pc.course?.isDualCredit ?? false,
                 gpaWaiver: pc.course?.gpaWaiver ?? false,
                 gpaWaiverApplied: pc.gpaWaiverApplied ?? false,
+                prereqOverridden: pc.prereqOverridden ?? false,
                 gradeLevels: pc.course?.gradeLevels ?? [],
                 semestersOffered: pc.course?.semestersOffered ?? null,
                 divisionName: pc.course?.divisionName ?? "",
@@ -300,8 +302,28 @@ export default function PlannerPage() {
           }
         }
         setViolations(violationsMap);
+
+        const ignoredMap: Record<string, Violation[]> = {};
+        const ignoredCourseViolations = validationData.ignoredCourseViolations ?? [];
+        if (Array.isArray(ignoredCourseViolations)) {
+          for (const cv of ignoredCourseViolations) {
+            const key = cv.courseId ?? cv.course_id ?? "unknown";
+            const inner = cv.violations ?? [cv];
+            if (!ignoredMap[key]) ignoredMap[key] = [];
+            for (const v of inner) {
+              ignoredMap[key].push({
+                type: v.type ?? "unknown",
+                message: v.message ?? "Validation issue",
+                severity: v.severity ?? "warning",
+                relatedCourseId: v.relatedCourseId,
+              });
+            }
+          }
+        }
+        setIgnoredViolations(ignoredMap);
       } else {
         setViolations({});
+        setIgnoredViolations({});
       }
 
       // Fetch template courses if this plan was created from a template
@@ -741,6 +763,7 @@ export default function PlannerPage() {
         setSelectedPlanId(remaining[0]?.id ?? null);
         setCourses([]);
         setViolations({});
+        setIgnoredViolations({});
         setDeletePlanConfirm(false);
         if (remaining.length > 0 && remaining[0]?.id) {
           await fetchPlanData(remaining[0].id);
@@ -1805,6 +1828,7 @@ export default function PlannerPage() {
             handleToggleGradeLock(gradeLevel, true);
           }}
           violations={violations}
+          ignoredViolations={ignoredViolations}
           semesterGaps={semesterGapsMap}
           focusGrade={focusGradeTarget}
           readOnly={selectedPlan?.status === "archived" || selectedPlan?.permission === "view"}

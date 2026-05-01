@@ -18,6 +18,7 @@ import {
   listPlanShares,
   lockGrade,
   unlockGrade,
+  validatePlan,
   type Course,
   type Plan,
 } from "../helpers/api-client";
@@ -220,6 +221,57 @@ test.describe("Course mutations", () => {
     });
     // Any of these statuses proves validation ran
     expect([201, 400, 409, 422]).toContain(res.status());
+  });
+
+  test("force-add past a prereq warning sets prereqOverridden and clears the validate banner", async ({ request }) => {
+    // Find a course that returns a prereq warning when added without force_add.
+    // We try a few candidates — seed data varies by environment.
+    const candidates = [
+      ...catalog.filter((c) => c.isAp),
+      ...catalog.filter((c) => /MAT|BIO|CHE|PHY/.test(c.code)),
+    ].slice(0, 8);
+
+    let candidate: Course | null = null;
+    for (const c of candidates) {
+      const probe = await addCourseToPlan(request, scratchPlan.id, {
+        courseId: c.id,
+        gradeLevel: 9,
+        semester: 1,
+        forceAdd: false,
+      });
+      if (probe.status() === 422) {
+        const body = await probe.json();
+        const types: string[] = (body.violations ?? []).map((v: { type: string }) => v.type);
+        if (types.includes("prerequisite")) {
+          candidate = c;
+          break;
+        }
+      }
+    }
+
+    test.skip(!candidate, "No course with a prereq violation found in the catalog for grade 9 sem 1");
+    if (!candidate) return;
+
+    // Force-add through the prereq warning
+    const forced = await addCourseToPlan(request, scratchPlan.id, {
+      courseId: candidate.id,
+      gradeLevel: 9,
+      semester: 1,
+      forceAdd: true,
+    });
+    expect(forced.status()).toBe(201);
+
+    const placed = (await listPlanCourses(request, scratchPlan.id)).find(
+      (pc) => pc.courseId === candidate!.id
+    );
+    expect(placed).toBeDefined();
+    expect(placed!.prereqOverridden).toBe(true);
+
+    // Plan-level revalidation should not re-flag the prereq for this course
+    const validation = await validatePlan(request, scratchPlan.id);
+    const cv = validation.courseViolations.find((v) => v.courseId === candidate!.id);
+    const prereqViolations = cv?.violations.filter((v) => v.type === "prerequisite") ?? [];
+    expect(prereqViolations).toHaveLength(0);
   });
 });
 

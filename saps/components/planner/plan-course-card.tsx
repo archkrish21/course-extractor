@@ -21,6 +21,7 @@ export interface PlanCourse {
   isDualCredit: boolean;
   gpaWaiver: boolean;
   gpaWaiverApplied?: boolean;
+  prereqOverridden?: boolean;
   gradeLevels?: number[];
   semestersOffered?: number[] | null;
   divisionName?: string;
@@ -36,6 +37,7 @@ export interface Violation {
 interface PlanCourseCardProps {
   course: PlanCourse;
   violations?: Violation[];
+  ignoredViolations?: Violation[];
   onRemove?: () => void;
   onClick?: () => void;
   onStatusChange?: (status: PlanCourse["status"]) => void;
@@ -133,6 +135,7 @@ const STATUS_CONFIG: Record<
 export function PlanCourseCard({
   course,
   violations = [],
+  ignoredViolations = [],
   onRemove,
   onClick,
   onStatusChange,
@@ -143,12 +146,15 @@ export function PlanCourseCard({
   const waiverApplied = course.gpaWaiverApplied ?? false;
   const statusConfig = STATUS_CONFIG[course.status];
   const hasViolations = violations.length > 0;
+  const hasIgnored = ignoredViolations.length > 0;
   const isDropped = course.status === "dropped";
   const isCompleted = course.status === "completed";
   const canRemove = !readOnly && onRemove;
   const [showWarnings, setShowWarnings] = useState(false);
+  const [showIgnored, setShowIgnored] = useState(false);
   const [statusMenuOpen, setStatusMenuOpen] = useState(false);
   const warningRef = useRef<HTMLDivElement>(null);
+  const ignoredRef = useRef<HTMLDivElement>(null);
   const statusRef = useRef<HTMLDivElement>(null);
 
   // Close popover on outside click
@@ -163,18 +169,30 @@ export function PlanCourseCard({
     return () => document.removeEventListener("mousedown", handleClick);
   }, [showWarnings]);
 
+  useEffect(() => {
+    if (!showIgnored) return;
+    function handleClick(e: MouseEvent) {
+      if (ignoredRef.current && !ignoredRef.current.contains(e.target as Node)) {
+        setShowIgnored(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClick);
+    return () => document.removeEventListener("mousedown", handleClick);
+  }, [showIgnored]);
+
   // Close on Escape
   useEffect(() => {
-    if (!showWarnings && !statusMenuOpen) return;
+    if (!showWarnings && !showIgnored && !statusMenuOpen) return;
     function handleKey(e: KeyboardEvent) {
       if (e.key === "Escape") {
         setShowWarnings(false);
+        setShowIgnored(false);
         setStatusMenuOpen(false);
       }
     }
     document.addEventListener("keydown", handleKey);
     return () => document.removeEventListener("keydown", handleKey);
-  }, [showWarnings, statusMenuOpen]);
+  }, [showWarnings, showIgnored, statusMenuOpen]);
 
   // Close status menu on outside click
   useEffect(() => {
@@ -200,7 +218,7 @@ export function PlanCourseCard({
         }
       }}
       className={`
-        group relative flex min-h-[44px] cursor-pointer items-start gap-2 rounded-xl border p-2.5
+        group relative flex flex-col cursor-pointer gap-1 rounded-xl border p-2.5 min-h-[44px]
         transition-all duration-150 shadow-sm hover:shadow-md
         focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring
         ${hasViolations ? "border-warning/60 bg-warning-light/50" : "border-border bg-card hover:bg-muted/30"}
@@ -210,10 +228,10 @@ export function PlanCourseCard({
         hasViolations ? `, ${violations.length} warning${violations.length > 1 ? "s" : ""}` : ""
       }${course.plannedGrade ? `, grade: ${course.plannedGrade}` : ""}`}
     >
-      <div className="flex-1 min-w-0">
-        {/* Course name and code */}
+      {/* Row 1: course name (left) | excused + warning + remove (right) */}
+      <div className="flex items-start gap-2">
         <p
-          className={`text-sm font-medium leading-tight text-foreground truncate ${
+          className={`flex-1 min-w-0 text-sm font-medium leading-tight text-foreground truncate ${
             isDropped ? "line-through" : ""
           }`}
           title={`${course.name} (${course.code})`}
@@ -221,40 +239,200 @@ export function PlanCourseCard({
           {course.name} <span className="font-normal text-muted-foreground">({course.code})</span>
         </p>
 
-        {/* Badges row */}
-        <div className="mt-1 flex flex-wrap items-center gap-1">
-          <Badge
-            variant={creditTypeBadgeVariant(course.creditType)}
-            className="text-[10px] px-1.5 py-0"
-          >
+        <div className="flex shrink-0 items-center gap-1">
+          {course.prereqOverridden && (
+            <div ref={ignoredRef} className="relative">
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setShowIgnored((v) => !v);
+                }}
+                className="flex h-6 w-6 items-center justify-center rounded text-muted-foreground hover:bg-muted transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
+                aria-haspopup="dialog"
+                aria-expanded={showIgnored}
+                aria-label={
+                  hasIgnored
+                    ? `${ignoredViolations.length} warning${ignoredViolations.length === 1 ? "" : "s"} excused. Click to view.`
+                    : "Warnings excused when this course was added"
+                }
+                title={hasIgnored ? `${ignoredViolations.length} warning${ignoredViolations.length === 1 ? "" : "s"} excused — click to view` : "Validation warnings were excused when this course was added"}
+              >
+                {/* check-badge: "validation acknowledged" */}
+                <svg
+                  aria-hidden="true"
+                  className="h-4 w-4"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  strokeWidth={2}
+                  stroke="currentColor"
+                >
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75 11.25 15 15 9.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
+                </svg>
+              </button>
+
+              {showIgnored && hasIgnored && (
+                <div
+                  role="dialog"
+                  aria-label="Excused warnings"
+                  className="absolute right-0 top-full z-50 mt-1 w-72 rounded-xl border border-border bg-card shadow-xl"
+                >
+                  <div className="border-b border-border bg-muted px-3 py-2">
+                    <p className="text-xs font-semibold text-foreground">
+                      {ignoredViolations.length} Warning{ignoredViolations.length === 1 ? "" : "s"} excused
+                    </p>
+                    <p className="mt-0.5 text-[11px] text-muted-foreground">
+                      Acknowledged when this course was added.
+                    </p>
+                  </div>
+                  <ul className="max-h-48 overflow-y-auto p-2 flex flex-col gap-1.5">
+                    {ignoredViolations.map((v, i) => (
+                      <li key={i} className="flex items-start gap-2 rounded-md bg-muted/50 px-2.5 py-2 text-xs text-foreground">
+                        <span className="mt-0.5 shrink-0 rounded-full bg-foreground/10 px-1.5 py-0.5 text-[10px] font-medium text-foreground capitalize">
+                          {(v.type ?? "warning").replace(/_/g, " ")}
+                        </span>
+                        <span className="leading-relaxed">{v.message}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+            </div>
+          )}
+
+          {hasViolations && (
+            <div ref={warningRef} className="relative">
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setShowWarnings((prev) => !prev);
+                }}
+                className="flex h-6 w-6 items-center justify-center rounded text-warning hover:bg-warning-light transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
+                aria-label={`${violations.length} warning${violations.length > 1 ? "s" : ""} — click for details`}
+                aria-expanded={showWarnings}
+              >
+                <svg aria-hidden="true" className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126ZM12 15.75h.007v.008H12v-.008Z" />
+                </svg>
+              </button>
+
+              {showWarnings && (
+                <div
+                  role="dialog"
+                  aria-label="Validation warnings"
+                  className="absolute right-0 top-full z-50 mt-1 w-72 rounded-xl border border-warning/30 bg-card shadow-xl"
+                >
+                  <div className="border-b border-warning/20 bg-warning-light px-3 py-2">
+                    <p className="text-xs font-semibold text-warning flex items-center gap-1.5">
+                      <svg aria-hidden="true" className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126ZM12 15.75h.007v.008H12v-.008Z" />
+                      </svg>
+                      {violations.length} Warning{violations.length > 1 ? "s" : ""}
+                    </p>
+                  </div>
+                  <ul className="max-h-48 overflow-y-auto p-2 flex flex-col gap-1.5">
+                    {violations.map((v, i) => (
+                      <li key={i} className="flex items-start gap-2 rounded-md bg-muted/50 px-2.5 py-2 text-xs text-foreground">
+                        <span className="mt-0.5 shrink-0 rounded-full bg-warning/20 px-1.5 py-0.5 text-[10px] font-medium text-warning capitalize">
+                          {(v.type ?? "warning").replace(/_/g, " ")}
+                        </span>
+                        <span className="leading-relaxed">{v.message}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+            </div>
+          )}
+
+          {canRemove && (
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                onRemove();
+              }}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" || e.key === " ") {
+                  e.stopPropagation();
+                }
+              }}
+              className="flex h-6 w-6 items-center justify-center rounded text-muted-foreground opacity-0 transition-opacity hover:text-destructive focus-visible:opacity-100 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring group-hover:opacity-100"
+              aria-label={`Remove ${course.name} from plan`}
+            >
+              <svg aria-hidden="true" className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M6 18 18 6M6 6l12 12" />
+              </svg>
+            </button>
+          )}
+        </div>
+      </div>
+
+      {/* Row 2: badges (left) | status + grade (right) */}
+      <div className="flex items-center gap-2">
+        <div className="flex flex-1 min-w-0 flex-wrap items-center gap-1">
+          <Badge variant={creditTypeBadgeVariant(course.creditType)} className="h-5 leading-4 text-[10px] px-1.5 py-0">
             {course.creditType}
           </Badge>
 
-          {course.semestersOffered?.some((s: number) => s < 0) && (
-            <Badge variant="warning" className="text-[10px] px-1.5 py-0">
-              Summer
-            </Badge>
-          )}
-
           {course.isAp && course.creditType !== "AP" && (
-            <Badge variant="ap" className="text-[10px] px-1.5 py-0">
-              AP
-            </Badge>
+            <Badge variant="ap" className="h-5 leading-4 text-[10px] px-1.5 py-0">AP</Badge>
           )}
 
           {course.isDualCredit && (
-            <Badge variant="dual-credit" className="text-[10px] px-1.5 py-0">
-              DC
-            </Badge>
+            <Badge variant="dual-credit" className="h-5 leading-4 text-[10px] px-1.5 py-0">DC</Badge>
+          )}
+
+          {course.semestersOffered?.some((s: number) => s < 0) && (
+            <Badge variant="warning" className="h-5 leading-4 text-[10px] px-1.5 py-0">Summer</Badge>
           )}
 
           {/* Static GPA Waiver badge shown in read-only mode */}
           {course.gpaWaiver && (readOnly || !onGpaWaiverToggle) && (
-            <Badge variant="warning" className="text-[10px] px-1.5 py-0">
+            <Badge variant="warning" className="h-5 leading-4 text-[10px] px-1.5 py-0">
               {waiverApplied ? "GPA Waived" : "GPA Waiver"}
             </Badge>
           )}
 
+          {/* GPA Waiver toggle — only for non-P/F courses */}
+          {course.gpaWaiver && !isPassFailCourse(course.code) && !readOnly && onGpaWaiverToggle && (
+            <button
+              type="button"
+              className="inline-flex h-5 items-center gap-1 rounded-full px-1.5 py-0 text-[10px] leading-4 font-medium cursor-pointer transition-colors bg-warning/20 text-warning hover:bg-warning/30"
+              title={waiverApplied ? "GPA waiver applied — click to remove" : "Click to apply GPA waiver"}
+              onClick={(e) => {
+                e.stopPropagation();
+                e.preventDefault();
+                onGpaWaiverToggle(!waiverApplied);
+              }}
+              onKeyDown={(e) => e.stopPropagation()}
+            >
+              {waiverApplied ? (
+                <svg aria-hidden="true" className="h-3 w-3" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="m4.5 12.75 6 6 9-13.5" />
+                </svg>
+              ) : (
+                <svg aria-hidden="true" className="h-3 w-3" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M5.25 7.5A2.25 2.25 0 0 1 7.5 5.25h9a2.25 2.25 0 0 1 2.25 2.25v9a2.25 2.25 0 0 1-2.25 2.25h-9a2.25 2.25 0 0 1-2.25-2.25v-9Z" />
+                </svg>
+              )}
+              GPA Waiver
+            </button>
+          )}
+
+          {/* P/F indicator for non-academic courses */}
+          {isPassFailCourse(course.code) && (
+            <span
+              className="inline-flex h-5 items-center rounded-full px-1.5 py-0 text-[10px] leading-4 font-medium bg-muted text-muted-foreground"
+              title="Pass/Fail course — excluded from GPA and academic course count"
+            >
+              P/F
+            </span>
+          )}
+        </div>
+
+        <div className="flex shrink-0 items-center gap-1">
           {/* Status indicator — clickable dropdown */}
           {!readOnly && onStatusChange ? (
             <div ref={statusRef} className="relative">
@@ -264,18 +442,18 @@ export function PlanCourseCard({
                   e.stopPropagation();
                   setStatusMenuOpen((prev) => !prev);
                 }}
-                className={`inline-flex items-center gap-0.5 rounded-full px-1.5 py-0 text-[10px] font-medium cursor-pointer hover:opacity-80 transition-opacity ${statusConfig.className}`}
+                className={`inline-flex h-5 w-28 items-center gap-0.5 rounded-full px-1.5 py-0 text-[10px] leading-4 font-medium cursor-pointer hover:opacity-80 transition-opacity ${statusConfig.className}`}
                 aria-label={`Status: ${statusConfig.label}. Click to change.`}
                 aria-expanded={statusMenuOpen}
               >
                 {statusConfig.icon}
                 {statusConfig.label}
-                <svg aria-hidden="true" className="h-2.5 w-2.5 ml-0.5" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor">
+                <svg aria-hidden="true" className="h-2.5 w-2.5 ml-auto" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" />
                 </svg>
               </button>
               {statusMenuOpen && (
-                <div className="absolute left-0 top-full z-50 mt-1 w-32 rounded-xl border border-border bg-card shadow-xl overflow-hidden">
+                <div className="absolute right-0 top-full z-50 mt-1 w-32 rounded-xl border border-border bg-card shadow-xl overflow-hidden">
                   {(["planned", "enrolled", "completed", "dropped"] as const).map((s) => {
                     const cfg = STATUS_CONFIG[s];
                     const isActive = course.status === s;
@@ -305,9 +483,7 @@ export function PlanCourseCard({
               )}
             </div>
           ) : (
-            <span
-              className={`inline-flex items-center gap-0.5 rounded-full px-1.5 py-0 text-[10px] font-medium ${statusConfig.className}`}
-            >
+            <span className={`inline-flex h-5 w-28 items-center gap-0.5 rounded-full px-1.5 py-0 text-[10px] leading-4 font-medium ${statusConfig.className}`}>
               {statusConfig.icon}
               {statusConfig.label}
             </span>
@@ -323,178 +499,49 @@ export function PlanCourseCard({
               }}
               onClick={(e) => e.stopPropagation()}
               aria-label={`${isCompleted ? "Actual" : "Projected"} grade for ${course.name}`}
-              className={`h-5 rounded-md border px-1.5 text-[10px] font-semibold cursor-pointer transition-colors
+              className={`h-5 w-12 rounded-full px-1.5 text-[10px] font-semibold text-center cursor-pointer transition-colors appearance-none
                 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring
                 ${course.plannedGrade
                   ? isCompleted
-                    ? "border-success/50 bg-success-light text-success"
-                    : "border-primary/50 bg-primary-light text-primary"
-                  : "border-border bg-muted text-muted-foreground hover:border-primary/30"
+                    ? "bg-success-light text-success"
+                    : "bg-primary-light text-primary"
+                  : "bg-muted text-muted-foreground hover:bg-border"
                 }`}
             >
-              <option value="">{isCompleted ? "Grade" : "Est."}</option>
+              <option value="">-</option>
               {(isPassFailCourse(course.code) ? PASS_FAIL_OPTIONS : GRADE_OPTIONS).map((g) => (
                 <option key={g} value={g}>{g}</option>
               ))}
             </select>
           ) : !isDropped && course.plannedGrade ? (
-            <Badge
-              variant={isCompleted ? "success" : "default"}
-              className="text-[10px] px-1.5 py-0"
-            >
+            <Badge variant={isCompleted ? "success" : "default"} className="flex h-5 w-12 leading-4 text-[10px] px-1.5 py-0 items-center justify-center">
               {course.plannedGrade}
             </Badge>
           ) : null}
-
-          {/* GPA Waiver toggle — only for non-P/F courses */}
-          {course.gpaWaiver && !isPassFailCourse(course.code) && !readOnly && onGpaWaiverToggle && (
-            <button
-              type="button"
-              className={`inline-flex items-center gap-1 rounded-full px-1.5 py-0.5 text-[10px] font-medium cursor-pointer transition-colors bg-warning/20 text-warning hover:bg-warning/30`}
-              title={waiverApplied ? "GPA waiver applied — click to remove" : "Click to apply GPA waiver"}
-              onClick={(e) => {
-                e.stopPropagation();
-                e.preventDefault();
-                onGpaWaiverToggle(!waiverApplied);
-              }}
-              onKeyDown={(e) => e.stopPropagation()}
-            >
-              {waiverApplied ? (
-                <svg aria-hidden="true" className="h-3 w-3" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="m4.5 12.75 6 6 9-13.5" />
-                </svg>
-              ) : (
-                <svg aria-hidden="true" className="h-3 w-3" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M5.25 7.5A2.25 2.25 0 0 1 7.5 5.25h9a2.25 2.25 0 0 1 2.25 2.25v9a2.25 2.25 0 0 1-2.25 2.25h-9a2.25 2.25 0 0 1-2.25-2.25v-9Z" />
-                </svg>
-              )}
-              GPA Waiver
-            </button>
-          )}
-
-          {/* P/F indicator for non-academic courses */}
-          {isPassFailCourse(course.code) && (
-            <span
-              className="inline-flex items-center rounded-full px-1.5 py-0.5 text-[10px] font-medium bg-muted text-muted-foreground"
-              title="Pass/Fail course — excluded from GPA and academic course count"
-            >
-              P/F
-            </span>
-          )}
-        </div>
-
-        {/* Info line: grades offered + semester */}
-        <div className="mt-1 flex flex-wrap items-center gap-1.5 text-[10px] text-muted-foreground">
-          {course.gradeLevels && course.gradeLevels.length > 0 && (
-            <span className="flex items-center gap-0.5">
-              {course.gradeLevels.map((g) => (
-                <span
-                  key={g}
-                  className="inline-flex h-4 w-4 items-center justify-center rounded-full border border-border bg-muted text-[9px] font-semibold"
-                >
-                  {g}
-                </span>
-              ))}
-            </span>
-          )}
-          <span>
-            {course.duration === "full_year"
-              ? "Full Year"
-              : course.semestersOffered && course.semestersOffered.length === 1
-                ? `Sem ${course.semestersOffered[0]} only`
-                : "Sem 1 & 2"}
-          </span>
         </div>
       </div>
 
-      {/* Right side: warning icon + remove button */}
-      <div className="flex shrink-0 items-start gap-1">
-        {hasViolations && (
-          <div ref={warningRef} className="relative">
-            <button
-              type="button"
-              onClick={(e) => {
-                e.stopPropagation();
-                setShowWarnings((prev) => !prev);
-              }}
-              className="flex h-6 w-6 items-center justify-center rounded text-warning hover:bg-warning-light transition-colors
-                focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
-              aria-label={`${violations.length} warning${violations.length > 1 ? "s" : ""} — click for details`}
-              aria-expanded={showWarnings}
-            >
-              <svg
-                aria-hidden="true"
-                className="h-4 w-4"
-                fill="none"
-                viewBox="0 0 24 24"
-                strokeWidth={2}
-                stroke="currentColor"
+      {/* Row 3: grade circles + duration */}
+      <div className="flex flex-wrap items-center gap-1.5 text-[10px] text-muted-foreground">
+        {course.gradeLevels && course.gradeLevels.length > 0 && (
+          <span className="flex items-center gap-0.5">
+            {course.gradeLevels.map((g) => (
+              <span
+                key={g}
+                className="inline-flex h-4 w-4 items-center justify-center rounded-full border border-border bg-muted text-[9px] font-semibold"
               >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126ZM12 15.75h.007v.008H12v-.008Z"
-                />
-              </svg>
-            </button>
-
-            {/* Warning details popover */}
-            {showWarnings && (
-              <div
-                role="dialog"
-                aria-label="Validation warnings"
-                className="absolute right-0 top-full z-50 mt-1 w-72 rounded-xl border border-warning/30 bg-card shadow-xl"
-              >
-                <div className="border-b border-warning/20 bg-warning-light px-3 py-2">
-                  <p className="text-xs font-semibold text-warning flex items-center gap-1.5">
-                    <svg aria-hidden="true" className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126ZM12 15.75h.007v.008H12v-.008Z" />
-                    </svg>
-                    {violations.length} Warning{violations.length > 1 ? "s" : ""}
-                  </p>
-                </div>
-                <ul className="max-h-48 overflow-y-auto p-2 flex flex-col gap-1.5">
-                  {violations.map((v, i) => (
-                    <li key={i} className="flex items-start gap-2 rounded-md bg-muted/50 px-2.5 py-2 text-xs text-foreground">
-                      <span className="mt-0.5 shrink-0 rounded-full bg-warning/20 px-1.5 py-0.5 text-[10px] font-medium text-warning capitalize">
-                        {(v.type ?? "warning").replace(/_/g, " ")}
-                      </span>
-                      <span className="leading-relaxed">{v.message}</span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            )}
-          </div>
+                {g}
+              </span>
+            ))}
+          </span>
         )}
-
-        {canRemove && (
-          <button
-            type="button"
-            onClick={(e) => {
-              e.stopPropagation();
-              onRemove();
-            }}
-            onKeyDown={(e) => {
-              if (e.key === "Enter" || e.key === " ") {
-                e.stopPropagation();
-              }
-            }}
-            className="flex h-6 w-6 min-h-[44px] min-w-[44px] -m-[9px] items-center justify-center rounded text-muted-foreground opacity-0 transition-opacity hover:text-destructive focus-visible:opacity-100 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring group-hover:opacity-100"
-            aria-label={`Remove ${course.name} from plan`}
-          >
-            <svg
-              aria-hidden="true"
-              className="h-4 w-4"
-              fill="none"
-              viewBox="0 0 24 24"
-              strokeWidth={2}
-              stroke="currentColor"
-            >
-              <path strokeLinecap="round" strokeLinejoin="round" d="M6 18 18 6M6 6l12 12" />
-            </svg>
-          </button>
-        )}
+        <span>
+          {course.duration === "full_year"
+            ? "Full Year"
+            : course.semestersOffered && course.semestersOffered.length === 1
+              ? `Sem ${course.semestersOffered[0]} only`
+              : "Sem 1 & 2"}
+        </span>
       </div>
     </div>
   );

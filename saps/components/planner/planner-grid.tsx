@@ -26,6 +26,7 @@ interface PlannerGridProps {
   onGpaWaiverToggle?: (planCourseId: string, applied: boolean) => void;
   onToggleGradeLock?: (gradeLevel: number, locked: boolean) => void;
   violations: Record<string, Violation[]>;
+  ignoredViolations?: Record<string, Violation[]>;
   semesterGaps?: Record<string, string[]>;
   focusGrade?: { grade: number; semester: number } | null;
   readOnly?: boolean;
@@ -113,6 +114,7 @@ function DesktopGrid({
   onGpaWaiverToggle,
   onToggleGradeLock,
   violations,
+  ignoredViolations = {},
   semesterGaps,
   focusGrade,
   readOnly,
@@ -289,7 +291,7 @@ function DesktopGrid({
           });
 
         return (
-          <div key={grade} role="row" className="mb-3 rounded-xl border border-border overflow-hidden">
+          <div key={grade} role="row" className="mb-3 rounded-xl border border-border overflow-visible">
             {/* Grade header — full width, clickable toggle */}
             <div
               ref={(el) => { gradeHeaderRefs.current[grade] = el; }}
@@ -466,6 +468,7 @@ function DesktopGrid({
                                   key={course.id}
                                   course={course}
                                   violations={violations[course.courseId]}
+                                  ignoredViolations={ignoredViolations[course.courseId]}
                                   onRemove={!readOnly && !isGradeLocked ? () => onRemoveCourse(course.id) : undefined}
                                   onClick={onViewDetails ? () => onViewDetails(course.courseId) : () => onCourseClick(course)}
                                   onStatusChange={isGradeLocked ? undefined : (onStatusChange ? (status) => onStatusChange(course.id, status) : undefined)}
@@ -635,6 +638,7 @@ function DesktopGrid({
                             key={course.id}
                             course={course}
                             violations={violations[course.courseId]}
+                                  ignoredViolations={ignoredViolations[course.courseId]}
                             onRemove={isGradeLocked ? undefined : () => onRemoveCourse(course.id)}
                             onClick={onViewDetails ? () => onViewDetails(course.courseId) : () => onCourseClick(course)}
                             onStatusChange={isGradeLocked ? undefined : (onStatusChange ? (s) => onStatusChange(course.id, s) : undefined)}
@@ -718,6 +722,7 @@ function MobileAccordion({
   onGpaWaiverToggle,
   onToggleGradeLock,
   violations,
+  ignoredViolations = {},
   semesterGaps,
   focusGrade: _focusGrade,
   readOnly,
@@ -864,6 +869,7 @@ function MobileAccordion({
                               key={course.id}
                               course={course}
                               violations={violations[course.courseId]}
+                                  ignoredViolations={ignoredViolations[course.courseId]}
                               onRemove={mobileGradeLocked ? undefined : () => onRemoveCourse(course.id)}
                               onClick={onViewDetails ? () => onViewDetails(course.courseId) : () => onCourseClick(course)}
                               onStatusChange={mobileGradeLocked ? undefined : (onStatusChange ? (s) => onStatusChange(course.id, s) : undefined)}

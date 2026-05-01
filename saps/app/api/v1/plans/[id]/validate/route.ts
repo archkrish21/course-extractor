@@ -116,10 +116,34 @@ export async function GET(request: NextRequest, context: RouteContext) {
       violationsByCourse[v.courseId].violations.push(v);
     }
 
+    // Group ignored (override-suppressed) violations by course separately so
+    // the UI can render them under a "warnings ignored" affordance.
+    const ignoredByCourse: Record<
+      string,
+      {
+        courseId: string;
+        courseCode: string;
+        courseName: string;
+        violations: Violation[];
+      }
+    > = {};
+    for (const v of result.ignoredViolations ?? []) {
+      if (!ignoredByCourse[v.courseId]) {
+        ignoredByCourse[v.courseId] = {
+          courseId: v.courseId,
+          courseCode: v.courseCode,
+          courseName: v.courseName,
+          violations: [],
+        };
+      }
+      ignoredByCourse[v.courseId].violations.push(v);
+    }
+
     return successResponse({
       valid: result.valid,
       totalViolations: result.violations.length,
       courseViolations: Object.values(violationsByCourse),
+      ignoredCourseViolations: Object.values(ignoredByCourse),
     });
   } catch (error) {
     console.error("[plans/:id/validate] GET error:", error);

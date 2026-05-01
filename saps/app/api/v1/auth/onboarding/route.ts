@@ -296,8 +296,12 @@ export async function POST(request: NextRequest) {
 
       // Add completed courses to the plan as "completed" status
       if (courses_completed) {
+        // Pull gradeLevels too so we can mark cross-grade selections as overridden.
+        // When a student records a course at a non-standard grade (e.g. via the
+        // "All grades" toggle in past-courses), the planner would otherwise
+        // permanently flag a grade-level violation on every load.
         const allCourses = await db
-          .select({ id: courses.id, code: courses.code })
+          .select({ id: courses.id, code: courses.code, gradeLevels: courses.gradeLevels })
           .from(courses)
           .where(
             and(
@@ -305,27 +309,31 @@ export async function POST(request: NextRequest) {
               eq(courses.isActive, true)
             )
           );
-        const codeToId = new Map<string, string>();
-        for (const c of allCourses) codeToId.set(c.code, c.id);
+        const codeToCourse = new Map<string, { id: string; gradeLevels: number[] }>();
+        for (const c of allCourses) codeToCourse.set(c.code, { id: c.id, gradeLevels: c.gradeLevels ?? [] });
 
         let order = 0;
         for (const entry of courses_completed) {
-          const courseId = codeToId.get(entry.code);
-          if (!courseId) continue;
+          const courseInfo = codeToCourse.get(entry.code);
+          if (!courseInfo) continue;
           // Derive grade level from academic year
           const startYear = parseInt(entry.academic_year.split("-")[0], 10);
-          const entryGradeLevel = 9 + (startYear - (graduation_year - 4));
+          const entryGradeLevel = Math.max(9, Math.min(12, 9 + (startYear - (graduation_year - 4))));
+          const isCrossGrade =
+            courseInfo.gradeLevels.length > 0 &&
+            !courseInfo.gradeLevels.includes(entryGradeLevel);
 
           await db
             .insert(planCourses)
             .values({
               planId: newPlan.id,
-              courseId,
-              gradeLevel: Math.max(9, Math.min(12, entryGradeLevel)),
+              courseId: courseInfo.id,
+              gradeLevel: entryGradeLevel,
               semester: entry.semester,
               status: "completed",
               plannedGrade: entry.grade,
               displayOrder: order++,
+              prereqOverridden: isCrossGrade,
             })
             .onConflictDoNothing();
         }

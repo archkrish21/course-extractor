@@ -37,6 +37,10 @@ export interface ValidationResult {
 export interface PlanIntegrityResult {
   valid: boolean;
   violations: Violation[];
+  // Violations that were suppressed because the row was force-added past them.
+  // Surfaced separately so the UI can show them under a "warnings ignored"
+  // affordance without re-flagging them as active issues.
+  ignoredViolations: Violation[];
 }
 
 interface PlanCourseRow {
@@ -402,6 +406,7 @@ export async function validatePlanIntegrity(
   planId: string
 ): Promise<PlanIntegrityResult> {
   const violations: Violation[] = [];
+  const ignoredViolations: Violation[] = [];
 
   // Fetch all courses in the plan with details
   const allPlanCourses = await db
@@ -411,6 +416,7 @@ export async function validatePlanIntegrity(
       gradeLevel: planCourses.gradeLevel,
       semester: planCourses.semester,
       status: planCourses.status,
+      prereqOverridden: planCourses.prereqOverridden,
       course: {
         id: courses.id,
         code: courses.code,
@@ -426,7 +432,7 @@ export async function validatePlanIntegrity(
     .where(eq(planCourses.planId, planId));
 
   if (allPlanCourses.length === 0) {
-    return { valid: true, violations: [] };
+    return { valid: true, violations: [], ignoredViolations: [] };
   }
 
   // Get all course IDs in the plan
@@ -455,19 +461,21 @@ export async function validatePlanIntegrity(
       (p) => p.courseId === pc.courseId && !p.isRecommended
     );
 
-    // Check grade-level eligibility
+    // Check grade-level eligibility. Track in ignoredViolations when the user
+    // explicitly placed this course at a non-standard grade via force_add.
     if (
       pc.course.gradeLevels &&
       !pc.course.gradeLevels.includes(pc.gradeLevel)
     ) {
-      violations.push({
+      const v: Violation = {
         type: "grade_level",
         courseId: pc.course.id,
         courseName: pc.course.name,
         courseCode: pc.course.code,
         message: `${pc.course.code} is not available for grade ${pc.gradeLevel}. Available grades: ${pc.course.gradeLevels.join(", ")}.`,
         details: { requiredGradeLevels: pc.course.gradeLevels },
-      });
+      };
+      (pc.prereqOverridden ? ignoredViolations : violations).push(v);
     }
 
     // Check enrollment rules: full-year courses must have both semesters present
@@ -502,7 +510,9 @@ export async function validatePlanIntegrity(
       });
     }
 
-    // Check prerequisites
+    // Check prerequisites. When the row is overridden, prereq misses go into
+    // ignoredViolations rather than active violations so the UI can list them
+    // under a "warnings ignored" affordance.
     const prerequisites = coursePrereqs.filter(
       (p) => p.relationshipType === "prerequisite"
     );
@@ -538,7 +548,7 @@ export async function validatePlanIntegrity(
       });
 
       if (!satisfied) {
-        violations.push({
+        const v: Violation = {
           type: "prerequisite",
           courseId: pc.course.id,
           courseName: pc.course.name,
@@ -551,7 +561,8 @@ export async function validatePlanIntegrity(
               group: groupNum,
             })),
           },
-        });
+        };
+        (pc.prereqOverridden ? ignoredViolations : violations).push(v);
       }
     }
 
@@ -635,6 +646,7 @@ export async function validatePlanIntegrity(
   return {
     valid: violations.length === 0,
     violations,
+    ignoredViolations,
   };
 }
 

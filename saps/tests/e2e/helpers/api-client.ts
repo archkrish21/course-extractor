@@ -24,6 +24,7 @@ export interface PlanCourse {
   status: string;
   plannedGrade: string | null;
   gpaWaiverApplied: boolean;
+  prereqOverridden?: boolean;
 }
 
 export interface GpaResult {
@@ -249,6 +250,25 @@ export async function removePlanCourse(
 ) {
   const res = await request.delete(`/api/v1/plans/${planId}/courses/${planCourseId}`);
   return res;
+}
+
+// ── Validation ─────────────────────────────────────────────────────────────
+
+export async function validatePlan(
+  request: APIRequestContext,
+  planId: string
+): Promise<{
+  valid: boolean;
+  courseViolations: Array<{ courseId: string; violations: Array<{ type: string }> }>;
+}> {
+  const res = await request.get(`/api/v1/plans/${planId}/validate`);
+  expect(res.ok()).toBeTruthy();
+  const data = await res.json();
+  const v = data.data ?? data;
+  return {
+    valid: v.valid ?? false,
+    courseViolations: v.courseViolations ?? v.violations ?? [],
+  };
 }
 
 // ── GPA ────────────────────────────────────────────────────────────────────

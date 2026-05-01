@@ -700,6 +700,7 @@ export const planCourses = pgTable(
       enum: ["A", "B", "C", "D", "F", "P", "I"],
     }),
     gpaWaiverApplied: boolean("gpa_waiver_applied").default(false),
+    prereqOverridden: boolean("prereq_overridden").default(false).notNull(),
     displayOrder: smallint("display_order").default(0),
     notes: text("notes"),
     createdAt: timestamp("created_at", { withTimezone: true }).defaultNow(),

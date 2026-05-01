@@ -1,0 +1,1 @@
+ALTER TABLE "plan_courses" ADD COLUMN "prereq_overridden" boolean DEFAULT false NOT NULL;

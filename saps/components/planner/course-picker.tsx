@@ -106,6 +106,7 @@ export function CoursePicker({
   const [durationFilter, setDurationFilter] = useState<"all" | "full_year" | "semester">("all");
   const [earlyBirdOnly, setEarlyBirdOnly] = useState(false);
   const [gpaWaiverOnly, setGpaWaiverOnly] = useState(false);
+  const [showAllGrades, setShowAllGrades] = useState(false);
   const [courses, setCourses] = useState<CourseResult[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
   const COURSES_PER_PAGE = 4;
@@ -165,7 +166,10 @@ export function CoursePicker({
       setLoading(true);
       try {
         const params = new URLSearchParams();
-        params.set("grade_level", String(gradeLevel));
+        // When the cross-grade toggle is on, drop the grade filter so courses
+        // from any grade appear. The slot's grade is still passed to the
+        // add-course API; force_add handles any prereq warnings.
+        if (!showAllGrades) params.set("grade_level", String(gradeLevel));
         // For summer semesters, filter to only summer-offered courses
         if (semester < 0) params.set("semester_offered", String(semester));
         if (debouncedQuery) params.set("q", debouncedQuery);
@@ -192,7 +196,7 @@ export function CoursePicker({
     }
 
     fetchCourses();
-  }, [isOpen, debouncedQuery, creditFilter, divisionFilter, departmentFilter, gradeLevel, semester]);
+  }, [isOpen, debouncedQuery, creditFilter, divisionFilter, departmentFilter, gradeLevel, semester, showAllGrades]);
 
   // Apply client-side filters (runs on rawCourses change or filter toggle change, no API call)
   useEffect(() => {
@@ -467,6 +471,23 @@ export function CoursePicker({
               `}
             >
               GPA Waiver
+            </button>
+            <button
+              type="button"
+              aria-pressed={showAllGrades}
+              onClick={() => setShowAllGrades(!showAllGrades)}
+              title="Show courses from any grade level (e.g. if you completed it in middle school)"
+              className={`
+                min-h-[36px] rounded-full px-3 py-1 text-xs font-medium
+                transition-colors duration-150
+                focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring
+                ${showAllGrades
+                  ? "bg-primary text-primary-foreground"
+                  : "bg-muted text-muted-foreground hover:bg-border"
+                }
+              `}
+            >
+              All grades
             </button>
           </div>
 

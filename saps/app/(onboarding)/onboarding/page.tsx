@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardHeader, CardContent } from "@/components/ui/card";
 import { creditTypeBadgeVariant } from "@/lib/badge-utils";
 import { apiFetch } from "@/lib/api-client";
+import { deriveCompletionSemesters } from "@/lib/onboarding/derive-completion-semesters";
 
 // ─── Types ─────────────────────────────────────────────────────────────────
 
@@ -293,13 +294,17 @@ function StepPastCourses({
     if (isCourseSelected(course.code)) {
       setCompletedCourses(completedCourses.filter((c) => !(c.code === course.code && c.academic_year === curAcademicYear)));
     } else {
-      const newEntries: CompletedCourse[] = [];
-      if (course.duration === "full_year") {
-        newEntries.push({ code: course.code, name: course.name, grade: "A", academic_year: curAcademicYear, semester: 1 });
-        newEntries.push({ code: course.code, name: course.name, grade: "A", academic_year: curAcademicYear, semester: 2 });
-      } else {
-        newEntries.push({ code: course.code, name: course.name, grade: "A", academic_year: curAcademicYear, semester: course.semestersOffered?.[0] ?? 1 });
-      }
+      // Honor semestersOffered for full-year courses so pre-summer pairings
+      // (e.g., World History SOC13S/SOC14S offered in [-2, -1]) land in the
+      // pre-summer cells instead of being forced into regular Sem 1 / Sem 2.
+      const semesters = deriveCompletionSemesters(course.duration, course.semestersOffered);
+      const newEntries: CompletedCourse[] = semesters.map((semester) => ({
+        code: course.code,
+        name: course.name,
+        grade: "A",
+        academic_year: curAcademicYear,
+        semester,
+      }));
       setCompletedCourses([...completedCourses, ...newEntries]);
     }
   }

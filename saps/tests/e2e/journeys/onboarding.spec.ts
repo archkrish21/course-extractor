@@ -49,3 +49,70 @@ test("onboarding page renders step indicator for a pre-onboarding student", asyn
     }, { timeout: 10_000 })
     .toBeGreaterThan(0);
 });
+
+/**
+ * Regression: full-year pre-summer courses (e.g. World History SOC13S/SOC14S
+ * with semestersOffered [-2, -1]) used to be hardcoded into Sem 1 / Sem 2
+ * during onboarding's Past Courses step. Drives the wizard as a Grade 11
+ * student, checks World History under Grade 9 past courses, and verifies
+ * the resulting plan places it in the pre-summer cells, not regular ones.
+ *
+ * Idempotent across runs: global-setup.ts resets studentOnboarding's
+ * onboarding_completed_at and wipes any plans/courses/grades it produced
+ * in a prior run, so this test always reaches the wizard fresh.
+ */
+test("full-year pre-summer past course lands in pre-summer cells, not Sem 1/2", async ({ page }) => {
+  await loginAsOnboardingUser(page);
+  await page.goto("/onboarding");
+  await page.waitForLoadState("domcontentloaded");
+
+  expect(page.url(), "global-setup must leave studentOnboarding pre-onboarding").toContain("/onboarding");
+
+  // Step 1: pick Grade 11 (triggers the 3-step flow with Past Courses).
+  await page.locator('input[name="grade_level"][value="11"]').check({ force: true });
+  await page.getByRole("button", { name: /^Next/i }).click();
+
+  // Step 2: Past Courses. Grade 9 tab is the default for Grade 11 students,
+  // but click it explicitly for resilience.
+  const grade9Tab = page.getByRole("button", { name: /^Grade 9/ });
+  await grade9Tab.waitFor({ state: "visible", timeout: 10_000 });
+  await grade9Tab.click();
+
+  // Wait for course list to load, then check World History (SOC13S/SOC14S).
+  // The label contains both the course code and name.
+  const worldHistoryLabel = page.locator("label", { hasText: "SOC13S/SOC14S" }).first();
+  await worldHistoryLabel.waitFor({ state: "visible", timeout: 15_000 });
+  await worldHistoryLabel.locator('input[type="checkbox"]').check();
+
+  await page.getByRole("button", { name: /^Next/i }).click();
+
+  // Step 3: Assign Grades — defaults ("A") are fine, just complete.
+  await page.getByRole("button", { name: /^Complete$/i }).click();
+
+  // Onboarding redirects to /planner or /dashboard once the plan is created.
+  await page.waitForURL(/\/(dashboard|planner)/, { timeout: 20_000 });
+
+  // Verify via API: the new primary plan must have SOC13S/SOC14S in
+  // Grade 9 pre-summer cells (-2, -1), NOT in regular Sem 1/2.
+  const plansRes = await page.request.get("/api/v1/plans");
+  expect(plansRes.ok(), "GET /api/v1/plans succeeded").toBeTruthy();
+  const plansBody = await plansRes.json();
+  const plans = plansBody.data ?? plansBody.plans ?? [];
+  const primary = plans.find((p: { isPrimary?: boolean }) => p.isPrimary);
+  expect(primary, "primary plan was created by onboarding").toBeTruthy();
+
+  const coursesRes = await page.request.get(`/api/v1/plans/${primary.id}/courses`);
+  expect(coursesRes.ok(), "GET plan courses succeeded").toBeTruthy();
+  const coursesBody = await coursesRes.json();
+  const grouped: Record<string, Record<string, Array<{ course?: { code?: string } }>>> =
+    coursesBody.data ?? coursesBody;
+  const grade9 = grouped["9"] ?? {};
+
+  const codesIn = (sem: string) =>
+    (grade9[sem] ?? []).map((c) => c.course?.code).filter((x): x is string => Boolean(x));
+
+  expect(codesIn("-2"), "Pre-Summer Session 1 of Grade 9").toContain("SOC13S/SOC14S");
+  expect(codesIn("-1"), "Pre-Summer Session 2 of Grade 9").toContain("SOC13S/SOC14S");
+  expect(codesIn("1"), "Sem 1 of Grade 9 must NOT hold the pre-summer course").not.toContain("SOC13S/SOC14S");
+  expect(codesIn("2"), "Sem 2 of Grade 9 must NOT hold the pre-summer course").not.toContain("SOC13S/SOC14S");
+});

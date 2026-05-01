@@ -258,7 +258,8 @@ export function PlanCourseCard({
                 }
                 title={hasIgnored ? `${ignoredViolations.length} warning${ignoredViolations.length === 1 ? "" : "s"} excused — click to view` : "Validation warnings were excused when this course was added"}
               >
-                {/* check-badge: "validation acknowledged" */}
+                {/* bell-slash: "warning silenced/excused" — distinct from
+                    the check-circle used for completed status across the app. */}
                 <svg
                   aria-hidden="true"
                   className="h-4 w-4"
@@ -267,7 +268,7 @@ export function PlanCourseCard({
                   strokeWidth={2}
                   stroke="currentColor"
                 >
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75 11.25 15 15 9.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M9.143 17.082a24.248 24.248 0 0 0 3.844.148m-3.844-.148a23.856 23.856 0 0 1-5.455-1.31 8.964 8.964 0 0 0 2.3-5.542m3.155 6.852a3 3 0 0 0 5.667 1.97m1.965-2.277L21 21m-4.225-4.225a23.81 23.81 0 0 0 3.536-1.003A8.967 8.967 0 0 1 18 9.75V9A6 6 0 0 0 6.53 6.53m10.245 10.245L6.53 6.53M3 3l3.53 3.53" />
                 </svg>
               </button>
 

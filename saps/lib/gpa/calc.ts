@@ -45,8 +45,8 @@ export function calculateGPA(
     // Skip courses where student applied GPA waiver
     if (c.gpaWaiverApplied) continue;
 
-    // Skip P/F-only courses (Driver Ed, regular PE) from GPA per Stevenson policy
-    if (c.code && isPassFailCourse(c.code)) continue;
+    // Skip P/F-only courses (Driver Ed, regular PE, catalog Pass/Fail) per Stevenson policy
+    if (c.code && isPassFailCourse(c.code, c.creditType)) continue;
 
     // Skip courses without a grade
     const grade = c.plannedGrade;

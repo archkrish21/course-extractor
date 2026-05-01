@@ -3,7 +3,7 @@
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Spinner } from "@/components/ui/spinner";
-import { creditTypeBadgeVariant } from "@/lib/badge-utils";
+import { creditTypeBadgeVariant, creditTypeLabel } from "@/lib/badge-utils";
 import { useState, useEffect } from "react";
 import { isSummerSemester } from "@/config/semesters";
 
@@ -30,7 +30,7 @@ interface Course {
   divisionCode: string;
   departmentId?: string;
   departmentName?: string;
-  creditType: "CP" | "Accelerated" | "Honors" | "AP";
+  creditType: "CP" | "Accelerated" | "Honors" | "AP" | "Pass/Fail";
   creditValue: string;
   duration: "semester" | "full_year";
   gradeLevels: number[];
@@ -151,7 +151,7 @@ function DetailGrid({ course, onCourseClick, onDivisionClick, onDepartmentClick 
         </div>
         <div>
           <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Credit Type</p>
-          <p className="mt-1 text-sm font-medium text-foreground">{course.creditType}</p>
+          <p className="mt-1 text-sm font-medium text-foreground">{creditTypeLabel(course.creditType)}</p>
         </div>
       </div>
 

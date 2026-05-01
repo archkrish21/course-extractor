@@ -122,6 +122,26 @@ describe("calculateGPA", () => {
       expect(result.coursesUsed).toBe(1);
     });
 
+    it("excludes Adventure Education from GPA (regular PE per Course Book)", () => {
+      const courses = [
+        makeCourse({ plannedGrade: "A", status: "completed", code: "PED331" }),
+        makeCourse({ plannedGrade: "B", status: "completed", code: "MTH151" }),
+      ];
+      const result = calculateGPA(courses, "projected");
+      expect(result.coursesUsed).toBe(1);
+      expect(result.unweighted).toBeCloseTo(3.0);
+    });
+
+    it("excludes courses with Pass/Fail credit type (e.g. ACT Prep)", () => {
+      const courses = [
+        makeCourse({ plannedGrade: "P", status: "completed", code: "ACTPREPS2", creditType: "Pass/Fail" }),
+        makeCourse({ plannedGrade: "B", status: "completed", code: "MTH151" }),
+      ];
+      const result = calculateGPA(courses, "projected");
+      expect(result.coursesUsed).toBe(1);
+      expect(result.unweighted).toBeCloseTo(3.0);
+    });
+
     it("handles courses without code field", () => {
       const courses = [
         makeCourse({ plannedGrade: "A", status: "completed" }),

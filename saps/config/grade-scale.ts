@@ -29,21 +29,30 @@ export const PASS_FAIL_OPTIONS = ["P", "F"] as const;
 
 /**
  * Determine if a course is Pass/Fail only (no letter grades).
- * Per Stevenson policy: Driver Ed and regular PE courses are P/F.
- * Health (PED201/202), Applied Health (PED231/232), and Leadership courses get letter grades.
+ *
+ * A course is P/F when either:
+ *  - the catalog marks `creditType` as "Pass/Fail" (e.g. ACT Prep, summer P/F offerings), or
+ *  - the code matches Stevenson's PE/Driver Ed P/F policy (Course Book p. 86:
+ *    "All classes in Physical Education, with the exception of Leadership and
+ *    Aquatics courses, are Pass/Fail.").
+ *
+ * PE letter-graded exceptions: Health Education (PED201/202) and Applied Health
+ * (PED231/232) are part of the Health Education department, not PE. Lifeguard
+ * Training (PED501) is the Aquatics exception. Leadership courses (PED###L)
+ * are the Leadership exception.
  */
-export function isPassFailCourse(code: string): boolean {
+export function isPassFailCourse(code: string, creditType?: string): boolean {
+  // Catalog-level P/F (works for any department, e.g. ACTPREPS2)
+  if (creditType === "Pass/Fail") return true;
   // Driver Education — always P/F
   if (code.startsWith("D/E")) return true;
-  // PE courses — P/F except Health, Applied Health, Adventure Ed, Lifeguard, and Leadership
+  // PE courses — P/F except Health, Applied Health, Lifeguard, and Leadership
   if (code.startsWith("PED")) {
     // Health Education
     if (code.startsWith("PED201") || code.startsWith("PED202")) return false;
     // Applied Health
     if (code.startsWith("PED231") || code.startsWith("PED232")) return false;
-    // Adventure Education
-    if (code.startsWith("PED331") || code.startsWith("PED332")) return false;
-    // Lifeguard Training
+    // Lifeguard Training (Aquatics)
     if (code.startsWith("PED501")) return false;
     // Leadership courses (PED codes ending with L, e.g. PED101L)
     if (/^PED\d+L/.test(code)) return false;

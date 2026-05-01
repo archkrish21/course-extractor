@@ -1,4 +1,5 @@
 import { describe, it, expect } from "vitest";
+import { isPassFailCourse } from "@/config/grade-scale";
 
 /**
  * Unit tests for graduation requirement matching logic.
@@ -501,20 +502,6 @@ describe("GPA waiver eligibility", () => {
 // ── isPassFailCourse tests ───────────────────────────────────────────────────
 
 describe("isPassFailCourse", () => {
-  // Import the function directly for testing
-  function isPassFailCourse(code: string): boolean {
-    if (code.startsWith("D/E")) return true;
-    if (code.startsWith("PED")) {
-      if (code.startsWith("PED201") || code.startsWith("PED202")) return false;
-      if (code.startsWith("PED231") || code.startsWith("PED232")) return false;
-      if (code.startsWith("PED331") || code.startsWith("PED332")) return false;
-      if (code.startsWith("PED501")) return false;
-      if (/L/.test(code)) return false;
-      return true;
-    }
-    return false;
-  }
-
   it("identifies Driver Education as P/F", () => {
     expect(isPassFailCourse("D/E231")).toBe(true);
     expect(isPassFailCourse("D/E232")).toBe(true);
@@ -538,12 +525,15 @@ describe("isPassFailCourse", () => {
     expect(isPassFailCourse("PED232")).toBe(false);
   });
 
-  it("excludes Adventure Education from P/F", () => {
-    expect(isPassFailCourse("PED331")).toBe(false);
-    expect(isPassFailCourse("PED332")).toBe(false);
+  // Adventure Education is part of the PE department per the Course Book (p. 86),
+  // so it falls under the "all PE is P/F" rule — it is NOT a Leadership or
+  // Aquatics exception.
+  it("treats Adventure Education as P/F (regular PE)", () => {
+    expect(isPassFailCourse("PED331")).toBe(true);
+    expect(isPassFailCourse("PED332")).toBe(true);
   });
 
-  it("excludes Lifeguard Training from P/F", () => {
+  it("excludes Lifeguard Training from P/F (Aquatics exception)", () => {
     expect(isPassFailCourse("PED501")).toBe(false);
   });
 
@@ -552,6 +542,13 @@ describe("isPassFailCourse", () => {
     expect(isPassFailCourse("PED41L/PED42L")).toBe(false);
     expect(isPassFailCourse("PED71L/PED72L")).toBe(false);
     expect(isPassFailCourse("PED81L/PED82L")).toBe(false);
+  });
+
+  it("treats catalog Pass/Fail credit type as P/F regardless of department", () => {
+    expect(isPassFailCourse("ACTPREPS", "Pass/Fail")).toBe(true);
+    expect(isPassFailCourse("ACTPREPS2", "Pass/Fail")).toBe(true);
+    // Same code without the catalog hint — falls through to code rules
+    expect(isPassFailCourse("ACTPREPS2")).toBe(false);
   });
 
   it("returns false for non-PE/non-DriverEd courses", () => {
@@ -613,19 +610,6 @@ describe("course load academic-only count", () => {
 // ── GPA waiver eligibility with P/F exclusion ───────────────────────────────
 
 describe("GPA waiver eligibility with P/F exclusion", () => {
-  function isPassFailCourse(code: string): boolean {
-    if (code.startsWith("D/E")) return true;
-    if (code.startsWith("PED")) {
-      if (code.startsWith("PED201") || code.startsWith("PED202")) return false;
-      if (code.startsWith("PED231") || code.startsWith("PED232")) return false;
-      if (code.startsWith("PED331") || code.startsWith("PED332")) return false;
-      if (code.startsWith("PED501")) return false;
-      if (/L/.test(code)) return false;
-      return true;
-    }
-    return false;
-  }
-
   it("excludes P/F courses when counting GPA-eligible courses", () => {
     const courses = [
       { code: "MTH151", waivered: false, dropped: false },

@@ -2,7 +2,7 @@
 
 import { useState, useRef, useEffect } from "react";
 import { Badge } from "@/components/ui/badge";
-import { creditTypeBadgeVariant } from "@/lib/badge-utils";
+import { creditTypeBadgeVariant, creditTypeLabel } from "@/lib/badge-utils";
 import { GRADE_OPTIONS, PASS_FAIL_OPTIONS, isPassFailCourse } from "@/config/grade-scale";
 
 export interface PlanCourse {
@@ -374,7 +374,7 @@ export function PlanCourseCard({
       <div className="flex items-center gap-2">
         <div className="flex flex-1 min-w-0 flex-wrap items-center gap-1">
           <Badge variant={creditTypeBadgeVariant(course.creditType)} className="h-5 leading-4 text-[10px] px-1.5 py-0">
-            {course.creditType}
+            {creditTypeLabel(course.creditType)}
           </Badge>
 
           {course.isAp && course.creditType !== "AP" && (
@@ -397,7 +397,7 @@ export function PlanCourseCard({
           )}
 
           {/* GPA Waiver toggle — only for non-P/F courses */}
-          {course.gpaWaiver && !isPassFailCourse(course.code) && !readOnly && onGpaWaiverToggle && (
+          {course.gpaWaiver && !isPassFailCourse(course.code, course.creditType) && !readOnly && onGpaWaiverToggle && (
             <button
               type="button"
               className="inline-flex h-5 items-center gap-1 rounded-full px-1.5 py-0 text-[10px] leading-4 font-medium cursor-pointer transition-colors bg-warning/20 text-warning hover:bg-warning/30"
@@ -422,8 +422,8 @@ export function PlanCourseCard({
             </button>
           )}
 
-          {/* P/F indicator for non-academic courses */}
-          {isPassFailCourse(course.code) && (
+          {/* P/F indicator for non-academic courses whose credit-type badge doesn't already say P/F (e.g. PE/Driver Ed show "CP"). */}
+          {isPassFailCourse(course.code, course.creditType) && course.creditType !== "Pass/Fail" && (
             <span
               className="inline-flex h-5 items-center rounded-full px-1.5 py-0 text-[10px] leading-4 font-medium bg-muted text-muted-foreground"
               title="Pass/Fail course — excluded from GPA and academic course count"
@@ -510,7 +510,7 @@ export function PlanCourseCard({
                 }`}
             >
               <option value="">-</option>
-              {(isPassFailCourse(course.code) ? PASS_FAIL_OPTIONS : GRADE_OPTIONS).map((g) => (
+              {(isPassFailCourse(course.code, course.creditType) ? PASS_FAIL_OPTIONS : GRADE_OPTIONS).map((g) => (
                 <option key={g} value={g}>{g}</option>
               ))}
             </select>

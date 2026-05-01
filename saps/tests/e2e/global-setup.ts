@@ -200,6 +200,26 @@ async function globalSetup() {
 
     if (!studentId) { console.error("[e2e-setup] Student not found — aborting"); return; }
 
+    // ── 2.5. Reset preOnboarding users to a fresh state ──────────────
+    // Onboarding E2E tests need preOnboarding users to start with no
+    // plan, no completed courses, and onboarding_completed_at = NULL on
+    // every run. Wipe any data they produced in a previous run; the
+    // step-3 UPSERT then resets the user-level timestamps.
+    const preOnboardingIds = TEST_USERS
+      .filter((u) => u.preOnboarding)
+      .map((u) => userIds[u.email])
+      .filter((id): id is string => Boolean(id));
+
+    if (preOnboardingIds.length > 0) {
+      await client.query(`DELETE FROM plan_shares WHERE user_id = ANY($1) OR granted_by = ANY($1)`, [preOnboardingIds]);
+      await client.query(`DELETE FROM plan_history WHERE changed_by = ANY($1)`, [preOnboardingIds]);
+      await client.query(`DELETE FROM gpa_snapshots WHERE student_id = ANY($1)`, [preOnboardingIds]);
+      await client.query(`DELETE FROM plan_courses WHERE plan_id IN (SELECT id FROM four_year_plans WHERE created_by = ANY($1))`, [preOnboardingIds]);
+      await client.query(`DELETE FROM four_year_plans WHERE created_by = ANY($1)`, [preOnboardingIds]);
+      await client.query(`DELETE FROM grade_entries WHERE student_id = ANY($1)`, [preOnboardingIds]);
+      console.log(`[e2e-setup] Reset ${preOnboardingIds.length} preOnboarding user(s) to fresh state`);
+    }
+
     // ── 3. Ensure app user rows ──────────────────────────────────────
     for (const user of TEST_USERS) {
       const id = userIds[user.email];
@@ -209,15 +229,28 @@ async function globalSetup() {
       // courses, grades) is already seeded, so they should be treated as
       // having completed onboarding. A preOnboarding student is left null
       // so onboarding E2E tests can reach the /onboarding page.
+      // preOnboarding users are still past profile-setup so the onboarding
+      // layout guard doesn't bounce them to /profile-setup.
       const onboardingAt = user.role === "student" && !user.preOnboarding ? "NOW()" : "NULL";
-      const profileSetupAt = !user.preOnboarding ? "NOW()" : "NULL";
+      const profileSetupAt = "NOW()";
+      // For preOnboarding users we force onboarding_completed_at to NULL on
+      // every run so the wizard is reachable even after a previous run
+      // completed it. profile_setup_completed_at is held at NOW() so the
+      // layout guard accepts the user. For everyone else we COALESCE so
+      // manually-adjusted timestamps aren't clobbered between runs.
+      const onboardingExpr = user.preOnboarding
+        ? "NULL"
+        : `COALESCE(users.onboarding_completed_at, ${onboardingAt})`;
+      const profileSetupExpr = user.preOnboarding
+        ? profileSetupAt
+        : `COALESCE(users.profile_setup_completed_at, ${profileSetupAt})`;
       await client.query(
         `INSERT INTO users (id, email, first_name, last_name, role, date_of_birth, onboarding_completed_at, profile_setup_completed_at, created_at)
          VALUES ($1, $2, $3, $4, $5, $6, ${onboardingAt}, ${profileSetupAt}, NOW())
          ON CONFLICT (id) DO UPDATE SET email = EXCLUDED.email, first_name = EXCLUDED.first_name,
            last_name = EXCLUDED.last_name, role = EXCLUDED.role,
-           onboarding_completed_at = COALESCE(users.onboarding_completed_at, ${onboardingAt}),
-           profile_setup_completed_at = COALESCE(users.profile_setup_completed_at, ${profileSetupAt})`,
+           onboarding_completed_at = ${onboardingExpr},
+           profile_setup_completed_at = ${profileSetupExpr}`,
         [id, user.email, first, last || null, user.role, user.dob],
       );
     }

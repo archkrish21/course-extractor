@@ -57,19 +57,16 @@ test("onboarding page renders step indicator for a pre-onboarding student", asyn
  * student, checks World History under Grade 9 past courses, and verifies
  * the resulting plan places it in the pre-summer cells, not regular ones.
  *
- * This test consumes studentOnboarding's pre-onboarding state and will
- * skip on subsequent runs until the DB is reseeded — same pattern as the
- * smoke test above.
+ * Idempotent across runs: global-setup.ts resets studentOnboarding's
+ * onboarding_completed_at and wipes any plans/courses/grades it produced
+ * in a prior run, so this test always reaches the wizard fresh.
  */
 test("full-year pre-summer past course lands in pre-summer cells, not Sem 1/2", async ({ page }) => {
   await loginAsOnboardingUser(page);
   await page.goto("/onboarding");
   await page.waitForLoadState("domcontentloaded");
 
-  if (!page.url().includes("/onboarding")) {
-    test.skip(true, "User already onboarded — cannot drive the wizard");
-    return;
-  }
+  expect(page.url(), "global-setup must leave studentOnboarding pre-onboarding").toContain("/onboarding");
 
   // Step 1: pick Grade 11 (triggers the 3-step flow with Past Courses).
   await page.locator('input[name="grade_level"][value="11"]').check({ force: true });

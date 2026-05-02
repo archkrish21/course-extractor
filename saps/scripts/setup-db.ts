@@ -162,224 +162,237 @@ async function main() {
           const schoolYear = `${catalogYear}-${catalogYear + 1}`;
           const now = new Date();
 
-          // 2a. Upsert catalog version
-          const [catalogVersion] = await db
-            .insert(courseCatalogVersions)
-            .values({
-              schoolYear,
-              sourcePdfUrl: (coursesData.pdf_path as string) ?? "",
-              changeSummary: JSON.stringify({ loaded_by: "setup-db" }),
-              coursesAdded: courseList.length,
-              coursesRemoved: 0,
-              coursesModified: 0,
-              loadedAt: now,
-            })
-            .onConflictDoUpdate({
-              target: courseCatalogVersions.schoolYear,
-              set: {
-                sourcePdfUrl: (coursesData.pdf_path as string) ?? "",
-                changeSummary: JSON.stringify({ loaded_by: "setup-db" }),
-                coursesAdded: courseList.length,
-                loadedAt: now,
-              },
-            })
-            .returning({ id: courseCatalogVersions.id });
+          // Wrap the entire course catalog refresh in a single transaction.
+          // Without this, an interruption between the prereq DELETE and the
+          // last INSERT (network blip, Ctrl-C, DNS hiccup) would leave the
+          // database with a partial prereq graph until the next successful
+          // re-run. Particularly important against production.
+          const client = await pool.connect();
+          try {
+            await client.query("BEGIN");
 
-          const versionId = catalogVersion.id;
-          log("2/7", `Catalog version: ${versionId}`);
-
-          // Deactivate courses from previous versions
-          await pool.query(
-            "UPDATE courses SET is_active = FALSE WHERE catalog_version_id != $1 AND is_active = TRUE",
-            [versionId]
-          );
-
-          // 2b. Upsert divisions from course data
-          const divisionNames = [...new Set(courseList.map((c) => c.division as string))];
-          const divisionIds: Record<string, string> = {};
-
-          for (const divName of divisionNames.sort()) {
-            const divCode = divName.toUpperCase().replace(/\s+/g, "_").replace(/[,&]/g, "").slice(0, 20);
-            const { rows } = await pool.query(
-              `INSERT INTO divisions (name, code) VALUES ($1, $2)
-               ON CONFLICT (name) DO UPDATE SET name = EXCLUDED.name
+            // 2a. Upsert catalog version
+            const { rows: versionRows } = await client.query(
+              `INSERT INTO course_catalog_versions
+                 (school_year, source_pdf_url, change_summary, courses_added, courses_removed, courses_modified, loaded_at)
+               VALUES ($1, $2, $3::jsonb, $4, 0, 0, $5)
+               ON CONFLICT (school_year) DO UPDATE SET
+                 source_pdf_url = EXCLUDED.source_pdf_url,
+                 change_summary = EXCLUDED.change_summary,
+                 courses_added = EXCLUDED.courses_added,
+                 loaded_at = EXCLUDED.loaded_at
                RETURNING id`,
-              [divName, divCode]
+              [
+                schoolYear,
+                (coursesData.pdf_path as string) ?? "",
+                JSON.stringify({ loaded_by: "setup-db" }),
+                courseList.length,
+                now,
+              ]
             );
-            divisionIds[divName] = rows[0].id;
-          }
-          log("2/7", `Upserted ${divisionNames.length} divisions.`);
+            const versionId = versionRows[0].id;
+            log("2/7", `Catalog version: ${versionId}`);
 
-          // 2c. Upsert departments from course data
-          const deptPairs = [...new Set(courseList.map((c) => `${c.division}|||${c.department}`))];
-          const departmentIds: Record<string, string> = {};
-
-          for (const pair of deptPairs.sort()) {
-            const [divName, deptName] = pair.split("|||");
-            const { rows } = await pool.query(
-              `INSERT INTO departments (name, division_id) VALUES ($1, $2)
-               ON CONFLICT (division_id, name) DO UPDATE SET name = EXCLUDED.name
-               RETURNING id`,
-              [deptName, divisionIds[divName]]
+            // Deactivate courses from previous versions
+            await client.query(
+              "UPDATE courses SET is_active = FALSE WHERE catalog_version_id != $1 AND is_active = TRUE",
+              [versionId]
             );
-            departmentIds[pair] = rows[0].id;
-          }
-          log("2/7", `Upserted ${deptPairs.length} departments.`);
 
-          // 2d. Build existing course lookup for upsert
-          const { rows: existingRows } = await pool.query(
-            "SELECT id, code FROM courses WHERE catalog_version_id = $1",
-            [versionId]
-          );
-          const existingByCode: Record<string, string> = {};
-          for (const row of existingRows) {
-            existingByCode[row.code] = row.id;
-          }
+            // 2b. Upsert divisions from course data
+            const divisionNames = [...new Set(courseList.map((c) => c.division as string))];
+            const divisionIds: Record<string, string> = {};
 
-          // 2e. Upsert courses
-          const courseIds: Record<string, string> = {};
-          const newCodes = new Set<string>();
-          let insertedCount = 0;
-          let updatedCount = 0;
-
-          for (const c of courseList) {
-            const code = c.code as string;
-            const divId = divisionIds[c.division as string];
-            const deptId = departmentIds[`${c.division}|||${c.department}`];
-            newCodes.add(code);
-
-            if (existingByCode[code]) {
-              // Update existing
-              await pool.query(
-                `UPDATE courses SET
-                   name = $1, division_id = $2, department_id = $3,
-                   description = $4, credit_value = $5, duration = $6,
-                   grade_levels = $7, credit_type = $8,
-                   is_ap = $9, is_dual_credit = $10, is_honors = $11,
-                   gpa_waiver = $12, semesters_offered = $13, notes = $14,
-                   is_active = TRUE, updated_at = $15
-                 WHERE id = $16`,
-                [
-                  c.name, divId, deptId,
-                  c.description ?? "", c.credit_value, c.duration,
-                  c.grade_levels, c.credit_type,
-                  c.is_ap ?? false, c.is_dual_credit ?? false,
-                  c.credit_type === "Honors",
-                  c.gpa_waiver ?? false, c.semesters_offered ?? null,
-                  c.notes ?? null, now, existingByCode[code],
-                ]
-              );
-              courseIds[code] = existingByCode[code];
-              updatedCount++;
-            } else {
-              // Insert new
-              const { rows } = await pool.query(
-                `INSERT INTO courses
-                   (code, name, division_id, department_id, catalog_version_id,
-                    description, credit_value, duration, grade_levels,
-                    credit_type, is_ap, is_dual_credit, is_honors, gpa_waiver,
-                    semesters_offered, notes, is_active, created_at, updated_at)
-                 VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,TRUE,$17,$18)
+            for (const divName of divisionNames.sort()) {
+              const divCode = divName.toUpperCase().replace(/\s+/g, "_").replace(/[,&]/g, "").slice(0, 20);
+              const { rows } = await client.query(
+                `INSERT INTO divisions (name, code) VALUES ($1, $2)
+                 ON CONFLICT (name) DO UPDATE SET name = EXCLUDED.name
                  RETURNING id`,
-                [
-                  code, c.name, divId, deptId, versionId,
-                  c.description ?? "", c.credit_value, c.duration,
-                  c.grade_levels, c.credit_type,
-                  c.is_ap ?? false, c.is_dual_credit ?? false,
-                  c.credit_type === "Honors",
-                  c.gpa_waiver ?? false, c.semesters_offered ?? null,
-                  c.notes ?? null, now, now,
-                ]
+                [divName, divCode]
               );
-              courseIds[code] = rows[0].id;
-              insertedCount++;
+              divisionIds[divName] = rows[0].id;
             }
-          }
+            log("2/7", `Upserted ${divisionNames.length} divisions.`);
 
-          // Deactivate stale courses
-          const staleCodes = Object.keys(existingByCode).filter((c) => !newCodes.has(c));
-          if (staleCodes.length > 0) {
-            const staleIds = staleCodes.map((c) => existingByCode[c]);
-            await pool.query(
-              "UPDATE courses SET is_active = FALSE, updated_at = $1 WHERE id = ANY($2::uuid[])",
-              [now, staleIds]
+            // 2c. Upsert departments from course data
+            const deptPairs = [...new Set(courseList.map((c) => `${c.division}|||${c.department}`))];
+            const departmentIds: Record<string, string> = {};
+
+            for (const pair of deptPairs.sort()) {
+              const [divName, deptName] = pair.split("|||");
+              const { rows } = await client.query(
+                `INSERT INTO departments (name, division_id) VALUES ($1, $2)
+                 ON CONFLICT (division_id, name) DO UPDATE SET name = EXCLUDED.name
+                 RETURNING id`,
+                [deptName, divisionIds[divName]]
+              );
+              departmentIds[pair] = rows[0].id;
+            }
+            log("2/7", `Upserted ${deptPairs.length} departments.`);
+
+            // 2d. Build existing course lookup for upsert
+            const { rows: existingRows } = await client.query(
+              "SELECT id, code FROM courses WHERE catalog_version_id = $1",
+              [versionId]
             );
-            log("2/7", `Deactivated ${staleIds.length} stale courses.`);
-          }
+            const existingByCode: Record<string, string> = {};
+            for (const row of existingRows) {
+              existingByCode[row.code] = row.id;
+            }
 
-          log("2/7", `Courses: ${insertedCount} inserted, ${updatedCount} updated.`);
+            // 2e. Upsert courses
+            const courseIds: Record<string, string> = {};
+            const newCodes = new Set<string>();
+            let insertedCount = 0;
+            let updatedCount = 0;
 
-          // 2f. Insert prerequisites
-          await pool.query("DELETE FROM course_prerequisites WHERE catalog_version_id = $1", [versionId]);
+            for (const c of courseList) {
+              const code = c.code as string;
+              const divId = divisionIds[c.division as string];
+              const deptId = departmentIds[`${c.division}|||${c.department}`];
+              newCodes.add(code);
 
-          function resolveCode(code: string): { id: string; canonical: string } | null {
-            if (courseIds[code]) return { id: courseIds[code], canonical: code };
-            for (const composite of Object.keys(courseIds)) {
-              if (composite.includes("/") && composite.split("/").includes(code)) {
-                return { id: courseIds[composite], canonical: composite };
+              if (existingByCode[code]) {
+                // Update existing
+                await client.query(
+                  `UPDATE courses SET
+                     name = $1, division_id = $2, department_id = $3,
+                     description = $4, credit_value = $5, duration = $6,
+                     grade_levels = $7, credit_type = $8,
+                     is_ap = $9, is_dual_credit = $10, is_honors = $11,
+                     gpa_waiver = $12, semesters_offered = $13, notes = $14,
+                     is_active = TRUE, updated_at = $15
+                   WHERE id = $16`,
+                  [
+                    c.name, divId, deptId,
+                    c.description ?? "", c.credit_value, c.duration,
+                    c.grade_levels, c.credit_type,
+                    c.is_ap ?? false, c.is_dual_credit ?? false,
+                    c.credit_type === "Honors",
+                    c.gpa_waiver ?? false, c.semesters_offered ?? null,
+                    c.notes ?? null, now, existingByCode[code],
+                  ]
+                );
+                courseIds[code] = existingByCode[code];
+                updatedCount++;
+              } else {
+                // Insert new
+                const { rows } = await client.query(
+                  `INSERT INTO courses
+                     (code, name, division_id, department_id, catalog_version_id,
+                      description, credit_value, duration, grade_levels,
+                      credit_type, is_ap, is_dual_credit, is_honors, gpa_waiver,
+                      semesters_offered, notes, is_active, created_at, updated_at)
+                   VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,TRUE,$17,$18)
+                   RETURNING id`,
+                  [
+                    code, c.name, divId, deptId, versionId,
+                    c.description ?? "", c.credit_value, c.duration,
+                    c.grade_levels, c.credit_type,
+                    c.is_ap ?? false, c.is_dual_credit ?? false,
+                    c.credit_type === "Honors",
+                    c.gpa_waiver ?? false, c.semesters_offered ?? null,
+                    c.notes ?? null, now, now,
+                  ]
+                );
+                courseIds[code] = rows[0].id;
+                insertedCount++;
               }
             }
-            return null;
-          }
 
-          // Expand a prereq to include summer/regular equivalents so either path
-          // satisfies the requirement (same requirement_group → OR semantics).
-          function expandWithEquivalents(prereqId: string, prereqCanonical: string): string[] {
-            const ids = new Set<string>([prereqId]);
-            for (const eqCode of getEquivalents(prereqCanonical)) {
-              const eqId = courseIds[eqCode];
-              if (eqId) ids.add(eqId);
-            }
-            return Array.from(ids);
-          }
-
-          async function insertPrereqEdges(
-            courseId: string,
-            prereqId: string,
-            prereqCanonical: string,
-            group: number
-          ): Promise<number> {
-            let inserted = 0;
-            for (const id of expandWithEquivalents(prereqId, prereqCanonical)) {
-              if (id === courseId) continue;
-              await pool.query(
-                `INSERT INTO course_prerequisites
-                   (course_id, prerequisite_id, relationship_type, requirement_group, catalog_version_id)
-                 VALUES ($1, $2, 'prerequisite', $3, $4)
-                 ON CONFLICT (course_id, prerequisite_id, catalog_version_id) DO NOTHING`,
-                [courseId, id, group, versionId]
+            // Deactivate stale courses
+            const staleCodes = Object.keys(existingByCode).filter((c) => !newCodes.has(c));
+            if (staleCodes.length > 0) {
+              const staleIds = staleCodes.map((c) => existingByCode[c]);
+              await client.query(
+                "UPDATE courses SET is_active = FALSE, updated_at = $1 WHERE id = ANY($2::uuid[])",
+                [now, staleIds]
               );
-              inserted++;
+              log("2/7", `Deactivated ${staleIds.length} stale courses.`);
             }
-            return inserted;
-          }
 
-          let prereqCount = 0;
-          for (const c of courseList) {
-            const courseId = courseIds[c.code as string];
-            const groups = (c as Record<string, unknown>).prerequisite_groups as Array<{ group: number; codes: string[] }> | undefined;
+            log("2/7", `Courses: ${insertedCount} inserted, ${updatedCount} updated.`);
 
-            if (groups && groups.length > 0) {
-              for (const g of groups) {
-                for (const prereqCode of g.codes) {
+            // 2f. Insert prerequisites
+            await client.query("DELETE FROM course_prerequisites WHERE catalog_version_id = $1", [versionId]);
+
+            function resolveCode(code: string): { id: string; canonical: string } | null {
+              if (courseIds[code]) return { id: courseIds[code], canonical: code };
+              for (const composite of Object.keys(courseIds)) {
+                if (composite.includes("/") && composite.split("/").includes(code)) {
+                  return { id: courseIds[composite], canonical: composite };
+                }
+              }
+              return null;
+            }
+
+            // Expand a prereq to include summer/regular equivalents so either path
+            // satisfies the requirement (same requirement_group → OR semantics).
+            function expandWithEquivalents(prereqId: string, prereqCanonical: string): string[] {
+              const ids = new Set<string>([prereqId]);
+              for (const eqCode of getEquivalents(prereqCanonical)) {
+                const eqId = courseIds[eqCode];
+                if (eqId) ids.add(eqId);
+              }
+              return Array.from(ids);
+            }
+
+            async function insertPrereqEdges(
+              courseId: string,
+              prereqId: string,
+              prereqCanonical: string,
+              group: number
+            ): Promise<number> {
+              let inserted = 0;
+              for (const id of expandWithEquivalents(prereqId, prereqCanonical)) {
+                if (id === courseId) continue;
+                await client.query(
+                  `INSERT INTO course_prerequisites
+                     (course_id, prerequisite_id, relationship_type, requirement_group, catalog_version_id)
+                   VALUES ($1, $2, 'prerequisite', $3, $4)
+                   ON CONFLICT (course_id, prerequisite_id, catalog_version_id) DO NOTHING`,
+                  [courseId, id, group, versionId]
+                );
+                inserted++;
+              }
+              return inserted;
+            }
+
+            let prereqCount = 0;
+            for (const c of courseList) {
+              const courseId = courseIds[c.code as string];
+              const groups = (c as Record<string, unknown>).prerequisite_groups as Array<{ group: number; codes: string[] }> | undefined;
+
+              if (groups && groups.length > 0) {
+                for (const g of groups) {
+                  for (const prereqCode of g.codes) {
+                    const resolved = resolveCode(prereqCode);
+                    if (resolved) {
+                      prereqCount += await insertPrereqEdges(courseId, resolved.id, resolved.canonical, g.group);
+                    }
+                  }
+                }
+              } else {
+                const prereqCodes = (c.prerequisite_codes as string[]) ?? [];
+                for (const prereqCode of prereqCodes) {
                   const resolved = resolveCode(prereqCode);
                   if (resolved) {
-                    prereqCount += await insertPrereqEdges(courseId, resolved.id, resolved.canonical, g.group);
+                    prereqCount += await insertPrereqEdges(courseId, resolved.id, resolved.canonical, 1);
                   }
                 }
               }
-            } else {
-              const prereqCodes = (c.prerequisite_codes as string[]) ?? [];
-              for (const prereqCode of prereqCodes) {
-                const resolved = resolveCode(prereqCode);
-                if (resolved) {
-                  prereqCount += await insertPrereqEdges(courseId, resolved.id, resolved.canonical, 1);
-                }
-              }
             }
-          }
 
-          log("2/7", `Inserted ${prereqCount} prerequisite links (incl. summer/regular equivalents).`);
+            log("2/7", `Inserted ${prereqCount} prerequisite links (incl. summer/regular equivalents).`);
+
+            await client.query("COMMIT");
+          } catch (err) {
+            await client.query("ROLLBACK").catch(() => undefined);
+            throw err;
+          } finally {
+            client.release();
+          }
         } else {
           log("2/7", `Would load ${courseList.length} courses.`);
         }

@@ -541,8 +541,8 @@ export function PlanCourseCard({
                     </div>
                     <ul className="max-h-48 overflow-y-auto p-2 flex flex-col gap-1.5">
                       {ignoredViolations.map((v, i) => (
-                        <li key={i} className="flex items-start gap-2 rounded-md bg-muted/50 px-2.5 py-2 text-xs text-foreground">
-                          <span className="mt-0.5 shrink-0 rounded-full bg-foreground/10 px-1.5 py-0.5 text-[10px] font-medium text-foreground capitalize">
+                        <li key={i} className="flex flex-col gap-1 rounded-md bg-muted/50 px-2.5 py-2 text-xs text-foreground">
+                          <span className="self-start rounded-full bg-foreground/10 px-1.5 py-0.5 text-[10px] font-medium text-foreground capitalize">
                             {(v.type ?? "warning").replace(/_/g, " ")}
                           </span>
                           <ViolationMessage
@@ -612,8 +612,8 @@ export function PlanCourseCard({
                     </div>
                     <ul className="max-h-48 overflow-y-auto p-2 flex flex-col gap-1.5">
                       {violations.map((v, i) => (
-                        <li key={i} className="flex items-start gap-2 rounded-md bg-muted/50 px-2.5 py-2 text-xs text-foreground">
-                          <span className="mt-0.5 shrink-0 rounded-full bg-warning/20 px-1.5 py-0.5 text-[10px] font-medium text-warning capitalize">
+                        <li key={i} className="flex flex-col gap-1 rounded-md bg-muted/50 px-2.5 py-2 text-xs text-foreground">
+                          <span className="self-start rounded-full bg-warning/20 px-1.5 py-0.5 text-[10px] font-medium text-warning capitalize">
                             {(v.type ?? "warning").replace(/_/g, " ")}
                           </span>
                           <ViolationMessage

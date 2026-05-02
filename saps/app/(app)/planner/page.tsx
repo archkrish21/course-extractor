@@ -2765,21 +2765,26 @@ export default function PlannerPage() {
       {/* Course Picker */}
       {pickerTarget && selectedPlanId && (() => {
         const otherSem = pickerTarget.semester === 1 ? 2 : pickerTarget.semester === 2 ? 1 : pickerTarget.semester === -2 ? -1 : -2;
-        const fullYearCount = courses.filter(
+        // Dropped courses don't count toward course-load limits and shouldn't
+        // block the picker from offering re-add. The validator applies the
+        // same rule (lib/prereq/validator.ts).
+        const activeCourses = courses.filter((c) => c.status !== "dropped");
+        const fullYearCount = activeCourses.filter(
           (c) => c.gradeLevel === pickerTarget.gradeLevel && c.semester === null
         ).length;
-        const otherSemCount = courses.filter(
+        const otherSemCount = activeCourses.filter(
           (c) => c.gradeLevel === pickerTarget.gradeLevel && c.semester === otherSem
         ).length + fullYearCount;
-        const otherHasEarlyBird = courses
+        const otherHasEarlyBird = activeCourses
           .filter((c) => c.gradeLevel === pickerTarget.gradeLevel && (c.semester === otherSem || c.semester === null))
           .some((c) => (c.name ?? "").toLowerCase().includes("early bird") || /E\d$/.test(c.code ?? "") || /E\d\//.test(c.code ?? ""));
         const otherMax = otherHasEarlyBird ? 8 : 7;
 
-        // Collect all course IDs, names, and codes already in the plan
-        const existingIds = new Set(courses.map((c) => c.courseId));
-        const existingNames = new Set(courses.map((c) => c.name));
-        const existingCodes = courses.map((c) => c.code);
+        // Collect course IDs / names / codes already in the plan, excluding
+        // dropped rows so the picker re-offers them.
+        const existingIds = new Set(activeCourses.map((c) => c.courseId));
+        const existingNames = new Set(activeCourses.map((c) => c.name));
+        const existingCodes = activeCourses.map((c) => c.code);
 
         return (
           <CoursePicker

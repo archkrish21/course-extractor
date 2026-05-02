@@ -49,6 +49,7 @@ import {
 } from "../lib/db/schema";
 import { SUBSCRIPTION_PLANS } from "../config/subscription-plans";
 import { PLAN_TEMPLATES } from "../config/seeds/plan-templates";
+import { getEquivalents } from "../config/summer-equivalents";
 import { seedLegalDocuments, LEGAL_DOCUMENT_SEEDS } from "./seeds/legal-documents";
 
 // ─── Safety ─────────────────────────────────────────────────────────────────
@@ -311,14 +312,46 @@ async function main() {
           // 2f. Insert prerequisites
           await pool.query("DELETE FROM course_prerequisites WHERE catalog_version_id = $1", [versionId]);
 
-          function resolveCode(code: string): string | null {
-            if (courseIds[code]) return courseIds[code];
+          function resolveCode(code: string): { id: string; canonical: string } | null {
+            if (courseIds[code]) return { id: courseIds[code], canonical: code };
             for (const composite of Object.keys(courseIds)) {
               if (composite.includes("/") && composite.split("/").includes(code)) {
-                return courseIds[composite];
+                return { id: courseIds[composite], canonical: composite };
               }
             }
             return null;
+          }
+
+          // Expand a prereq to include summer/regular equivalents so either path
+          // satisfies the requirement (same requirement_group → OR semantics).
+          function expandWithEquivalents(prereqId: string, prereqCanonical: string): string[] {
+            const ids = new Set<string>([prereqId]);
+            for (const eqCode of getEquivalents(prereqCanonical)) {
+              const eqId = courseIds[eqCode];
+              if (eqId) ids.add(eqId);
+            }
+            return Array.from(ids);
+          }
+
+          async function insertPrereqEdges(
+            courseId: string,
+            prereqId: string,
+            prereqCanonical: string,
+            group: number
+          ): Promise<number> {
+            let inserted = 0;
+            for (const id of expandWithEquivalents(prereqId, prereqCanonical)) {
+              if (id === courseId) continue;
+              await pool.query(
+                `INSERT INTO course_prerequisites
+                   (course_id, prerequisite_id, relationship_type, requirement_group, catalog_version_id)
+                 VALUES ($1, $2, 'prerequisite', $3, $4)
+                 ON CONFLICT (course_id, prerequisite_id, catalog_version_id) DO NOTHING`,
+                [courseId, id, group, versionId]
+              );
+              inserted++;
+            }
+            return inserted;
           }
 
           let prereqCount = 0;
@@ -329,38 +362,24 @@ async function main() {
             if (groups && groups.length > 0) {
               for (const g of groups) {
                 for (const prereqCode of g.codes) {
-                  const prereqId = resolveCode(prereqCode);
-                  if (prereqId && courseId !== prereqId) {
-                    await pool.query(
-                      `INSERT INTO course_prerequisites
-                         (course_id, prerequisite_id, relationship_type, requirement_group, catalog_version_id)
-                       VALUES ($1, $2, 'prerequisite', $3, $4)
-                       ON CONFLICT (course_id, prerequisite_id, catalog_version_id) DO NOTHING`,
-                      [courseId, prereqId, g.group, versionId]
-                    );
-                    prereqCount++;
+                  const resolved = resolveCode(prereqCode);
+                  if (resolved) {
+                    prereqCount += await insertPrereqEdges(courseId, resolved.id, resolved.canonical, g.group);
                   }
                 }
               }
             } else {
               const prereqCodes = (c.prerequisite_codes as string[]) ?? [];
               for (const prereqCode of prereqCodes) {
-                const prereqId = resolveCode(prereqCode);
-                if (prereqId && courseId !== prereqId) {
-                  await pool.query(
-                    `INSERT INTO course_prerequisites
-                       (course_id, prerequisite_id, relationship_type, requirement_group, catalog_version_id)
-                     VALUES ($1, $2, 'prerequisite', 1, $3)
-                     ON CONFLICT (course_id, prerequisite_id, catalog_version_id) DO NOTHING`,
-                    [courseId, prereqId, versionId]
-                  );
-                  prereqCount++;
+                const resolved = resolveCode(prereqCode);
+                if (resolved) {
+                  prereqCount += await insertPrereqEdges(courseId, resolved.id, resolved.canonical, 1);
                 }
               }
             }
           }
 
-          log("2/7", `Inserted ${prereqCount} prerequisite links.`);
+          log("2/7", `Inserted ${prereqCount} prerequisite links (incl. summer/regular equivalents).`);
         } else {
           log("2/7", `Would load ${courseList.length} courses.`);
         }
@@ -371,7 +390,6 @@ async function main() {
 
     if (coursesOnly) {
       log("done", "Course catalog loaded. Exiting (--courses-only).");
-      await pool.end();
       return;
     }
 

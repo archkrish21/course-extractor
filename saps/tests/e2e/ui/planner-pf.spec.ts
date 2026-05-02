@@ -87,12 +87,20 @@ test("planner shows P/F badge + P/F-only grade dropdown for catalog and code-rul
       const card = cardLocator(page, code);
       await expect(card, `card for ${code}`).toBeVisible();
 
-      const select = card.locator('select[aria-label*="grade for"]');
-      const optionValues = await select.locator("option").evaluateAll((opts) =>
-        opts.map((o) => (o as HTMLOptionElement).value),
+      // Grade picker is a button + popup (PR #131), not a native <select>.
+      // Click the trigger, then read the option-button labels in the popup.
+      const trigger = card.locator('button[aria-label*="grade for"]');
+      await trigger.click();
+      const popup = trigger.locator("xpath=following-sibling::div[1]");
+      await expect(popup, `popup for ${code}`).toBeVisible();
+      const optionLabels = (await popup.locator("button").allTextContents()).map((s) =>
+        s.trim(),
       );
-      // Empty placeholder + P + F only — no A/B/C/D.
-      expect(optionValues, `dropdown options for ${code}`).toEqual(["", "P", "F"]);
+      // Clear placeholder + P + F only — no A/B/C/D.
+      expect(optionLabels, `dropdown options for ${code}`).toEqual(["Clear", "P", "F"]);
+      // Close the popup so it doesn't overlap the next card.
+      await trigger.click();
+      await expect(popup, `popup closed for ${code}`).toBeHidden();
 
       // Credit-type badge must read "P/F" — never the literal "Pass/Fail".
       await expect(card).not.toContainText("Pass/Fail");

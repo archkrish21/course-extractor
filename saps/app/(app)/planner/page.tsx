@@ -10,6 +10,8 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import Link from "next/link";
 import type { PlanCourse, Violation } from "@/components/planner/plan-course-card";
+import { ViolationMessage } from "@/components/planner/violation-message";
+import { formatViolation } from "@/lib/planner/format-violation-message";
 import { CourseDetailModal } from "@/components/course-detail-modal";
 import { useAccount } from "@/lib/account-context";
 import { useTour } from "@/lib/hooks/use-tour";
@@ -319,6 +321,9 @@ export default function PlannerPage() {
                 missingPrerequisites: v.details?.missingPrerequisites?.map(
                   (p: { code: string; name: string }) => ({ code: p.code, name: p.name })
                 ),
+                referencedCourses: v.details?.referencedCourses?.map(
+                  (p: { code: string; name: string }) => ({ code: p.code, name: p.name })
+                ),
               });
             }
           }
@@ -339,6 +344,9 @@ export default function PlannerPage() {
                 severity: v.severity ?? "warning",
                 relatedCourseId: v.relatedCourseId,
                 missingPrerequisites: v.details?.missingPrerequisites?.map(
+                  (p: { code: string; name: string }) => ({ code: p.code, name: p.name })
+                ),
+                referencedCourses: v.details?.referencedCourses?.map(
                   (p: { code: string; name: string }) => ({ code: p.code, name: p.name })
                 ),
               });
@@ -1258,9 +1266,10 @@ export default function PlannerPage() {
       message: string;
       sortOrder: number;
       excused: boolean;
-      // Map of "course code" → "course name" for any prereq referenced in
-      // the message. Drives the inline tooltip on prereq codes.
-      prereqNames: Record<string, string>;
+      // Course refs in the message — used by ViolationMessage to render names
+      // with code-on-hover tooltips.
+      missingPrerequisites?: Array<{ code: string; name: string }>;
+      referencedCourses?: Array<{ code: string; name: string }>;
     }
     interface Group {
       gradeLevel: number;
@@ -1305,10 +1314,6 @@ export default function PlannerPage() {
             };
             byKey.set(key, group);
           }
-          const prereqNames: Record<string, string> = {};
-          for (const p of v.missingPrerequisites ?? []) {
-            if (p.code && p.name) prereqNames[p.code] = p.name;
-          }
           group.entries.push({
             planCourseId,
             courseId: course.courseId,
@@ -1318,7 +1323,8 @@ export default function PlannerPage() {
             message: v.message,
             sortOrder: getCourseSortOrder(course),
             excused,
-            prereqNames,
+            missingPrerequisites: v.missingPrerequisites,
+            referencedCourses: v.referencedCourses,
           });
           if (excused) group.excusedCount++;
           else group.activeCount++;
@@ -1393,56 +1399,6 @@ export default function PlannerPage() {
   // Count used by the section toggle and the issues badge — only active
   // violations matter for "do I have problems to fix?".
   const totalViolations = totalActiveViolations;
-
-  // Course-code chip used in the validation report. Renders the code in
-  // brand-blue and shows a CSS-only popup with the full course name on
-  // hover/focus — no React state per chip, so the report stays cheap to
-  // re-render.
-  const CodeWithTooltip = ({ code, name }: { code: string; name?: string }) => (
-    <span className="group relative inline-block">
-      <span
-        className="font-mono text-primary cursor-help"
-        tabIndex={name ? 0 : -1}
-      >
-        {code}
-      </span>
-      {name && (
-        <span
-          role="tooltip"
-          className="pointer-events-none absolute left-0 bottom-full z-50 mb-1 max-w-[16rem] rounded-md bg-foreground px-2.5 py-1.5 text-xs font-medium text-background shadow-lg break-words opacity-0 transition-opacity duration-150 group-hover:opacity-100 group-focus-within:opacity-100"
-        >
-          {name}
-        </span>
-      )}
-    </span>
-  );
-
-  // Render a violation message with two transformations:
-  //   1. Strip the leading "{code} " prefix (already shown in the entry's
-  //      code column) and replace it with "It " — keeps the message readable
-  //      without restating the course code.
-  //   2. Wrap any referenced prereq codes in CodeWithTooltip so hovering
-  //      reveals the prereq's full course name.
-  const renderViolationMessage = (entry: { code: string; message: string; prereqNames: Record<string, string> }) => {
-    const stripped = entry.message.startsWith(`${entry.code} `)
-      ? `It ${entry.message.slice(entry.code.length + 1)}`
-      : entry.message;
-    const codes = Object.keys(entry.prereqNames);
-    if (codes.length === 0) return stripped;
-    // Match longest codes first so "SPA101/SPA102" wins over a hypothetical
-    // "SPA101" entry. Escape regex metacharacters in codes (codes contain `/`).
-    const sorted = [...codes].sort((a, b) => b.length - a.length);
-    const escaped = sorted.map((c) => c.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"));
-    const re = new RegExp(`(${escaped.join("|")})`, "g");
-    const parts = stripped.split(re);
-    return parts.map((part, i) => {
-      const name = entry.prereqNames[part];
-      if (name) {
-        return <CodeWithTooltip key={i} code={part} name={name} />;
-      }
-      return part;
-    });
-  };
 
   const isReadOnly =
     selectedPlan?.status === "archived" || selectedPlan?.permission === "view";
@@ -2550,7 +2506,16 @@ export default function PlannerPage() {
                                                 <span
                                                   className={`leading-relaxed ${entry.excused ? "text-muted-foreground line-through" : ""}`}
                                                 >
-                                                  <CodeWithTooltip code={entry.code} name={entry.name} />{" "}— {renderViolationMessage(entry)}
+                                                  <ViolationMessage
+                                                    segments={formatViolation({
+                                                      type: entry.type,
+                                                      message: entry.message,
+                                                      targetName: entry.name,
+                                                      targetCode: entry.code,
+                                                      missingPrerequisites: entry.missingPrerequisites,
+                                                      referencedCourses: entry.referencedCourses,
+                                                    })}
+                                                  />
                                                 </span>
                                               </li>
                                             ))}

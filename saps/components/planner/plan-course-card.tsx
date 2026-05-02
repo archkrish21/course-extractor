@@ -5,6 +5,8 @@ import { Badge } from "@/components/ui/badge";
 import { creditTypeBadgeVariant, creditTypeLabel } from "@/lib/badge-utils";
 import { GRADE_OPTIONS, PASS_FAIL_OPTIONS, isPassFailCourse } from "@/config/grade-scale";
 import { dedupeViolations } from "@/lib/planner/dedupe-violations";
+import { formatViolation } from "@/lib/planner/format-violation-message";
+import { ViolationMessage } from "@/components/planner/violation-message";
 
 export interface PlanCourse {
   id: string;
@@ -34,8 +36,11 @@ export interface Violation {
   severity: "error" | "warning";
   relatedCourseId?: string;
   // Prereq/coreq violations carry the missing courses' codes + names so the
-  // validation report can show a tooltip with the human name on hover.
+  // popover/report can render the name with the code in a tooltip.
   missingPrerequisites?: Array<{ code: string; name: string }>;
+  // Other violations (e.g., duplicate-equivalent, semester-partner) reference
+  // a non-target course in their message; carry it here for the same purpose.
+  referencedCourses?: Array<{ code: string; name: string }>;
 }
 
 interface PlanCourseCardProps {
@@ -229,6 +234,7 @@ export function PlanCourseCard({
         focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring
         ${hasViolations ? "border-warning/60 bg-warning-light/50" : "border-border bg-card hover:bg-muted/30"}
         ${isDropped ? "opacity-60" : ""}
+        ${statusMenuOpen || gradeMenuOpen || showWarnings || showIgnored ? "z-30" : ""}
       `}
       aria-label={`${course.name} (${course.code}), ${statusConfig.label}${
         hasViolations ? `, ${violations.length} warning${violations.length > 1 ? "s" : ""}` : ""
@@ -535,11 +541,20 @@ export function PlanCourseCard({
                     </div>
                     <ul className="max-h-48 overflow-y-auto p-2 flex flex-col gap-1.5">
                       {ignoredViolations.map((v, i) => (
-                        <li key={i} className="flex items-start gap-2 rounded-md bg-muted/50 px-2.5 py-2 text-xs text-foreground">
-                          <span className="mt-0.5 shrink-0 rounded-full bg-foreground/10 px-1.5 py-0.5 text-[10px] font-medium text-foreground capitalize">
+                        <li key={i} className="flex flex-col gap-1 rounded-md bg-muted/50 px-2.5 py-2 text-xs text-foreground">
+                          <span className="self-start rounded-full bg-foreground/10 px-1.5 py-0.5 text-[10px] font-medium text-foreground capitalize">
                             {(v.type ?? "warning").replace(/_/g, " ")}
                           </span>
-                          <span className="leading-relaxed">{v.message}</span>
+                          <ViolationMessage
+                            segments={formatViolation({
+                              type: v.type,
+                              message: v.message,
+                              targetName: course.name,
+                              targetCode: course.code,
+                              missingPrerequisites: v.missingPrerequisites,
+                              referencedCourses: v.referencedCourses,
+                            })}
+                          />
                         </li>
                       ))}
                     </ul>
@@ -597,11 +612,20 @@ export function PlanCourseCard({
                     </div>
                     <ul className="max-h-48 overflow-y-auto p-2 flex flex-col gap-1.5">
                       {violations.map((v, i) => (
-                        <li key={i} className="flex items-start gap-2 rounded-md bg-muted/50 px-2.5 py-2 text-xs text-foreground">
-                          <span className="mt-0.5 shrink-0 rounded-full bg-warning/20 px-1.5 py-0.5 text-[10px] font-medium text-warning capitalize">
+                        <li key={i} className="flex flex-col gap-1 rounded-md bg-muted/50 px-2.5 py-2 text-xs text-foreground">
+                          <span className="self-start rounded-full bg-warning/20 px-1.5 py-0.5 text-[10px] font-medium text-warning capitalize">
                             {(v.type ?? "warning").replace(/_/g, " ")}
                           </span>
-                          <span className="leading-relaxed">{v.message}</span>
+                          <ViolationMessage
+                            segments={formatViolation({
+                              type: v.type,
+                              message: v.message,
+                              targetName: course.name,
+                              targetCode: course.code,
+                              missingPrerequisites: v.missingPrerequisites,
+                              referencedCourses: v.referencedCourses,
+                            })}
+                          />
                         </li>
                       ))}
                     </ul>

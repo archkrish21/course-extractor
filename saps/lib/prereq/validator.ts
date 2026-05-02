@@ -32,6 +32,10 @@ export interface Violation {
     missingPrerequisites?: Array<{ code: string; name: string; group: number }>;
     requiredGradeLevels?: number[];
     conflictingCourseId?: string;
+    // Names + codes for any non-target course mentioned in `message`. Lets the
+    // UI render the name with the code in a tooltip (search "ViolationMessage").
+    // Target course's name/code are on the violation itself.
+    referencedCourses?: Array<{ code: string; name: string }>;
   };
 }
 
@@ -219,6 +223,9 @@ export async function validateCourseAddition(
     .map((pc) => pc.course.code);
   const equivalentInPlan = findEquivalentInPlan(targetCourse.code, existingCodes);
   if (equivalentInPlan) {
+    const equivalentRow = existingPlanCourses.find(
+      (pc) => pc.course.code === equivalentInPlan && pc.status !== "dropped"
+    );
     violations.push({
       type: "duplicate",
       courseId: targetCourse.id,
@@ -226,6 +233,13 @@ export async function validateCourseAddition(
       courseCode: targetCourse.code,
       message: `${targetCourse.code} is equivalent to ${equivalentInPlan} which is already in your plan.`,
       severity: "warning",
+      details: equivalentRow
+        ? {
+            referencedCourses: [
+              { code: equivalentRow.course.code, name: equivalentRow.course.name },
+            ],
+          }
+        : undefined,
     });
   }
 
@@ -245,7 +259,12 @@ export async function validateCourseAddition(
       courseName: targetCourse.name,
       courseCode: targetCourse.code,
       message: `${semesterPartner.course.code} (${semesterPartner.course.name}) is already in the plan. This is the same course offered in a different semester.`,
-      details: { conflictingCourseId: semesterPartner.id },
+      details: {
+        conflictingCourseId: semesterPartner.id,
+        referencedCourses: [
+          { code: semesterPartner.course.code, name: semesterPartner.course.name },
+        ],
+      },
     });
   }
 

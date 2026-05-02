@@ -447,8 +447,9 @@ function DesktopGrid({
                     <div className="grid grid-cols-2 gap-3">
                       {SUMMER_SEMESTERS.map((sem) => {
                         const cellCourses = sortCourses(getSemesterCourses(courses, grade, sem));
+                        const activeCellCount = cellCourses.filter((c) => c.status !== "dropped").length;
                         const summerMax = 1;
-                        const isAtMax = cellCourses.length >= summerMax;
+                        const isAtMax = activeCellCount >= summerMax;
                         return (
                           <div
                             key={sem}
@@ -460,7 +461,7 @@ function DesktopGrid({
                                 {semesterLabel(sem)}
                               </p>
                               <span className="text-[10px] text-warning/60">
-                                {cellCourses.length}/{summerMax}
+                                {activeCellCount}/{summerMax}
                               </span>
                             </div>
 
@@ -513,19 +514,24 @@ function DesktopGrid({
                 <div className="grid grid-cols-2 gap-3">
                 {REGULAR_SEMESTERS.map((sem, colIdx) => {
                   const cellCourses = sortCourses(getSemesterCourses(courses, grade, sem));
+                  // Dropped rows still render (struck-through) but don't count
+                  // toward course-load limits, underload checks, or the X/Y
+                  // indicator — they're no longer part of the student's load.
+                  const activeCellCourses = cellCourses.filter((c) => c.status !== "dropped");
+                  const activeCellCount = activeCellCourses.length;
                   const cellViolationCount = cellCourses.reduce(
                     (count, c) => count + (violations[c.id]?.length ?? 0),
                     0
                   );
 
                   // Course limit: 7 normally, 8 if early bird is included
-                  const hasEarlyBird = cellCourses.some(
+                  const hasEarlyBird = activeCellCourses.some(
                     (c) => (c.name ?? "").toLowerCase().includes("early bird") ||
                            /E\d$/.test(c.code ?? "") || /E\d\//.test(c.code ?? "")
                   );
                   const maxCourses = hasEarlyBird ? 8 : 7;
-                  const isAtMax = cellCourses.length >= maxCourses;
-                  const isUnderload = cellCourses.length < 5;
+                  const isAtMax = activeCellCount >= maxCourses;
+                  const isUnderload = activeCellCount < 5;
 
                   return (
                     <div
@@ -535,8 +541,8 @@ function DesktopGrid({
                       tabIndex={
                         focusedCell.row === rowIdx && focusedCell.col === colIdx ? 0 : -1
                       }
-                      aria-label={`Grade ${grade}, Semester ${sem} — ${cellCourses.length} course${
-                        cellCourses.length !== 1 ? "s" : ""
+                      aria-label={`Grade ${grade}, Semester ${sem} — ${activeCellCount} course${
+                        activeCellCount !== 1 ? "s" : ""
                       } planned${
                         cellViolationCount > 0
                           ? `, ${cellViolationCount} warning${cellViolationCount !== 1 ? "s" : ""}`
@@ -628,7 +634,7 @@ function DesktopGrid({
                         <span className={`text-[10px] font-medium ${
                           isAtMax ? "text-destructive" : isUnderload ? "text-warning" : "text-muted-foreground"
                         }`}>
-                          {cellCourses.length}/{maxCourses}
+                          {activeCellCount}/{maxCourses}
                         </span>
                       </div>
                       </div>
@@ -846,6 +852,7 @@ function MobileAccordion({
               <div id={`grade-${grade}-content`} className="border-t border-border px-4 pb-4 pt-3">
                 {REGULAR_SEMESTERS.map((sem) => {
                   const cellCourses = getCoursesForCell(courses, grade, sem);
+                  const activeCellCount = cellCourses.filter((c) => c.status !== "dropped").length;
                   const cellViolationCount = cellCourses.reduce(
                     (count, c) =>
                       count + (violations[c.id]?.length ?? 0),
@@ -856,8 +863,8 @@ function MobileAccordion({
                     <div key={sem} role="gridcell" className="mb-3 last:mb-0">
                       <h3
                         className="mb-1.5 text-xs font-semibold uppercase tracking-wider text-muted-foreground"
-                        aria-label={`Grade ${grade}, Semester ${sem} — ${cellCourses.length} course${
-                          cellCourses.length !== 1 ? "s" : ""
+                        aria-label={`Grade ${grade}, Semester ${sem} — ${activeCellCount} course${
+                          activeCellCount !== 1 ? "s" : ""
                         } planned${
                           cellViolationCount > 0
                             ? `, ${cellViolationCount} warning${cellViolationCount !== 1 ? "s" : ""}`

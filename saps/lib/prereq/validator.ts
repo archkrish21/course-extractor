@@ -255,15 +255,21 @@ export async function validateCourseAddition(
     });
   }
 
-  // Also check semester partner: same course name (e.g., CSC162 when CSC161 is already planned)
-  const semesterPartner = existingPlanCourses.find(
-    (pc) =>
-      pc.courseId !== courseId &&
-      pc.course.name === targetCourse.name &&
-      pc.course.duration === "semester" &&
-      targetCourse.duration === "semester" &&
-      pc.status !== "dropped"
-  );
+  // Also check semester partner: same course name (e.g., CSC162 when CSC161 is already planned).
+  // Repeatable PE courses share names across sem-1/sem-2 codes (e.g. PED451 / PED452
+  // are both "CHOICE P.E."), but each enrollment is an independent semester pick
+  // toward the 3.5-credit PE requirement — not two halves of one course. Skip
+  // the partner check for them.
+  const semesterPartner = repeatable
+    ? undefined
+    : existingPlanCourses.find(
+        (pc) =>
+          pc.courseId !== courseId &&
+          pc.course.name === targetCourse.name &&
+          pc.course.duration === "semester" &&
+          targetCourse.duration === "semester" &&
+          pc.status !== "dropped"
+      );
   if (semesterPartner) {
     violations.push({
       type: "duplicate",

@@ -5385,7 +5385,7 @@
       "credit_type": "AP",
       "prerequisites": "AP Precalculus BC an",
       "prerequisite_codes": [
-        "MTH451/MTH452"
+        "MTH421/MTH422"
       ],
       "corequisites": null,
       "is_ap": true,
@@ -5398,7 +5398,7 @@
           "group": 1,
           "type": "or",
           "codes": [
-            "MTH451/MTH452"
+            "MTH421/MTH422"
           ]
         }
       ]

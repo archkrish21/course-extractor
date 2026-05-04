@@ -3,6 +3,7 @@
 import { useState, useRef, useEffect } from "react";
 import { Badge } from "@/components/ui/badge";
 import { creditTypeBadgeVariant, creditTypeLabel } from "@/lib/badge-utils";
+import { gradeToneClasses, gradeToneVariant } from "@/lib/grade-tone";
 import { GRADE_OPTIONS, PASS_FAIL_OPTIONS, isPassFailCourse } from "@/config/grade-scale";
 import { dedupeViolations } from "@/lib/planner/dedupe-violations";
 import { formatViolation } from "@/lib/planner/format-violation-message";
@@ -85,7 +86,7 @@ const STATUS_CONFIG: Record<
   },
   enrolled: {
     label: "Enrolled",
-    className: "bg-primary-light text-primary",
+    className: "bg-info-light text-info",
     icon: (
       <svg
         aria-hidden="true"
@@ -406,13 +407,7 @@ export function PlanCourseCard({
                 }}
                 aria-label={`${isCompleted ? "Actual" : "Projected"} grade for ${course.name}${course.plannedGrade ? `: ${course.plannedGrade}` : ""}. Click to change.`}
                 aria-expanded={gradeMenuOpen}
-                className={`inline-flex h-5 w-12 items-center gap-0.5 rounded-full px-1.5 py-0 text-[10px] leading-4 font-semibold cursor-pointer hover:opacity-80 transition-opacity
-                  ${course.plannedGrade
-                    ? isCompleted
-                      ? "bg-success-light text-success"
-                      : "bg-primary-light text-primary"
-                    : "bg-muted text-muted-foreground"
-                  }`}
+                className={`inline-flex h-5 w-12 items-center gap-0.5 rounded-full px-1.5 py-0 text-[10px] leading-4 font-semibold cursor-pointer hover:opacity-80 transition-opacity ${gradeToneClasses(course.plannedGrade)}`}
               >
                 <span>{course.plannedGrade ?? "—"}</span>
                 <svg aria-hidden="true" className="h-2.5 w-2.5 ml-auto" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor">
@@ -448,7 +443,7 @@ export function PlanCourseCard({
               )}
             </div>
           ) : !isDropped && course.plannedGrade ? (
-            <Badge variant={isCompleted ? "success" : "default"} className="flex h-5 w-12 leading-4 text-[10px] px-1.5 py-0 items-center justify-center">
+            <Badge variant={gradeToneVariant(course.plannedGrade)} className="flex h-5 w-12 leading-4 text-[10px] px-1.5 py-0 items-center justify-center">
               {course.plannedGrade}
             </Badge>
           ) : (

@@ -10,6 +10,7 @@ import { useAccount } from "@/lib/account-context";
 import { apiFetch } from "@/lib/api-client";
 import { GRADE_OPTIONS } from "@/config/grade-scale";
 import { isPassFailCourse, PASS_FAIL_OPTIONS } from "@/config/grade-scale";
+import { gradeToneVariant } from "@/lib/grade-tone";
 
 interface CourseEntry {
   id: string;
@@ -372,7 +373,7 @@ function YearEndPageInner() {
                                   </td>
                                   <td className="px-3 py-2.5 text-right">
                                     {c.status === "completed" && c.plannedGrade ? (
-                                      <Badge className="rounded-full bg-success/15 text-success">{c.plannedGrade}</Badge>
+                                      <Badge variant={gradeToneVariant(c.plannedGrade)} className="rounded-full">{c.plannedGrade}</Badge>
                                     ) : (
                                       <select
                                         value={grades[c.id] ?? c.plannedGrade ?? ""}
@@ -499,7 +500,7 @@ function YearEndPageInner() {
                           <span className="ml-2 text-xs text-muted-foreground">{c.code}</span>
                         </td>
                         <td className="px-3 py-2 text-right">
-                          <Badge className="rounded-full bg-success/15 text-success">
+                          <Badge variant={gradeToneVariant(grades[c.id] ?? c.plannedGrade)} className="rounded-full">
                             {grades[c.id] ?? c.plannedGrade ?? "—"}
                           </Badge>
                         </td>

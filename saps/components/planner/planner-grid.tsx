@@ -399,14 +399,14 @@ function DesktopGrid({
                 {gradeProjectedGPA.unweighted !== null && (
                   <>
                     <span className="text-border">|</span>
-                    <span className="text-primary" title="Projected GPA (all graded courses): Unweighted / Weighted">
-                      Proj: {formatGPA(gradeProjectedGPA.unweighted)} / {formatGPA(gradeProjectedGPA.weighted)}
+                    <span className="text-primary" title="Projected GPA (all graded courses) — UW (unweighted) · W (weighted)">
+                      Proj: {formatGPA(gradeProjectedGPA.unweighted)}<span className="ml-0.5 text-[10px] opacity-80">UW</span> · {formatGPA(gradeProjectedGPA.weighted)}<span className="ml-0.5 text-[10px] opacity-80">W</span>
                     </span>
                   </>
                 )}
                 {gradeActualGPA.unweighted !== null && (
-                  <span className="text-success" title="Actual GPA (completed only): Unweighted / Weighted">
-                    Actual: {formatGPA(gradeActualGPA.unweighted)} / {formatGPA(gradeActualGPA.weighted)}
+                  <span className="text-success" title="Actual GPA (completed only) — UW (unweighted) · W (weighted)">
+                    Actual: {formatGPA(gradeActualGPA.unweighted)}<span className="ml-0.5 text-[10px] opacity-80">UW</span> · {formatGPA(gradeActualGPA.weighted)}<span className="ml-0.5 text-[10px] opacity-80">W</span>
                   </span>
                 )}
               </span>

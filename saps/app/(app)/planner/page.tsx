@@ -1863,14 +1863,14 @@ export default function PlannerPage() {
                 {totalProjectedGPA.unweighted !== null && (
                   <>
                     <span className="text-border">|</span>
-                    <span className="text-xs font-semibold text-primary" title="Projected GPA (all graded courses): Unweighted / Weighted">
-                      Proj: {formatGPA(totalProjectedGPA.unweighted)} / {formatGPA(totalProjectedGPA.weighted)}
+                    <span className="text-xs font-semibold text-primary" title="Projected GPA (all graded courses) — UW (unweighted) · W (weighted)">
+                      Proj: {formatGPA(totalProjectedGPA.unweighted)}<span className="ml-0.5 text-[10px] font-normal opacity-80">UW</span> · {formatGPA(totalProjectedGPA.weighted)}<span className="ml-0.5 text-[10px] font-normal opacity-80">W</span>
                     </span>
                   </>
                 )}
                 {totalActualGPA.unweighted !== null && (
-                  <span className="text-xs font-semibold text-success" title="Actual GPA (completed only): Unweighted / Weighted">
-                    Actual: {formatGPA(totalActualGPA.unweighted)} / {formatGPA(totalActualGPA.weighted)}
+                  <span className="text-xs font-semibold text-success" title="Actual GPA (completed only) — UW (unweighted) · W (weighted)">
+                    Actual: {formatGPA(totalActualGPA.unweighted)}<span className="ml-0.5 text-[10px] font-normal opacity-80">UW</span> · {formatGPA(totalActualGPA.weighted)}<span className="ml-0.5 text-[10px] font-normal opacity-80">W</span>
                   </span>
                 )}
               <span className="text-border">|</span>

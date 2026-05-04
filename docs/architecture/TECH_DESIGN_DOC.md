@@ -1351,7 +1351,7 @@ The extractor runs a 3-phase pipeline over the PDF:
 | **Phase 2** | Name cleanup | Strip credit-type suffixes, remove junk artifacts, apply title-casing |
 | **Phase 3** | Prerequisite resolution | Match prerequisite text names to course codes using the appendix map; exclude semester-pair siblings to prevent prerequisite cycles |
 
-**Output:** 315 courses, 331 prerequisite links, 159 GPA waiver courses. Semester breakdown: 89 Sem 1 only, 90 Sem 2 only, 136 full year, 6 Sem 1 exclusive, 6 Sem 2 exclusive, 168 available in both semesters. Structured `prerequisite_groups` (list of {group, type, codes}) with AND/OR semantics extracted; semester-pair siblings grouped as single OR group. `semesters_offered` integer array ([1], [2], or null) parsed from PDF code line patterns (e.g., "BUS411–Semester 1", "Semester 1 ONLY"). `gpa_waiver` boolean detected from "GPA WAIVER" in description/notes.
+**Output:** 345 courses, 334 prerequisite links, 159 GPA waiver courses. Semester breakdown: 89 Sem 1 only, 90 Sem 2 only, 136 full year, 6 Sem 1 exclusive, 6 Sem 2 exclusive, 168 available in both semesters. Structured `prerequisite_groups` (list of {group, type, codes}) with AND/OR semantics extracted; semester-pair siblings grouped as single OR group. `semesters_offered` integer array ([1], [2], or null) parsed from PDF code line patterns (e.g., "BUS411–Semester 1", "Semester 1 ONLY"). `gpa_waiver` boolean detected from "GPA WAIVER" in description/notes.
 
 ### Summer course support
 

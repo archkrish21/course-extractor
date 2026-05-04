@@ -8,6 +8,7 @@ import { creditTypeBadgeVariant, creditTypeLabel } from "@/lib/badge-utils";
 import { Spinner } from "@/components/ui/spinner";
 import { findEquivalentInPlan } from "@/config/summer-equivalents";
 import { isSummerSemester } from "@/config/semesters";
+import { isRepeatableCourse } from "@/config/grade-scale";
 
 interface CourseResult {
   id: string;
@@ -43,6 +44,10 @@ interface CoursePickerProps {
   existingCourseIds?: Set<string>;
   existingCourseNames?: Set<string>;
   existingCourseCodes?: string[];
+  /** Course IDs already in the slot the picker is opening — repeatable
+   * courses are still hidden when they collide with this set, since the
+   * server blocks exact-same-slot duplicates even for PE. */
+  currentSlotCourseIds?: Set<string>;
   onAddCourse: (courseId: string, addAnyway?: boolean, courseDuration?: string) => Promise<ValidationPreview | null>;
   onViewDetails?: (courseId: string) => void;
   lastViewedCourseId?: string | null;
@@ -94,6 +99,7 @@ export function CoursePicker({
   existingCourseIds = EMPTY_STRING_SET,
   existingCourseNames = EMPTY_STRING_SET,
   existingCourseCodes = [],
+  currentSlotCourseIds = EMPTY_STRING_SET,
   onAddCourse,
   onViewDetails,
   lastViewedCourseId,
@@ -201,13 +207,22 @@ export function CoursePicker({
   // Apply client-side filters (runs on rawCourses change or filter toggle change, no API call)
   useEffect(() => {
     const filtered = rawCourses.filter((c) => {
-      // Exclude already-added courses (from plan + added in this session)
-      if (existingIdsRef.current.has(c.id)) return false;
-      if (addedInSession.has(c.id)) return false;
-      // Exclude semester partners of already-added courses (e.g., CSC162 if CSC161 is in plan)
-      if (c.duration === "semester" && existingNamesRef.current.has(c.name)) return false;
-      // Exclude summer/regular equivalents already in plan (e.g., hide SOC101/102 if SOC13S is planned)
-      if (existingCourseCodes.length > 0 && findEquivalentInPlan(c.code, existingCourseCodes)) return false;
+      // Repeatable courses (regular P/F PE) count toward the 3.5-credit PE
+      // requirement each semester taken, so they stay listed even when already
+      // in another slot. Still hide if they're in the *current* slot, since
+      // the server blocks exact-same-slot duplicates even for repeatables.
+      const repeatable = isRepeatableCourse(c.code, c.creditType);
+      if (repeatable) {
+        if (currentSlotCourseIds.has(c.id)) return false;
+      } else {
+        // Exclude already-added courses (from plan + added in this session)
+        if (existingIdsRef.current.has(c.id)) return false;
+        if (addedInSession.has(c.id)) return false;
+        // Exclude semester partners of already-added courses (e.g., CSC162 if CSC161 is in plan)
+        if (c.duration === "semester" && existingNamesRef.current.has(c.name)) return false;
+        // Exclude summer/regular equivalents already in plan (e.g., hide SOC101/102 if SOC13S is planned)
+        if (existingCourseCodes.length > 0 && findEquivalentInPlan(c.code, existingCourseCodes)) return false;
+      }
       // Exclude summer courses from regular semester pickers and vice versa
       const isSummerCourse = c.semestersOffered?.some(isSummerSemester) ?? false;
       if (semester > 0 && isSummerCourse) return false;
@@ -237,7 +252,7 @@ export function CoursePicker({
     });
     setCourses(filtered);
     setCurrentPage(1); // Reset to first page when filters change
-  }, [rawCourses, durationFilter, earlyBirdOnly, gpaWaiverOnly, semester, otherSemesterAtMax, addedInSession, existingCourseCodes]);
+  }, [rawCourses, durationFilter, earlyBirdOnly, gpaWaiverOnly, semester, otherSemesterAtMax, addedInSession, existingCourseCodes, currentSlotCourseIds]);
 
   // Escape to close
   useEffect(() => {

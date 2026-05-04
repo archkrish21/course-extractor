@@ -20,6 +20,7 @@ import {
   unlockGrade,
   validatePlan,
   bulkOverridePrereqs,
+  findCourseByCode,
   type Course,
   type Plan,
 } from "../helpers/api-client";
@@ -135,6 +136,52 @@ test.describe("Course mutations", () => {
       forceAdd: true,
     });
     expect([409, 422, 400]).toContain(second.status());
+  });
+
+  test("repeatable PE course can be added to multiple grade/semester slots", async ({ request }) => {
+    // PED451/PED452 (CHOICE P.E. sem-1 / sem-2 offerings) share a name and
+    // count toward Stevenson's 3.5-credit PE requirement each semester taken.
+    // Pre-fix, the validator rejected PED452 once PED451 was in the plan via
+    // the semester-partner-by-name check.
+    const ped451 = await findCourseByCode(request, "PED451");
+    const ped452 = await findCourseByCode(request, "PED452");
+    expect(ped451, "catalog missing PED451 — re-run db:seed").toBeTruthy();
+    expect(ped452, "catalog missing PED452 — re-run db:seed").toBeTruthy();
+
+    // PED451 in G11S1; PED452 in G11S2 (the partner-by-name case).
+    const r1 = await addCourseToPlan(request, scratchPlan.id, {
+      courseId: ped451!.id,
+      gradeLevel: 11,
+      semester: 1,
+      forceAdd: true,
+    });
+    expect(r1.status(), "add PED451 to G11S1").toBe(201);
+
+    const r2 = await addCourseToPlan(request, scratchPlan.id, {
+      courseId: ped452!.id,
+      gradeLevel: 11,
+      semester: 2,
+      forceAdd: true,
+    });
+    expect(r2.status(), "add PED452 to G11S2 alongside PED451").toBe(201);
+
+    // Same PED452 in another grade — should also succeed (cross-grade repeat).
+    const r3 = await addCourseToPlan(request, scratchPlan.id, {
+      courseId: ped452!.id,
+      gradeLevel: 12,
+      semester: 2,
+      forceAdd: true,
+    });
+    expect(r3.status(), "add PED452 to G12S2").toBe(201);
+
+    // …but adding PED452 to the *same* slot still 409s — exact-slot dupes are blocked.
+    const dup = await addCourseToPlan(request, scratchPlan.id, {
+      courseId: ped452!.id,
+      gradeLevel: 11,
+      semester: 2,
+      forceAdd: true,
+    });
+    expect([409, 422, 400]).toContain(dup.status());
   });
 
   test("updating a course's status persists", async ({ request }) => {

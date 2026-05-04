@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { isPassFailCourse } from "@/config/grade-scale";
+import { isPassFailCourse, isRepeatableCourse } from "@/config/grade-scale";
 
 /**
  * Unit tests for graduation requirement matching logic.
@@ -556,6 +556,34 @@ describe("isPassFailCourse", () => {
     expect(isPassFailCourse("ENG151")).toBe(false);
     expect(isPassFailCourse("SCI111")).toBe(false);
     expect(isPassFailCourse("DNC101/DNC102")).toBe(false);
+  });
+});
+
+// ── isRepeatableCourse tests ─────────────────────────────────────────────────
+
+describe("isRepeatableCourse", () => {
+  it("treats regular P/F PE courses as repeatable across slots", () => {
+    expect(isRepeatableCourse("PED452")).toBe(true); // CHOICE P.E.
+    expect(isRepeatableCourse("PED121")).toBe(true);
+    expect(isRepeatableCourse("PED331")).toBe(true); // Adventure Education
+    expect(isRepeatableCourse("PED111/PED112")).toBe(true);
+  });
+
+  it("excludes single-take PED courses (Health/Applied Health/Lifeguard/Leadership)", () => {
+    expect(isRepeatableCourse("PED201")).toBe(false); // Health
+    expect(isRepeatableCourse("PED231")).toBe(false); // Applied Health
+    expect(isRepeatableCourse("PED501")).toBe(false); // Lifeguard
+    expect(isRepeatableCourse("PED61L/PED62L")).toBe(false); // Leadership
+  });
+
+  it("excludes Driver Education (P/F but not repeatable)", () => {
+    expect(isRepeatableCourse("D/E231")).toBe(false);
+  });
+
+  it("excludes academic and arts courses regardless of credit type", () => {
+    expect(isRepeatableCourse("MTH151")).toBe(false);
+    expect(isRepeatableCourse("ENG151")).toBe(false);
+    expect(isRepeatableCourse("ACTPREPS2", "Pass/Fail")).toBe(false);
   });
 });
 

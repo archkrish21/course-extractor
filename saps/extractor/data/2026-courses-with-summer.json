@@ -1,8 +1,7 @@
 {
   "catalog_year": 2026,
   "school": "Adlai E. Stevenson High School",
-  "extracted_at": "2026-03-23T01:40:43.152151+00:00",
-  "total_courses": 361,
+  "extracted_at": "2026-05-04T22:19:06.372265+00:00",
   "courses": [
     {
       "code": "ART101",
@@ -28,7 +27,8 @@
       "semesters_offered": [
         1
       ],
-      "notes": "GPA waiver option available"
+      "notes": "GPA waiver option available",
+      "is_summer": false
     },
     {
       "code": "ART102",
@@ -54,7 +54,8 @@
       "semesters_offered": [
         2
       ],
-      "notes": "GPA waiver option available"
+      "notes": "GPA waiver option available",
+      "is_summer": false
     },
     {
       "code": "ART201",
@@ -93,7 +94,8 @@
             "FCS252"
           ]
         }
-      ]
+      ],
+      "is_summer": false
     },
     {
       "code": "ART202",
@@ -132,7 +134,8 @@
             "FCS252"
           ]
         }
-      ]
+      ],
+      "is_summer": false
     },
     {
       "code": "ART221",
@@ -171,7 +174,8 @@
             "FCS252"
           ]
         }
-      ]
+      ],
+      "is_summer": false
     },
     {
       "code": "ART222",
@@ -210,7 +214,8 @@
             "FCS252"
           ]
         }
-      ]
+      ],
+      "is_summer": false
     },
     {
       "code": "ART241",
@@ -249,7 +254,8 @@
             "FCS252"
           ]
         }
-      ]
+      ],
+      "is_summer": false
     },
     {
       "code": "ART242",
@@ -288,7 +294,8 @@
             "FCS252"
           ]
         }
-      ]
+      ],
+      "is_summer": false
     },
     {
       "code": "ART261",
@@ -327,7 +334,8 @@
             "FCS252"
           ]
         }
-      ]
+      ],
+      "is_summer": false
     },
     {
       "code": "ART262",
@@ -366,7 +374,8 @@
             "FCS252"
           ]
         }
-      ]
+      ],
+      "is_summer": false
     },
     {
       "code": "ART281",
@@ -405,7 +414,8 @@
             "FCS252"
           ]
         }
-      ]
+      ],
+      "is_summer": false
     },
     {
       "code": "ART282",
@@ -444,7 +454,8 @@
             "FCS252"
           ]
         }
-      ]
+      ],
+      "is_summer": false
     },
     {
       "code": "ART401",
@@ -470,7 +481,8 @@
       "semesters_offered": [
         1
       ],
-      "notes": "GPA waiver option available"
+      "notes": "GPA waiver option available",
+      "is_summer": false
     },
     {
       "code": "ART402",
@@ -496,7 +508,8 @@
       "semesters_offered": [
         2
       ],
-      "notes": "GPA waiver option available"
+      "notes": "GPA waiver option available",
+      "is_summer": false
     },
     {
       "code": "ART411",
@@ -535,7 +548,8 @@
             "ART402"
           ]
         }
-      ]
+      ],
+      "is_summer": false
     },
     {
       "code": "ART412",
@@ -574,7 +588,8 @@
             "ART402"
           ]
         }
-      ]
+      ],
+      "is_summer": false
     },
     {
       "code": "ART421/ART422",
@@ -622,7 +637,8 @@
             "ART532"
           ]
         }
-      ]
+      ],
+      "is_summer": false
     },
     {
       "code": "ART501",
@@ -648,7 +664,8 @@
       "semesters_offered": [
         1
       ],
-      "notes": "GPA waiver option available"
+      "notes": "GPA waiver option available",
+      "is_summer": false
     },
     {
       "code": "ART502",
@@ -674,7 +691,8 @@
       "semesters_offered": [
         2
       ],
-      "notes": "GPA waiver option available"
+      "notes": "GPA waiver option available",
+      "is_summer": false
     },
     {
       "code": "ART511",
@@ -723,7 +741,8 @@
             "FCS252"
           ]
         }
-      ]
+      ],
+      "is_summer": false
     },
     {
       "code": "ART512",
@@ -772,7 +791,8 @@
             "FCS252"
           ]
         }
-      ]
+      ],
+      "is_summer": false
     },
     {
       "code": "ART531",
@@ -821,7 +841,8 @@
             "FCS252"
           ]
         }
-      ]
+      ],
+      "is_summer": false
     },
     {
       "code": "ART532",
@@ -870,7 +891,8 @@
             "FCS252"
           ]
         }
-      ]
+      ],
+      "is_summer": false
     },
     {
       "code": "ART541",
@@ -909,7 +931,8 @@
             "ART532"
           ]
         }
-      ]
+      ],
+      "is_summer": false
     },
     {
       "code": "ART542",
@@ -948,7 +971,8 @@
             "ART532"
           ]
         }
-      ]
+      ],
+      "is_summer": false
     },
     {
       "code": "ART611",
@@ -987,7 +1011,8 @@
             "FCS252"
           ]
         }
-      ]
+      ],
+      "is_summer": false
     },
     {
       "code": "ART612",
@@ -1026,7 +1051,8 @@
             "FCS252"
           ]
         }
-      ]
+      ],
+      "is_summer": false
     },
     {
       "code": "ART621",
@@ -1072,7 +1098,8 @@
             "ART612"
           ]
         }
-      ]
+      ],
+      "is_summer": false
     },
     {
       "code": "ART622",
@@ -1118,7 +1145,8 @@
             "ART612"
           ]
         }
-      ]
+      ],
+      "is_summer": false
     },
     {
       "code": "ART631",
@@ -1168,7 +1196,8 @@
             "ART282"
           ]
         }
-      ]
+      ],
+      "is_summer": false
     },
     {
       "code": "ART632",
@@ -1218,7 +1247,8 @@
             "ART282"
           ]
         }
-      ]
+      ],
+      "is_summer": false
     },
     {
       "code": "ART721/ART722",
@@ -1241,7 +1271,8 @@
       "is_dual_credit": false,
       "gpa_waiver": false,
       "semesters_offered": null,
-      "notes": null
+      "notes": null,
+      "is_summer": false
     },
     {
       "code": "ART801/ART802",
@@ -1288,7 +1319,8 @@
             "ART282"
           ]
         }
-      ]
+      ],
+      "is_summer": false
     },
     {
       "code": "ART871/ART872",
@@ -1321,7 +1353,8 @@
             "ART421/ART422"
           ]
         }
-      ]
+      ],
+      "is_summer": false
     },
     {
       "code": "BUS131",
@@ -1347,7 +1380,8 @@
       "semesters_offered": [
         1
       ],
-      "notes": "GPA waiver option available"
+      "notes": "GPA waiver option available",
+      "is_summer": false
     },
     {
       "code": "BUS132",
@@ -1373,7 +1407,8 @@
       "semesters_offered": [
         2
       ],
-      "notes": "GPA waiver option available"
+      "notes": "GPA waiver option available",
+      "is_summer": false
     },
     {
       "code": "BUS142",
@@ -1412,7 +1447,8 @@
             "BUS132"
           ]
         }
-      ]
+      ],
+      "is_summer": false
     },
     {
       "code": "BUS171",
@@ -1436,7 +1472,8 @@
       "semesters_offered": [
         1
       ],
-      "notes": "GPA waiver option available"
+      "notes": "GPA waiver option available",
+      "is_summer": false
     },
     {
       "code": "BUS172",
@@ -1460,7 +1497,8 @@
       "semesters_offered": [
         2
       ],
-      "notes": "GPA waiver option available"
+      "notes": "GPA waiver option available",
+      "is_summer": false
     },
     {
       "code": "BUS231",
@@ -1485,7 +1523,8 @@
       "semesters_offered": [
         1
       ],
-      "notes": "GPA waiver option available"
+      "notes": "GPA waiver option available",
+      "is_summer": false
     },
     {
       "code": "BUS232",
@@ -1510,7 +1549,8 @@
       "semesters_offered": [
         2
       ],
-      "notes": "GPA waiver option available"
+      "notes": "GPA waiver option available",
+      "is_summer": false
     },
     {
       "code": "BUS251",
@@ -1535,7 +1575,8 @@
       "semesters_offered": [
         1
       ],
-      "notes": "GPA waiver option available"
+      "notes": "GPA waiver option available",
+      "is_summer": false
     },
     {
       "code": "BUS252",
@@ -1571,7 +1612,8 @@
             "BUS251"
           ]
         }
-      ]
+      ],
+      "is_summer": false
     },
     {
       "code": "BUS281",
@@ -1596,7 +1638,8 @@
       "semesters_offered": [
         1
       ],
-      "notes": "GPA waiver option available"
+      "notes": "GPA waiver option available",
+      "is_summer": false
     },
     {
       "code": "BUS282",
@@ -1621,7 +1664,8 @@
       "semesters_offered": [
         2
       ],
-      "notes": "GPA waiver option available"
+      "notes": "GPA waiver option available",
+      "is_summer": false
     },
     {
       "code": "BUS301",
@@ -1645,7 +1689,8 @@
       "semesters_offered": [
         1
       ],
-      "notes": "GPA waiver option available"
+      "notes": "GPA waiver option available",
+      "is_summer": false
     },
     {
       "code": "BUS302",
@@ -1669,7 +1714,8 @@
       "semesters_offered": [
         2
       ],
-      "notes": "GPA waiver option available"
+      "notes": "GPA waiver option available",
+      "is_summer": false
     },
     {
       "code": "BUS351",
@@ -1704,7 +1750,8 @@
             "BUS252"
           ]
         }
-      ]
+      ],
+      "is_summer": false
     },
     {
       "code": "BUS361",
@@ -1728,7 +1775,8 @@
       "semesters_offered": [
         1
       ],
-      "notes": "GPA waiver option available"
+      "notes": "GPA waiver option available",
+      "is_summer": false
     },
     {
       "code": "BUS362",
@@ -1752,7 +1800,8 @@
       "semesters_offered": [
         2
       ],
-      "notes": "GPA waiver option available"
+      "notes": "GPA waiver option available",
+      "is_summer": false
     },
     {
       "code": "BUS371",
@@ -1776,7 +1825,8 @@
       "semesters_offered": [
         1
       ],
-      "notes": "GPA waiver option available"
+      "notes": "GPA waiver option available",
+      "is_summer": false
     },
     {
       "code": "BUS372",
@@ -1800,7 +1850,8 @@
       "semesters_offered": [
         2
       ],
-      "notes": "GPA waiver option available"
+      "notes": "GPA waiver option available",
+      "is_summer": false
     },
     {
       "code": "BUS411",
@@ -1854,7 +1905,8 @@
             "BUS351"
           ]
         }
-      ]
+      ],
+      "is_summer": false
     },
     {
       "code": "BUS412",
@@ -1908,7 +1960,8 @@
             "BUS351"
           ]
         }
-      ]
+      ],
+      "is_summer": false
     },
     {
       "code": "CHI101/CHI102",
@@ -1932,7 +1985,8 @@
       "is_dual_credit": false,
       "gpa_waiver": false,
       "semesters_offered": null,
-      "notes": null
+      "notes": null,
+      "is_summer": false
     },
     {
       "code": "CHI211/CHI212",
@@ -1967,7 +2021,8 @@
             "CHI101/CHI102"
           ]
         }
-      ]
+      ],
+      "is_summer": false
     },
     {
       "code": "CHI311/CHI312",
@@ -2002,7 +2057,44 @@
             "CHI211/CHI212"
           ]
         }
-      ]
+      ],
+      "is_summer": false
+    },
+    {
+      "code": "CHI351/CHI352",
+      "name": "Intermediate Mandarin Chinese Language Arts",
+      "division": "Multilingual Learning",
+      "department": "Mandarin Chinese",
+      "description": "of speaking and listening as demonstrated on Mandarin Chinese language proficiency assessment (e.g., AAPPL), teacher recommendation, or director approval This course is designed specifically for students with lived Mandarin Chinese language experience, either from prior schooling in a Chinese-speaking country or as native/heritage speakers of Chinese. Students will develop their literacy skills in Chinese as they explore literature from the Chinese- speaking world and engage in focused development of reading and writing skills. While special focus will be placed on developing foundational literacy skills (e.g., Mandarin character decoding and character writing), students will also develop critical thinking and oracy skills in Chinese as they collaboratively explore topics related to current events, culture and media. DUAL CREDIT AVAILABLE WITH NORTH CENTRAL COLLEGE",
+      "credit_value": 2.0,
+      "duration": "full_year",
+      "grade_levels": [
+        9,
+        10,
+        11,
+        12
+      ],
+      "credit_type": "Accelerated",
+      "prerequisites": "Intermediate or higher proficiency in the domains of speaking and listening as demonstrated on Mandarin Chinese language proficiency assessment (e.g., AAPPL), teacher recommendation, or director approval",
+      "prerequisite_codes": [
+        "ELD361/ELD362"
+      ],
+      "corequisites": null,
+      "is_ap": false,
+      "is_dual_credit": true,
+      "gpa_waiver": false,
+      "semesters_offered": null,
+      "notes": "Dual credit available with NORTH CENTRAL COLLEGE",
+      "prerequisite_groups": [
+        {
+          "group": 1,
+          "type": "or",
+          "codes": [
+            "ELD361/ELD362"
+          ]
+        }
+      ],
+      "is_summer": false
     },
     {
       "code": "CHI411/CHI412",
@@ -2036,7 +2128,8 @@
             "CHI311/CHI312"
           ]
         }
-      ]
+      ],
+      "is_summer": false
     },
     {
       "code": "CHI601/CHI602",
@@ -2071,7 +2164,8 @@
             "ENG141/ENG142"
           ]
         }
-      ]
+      ],
+      "is_summer": false
     },
     {
       "code": "CHI611/CHI612",
@@ -2106,7 +2200,8 @@
             "ENG141/ENG142"
           ]
         }
-      ]
+      ],
+      "is_summer": false
     },
     {
       "code": "CSC161",
@@ -2132,7 +2227,8 @@
       "semesters_offered": [
         1
       ],
-      "notes": "GPA waiver option available"
+      "notes": "GPA waiver option available",
+      "is_summer": false
     },
     {
       "code": "CSC162",
@@ -2158,7 +2254,8 @@
       "semesters_offered": [
         2
       ],
-      "notes": "GPA waiver option available"
+      "notes": "GPA waiver option available",
+      "is_summer": false
     },
     {
       "code": "CSC181",
@@ -2177,8 +2274,8 @@
       "credit_type": "CP",
       "prerequisites": "Computer Programming 1 (CSC161/162) or Web Development 2 (TEC281/282) or Principles of Engineering (TEC301/302), or AP Computer Science Principles (CSC371/372)",
       "prerequisite_codes": [
-        "TEC281",
         "CSC161",
+        "TEC281",
         "TEC301/TEC302",
         "CSC371/CSC372",
         "CSC162",
@@ -2197,15 +2294,16 @@
           "group": 1,
           "type": "or",
           "codes": [
-            "TEC281",
             "CSC161",
+            "TEC281",
             "TEC301/TEC302",
             "CSC371/CSC372",
             "CSC162",
             "TEC282"
           ]
         }
-      ]
+      ],
+      "is_summer": false
     },
     {
       "code": "CSC182",
@@ -2224,8 +2322,8 @@
       "credit_type": "CP",
       "prerequisites": "Computer Programming 1 (CSC161/162) or Web Development 2 (TEC281/282) or Principles of Engineering (TEC301/302), or AP Computer Science Principles (CSC371/372)",
       "prerequisite_codes": [
-        "TEC281",
         "CSC161",
+        "TEC281",
         "TEC301/TEC302",
         "CSC371/CSC372",
         "CSC162",
@@ -2244,15 +2342,16 @@
           "group": 1,
           "type": "or",
           "codes": [
-            "TEC281",
             "CSC161",
+            "TEC281",
             "TEC301/TEC302",
             "CSC371/CSC372",
             "CSC162",
             "TEC282"
           ]
         }
-      ]
+      ],
+      "is_summer": false
     },
     {
       "code": "CSC251/CSC252",
@@ -2271,8 +2370,8 @@
       "credit_type": "CP",
       "prerequisites": "Computer Programming 1 (CSC161/162), or Web Development 2 (TEC281/282), or Principles of Engineering (TEC301/302) or AP Computer Science Principles (CSC371/372)",
       "prerequisite_codes": [
-        "TEC281",
         "CSC161",
+        "TEC281",
         "TEC301/TEC302",
         "CSC371/CSC372",
         "CSC162",
@@ -2289,15 +2388,16 @@
           "group": 1,
           "type": "or",
           "codes": [
-            "TEC281",
             "CSC161",
+            "TEC281",
             "TEC301/TEC302",
             "CSC371/CSC372",
             "CSC162",
             "TEC282"
           ]
         }
-      ]
+      ],
+      "is_summer": false
     },
     {
       "code": "CSC371/CSC372",
@@ -2331,7 +2431,8 @@
             "MTH151/MTH152"
           ]
         }
-      ]
+      ],
+      "is_summer": false
     },
     {
       "code": "CSC391/CSC392",
@@ -2367,7 +2468,8 @@
             "CSC182"
           ]
         }
-      ]
+      ],
+      "is_summer": false
     },
     {
       "code": "CSC421/CSC422",
@@ -2400,7 +2502,8 @@
             "CSC391/CSC392"
           ]
         }
-      ]
+      ],
+      "is_summer": false
     },
     {
       "code": "D/E231",
@@ -2426,7 +2529,8 @@
         1
       ],
       "notes": null,
-      "prerequisite_groups": []
+      "prerequisite_groups": [],
+      "is_summer": false
     },
     {
       "code": "D/E232",
@@ -2452,7 +2556,8 @@
         2
       ],
       "notes": null,
-      "prerequisite_groups": []
+      "prerequisite_groups": [],
+      "is_summer": false
     },
     {
       "code": "DNC101/DNC102",
@@ -2476,7 +2581,8 @@
       "is_dual_credit": false,
       "gpa_waiver": true,
       "semesters_offered": null,
-      "notes": "GPA waiver option available; May be repeated for credit"
+      "notes": "GPA waiver option available; May be repeated for credit",
+      "is_summer": false
     },
     {
       "code": "DNC201/DNC202",
@@ -2511,7 +2617,8 @@
             "DNC101/DNC102"
           ]
         }
-      ]
+      ],
+      "is_summer": false
     },
     {
       "code": "DNC301/DNC302",
@@ -2546,7 +2653,8 @@
             "DNC201/DNC202"
           ]
         }
-      ]
+      ],
+      "is_summer": false
     },
     {
       "code": "DNC311",
@@ -2582,7 +2690,8 @@
             "DNC201/DNC202"
           ]
         }
-      ]
+      ],
+      "is_summer": false
     },
     {
       "code": "DNC312",
@@ -2618,7 +2727,8 @@
             "DNC201/DNC202"
           ]
         }
-      ]
+      ],
+      "is_summer": false
     },
     {
       "code": "DNC321",
@@ -2643,7 +2753,8 @@
       "semesters_offered": [
         1
       ],
-      "notes": "GPA waiver option available; May be repeated for credit"
+      "notes": "GPA waiver option available; May be repeated for credit",
+      "is_summer": false
     },
     {
       "code": "DNC322",
@@ -2668,7 +2779,8 @@
       "semesters_offered": [
         2
       ],
-      "notes": "GPA waiver option available; May be repeated for credit"
+      "notes": "GPA waiver option available; May be repeated for credit",
+      "is_summer": false
     },
     {
       "code": "DNC401/DNC402",
@@ -2703,7 +2815,8 @@
             "DNC301/DNC302"
           ]
         }
-      ]
+      ],
+      "is_summer": false
     },
     {
       "code": "DNC501/DNC502",
@@ -2739,7 +2852,8 @@
             "DNC301/DNC302"
           ]
         }
-      ]
+      ],
+      "is_summer": false
     },
     {
       "code": "DNC601/DNC602",
@@ -2775,7 +2889,8 @@
             "DNC401/DNC402"
           ]
         }
-      ]
+      ],
+      "is_summer": false
     },
     {
       "code": "ELD161/ELD162",
@@ -2800,7 +2915,8 @@
       "gpa_waiver": false,
       "semesters_offered": null,
       "notes": null,
-      "prerequisite_groups": []
+      "prerequisite_groups": [],
+      "is_summer": false
     },
     {
       "code": "ELD261/ELD262",
@@ -2825,7 +2941,8 @@
       "gpa_waiver": false,
       "semesters_offered": null,
       "notes": null,
-      "prerequisite_groups": []
+      "prerequisite_groups": [],
+      "is_summer": false
     },
     {
       "code": "ELD361/ELD362",
@@ -2850,7 +2967,8 @@
       "gpa_waiver": false,
       "semesters_offered": null,
       "notes": null,
-      "prerequisite_groups": []
+      "prerequisite_groups": [],
+      "is_summer": false
     },
     {
       "code": "ELD371/ELD372",
@@ -2875,7 +2993,8 @@
       "gpa_waiver": false,
       "semesters_offered": null,
       "notes": null,
-      "prerequisite_groups": []
+      "prerequisite_groups": [],
+      "is_summer": false
     },
     {
       "code": "ELD461/ELD462",
@@ -2910,7 +3029,8 @@
             "ELD361/ELD362"
           ]
         }
-      ]
+      ],
+      "is_summer": false
     },
     {
       "code": "ELD561/ELD562",
@@ -2934,7 +3054,8 @@
       "is_dual_credit": false,
       "gpa_waiver": false,
       "semesters_offered": null,
-      "notes": "May be repeated for credit"
+      "notes": "May be repeated for credit",
+      "is_summer": false
     },
     {
       "code": "ENG141/ENG142",
@@ -2955,7 +3076,8 @@
       "is_dual_credit": false,
       "gpa_waiver": false,
       "semesters_offered": null,
-      "notes": null
+      "notes": null,
+      "is_summer": false
     },
     {
       "code": "ENG151/ENG152",
@@ -2976,7 +3098,8 @@
       "is_dual_credit": false,
       "gpa_waiver": false,
       "semesters_offered": null,
-      "notes": null
+      "notes": null,
+      "is_summer": false
     },
     {
       "code": "ENG161/ENG162",
@@ -2997,7 +3120,8 @@
       "is_dual_credit": false,
       "gpa_waiver": false,
       "semesters_offered": null,
-      "notes": null
+      "notes": null,
+      "is_summer": false
     },
     {
       "code": "ENG171/ENG172",
@@ -3018,7 +3142,8 @@
       "is_dual_credit": false,
       "gpa_waiver": false,
       "semesters_offered": null,
-      "notes": null
+      "notes": null,
+      "is_summer": false
     },
     {
       "code": "ENG211/ENG212",
@@ -3039,7 +3164,8 @@
       "is_dual_credit": false,
       "gpa_waiver": false,
       "semesters_offered": null,
-      "notes": null
+      "notes": null,
+      "is_summer": false
     },
     {
       "code": "ENG231/ENG232",
@@ -3060,7 +3186,8 @@
       "is_dual_credit": false,
       "gpa_waiver": false,
       "semesters_offered": null,
-      "notes": null
+      "notes": null,
+      "is_summer": false
     },
     {
       "code": "ENG311/ENG312",
@@ -3081,7 +3208,8 @@
       "is_dual_credit": false,
       "gpa_waiver": false,
       "semesters_offered": null,
-      "notes": null
+      "notes": null,
+      "is_summer": false
     },
     {
       "code": "ENG341/ENG342",
@@ -3102,7 +3230,8 @@
       "is_dual_credit": false,
       "gpa_waiver": false,
       "semesters_offered": null,
-      "notes": null
+      "notes": null,
+      "is_summer": false
     },
     {
       "code": "ENG371/ENG372",
@@ -3123,7 +3252,8 @@
       "is_dual_credit": false,
       "gpa_waiver": false,
       "semesters_offered": null,
-      "notes": null
+      "notes": null,
+      "is_summer": false
     },
     {
       "code": "ENG381/ENG382",
@@ -3144,7 +3274,8 @@
       "is_dual_credit": false,
       "gpa_waiver": false,
       "semesters_offered": null,
-      "notes": null
+      "notes": null,
+      "is_summer": false
     },
     {
       "code": "ENG431/ENG432",
@@ -3165,7 +3296,8 @@
       "is_dual_credit": false,
       "gpa_waiver": false,
       "semesters_offered": null,
-      "notes": null
+      "notes": null,
+      "is_summer": false
     },
     {
       "code": "ENG451/ENG452",
@@ -3186,7 +3318,8 @@
       "is_dual_credit": false,
       "gpa_waiver": false,
       "semesters_offered": null,
-      "notes": null
+      "notes": null,
+      "is_summer": false
     },
     {
       "code": "ENG501",
@@ -3210,7 +3343,8 @@
       "semesters_offered": [
         1
       ],
-      "notes": null
+      "notes": null,
+      "is_summer": false
     },
     {
       "code": "ENG502",
@@ -3234,7 +3368,8 @@
       "semesters_offered": [
         2
       ],
-      "notes": null
+      "notes": null,
+      "is_summer": false
     },
     {
       "code": "ENG522",
@@ -3271,7 +3406,8 @@
             "ENG502"
           ]
         }
-      ]
+      ],
+      "is_summer": false
     },
     {
       "code": "ENG541",
@@ -3294,7 +3430,8 @@
       "semesters_offered": [
         1
       ],
-      "notes": null
+      "notes": null,
+      "is_summer": false
     },
     {
       "code": "ENG542",
@@ -3317,7 +3454,8 @@
       "semesters_offered": [
         2
       ],
-      "notes": null
+      "notes": null,
+      "is_summer": false
     },
     {
       "code": "ENG601",
@@ -3361,7 +3499,8 @@
             "ENG381/ENG382"
           ]
         }
-      ]
+      ],
+      "is_summer": false
     },
     {
       "code": "ENG602",
@@ -3405,7 +3544,8 @@
             "ENG381/ENG382"
           ]
         }
-      ]
+      ],
+      "is_summer": false
     },
     {
       "code": "ENG681",
@@ -3429,7 +3569,8 @@
       "semesters_offered": [
         1
       ],
-      "notes": null
+      "notes": null,
+      "is_summer": false
     },
     {
       "code": "ENG682",
@@ -3453,7 +3594,8 @@
       "semesters_offered": [
         2
       ],
-      "notes": null
+      "notes": null,
+      "is_summer": false
     },
     {
       "code": "ENG691",
@@ -3477,7 +3619,8 @@
       "semesters_offered": [
         1
       ],
-      "notes": null
+      "notes": null,
+      "is_summer": false
     },
     {
       "code": "ENG722",
@@ -3501,7 +3644,8 @@
       "semesters_offered": [
         2
       ],
-      "notes": null
+      "notes": null,
+      "is_summer": false
     },
     {
       "code": "ENG761",
@@ -3526,7 +3670,8 @@
       "semesters_offered": [
         1
       ],
-      "notes": null
+      "notes": null,
+      "is_summer": false
     },
     {
       "code": "ENG762",
@@ -3551,7 +3696,8 @@
       "semesters_offered": [
         2
       ],
-      "notes": null
+      "notes": null,
+      "is_summer": false
     },
     {
       "code": "FCS111",
@@ -3577,7 +3723,8 @@
       "semesters_offered": [
         1
       ],
-      "notes": "GPA waiver option available"
+      "notes": "GPA waiver option available",
+      "is_summer": false
     },
     {
       "code": "FCS112",
@@ -3603,7 +3750,8 @@
       "semesters_offered": [
         2
       ],
-      "notes": "GPA waiver option available"
+      "notes": "GPA waiver option available",
+      "is_summer": false
     },
     {
       "code": "FCS211",
@@ -3629,7 +3777,8 @@
       "semesters_offered": [
         1
       ],
-      "notes": "GPA waiver option available"
+      "notes": "GPA waiver option available",
+      "is_summer": false
     },
     {
       "code": "FCS212",
@@ -3655,7 +3804,8 @@
       "semesters_offered": [
         2
       ],
-      "notes": "GPA waiver option available"
+      "notes": "GPA waiver option available",
+      "is_summer": false
     },
     {
       "code": "FCS221",
@@ -3680,7 +3830,8 @@
       "semesters_offered": [
         1
       ],
-      "notes": "GPA waiver option available"
+      "notes": "GPA waiver option available",
+      "is_summer": false
     },
     {
       "code": "FCS222",
@@ -3705,7 +3856,8 @@
       "semesters_offered": [
         2
       ],
-      "notes": "GPA waiver option available"
+      "notes": "GPA waiver option available",
+      "is_summer": false
     },
     {
       "code": "FCS231",
@@ -3730,7 +3882,8 @@
       "semesters_offered": [
         1
       ],
-      "notes": "GPA waiver option available; Dual credit available with HARPER COLLEGE"
+      "notes": "GPA waiver option available; Dual credit available with HARPER COLLEGE",
+      "is_summer": false
     },
     {
       "code": "FCS232",
@@ -3755,7 +3908,8 @@
       "semesters_offered": [
         2
       ],
-      "notes": "GPA waiver option available; Dual credit available with HARPER COLLEGE"
+      "notes": "GPA waiver option available; Dual credit available with HARPER COLLEGE",
+      "is_summer": false
     },
     {
       "code": "FCS241",
@@ -3780,7 +3934,8 @@
       "semesters_offered": [
         1
       ],
-      "notes": "GPA waiver option available; Dual credit available with HARPER COLLEGE"
+      "notes": "GPA waiver option available; Dual credit available with HARPER COLLEGE",
+      "is_summer": false
     },
     {
       "code": "FCS242",
@@ -3805,7 +3960,8 @@
       "semesters_offered": [
         2
       ],
-      "notes": "GPA waiver option available; Dual credit available with HARPER COLLEGE"
+      "notes": "GPA waiver option available; Dual credit available with HARPER COLLEGE",
+      "is_summer": false
     },
     {
       "code": "FCS251",
@@ -3831,7 +3987,8 @@
       "semesters_offered": [
         1
       ],
-      "notes": "GPA waiver option available"
+      "notes": "GPA waiver option available",
+      "is_summer": false
     },
     {
       "code": "FCS252",
@@ -3857,7 +4014,8 @@
       "semesters_offered": [
         2
       ],
-      "notes": "GPA waiver option available"
+      "notes": "GPA waiver option available",
+      "is_summer": false
     },
     {
       "code": "FCS291",
@@ -3896,7 +4054,8 @@
             "FCS252"
           ]
         }
-      ]
+      ],
+      "is_summer": false
     },
     {
       "code": "FCS292",
@@ -3935,7 +4094,8 @@
             "FCS252"
           ]
         }
-      ]
+      ],
+      "is_summer": false
     },
     {
       "code": "FCS311",
@@ -3973,7 +4133,8 @@
             "FCS212"
           ]
         }
-      ]
+      ],
+      "is_summer": false
     },
     {
       "code": "FCS312",
@@ -4011,7 +4172,8 @@
             "FCS212"
           ]
         }
-      ]
+      ],
+      "is_summer": false
     },
     {
       "code": "FCS321",
@@ -4049,7 +4211,8 @@
             "FCS222"
           ]
         }
-      ]
+      ],
+      "is_summer": false
     },
     {
       "code": "FCS322",
@@ -4087,7 +4250,8 @@
             "FCS222"
           ]
         }
-      ]
+      ],
+      "is_summer": false
     },
     {
       "code": "FCS331",
@@ -4125,7 +4289,8 @@
             "FCS312"
           ]
         }
-      ]
+      ],
+      "is_summer": false
     },
     {
       "code": "FCS332",
@@ -4163,7 +4328,8 @@
             "FCS312"
           ]
         }
-      ]
+      ],
+      "is_summer": false
     },
     {
       "code": "FCS411",
@@ -4188,7 +4354,8 @@
       "semesters_offered": [
         1
       ],
-      "notes": "GPA waiver option available"
+      "notes": "GPA waiver option available",
+      "is_summer": false
     },
     {
       "code": "FCS412",
@@ -4213,7 +4380,8 @@
       "semesters_offered": [
         2
       ],
-      "notes": "GPA waiver option available"
+      "notes": "GPA waiver option available",
+      "is_summer": false
     },
     {
       "code": "FRE101/FRE102",
@@ -4237,7 +4405,8 @@
       "is_dual_credit": false,
       "gpa_waiver": false,
       "semesters_offered": null,
-      "notes": null
+      "notes": null,
+      "is_summer": false
     },
     {
       "code": "FRE211/FRE212",
@@ -4272,7 +4441,8 @@
             "FRE101/FRE102"
           ]
         }
-      ]
+      ],
+      "is_summer": false
     },
     {
       "code": "FRE311/FRE312",
@@ -4306,7 +4476,8 @@
             "FRE211/FRE212"
           ]
         }
-      ]
+      ],
+      "is_summer": false
     },
     {
       "code": "FRE601/FRE602",
@@ -4339,7 +4510,8 @@
             "FRE311/FRE312"
           ]
         }
-      ]
+      ],
+      "is_summer": false
     },
     {
       "code": "GRE101/GRE102",
@@ -4363,7 +4535,8 @@
       "is_dual_credit": false,
       "gpa_waiver": false,
       "semesters_offered": null,
-      "notes": null
+      "notes": null,
+      "is_summer": false
     },
     {
       "code": "GRE211/GRE212",
@@ -4398,7 +4571,8 @@
             "GRE101/GRE102"
           ]
         }
-      ]
+      ],
+      "is_summer": false
     },
     {
       "code": "GRE311/GRE312",
@@ -4432,7 +4606,8 @@
             "GRE211/GRE212"
           ]
         }
-      ]
+      ],
+      "is_summer": false
     },
     {
       "code": "GRE601/GRE602",
@@ -4465,7 +4640,8 @@
             "GRE311/GRE312"
           ]
         }
-      ]
+      ],
+      "is_summer": false
     },
     {
       "code": "HBR101/HBR102",
@@ -4489,7 +4665,8 @@
       "is_dual_credit": false,
       "gpa_waiver": false,
       "semesters_offered": null,
-      "notes": null
+      "notes": null,
+      "is_summer": false
     },
     {
       "code": "HBR211/HBR212",
@@ -4524,7 +4701,8 @@
             "HBR101/HBR102"
           ]
         }
-      ]
+      ],
+      "is_summer": false
     },
     {
       "code": "HBR311/HBR312",
@@ -4558,7 +4736,8 @@
             "HBR211/HBR212"
           ]
         }
-      ]
+      ],
+      "is_summer": false
     },
     {
       "code": "HBR411/HBR412",
@@ -4591,7 +4770,8 @@
             "HBR311/HBR312"
           ]
         }
-      ]
+      ],
+      "is_summer": false
     },
     {
       "code": "JRN901",
@@ -4618,7 +4798,8 @@
         1
       ],
       "notes": "GPA waiver option available",
-      "prerequisite_groups": []
+      "prerequisite_groups": [],
+      "is_summer": false
     },
     {
       "code": "JRN902",
@@ -4645,7 +4826,8 @@
         2
       ],
       "notes": "GPA waiver option available",
-      "prerequisite_groups": []
+      "prerequisite_groups": [],
+      "is_summer": false
     },
     {
       "code": "JRN911",
@@ -4671,7 +4853,8 @@
         1
       ],
       "notes": "GPA waiver option available",
-      "prerequisite_groups": []
+      "prerequisite_groups": [],
+      "is_summer": false
     },
     {
       "code": "JRN912",
@@ -4697,7 +4880,8 @@
         2
       ],
       "notes": "GPA waiver option available",
-      "prerequisite_groups": []
+      "prerequisite_groups": [],
+      "is_summer": false
     },
     {
       "code": "JRN921",
@@ -4736,7 +4920,8 @@
             "JRN902"
           ]
         }
-      ]
+      ],
+      "is_summer": false
     },
     {
       "code": "JRN922",
@@ -4775,7 +4960,8 @@
             "JRN902"
           ]
         }
-      ]
+      ],
+      "is_summer": false
     },
     {
       "code": "JRN951/JRN952",
@@ -4811,7 +4997,8 @@
             "JRN922"
           ]
         }
-      ]
+      ],
+      "is_summer": false
     },
     {
       "code": "LAT101/LAT102",
@@ -4835,7 +5022,8 @@
       "is_dual_credit": false,
       "gpa_waiver": false,
       "semesters_offered": null,
-      "notes": null
+      "notes": null,
+      "is_summer": false
     },
     {
       "code": "LAT211/LAT212",
@@ -4870,7 +5058,8 @@
             "LAT101/LAT102"
           ]
         }
-      ]
+      ],
+      "is_summer": false
     },
     {
       "code": "LAT311/LAT312",
@@ -4904,7 +5093,8 @@
             "LAT211/LAT212"
           ]
         }
-      ]
+      ],
+      "is_summer": false
     },
     {
       "code": "LAT621/LAT622",
@@ -4937,7 +5127,8 @@
             "LAT311/LAT312"
           ]
         }
-      ]
+      ],
+      "is_summer": false
     },
     {
       "code": "MTH151/MTH152",
@@ -4960,7 +5151,8 @@
       "gpa_waiver": false,
       "semesters_offered": null,
       "notes": null,
-      "prerequisite_groups": []
+      "prerequisite_groups": [],
+      "is_summer": false
     },
     {
       "code": "MTH171/MTH172",
@@ -4993,7 +5185,8 @@
             "MTH271/MTH272"
           ]
         }
-      ]
+      ],
+      "is_summer": false
     },
     {
       "code": "MTH251/MTH252",
@@ -5026,7 +5219,8 @@
             "MTH151/MTH152"
           ]
         }
-      ]
+      ],
+      "is_summer": false
     },
     {
       "code": "MTH271/MTH272",
@@ -5059,7 +5253,8 @@
             "MTH151/MTH152"
           ]
         }
-      ]
+      ],
+      "is_summer": false
     },
     {
       "code": "MTH351/MTH352",
@@ -5094,7 +5289,8 @@
             "MTH271/MTH272"
           ]
         }
-      ]
+      ],
+      "is_summer": false
     },
     {
       "code": "MTH411/MTH412",
@@ -5130,7 +5326,8 @@
             "MTH171/MTH172"
           ]
         }
-      ]
+      ],
+      "is_summer": false
     },
     {
       "code": "MTH421/MTH422",
@@ -5164,7 +5361,8 @@
             "MTH171/MTH172"
           ]
         }
-      ]
+      ],
+      "is_summer": false
     },
     {
       "code": "MTH431/MTH432",
@@ -5197,7 +5395,8 @@
             "MTH451/MTH452"
           ]
         }
-      ]
+      ],
+      "is_summer": false
     },
     {
       "code": "MTH441/MTH442",
@@ -5229,7 +5428,8 @@
             "MTH351/MTH352"
           ]
         }
-      ]
+      ],
+      "is_summer": false
     },
     {
       "code": "MTH451/MTH452",
@@ -5264,7 +5464,8 @@
             "MTH171/MTH172"
           ]
         }
-      ]
+      ],
+      "is_summer": false
     },
     {
       "code": "MTH461/MTH462",
@@ -5300,7 +5501,8 @@
             "MTH421/MTH422"
           ]
         }
-      ]
+      ],
+      "is_summer": false
     },
     {
       "code": "MTH471/MTH472",
@@ -5333,7 +5535,8 @@
             "MTH451/MTH452"
           ]
         }
-      ]
+      ],
+      "is_summer": false
     },
     {
       "code": "MTH481/MTH482",
@@ -5368,7 +5571,8 @@
             "MTH171/MTH172"
           ]
         }
-      ]
+      ],
+      "is_summer": false
     },
     {
       "code": "MTH491/MTH492",
@@ -5385,7 +5589,7 @@
       "credit_type": "AP",
       "prerequisites": "AP Precalculus BC an",
       "prerequisite_codes": [
-        "MTH421/MTH422"
+        "MTH451/MTH452"
       ],
       "corequisites": null,
       "is_ap": true,
@@ -5398,10 +5602,11 @@
           "group": 1,
           "type": "or",
           "codes": [
-            "MTH421/MTH422"
+            "MTH451/MTH452"
           ]
         }
-      ]
+      ],
+      "is_summer": false
     },
     {
       "code": "MTH591",
@@ -5436,7 +5641,8 @@
             "MTH491/MTH492"
           ]
         }
-      ]
+      ],
+      "is_summer": false
     },
     {
       "code": "MTH592",
@@ -5471,7 +5677,8 @@
             "MTH491/MTH492"
           ]
         }
-      ]
+      ],
+      "is_summer": false
     },
     {
       "code": "MUS101/MUS102",
@@ -5493,7 +5700,8 @@
       "gpa_waiver": true,
       "semesters_offered": null,
       "notes": "GPA waiver option available",
-      "prerequisite_groups": []
+      "prerequisite_groups": [],
+      "is_summer": false
     },
     {
       "code": "MUS121/MUS122",
@@ -5517,7 +5725,8 @@
       "gpa_waiver": true,
       "semesters_offered": null,
       "notes": "GPA waiver option available; May be repeated for credit",
-      "prerequisite_groups": []
+      "prerequisite_groups": [],
+      "is_summer": false
     },
     {
       "code": "MUS131/MUS132",
@@ -5541,7 +5750,8 @@
       "gpa_waiver": true,
       "semesters_offered": null,
       "notes": "GPA waiver option available; May be repeated for credit",
-      "prerequisite_groups": []
+      "prerequisite_groups": [],
+      "is_summer": false
     },
     {
       "code": "MUS141/MUS142",
@@ -5565,7 +5775,8 @@
       "gpa_waiver": true,
       "semesters_offered": null,
       "notes": "GPA waiver option available",
-      "prerequisite_groups": []
+      "prerequisite_groups": [],
+      "is_summer": false
     },
     {
       "code": "MUS201/MUS202",
@@ -5589,7 +5800,8 @@
       "is_dual_credit": false,
       "gpa_waiver": true,
       "semesters_offered": null,
-      "notes": "GPA waiver option available; May be repeated for credit"
+      "notes": "GPA waiver option available; May be repeated for credit",
+      "is_summer": false
     },
     {
       "code": "MUS211/MUS212",
@@ -5613,7 +5825,8 @@
       "gpa_waiver": true,
       "semesters_offered": null,
       "notes": "GPA waiver option available; May be repeated for credit",
-      "prerequisite_groups": []
+      "prerequisite_groups": [],
+      "is_summer": false
     },
     {
       "code": "MUS221/MUS222",
@@ -5647,7 +5860,8 @@
             "MUS211/MUS212"
           ]
         }
-      ]
+      ],
+      "is_summer": false
     },
     {
       "code": "MUS301/MUS302",
@@ -5669,7 +5883,8 @@
       "gpa_waiver": true,
       "semesters_offered": null,
       "notes": "GPA waiver option available; May be repeated for credit",
-      "prerequisite_groups": []
+      "prerequisite_groups": [],
+      "is_summer": false
     },
     {
       "code": "MUS311/MUS312",
@@ -5693,7 +5908,8 @@
       "gpa_waiver": true,
       "semesters_offered": null,
       "notes": "GPA waiver option available; May be repeated for credit",
-      "prerequisite_groups": []
+      "prerequisite_groups": [],
+      "is_summer": false
     },
     {
       "code": "MUS321/MUS322",
@@ -5727,7 +5943,8 @@
             "MUS331/MUS332"
           ]
         }
-      ]
+      ],
+      "is_summer": false
     },
     {
       "code": "MUS331/MUS332",
@@ -5752,7 +5969,8 @@
       "gpa_waiver": true,
       "semesters_offered": null,
       "notes": "GPA waiver option available; May be repeated for credit",
-      "prerequisite_groups": []
+      "prerequisite_groups": [],
+      "is_summer": false
     },
     {
       "code": "MUS401",
@@ -5778,7 +5996,8 @@
       "semesters_offered": [
         1
       ],
-      "notes": "GPA waiver option available; May be repeated for credit"
+      "notes": "GPA waiver option available; May be repeated for credit",
+      "is_summer": false
     },
     {
       "code": "MUS402",
@@ -5804,7 +6023,8 @@
       "semesters_offered": [
         2
       ],
-      "notes": "GPA waiver option available; May be repeated for credit"
+      "notes": "GPA waiver option available; May be repeated for credit",
+      "is_summer": false
     },
     {
       "code": "MUS421/MUS422",
@@ -5828,7 +6048,8 @@
       "is_dual_credit": false,
       "gpa_waiver": true,
       "semesters_offered": null,
-      "notes": "GPA waiver option available; May be repeated for credit"
+      "notes": "GPA waiver option available; May be repeated for credit",
+      "is_summer": false
     },
     {
       "code": "MUS431",
@@ -5854,7 +6075,8 @@
       "semesters_offered": [
         1
       ],
-      "notes": "GPA waiver option available"
+      "notes": "GPA waiver option available",
+      "is_summer": false
     },
     {
       "code": "MUS432",
@@ -5880,7 +6102,8 @@
       "semesters_offered": [
         2
       ],
-      "notes": "GPA waiver option available"
+      "notes": "GPA waiver option available",
+      "is_summer": false
     },
     {
       "code": "MUS441/MUS442",
@@ -5904,7 +6127,8 @@
       "gpa_waiver": true,
       "semesters_offered": null,
       "notes": "GPA waiver option available",
-      "prerequisite_groups": []
+      "prerequisite_groups": [],
+      "is_summer": false
     },
     {
       "code": "MUS451",
@@ -5943,7 +6167,8 @@
             "MUS432"
           ]
         }
-      ]
+      ],
+      "is_summer": false
     },
     {
       "code": "MUS452",
@@ -5982,7 +6207,8 @@
             "MUS432"
           ]
         }
-      ]
+      ],
+      "is_summer": false
     },
     {
       "code": "MUS461/MUS462",
@@ -6016,7 +6242,8 @@
             "MUS421/MUS422"
           ]
         }
-      ]
+      ],
+      "is_summer": false
     },
     {
       "code": "MUS471/MUS472",
@@ -6052,7 +6279,8 @@
             "MUS452"
           ]
         }
-      ]
+      ],
+      "is_summer": false
     },
     {
       "code": "MUS801/MUS802",
@@ -6076,7 +6304,62 @@
       "gpa_waiver": false,
       "semesters_offered": null,
       "notes": null,
-      "prerequisite_groups": []
+      "prerequisite_groups": [],
+      "is_summer": false
+    },
+    {
+      "code": "PED031",
+      "name": "Choice P.E. Early Bird",
+      "division": "Physical Welfare",
+      "department": "Physical Education",
+      "description": "education class or director approval (See description for Choice P.E.). Early Bird Physical Education is scheduled from 7-8:25 a.m. on Monday/Wednesday/Friday. Students with excessive absenteeism in this class will be removed from the Early Bird program and placed in a Physical Education class during the regularly scheduled day. This course may be repeated for credit. PHYSICAL EDUCATION LEADERSHIP TRAINING GPA WAIVER OPTION",
+      "credit_value": 1.0,
+      "duration": "semester",
+      "grade_levels": [
+        10,
+        11,
+        12
+      ],
+      "credit_type": "CP",
+      "prerequisites": "A Foundational Fitness course, any physical education class or director approval",
+      "prerequisite_codes": [],
+      "corequisites": null,
+      "is_ap": false,
+      "is_dual_credit": false,
+      "gpa_waiver": true,
+      "semesters_offered": [
+        1
+      ],
+      "notes": "GPA waiver option available; Early bird option available; May be repeated for credit",
+      "prerequisite_groups": [],
+      "is_summer": false
+    },
+    {
+      "code": "PED032",
+      "name": "Choice P.E. Early Bird",
+      "division": "Physical Welfare",
+      "department": "Physical Education",
+      "description": "education class or director approval (See description for Choice P.E.). Early Bird Physical Education is scheduled from 7-8:25 a.m. on Monday/Wednesday/Friday. Students with excessive absenteeism in this class will be removed from the Early Bird program and placed in a Physical Education class during the regularly scheduled day. This course may be repeated for credit. PHYSICAL EDUCATION LEADERSHIP TRAINING GPA WAIVER OPTION",
+      "credit_value": 1.0,
+      "duration": "semester",
+      "grade_levels": [
+        10,
+        11,
+        12
+      ],
+      "credit_type": "CP",
+      "prerequisites": "A Foundational Fitness course, any physical education class or director approval",
+      "prerequisite_codes": [],
+      "corequisites": null,
+      "is_ap": false,
+      "is_dual_credit": false,
+      "gpa_waiver": true,
+      "semesters_offered": [
+        2
+      ],
+      "notes": "GPA waiver option available; Early bird option available; May be repeated for credit",
+      "prerequisite_groups": [],
+      "is_summer": false
     },
     {
       "code": "PED111/PED112",
@@ -6101,7 +6384,8 @@
       "gpa_waiver": false,
       "semesters_offered": null,
       "notes": null,
-      "prerequisite_groups": []
+      "prerequisite_groups": [],
+      "is_summer": false
     },
     {
       "code": "PED121",
@@ -6124,7 +6408,8 @@
       "semesters_offered": [
         1
       ],
-      "notes": null
+      "notes": null,
+      "is_summer": false
     },
     {
       "code": "PED122",
@@ -6147,7 +6432,8 @@
       "semesters_offered": [
         2
       ],
-      "notes": null
+      "notes": null,
+      "is_summer": false
     },
     {
       "code": "PED201",
@@ -6170,7 +6456,8 @@
       "semesters_offered": [
         1
       ],
-      "notes": "GPA waiver option available"
+      "notes": "GPA waiver option available",
+      "is_summer": false
     },
     {
       "code": "PED202",
@@ -6193,7 +6480,8 @@
       "semesters_offered": [
         2
       ],
-      "notes": "GPA waiver option available"
+      "notes": "GPA waiver option available",
+      "is_summer": false
     },
     {
       "code": "PED231",
@@ -6231,7 +6519,8 @@
             "PED202"
           ]
         }
-      ]
+      ],
+      "is_summer": false
     },
     {
       "code": "PED232",
@@ -6269,7 +6558,8 @@
             "PED202"
           ]
         }
-      ]
+      ],
+      "is_summer": false
     },
     {
       "code": "PED331",
@@ -6296,7 +6586,8 @@
         1
       ],
       "notes": null,
-      "prerequisite_groups": []
+      "prerequisite_groups": [],
+      "is_summer": false
     },
     {
       "code": "PED332",
@@ -6323,7 +6614,8 @@
         2
       ],
       "notes": null,
-      "prerequisite_groups": []
+      "prerequisite_groups": [],
+      "is_summer": false
     },
     {
       "code": "PED41L/PED42L",
@@ -6356,14 +6648,15 @@
             "PED61L/PED62L"
           ]
         }
-      ]
+      ],
+      "is_summer": false
     },
     {
       "code": "PED451",
       "name": "CHOICE P.E.",
       "division": "Physical Welfare",
       "department": "Physical Education",
-      "description": "Physical Education course or director approval This course is designed for students to develop and maintain their lifelong wellness in activities of their choice. Students will choose the activity in which they will participate each semester. (Regardless of activity selected, all students will learn how to apply their fitness plan, reflect on their fitness and build their knowledge of health-related fitness.) This course may be repeated for credit. PED031 (early bird)\u2013Semester 1 PED032 (early bird)\u2013Semester 2 education class or director approval (See description for Choice P.E.). Early Bird Physical Education is scheduled from 7-8:25 a.m. on Monday/Wednesday/Friday. Students with excessive absenteeism in this class will be removed from the Early Bird program and placed in a Physical Education class during the regularly scheduled day. This course may be repeated for credit. PHYSICAL EDUCATION LEADERSHIP TRAINING GPA WAIVER OPTION",
+      "description": "Physical Education course or director approval This course is designed for students to develop and maintain their lifelong wellness in activities of their choice. Students will choose the activity in which they will participate each semester. (Regardless of activity selected, all students will learn how to apply their fitness plan, reflect on their fitness and build their knowledge of health-related fitness.) This course may be repeated for credit.",
       "credit_value": 1.0,
       "duration": "semester",
       "grade_levels": [
@@ -6378,19 +6671,20 @@
       "corequisites": null,
       "is_ap": false,
       "is_dual_credit": false,
-      "gpa_waiver": true,
+      "gpa_waiver": false,
       "semesters_offered": [
         1
       ],
-      "notes": "GPA waiver option available; Early bird option available; May be repeated for credit",
-      "prerequisite_groups": []
+      "notes": "Early bird option available; May be repeated for credit",
+      "prerequisite_groups": [],
+      "is_summer": false
     },
     {
       "code": "PED452",
       "name": "CHOICE P.E.",
       "division": "Physical Welfare",
       "department": "Physical Education",
-      "description": "Physical Education course or director approval This course is designed for students to develop and maintain their lifelong wellness in activities of their choice. Students will choose the activity in which they will participate each semester. (Regardless of activity selected, all students will learn how to apply their fitness plan, reflect on their fitness and build their knowledge of health-related fitness.) This course may be repeated for credit. PED031 (early bird)\u2013Semester 1 PED032 (early bird)\u2013Semester 2 education class or director approval (See description for Choice P.E.). Early Bird Physical Education is scheduled from 7-8:25 a.m. on Monday/Wednesday/Friday. Students with excessive absenteeism in this class will be removed from the Early Bird program and placed in a Physical Education class during the regularly scheduled day. This course may be repeated for credit. PHYSICAL EDUCATION LEADERSHIP TRAINING GPA WAIVER OPTION",
+      "description": "Physical Education course or director approval This course is designed for students to develop and maintain their lifelong wellness in activities of their choice. Students will choose the activity in which they will participate each semester. (Regardless of activity selected, all students will learn how to apply their fitness plan, reflect on their fitness and build their knowledge of health-related fitness.) This course may be repeated for credit.",
       "credit_value": 1.0,
       "duration": "semester",
       "grade_levels": [
@@ -6405,12 +6699,13 @@
       "corequisites": null,
       "is_ap": false,
       "is_dual_credit": false,
-      "gpa_waiver": true,
+      "gpa_waiver": false,
       "semesters_offered": [
         2
       ],
-      "notes": "GPA waiver option available; Early bird option available; May be repeated for credit",
-      "prerequisite_groups": []
+      "notes": "Early bird option available; May be repeated for credit",
+      "prerequisite_groups": [],
+      "is_summer": false
     },
     {
       "code": "PED501",
@@ -6436,7 +6731,8 @@
         1
       ],
       "notes": "GPA waiver option available",
-      "prerequisite_groups": []
+      "prerequisite_groups": [],
+      "is_summer": false
     },
     {
       "code": "PED61L/PED62L",
@@ -6457,7 +6753,8 @@
       "is_dual_credit": false,
       "gpa_waiver": true,
       "semesters_offered": null,
-      "notes": "GPA waiver option available; Early bird option available"
+      "notes": "GPA waiver option available",
+      "is_summer": false
     },
     {
       "code": "PED71L/PED72L",
@@ -6480,7 +6777,8 @@
       "gpa_waiver": true,
       "semesters_offered": null,
       "notes": "GPA waiver option available",
-      "prerequisite_groups": []
+      "prerequisite_groups": [],
+      "is_summer": false
     },
     {
       "code": "PED81L/PED82L",
@@ -6512,7 +6810,8 @@
             "PED61L/PED62L"
           ]
         }
-      ]
+      ],
+      "is_summer": false
     },
     {
       "code": "SCI111/SCI112",
@@ -6536,7 +6835,8 @@
       "is_dual_credit": false,
       "gpa_waiver": false,
       "semesters_offered": null,
-      "notes": null
+      "notes": null,
+      "is_summer": false
     },
     {
       "code": "SCI211/SCI212",
@@ -6560,7 +6860,8 @@
       "is_dual_credit": false,
       "gpa_waiver": false,
       "semesters_offered": null,
-      "notes": null
+      "notes": null,
+      "is_summer": false
     },
     {
       "code": "SCI271/SCI272",
@@ -6583,7 +6884,8 @@
       "is_dual_credit": false,
       "gpa_waiver": false,
       "semesters_offered": null,
-      "notes": null
+      "notes": null,
+      "is_summer": false
     },
     {
       "code": "SCI351/SCI352",
@@ -6607,7 +6909,8 @@
       "gpa_waiver": false,
       "semesters_offered": null,
       "notes": null,
-      "prerequisite_groups": []
+      "prerequisite_groups": [],
+      "is_summer": false
     },
     {
       "code": "SCI401/SCI402",
@@ -6630,7 +6933,8 @@
       "is_dual_credit": false,
       "gpa_waiver": false,
       "semesters_offered": null,
-      "notes": null
+      "notes": null,
+      "is_summer": false
     },
     {
       "code": "SCI521/SCI522",
@@ -6652,7 +6956,8 @@
       "is_dual_credit": false,
       "gpa_waiver": false,
       "semesters_offered": null,
-      "notes": null
+      "notes": null,
+      "is_summer": false
     },
     {
       "code": "SCI531/SCI532",
@@ -6675,15 +6980,16 @@
       "is_dual_credit": false,
       "gpa_waiver": false,
       "semesters_offered": null,
-      "notes": null
+      "notes": null,
+      "is_summer": false
     },
     {
       "code": "SCI611/SCI612",
       "name": "AP PHYSICS 1",
       "division": "Science",
       "department": "Science",
-      "description": "In this 1.5 period lab-based course, students explore linear, circular and simple harmonic motion, forces, energy, momentum, rotation and fluids. Students will work collaboratively and engage with the science and engineering practices. This course can fulfill students' graduation requirement for two semesters of physical science and is beneficial for students considering majors or careers in science or engineering. Students who enroll in this course will be prepared to take the AP Physics 1 exam in May.",
-      "credit_value": "3.0",
+      "description": "Op Pr Cr EA",
+      "credit_value": 2.0,
       "duration": "full_year",
       "grade_levels": [
         10,
@@ -6699,15 +7005,16 @@
       "gpa_waiver": false,
       "semesters_offered": null,
       "notes": "Dual credit available; Early bird option available",
-      "prerequisite_groups": []
+      "prerequisite_groups": [],
+      "is_summer": false
     },
     {
       "code": "SCI61E1/SCI61E2",
       "name": "AP Physics 1 Early Bird",
       "division": "Science",
       "department": "Science",
-      "description": "In this 1.5 period lab-based course, students explore linear, circular and simple harmonic motion, forces, energy, momentum, rotation and fluids. Students will work collaboratively and engage with the science and engineering practices. This course can fulfill students' graduation requirement for two semesters of physical science and is beneficial for students considering majors or careers in science or engineering. Students who enroll in this course will be prepared to take the AP Physics 1 exam in May.",
-      "credit_value": "3.0",
+      "description": "",
+      "credit_value": 2.0,
       "duration": "full_year",
       "grade_levels": [
         10,
@@ -6722,15 +7029,16 @@
       "is_dual_credit": false,
       "gpa_waiver": false,
       "semesters_offered": null,
-      "notes": "Early bird option available"
+      "notes": "Early bird option available",
+      "is_summer": false
     },
     {
       "code": "SCI631/SCI632",
       "name": "AP BIOLOGY",
       "division": "Science",
       "department": "Science",
-      "description": "In this 1.5 period lab-based course, students explore evolution, proteins, cell evolution, DNA, photosynthesis, ecology, cellular respiration, gene expression, gene regulation, genetics and cell signaling. Students will work collaboratively and engage with the science and engineering practices. This course can fulfill students' graduation requirement for two semesters of biological science and is beneficial for students considering majors or careers in science or health-related fields. Students who enroll in this course will be prepared to take the AP Biology exam in May.",
-      "credit_value": "3.0",
+      "description": "",
+      "credit_value": 2.0,
       "duration": "full_year",
       "grade_levels": [
         10,
@@ -6745,15 +7053,16 @@
       "is_dual_credit": false,
       "gpa_waiver": false,
       "semesters_offered": null,
-      "notes": "Early bird option available"
+      "notes": "Early bird option available",
+      "is_summer": false
     },
     {
       "code": "SCI63E1/SCI63E2",
       "name": "AP Biology Early Bird",
       "division": "Science",
       "department": "Science",
-      "description": "In this 1.5 period lab-based course, students explore evolution, proteins, cell evolution, DNA, photosynthesis, ecology, cellular respiration, gene expression, gene regulation, genetics and cell signaling. Students will work collaboratively and engage with the science and engineering practices. This course can fulfill students' graduation requirement for two semesters of biological science and is beneficial for students considering majors or careers in science or health-related fields. Students who enroll in this course will be prepared to take the AP Biology exam in May.",
-      "credit_value": "3.0",
+      "description": "",
+      "credit_value": 2.0,
       "duration": "full_year",
       "grade_levels": [
         10,
@@ -6768,7 +7077,8 @@
       "is_dual_credit": false,
       "gpa_waiver": false,
       "semesters_offered": null,
-      "notes": "Early bird option available"
+      "notes": "Early bird option available",
+      "is_summer": false
     },
     {
       "code": "SCI641/SCI642",
@@ -6790,15 +7100,16 @@
       "is_dual_credit": false,
       "gpa_waiver": false,
       "semesters_offered": null,
-      "notes": null
+      "notes": null,
+      "is_summer": false
     },
     {
       "code": "SCI651/SCI652",
       "name": "AP CHEMISTRY",
       "division": "Science",
       "department": "Science",
-      "description": "In this 1.5 period lab-based course, students explore chemical bonding, the behavior of gases, the structure of matter, kinetic theory, solutions, acid-base chemistry, electrochemistry, molecular geometry, thermodynamics and equilibrium. Students will work collaboratively and engage with the science and engineering practices. This course can fulfill students' graduation requirement for two semesters of physical science and is beneficial for students considering majors in science. Students who enroll in this course will be prepared to take the AP Chemistry exam in May.",
-      "credit_value": "3.0",
+      "description": "",
+      "credit_value": 2.0,
       "duration": "full_year",
       "grade_levels": [
         10,
@@ -6813,15 +7124,16 @@
       "is_dual_credit": false,
       "gpa_waiver": false,
       "semesters_offered": null,
-      "notes": "Early bird option available"
+      "notes": "Early bird option available",
+      "is_summer": false
     },
     {
       "code": "SCI65E1/SCI65E2",
       "name": "AP Chemistry Early Bird",
       "division": "Science",
       "department": "Science",
-      "description": "In this 1.5 period lab-based course, students explore chemical bonding, the behavior of gases, the structure of matter, kinetic theory, solutions, acid-base chemistry, electrochemistry, molecular geometry, thermodynamics and equilibrium. Students will work collaboratively and engage with the science and engineering practices. This course can fulfill students' graduation requirement for two semesters of physical science and is beneficial for students considering majors in science. Students who enroll in this course will be prepared to take the AP Chemistry exam in May.",
-      "credit_value": "3.0",
+      "description": "",
+      "credit_value": 2.0,
       "duration": "full_year",
       "grade_levels": [
         10,
@@ -6836,15 +7148,16 @@
       "is_dual_credit": false,
       "gpa_waiver": false,
       "semesters_offered": null,
-      "notes": "Early bird option available"
+      "notes": "Early bird option available",
+      "is_summer": false
     },
     {
       "code": "SCI661/SCI662",
       "name": "AP PHYSICS C",
       "division": "Science",
       "department": "Science",
-      "description": "In this 1.5 period lab-based course, students explore linear, rotational, and simple harmonic motion; forces; energy; momentum; electrostatics; DC circuits; magnetostatics; and electromagnetic induction. Students will work collaboratively and engage with the science and engineering practices. This course is beneficial for students considering majors or careers in science or engineering. Students who enroll in this course will be prepared to take both the AP Physics C Mechanics and AP Physics C Electricity and Magnetism exams in May.",
-      "credit_value": "3.0",
+      "description": "concurrent enrollment in AP Calculus AB or BC, or approval of director",
+      "credit_value": 2.0,
       "duration": "full_year",
       "grade_levels": [
         11,
@@ -6873,15 +7186,16 @@
             "MTH471/MTH472"
           ]
         }
-      ]
+      ],
+      "is_summer": false
     },
     {
       "code": "SCI66E1/SCI66E2",
       "name": "AP Environmental Science Early Bird",
       "division": "Science",
       "department": "Science",
-      "description": "In this lab-based course, students explore earth systems, ecology, populations, energy use, global warming and pollution. Students will work collaboratively and engage with the science and engineering practices. This course takes field trips throughout the year. Students who enroll in this course will be prepared to take the AP Environmental Science exam in May.",
-      "credit_value": "3.0",
+      "description": "",
+      "credit_value": 2.0,
       "duration": "full_year",
       "grade_levels": [
         11,
@@ -6895,7 +7209,8 @@
       "is_dual_credit": false,
       "gpa_waiver": false,
       "semesters_offered": null,
-      "notes": "Early bird option available"
+      "notes": "Early bird option available",
+      "is_summer": false
     },
     {
       "code": "SCI671/SCI672",
@@ -6919,7 +7234,8 @@
       "gpa_waiver": false,
       "semesters_offered": null,
       "notes": "Dual credit available with COLLEGE OF SC",
-      "prerequisite_groups": []
+      "prerequisite_groups": [],
+      "is_summer": false
     },
     {
       "code": "SCI681/SCI682",
@@ -6954,7 +7270,8 @@
             "SCI401/SCI402"
           ]
         }
-      ]
+      ],
+      "is_summer": false
     },
     {
       "code": "SOC101/SOC102",
@@ -6976,7 +7293,8 @@
       "is_dual_credit": false,
       "gpa_waiver": false,
       "semesters_offered": null,
-      "notes": null
+      "notes": null,
+      "is_summer": false
     },
     {
       "code": "SOC321/SOC322",
@@ -7008,7 +7326,8 @@
             "SOC101/SOC102"
           ]
         }
-      ]
+      ],
+      "is_summer": false
     },
     {
       "code": "SOC401",
@@ -7050,7 +7369,8 @@
             "SOC321/SOC322"
           ]
         }
-      ]
+      ],
+      "is_summer": false
     },
     {
       "code": "SOC402",
@@ -7092,7 +7412,8 @@
             "SOC321/SOC322"
           ]
         }
-      ]
+      ],
+      "is_summer": false
     },
     {
       "code": "SOC411/SOC412",
@@ -7125,7 +7446,8 @@
             "SOC101/SOC102"
           ]
         }
-      ]
+      ],
+      "is_summer": false
     },
     {
       "code": "SOC431",
@@ -7162,7 +7484,8 @@
             "SOC101/SOC102"
           ]
         }
-      ]
+      ],
+      "is_summer": false
     },
     {
       "code": "SOC432",
@@ -7199,7 +7522,8 @@
             "SOC101/SOC102"
           ]
         }
-      ]
+      ],
+      "is_summer": false
     },
     {
       "code": "SOC501",
@@ -7236,7 +7560,8 @@
             "SOC101/SOC102"
           ]
         }
-      ]
+      ],
+      "is_summer": false
     },
     {
       "code": "SOC502",
@@ -7273,7 +7598,8 @@
             "SOC101/SOC102"
           ]
         }
-      ]
+      ],
+      "is_summer": false
     },
     {
       "code": "SOC511/SOC512",
@@ -7308,7 +7634,8 @@
             "SOC101/SOC102"
           ]
         }
-      ]
+      ],
+      "is_summer": false
     },
     {
       "code": "SOC531",
@@ -7345,7 +7672,8 @@
             "SOC101/SOC102"
           ]
         }
-      ]
+      ],
+      "is_summer": false
     },
     {
       "code": "SOC532",
@@ -7382,7 +7710,8 @@
             "SOC101/SOC102"
           ]
         }
-      ]
+      ],
+      "is_summer": false
     },
     {
       "code": "SOC541",
@@ -7419,7 +7748,8 @@
             "SOC101/SOC102"
           ]
         }
-      ]
+      ],
+      "is_summer": false
     },
     {
       "code": "SOC542",
@@ -7456,7 +7786,8 @@
             "SOC101/SOC102"
           ]
         }
-      ]
+      ],
+      "is_summer": false
     },
     {
       "code": "SOC551",
@@ -7493,7 +7824,8 @@
             "SOC101/SOC102"
           ]
         }
-      ]
+      ],
+      "is_summer": false
     },
     {
       "code": "SOC552",
@@ -7530,7 +7862,8 @@
             "SOC101/SOC102"
           ]
         }
-      ]
+      ],
+      "is_summer": false
     },
     {
       "code": "SOC561",
@@ -7574,7 +7907,8 @@
             "ENG381/ENG382"
           ]
         }
-      ]
+      ],
+      "is_summer": false
     },
     {
       "code": "SOC562",
@@ -7618,7 +7952,8 @@
             "ENG381/ENG382"
           ]
         }
-      ]
+      ],
+      "is_summer": false
     },
     {
       "code": "SOC571",
@@ -7653,7 +7988,8 @@
             "SOC101/SOC102"
           ]
         }
-      ]
+      ],
+      "is_summer": false
     },
     {
       "code": "SOC572",
@@ -7688,7 +8024,8 @@
             "SOC101/SOC102"
           ]
         }
-      ]
+      ],
+      "is_summer": false
     },
     {
       "code": "SOC581/SOC582",
@@ -7730,7 +8067,8 @@
             "ENG231/ENG232"
           ]
         }
-      ]
+      ],
+      "is_summer": false
     },
     {
       "code": "SOC601/SOC602",
@@ -7764,7 +8102,8 @@
             "SOC101/SOC102"
           ]
         }
-      ]
+      ],
+      "is_summer": false
     },
     {
       "code": "SOC611/SOC612",
@@ -7798,7 +8137,8 @@
             "SOC101/SOC102"
           ]
         }
-      ]
+      ],
+      "is_summer": false
     },
     {
       "code": "SOC621/SOC622",
@@ -7830,7 +8170,8 @@
             "SOC101/SOC102"
           ]
         }
-      ]
+      ],
+      "is_summer": false
     },
     {
       "code": "SOC631",
@@ -7866,7 +8207,8 @@
             "SOC101/SOC102"
           ]
         }
-      ]
+      ],
+      "is_summer": false
     },
     {
       "code": "SOC632",
@@ -7902,7 +8244,8 @@
             "SOC101/SOC102"
           ]
         }
-      ]
+      ],
+      "is_summer": false
     },
     {
       "code": "SOC63Q1",
@@ -7938,7 +8281,8 @@
             "SOC101/SOC102"
           ]
         }
-      ]
+      ],
+      "is_summer": false
     },
     {
       "code": "SOC63Q2",
@@ -7974,7 +8318,8 @@
             "SOC101/SOC102"
           ]
         }
-      ]
+      ],
+      "is_summer": false
     },
     {
       "code": "SOC641",
@@ -8009,7 +8354,8 @@
             "SOC101/SOC102"
           ]
         }
-      ]
+      ],
+      "is_summer": false
     },
     {
       "code": "SOC642",
@@ -8044,7 +8390,8 @@
             "SOC101/SOC102"
           ]
         }
-      ]
+      ],
+      "is_summer": false
     },
     {
       "code": "SOC651",
@@ -8079,7 +8426,8 @@
             "SOC101/SOC102"
           ]
         }
-      ]
+      ],
+      "is_summer": false
     },
     {
       "code": "SOC652",
@@ -8114,7 +8462,8 @@
             "SOC101/SOC102"
           ]
         }
-      ]
+      ],
+      "is_summer": false
     },
     {
       "code": "SOC661/SOC662",
@@ -8154,7 +8503,8 @@
             "SOC321/SOC322"
           ]
         }
-      ]
+      ],
+      "is_summer": false
     },
     {
       "code": "SOC671",
@@ -8189,7 +8539,8 @@
             "SOC101/SOC102"
           ]
         }
-      ]
+      ],
+      "is_summer": false
     },
     {
       "code": "SOC672",
@@ -8224,7 +8575,8 @@
             "SOC101/SOC102"
           ]
         }
-      ]
+      ],
+      "is_summer": false
     },
     {
       "code": "SOC681",
@@ -8266,7 +8618,8 @@
             "SOC321/SOC322"
           ]
         }
-      ]
+      ],
+      "is_summer": false
     },
     {
       "code": "SOC682",
@@ -8308,7 +8661,8 @@
             "SOC321/SOC322"
           ]
         }
-      ]
+      ],
+      "is_summer": false
     },
     {
       "code": "SOC691/SOC692",
@@ -8342,7 +8696,8 @@
             "SOC101/SOC102"
           ]
         }
-      ]
+      ],
+      "is_summer": false
     },
     {
       "code": "SPA101/SPA102",
@@ -8366,7 +8721,8 @@
       "is_dual_credit": false,
       "gpa_waiver": false,
       "semesters_offered": null,
-      "notes": null
+      "notes": null,
+      "is_summer": false
     },
     {
       "code": "SPA201/SPA202",
@@ -8401,7 +8757,8 @@
             "SPA101/SPA102"
           ]
         }
-      ]
+      ],
+      "is_summer": false
     },
     {
       "code": "SPA211/SPA212",
@@ -8438,7 +8795,8 @@
             "SPA201/SPA202"
           ]
         }
-      ]
+      ],
+      "is_summer": false
     },
     {
       "code": "SPA301/SPA302",
@@ -8472,14 +8830,15 @@
             "SPA201/SPA202"
           ]
         }
-      ]
+      ],
+      "is_summer": false
     },
     {
       "code": "SPA311/SPA312",
       "name": "SPANISH 3-4",
       "division": "Multilingual Learning",
       "department": "Spanish",
-      "description": "Spanish 3-4 and approval of director Students continue to work to develop their competence in Spanish across the three modes of communication in the context of the six AP themes. Performance-based assessments provide the students the opportunity to use the language independently in unfamiliar contexts. Interpretive listening and reading tasks are focused on both literal comprehension and inferential interpretation. Practice is provided regularly, both within the classroom and at home. Throughout the course, students continue to explore the target culture in new contexts. In comparison to the college prep sequence of courses, Spanish 3-4 accelerated has a faster pace and students are asked to engage in interpersonal, presentational and interpretive tasks at more advanced proficiency levels. In this course, students also continue reading authentic literature including poems, short stories and plays. The expectation is that the communication in the classroom (teacher-student and/or student-student) take place primarily in Spanish. INTERMEDIATE SPANISH LANGUAGE ARTS SPA351-SEMESTER 1 SPA352-SEMESTER 2 on Spanish language proficiency assessment (e.g., AAPPL), teacher recommendation, or director approval This course is designed specifically for students with lived Spanish language experience, either from prior schooling in a Spanish-speaking country or as native/heritage speakers of Spanish. Students will develop their literacy skills in Spanish as they explore literature from the Spanish-speaking world and engage in focused development of writing skills. Additionally, students will develop critical thinking and oracy skills in Spanish as they collaboratively explore topics related to current events, culture and media.",
+      "description": "Spanish 3-4 and approval of director Students continue to work to develop their competence in Spanish across the three modes of communication in the context of the six AP themes. Performance-based assessments provide the students the opportunity to use the language independently in unfamiliar contexts. Interpretive listening and reading tasks are focused on both literal comprehension and inferential interpretation. Practice is provided regularly, both within the classroom and at home. Throughout the course, students continue to explore the target culture in new contexts. In comparison to the college prep sequence of courses, Spanish 3-4 accelerated has a faster pace and students are asked to engage in interpersonal, presentational and interpretive tasks at more advanced proficiency levels. In this course, students also continue reading authentic literature including poems, short stories and plays. The expectation is that the communication in the classroom (teacher-student and/or student-student) take place primarily in Spanish. INTERMEDIATE SPANISH LANGUAGE ARTS",
       "credit_value": 2.0,
       "duration": "full_year",
       "grade_levels": [
@@ -8506,7 +8865,46 @@
             "SPA211/SPA212"
           ]
         }
-      ]
+      ],
+      "is_summer": false
+    },
+    {
+      "code": "SPA351/SPA352",
+      "name": "Intermediate Spanish Language Arts",
+      "division": "Multilingual Learning",
+      "department": "Spanish",
+      "description": "on Spanish language proficiency assessment (e.g., AAPPL), teacher recommendation, or director approval This course is designed specifically for students with lived Spanish language experience, either from prior schooling in a Spanish-speaking country or as native/heritage speakers of Spanish. Students will develop their literacy skills in Spanish as they explore literature from the Spanish-speaking world and engage in focused development of writing skills. Additionally, students will develop critical thinking and oracy skills in Spanish as they collaboratively explore topics related to current events, culture and media.",
+      "credit_value": 2.0,
+      "duration": "full_year",
+      "grade_levels": [
+        9,
+        10,
+        11,
+        12
+      ],
+      "credit_type": "Accelerated",
+      "prerequisites": "Intermediate or higher proficiency as demonstrated on Spanish language proficiency assessment (e.g., AAPPL), teacher recommendation, or director approval",
+      "prerequisite_codes": [
+        "CHI351/CHI352",
+        "ELD361/ELD362"
+      ],
+      "corequisites": null,
+      "is_ap": false,
+      "is_dual_credit": false,
+      "gpa_waiver": false,
+      "semesters_offered": null,
+      "notes": null,
+      "prerequisite_groups": [
+        {
+          "group": 1,
+          "type": "or",
+          "codes": [
+            "CHI351/CHI352",
+            "ELD361/ELD362"
+          ]
+        }
+      ],
+      "is_summer": false
     },
     {
       "code": "SPA401/SPA402",
@@ -8539,7 +8937,8 @@
             "SPA301/SPA302"
           ]
         }
-      ]
+      ],
+      "is_summer": false
     },
     {
       "code": "SPA511/SPA512",
@@ -8577,7 +8976,8 @@
             "ENG141/ENG142"
           ]
         }
-      ]
+      ],
+      "is_summer": false
     },
     {
       "code": "SPA601/SPA602",
@@ -8595,7 +8995,7 @@
       "credit_type": "AP",
       "prerequisites": "INTERMEDIATE SPANISH LANGUAGE ARTS, Spanish 4 or Spanish 3-4",
       "prerequisite_codes": [
-        "SPA401/SPA402",
+        "SPA351/SPA352",
         "SPA311/SPA312"
       ],
       "corequisites": null,
@@ -8609,11 +9009,12 @@
           "group": 1,
           "type": "or",
           "codes": [
-            "SPA401/SPA402",
+            "SPA351/SPA352",
             "SPA311/SPA312"
           ]
         }
-      ]
+      ],
+      "is_summer": false
     },
     {
       "code": "SPA611/SPA612",
@@ -8654,7 +9055,8 @@
             "ENG141/ENG142"
           ]
         }
-      ]
+      ],
+      "is_summer": false
     },
     {
       "code": "TEC111",
@@ -8680,7 +9082,8 @@
       "semesters_offered": [
         1
       ],
-      "notes": "GPA waiver option available"
+      "notes": "GPA waiver option available",
+      "is_summer": false
     },
     {
       "code": "TEC112",
@@ -8706,7 +9109,8 @@
       "semesters_offered": [
         2
       ],
-      "notes": "GPA waiver option available"
+      "notes": "GPA waiver option available",
+      "is_summer": false
     },
     {
       "code": "TEC121",
@@ -8732,7 +9136,8 @@
       "semesters_offered": [
         1
       ],
-      "notes": "GPA waiver option available"
+      "notes": "GPA waiver option available",
+      "is_summer": false
     },
     {
       "code": "TEC122",
@@ -8758,7 +9163,8 @@
       "semesters_offered": [
         2
       ],
-      "notes": "GPA waiver option available"
+      "notes": "GPA waiver option available",
+      "is_summer": false
     },
     {
       "code": "TEC141/TEC142",
@@ -8782,7 +9188,8 @@
       "is_dual_credit": false,
       "gpa_waiver": true,
       "semesters_offered": null,
-      "notes": "GPA waiver option available"
+      "notes": "GPA waiver option available",
+      "is_summer": false
     },
     {
       "code": "TEC151/TEC152",
@@ -8806,7 +9213,8 @@
       "is_dual_credit": false,
       "gpa_waiver": true,
       "semesters_offered": null,
-      "notes": "GPA waiver option available"
+      "notes": "GPA waiver option available",
+      "is_summer": false
     },
     {
       "code": "TEC171",
@@ -8832,7 +9240,8 @@
       "semesters_offered": [
         1
       ],
-      "notes": "GPA waiver option available"
+      "notes": "GPA waiver option available",
+      "is_summer": false
     },
     {
       "code": "TEC172",
@@ -8858,7 +9267,8 @@
       "semesters_offered": [
         2
       ],
-      "notes": "GPA waiver option available"
+      "notes": "GPA waiver option available",
+      "is_summer": false
     },
     {
       "code": "TEC181",
@@ -8884,7 +9294,8 @@
       "semesters_offered": [
         1
       ],
-      "notes": "GPA waiver option available"
+      "notes": "GPA waiver option available",
+      "is_summer": false
     },
     {
       "code": "TEC182",
@@ -8910,7 +9321,8 @@
       "semesters_offered": [
         2
       ],
-      "notes": "GPA waiver option available"
+      "notes": "GPA waiver option available",
+      "is_summer": false
     },
     {
       "code": "TEC191",
@@ -8949,7 +9361,8 @@
             "TEC502"
           ]
         }
-      ]
+      ],
+      "is_summer": false
     },
     {
       "code": "TEC192",
@@ -8988,7 +9401,8 @@
             "TEC502"
           ]
         }
-      ]
+      ],
+      "is_summer": false
     },
     {
       "code": "TEC241/TEC242",
@@ -9024,7 +9438,8 @@
             "TEC141/TEC142"
           ]
         }
-      ]
+      ],
+      "is_summer": false
     },
     {
       "code": "TEC251",
@@ -9063,7 +9478,8 @@
             "TEC182"
           ]
         }
-      ]
+      ],
+      "is_summer": false
     },
     {
       "code": "TEC252",
@@ -9102,7 +9518,8 @@
             "TEC182"
           ]
         }
-      ]
+      ],
+      "is_summer": false
     },
     {
       "code": "TEC261/TEC262",
@@ -9138,7 +9555,8 @@
             "TEC141/TEC142"
           ]
         }
-      ]
+      ],
+      "is_summer": false
     },
     {
       "code": "TEC281",
@@ -9177,7 +9595,8 @@
             "TEC172"
           ]
         }
-      ]
+      ],
+      "is_summer": false
     },
     {
       "code": "TEC282",
@@ -9216,7 +9635,8 @@
             "TEC172"
           ]
         }
-      ]
+      ],
+      "is_summer": false
     },
     {
       "code": "TEC291/TEC292",
@@ -9250,7 +9670,8 @@
             "TEC151/TEC152"
           ]
         }
-      ]
+      ],
+      "is_summer": false
     },
     {
       "code": "TEC301/TEC302",
@@ -9284,7 +9705,8 @@
             "TEC151/TEC152"
           ]
         }
-      ]
+      ],
+      "is_summer": false
     },
     {
       "code": "TEC351/TEC352",
@@ -9318,7 +9740,8 @@
             "TEC151/TEC152"
           ]
         }
-      ]
+      ],
+      "is_summer": false
     },
     {
       "code": "TEC401/TEC402",
@@ -9353,7 +9776,8 @@
             "TEC261/TEC262"
           ]
         }
-      ]
+      ],
+      "is_summer": false
     },
     {
       "code": "TEC501",
@@ -9379,7 +9803,8 @@
       "semesters_offered": [
         1
       ],
-      "notes": "GPA waiver option available"
+      "notes": "GPA waiver option available",
+      "is_summer": false
     },
     {
       "code": "TEC502",
@@ -9405,7 +9830,8 @@
       "semesters_offered": [
         2
       ],
-      "notes": "GPA waiver option available"
+      "notes": "GPA waiver option available",
+      "is_summer": false
     },
     {
       "code": "TEC511",
@@ -9444,7 +9870,8 @@
             "TEC502"
           ]
         }
-      ]
+      ],
+      "is_summer": false
     },
     {
       "code": "TEC512",
@@ -9483,7 +9910,8 @@
             "TEC502"
           ]
         }
-      ]
+      ],
+      "is_summer": false
     },
     {
       "code": "THR101",
@@ -9509,7 +9937,8 @@
       "semesters_offered": [
         1
       ],
-      "notes": "GPA waiver option available"
+      "notes": "GPA waiver option available",
+      "is_summer": false
     },
     {
       "code": "THR102",
@@ -9535,7 +9964,8 @@
       "semesters_offered": [
         2
       ],
-      "notes": "GPA waiver option available"
+      "notes": "GPA waiver option available",
+      "is_summer": false
     },
     {
       "code": "THR111",
@@ -9574,7 +10004,8 @@
             "THR102"
           ]
         }
-      ]
+      ],
+      "is_summer": false
     },
     {
       "code": "THR112",
@@ -9613,7 +10044,8 @@
             "THR102"
           ]
         }
-      ]
+      ],
+      "is_summer": false
     },
     {
       "code": "THR121",
@@ -9639,7 +10071,8 @@
       "semesters_offered": [
         1
       ],
-      "notes": "GPA waiver option available; May be repeated for credit"
+      "notes": "GPA waiver option available; May be repeated for credit",
+      "is_summer": false
     },
     {
       "code": "THR122",
@@ -9665,7 +10098,8 @@
       "semesters_offered": [
         2
       ],
-      "notes": "GPA waiver option available; May be repeated for credit"
+      "notes": "GPA waiver option available; May be repeated for credit",
+      "is_summer": false
     },
     {
       "code": "THR211",
@@ -9703,7 +10137,8 @@
             "THR112"
           ]
         }
-      ]
+      ],
+      "is_summer": false
     },
     {
       "code": "THR212",
@@ -9739,7 +10174,8 @@
             "THR211"
           ]
         }
-      ]
+      ],
+      "is_summer": false
     },
     {
       "code": "THR301",
@@ -9780,7 +10216,8 @@
             "FCS252"
           ]
         }
-      ]
+      ],
+      "is_summer": false
     },
     {
       "code": "THR302",
@@ -9821,7 +10258,8 @@
             "FCS252"
           ]
         }
-      ]
+      ],
+      "is_summer": false
     },
     {
       "code": "THR401",
@@ -9846,7 +10284,8 @@
         1
       ],
       "notes": "GPA waiver option available; Dual credit available with LOYOLA UNIVERSITY CHICAGO; May be repeated for credit",
-      "prerequisite_groups": []
+      "prerequisite_groups": [],
+      "is_summer": false
     },
     {
       "code": "THR402",
@@ -9871,7 +10310,8 @@
         2
       ],
       "notes": "GPA waiver option available; Dual credit available with LOYOLA UNIVERSITY CHICAGO; May be repeated for credit",
-      "prerequisite_groups": []
+      "prerequisite_groups": [],
+      "is_summer": false
     },
     {
       "code": "THR601",
@@ -9912,7 +10352,8 @@
             "FCS252"
           ]
         }
-      ]
+      ],
+      "is_summer": false
     },
     {
       "code": "THR602",
@@ -9953,7 +10394,606 @@
             "FCS252"
           ]
         }
-      ]
+      ],
+      "is_summer": false
+    },
+    {
+      "code": "VOC071/VOC072",
+      "name": "Computer Support Services",
+      "division": "Applied Arts",
+      "department": "Lake County Tech Campus",
+      "description": "",
+      "credit_value": 1.0,
+      "duration": "full_year",
+      "grade_levels": [
+        11,
+        12
+      ],
+      "credit_type": "CP",
+      "prerequisites": null,
+      "prerequisite_codes": [],
+      "corequisites": null,
+      "is_ap": false,
+      "is_dual_credit": true,
+      "gpa_waiver": false,
+      "semesters_offered": null,
+      "notes": "Lake County Tech Campus \u2014 see techcampus.org for details.",
+      "is_summer": false
+    },
+    {
+      "code": "VOC111/VOC112",
+      "name": "Criminal Justice",
+      "division": "Applied Arts",
+      "department": "Lake County Tech Campus",
+      "description": "",
+      "credit_value": 1.0,
+      "duration": "full_year",
+      "grade_levels": [
+        11,
+        12
+      ],
+      "credit_type": "CP",
+      "prerequisites": null,
+      "prerequisite_codes": [],
+      "corequisites": null,
+      "is_ap": false,
+      "is_dual_credit": true,
+      "gpa_waiver": false,
+      "semesters_offered": null,
+      "notes": "Lake County Tech Campus \u2014 see techcampus.org for details.",
+      "is_summer": false
+    },
+    {
+      "code": "VOC121/VOC122",
+      "name": "Law Enforcement and CSI",
+      "division": "Applied Arts",
+      "department": "Lake County Tech Campus",
+      "description": "",
+      "credit_value": 1.0,
+      "duration": "full_year",
+      "grade_levels": [
+        11,
+        12
+      ],
+      "credit_type": "CP",
+      "prerequisites": null,
+      "prerequisite_codes": [],
+      "corequisites": null,
+      "is_ap": false,
+      "is_dual_credit": true,
+      "gpa_waiver": false,
+      "semesters_offered": null,
+      "notes": "Lake County Tech Campus \u2014 see techcampus.org for details.",
+      "is_summer": false
+    },
+    {
+      "code": "VOC171/VOC172",
+      "name": "Game Programming and Virtualization",
+      "division": "Applied Arts",
+      "department": "Lake County Tech Campus",
+      "description": "",
+      "credit_value": 1.0,
+      "duration": "full_year",
+      "grade_levels": [
+        11,
+        12
+      ],
+      "credit_type": "CP",
+      "prerequisites": null,
+      "prerequisite_codes": [],
+      "corequisites": null,
+      "is_ap": false,
+      "is_dual_credit": true,
+      "gpa_waiver": false,
+      "semesters_offered": null,
+      "notes": "Lake County Tech Campus \u2014 see techcampus.org for details.",
+      "is_summer": false
+    },
+    {
+      "code": "VOC191/VOC192",
+      "name": "Cybersecurity",
+      "division": "Applied Arts",
+      "department": "Lake County Tech Campus",
+      "description": "",
+      "credit_value": 1.0,
+      "duration": "full_year",
+      "grade_levels": [
+        11,
+        12
+      ],
+      "credit_type": "CP",
+      "prerequisites": null,
+      "prerequisite_codes": [],
+      "corequisites": null,
+      "is_ap": false,
+      "is_dual_credit": true,
+      "gpa_waiver": false,
+      "semesters_offered": null,
+      "notes": "Lake County Tech Campus \u2014 see techcampus.org for details.",
+      "is_summer": false
+    },
+    {
+      "code": "VOC221/VOC222",
+      "name": "Fire Fighting",
+      "division": "Applied Arts",
+      "department": "Lake County Tech Campus",
+      "description": "",
+      "credit_value": 1.0,
+      "duration": "full_year",
+      "grade_levels": [
+        11,
+        12
+      ],
+      "credit_type": "CP",
+      "prerequisites": null,
+      "prerequisite_codes": [],
+      "corequisites": null,
+      "is_ap": false,
+      "is_dual_credit": true,
+      "gpa_waiver": false,
+      "semesters_offered": null,
+      "notes": "Lake County Tech Campus \u2014 see techcampus.org for details.",
+      "is_summer": false
+    },
+    {
+      "code": "VOC291/VOC292",
+      "name": "Certified Nurse Assisting",
+      "division": "Applied Arts",
+      "department": "Lake County Tech Campus",
+      "description": "",
+      "credit_value": 1.0,
+      "duration": "full_year",
+      "grade_levels": [
+        11,
+        12
+      ],
+      "credit_type": "CP",
+      "prerequisites": null,
+      "prerequisite_codes": [],
+      "corequisites": null,
+      "is_ap": false,
+      "is_dual_credit": true,
+      "gpa_waiver": false,
+      "semesters_offered": null,
+      "notes": "Lake County Tech Campus \u2014 see techcampus.org for details.",
+      "is_summer": false
+    },
+    {
+      "code": "VOC311/VOC312",
+      "name": "Emergency Medical Services",
+      "division": "Applied Arts",
+      "department": "Lake County Tech Campus",
+      "description": "",
+      "credit_value": 1.0,
+      "duration": "full_year",
+      "grade_levels": [
+        11,
+        12
+      ],
+      "credit_type": "CP",
+      "prerequisites": null,
+      "prerequisite_codes": [],
+      "corequisites": null,
+      "is_ap": false,
+      "is_dual_credit": true,
+      "gpa_waiver": false,
+      "semesters_offered": null,
+      "notes": "Lake County Tech Campus \u2014 see techcampus.org for details.",
+      "is_summer": false
+    },
+    {
+      "code": "VOC321/VOC322",
+      "name": "Medical Assisting",
+      "division": "Applied Arts",
+      "department": "Lake County Tech Campus",
+      "description": "",
+      "credit_value": 1.0,
+      "duration": "full_year",
+      "grade_levels": [
+        11,
+        12
+      ],
+      "credit_type": "CP",
+      "prerequisites": null,
+      "prerequisite_codes": [],
+      "corequisites": null,
+      "is_ap": false,
+      "is_dual_credit": true,
+      "gpa_waiver": false,
+      "semesters_offered": null,
+      "notes": "Lake County Tech Campus \u2014 see techcampus.org for details.",
+      "is_summer": false
+    },
+    {
+      "code": "VOC431/VOC432",
+      "name": "Automotive Collision Repair 1",
+      "division": "Applied Arts",
+      "department": "Lake County Tech Campus",
+      "description": "",
+      "credit_value": 1.0,
+      "duration": "full_year",
+      "grade_levels": [
+        11,
+        12
+      ],
+      "credit_type": "CP",
+      "prerequisites": null,
+      "prerequisite_codes": [],
+      "corequisites": null,
+      "is_ap": false,
+      "is_dual_credit": true,
+      "gpa_waiver": false,
+      "semesters_offered": null,
+      "notes": "Lake County Tech Campus \u2014 see techcampus.org for details.",
+      "is_summer": false
+    },
+    {
+      "code": "VOC451/VOC452",
+      "name": "Automotive Collision Repair 2",
+      "division": "Applied Arts",
+      "department": "Lake County Tech Campus",
+      "description": "",
+      "credit_value": 1.0,
+      "duration": "full_year",
+      "grade_levels": [
+        11,
+        12
+      ],
+      "credit_type": "CP",
+      "prerequisites": null,
+      "prerequisite_codes": [],
+      "corequisites": null,
+      "is_ap": false,
+      "is_dual_credit": true,
+      "gpa_waiver": false,
+      "semesters_offered": null,
+      "notes": "Lake County Tech Campus \u2014 see techcampus.org for details.",
+      "is_summer": false
+    },
+    {
+      "code": "VOC471/VOC472",
+      "name": "Automotive Service 1",
+      "division": "Applied Arts",
+      "department": "Lake County Tech Campus",
+      "description": "",
+      "credit_value": 1.0,
+      "duration": "full_year",
+      "grade_levels": [
+        11,
+        12
+      ],
+      "credit_type": "CP",
+      "prerequisites": null,
+      "prerequisite_codes": [],
+      "corequisites": null,
+      "is_ap": false,
+      "is_dual_credit": true,
+      "gpa_waiver": false,
+      "semesters_offered": null,
+      "notes": "Lake County Tech Campus \u2014 see techcampus.org for details.",
+      "is_summer": false
+    },
+    {
+      "code": "VOC491/VOC492",
+      "name": "Automotive Service 2",
+      "division": "Applied Arts",
+      "department": "Lake County Tech Campus",
+      "description": "",
+      "credit_value": 1.0,
+      "duration": "full_year",
+      "grade_levels": [
+        11,
+        12
+      ],
+      "credit_type": "CP",
+      "prerequisites": null,
+      "prerequisite_codes": [],
+      "corequisites": null,
+      "is_ap": false,
+      "is_dual_credit": true,
+      "gpa_waiver": false,
+      "semesters_offered": null,
+      "notes": "Lake County Tech Campus \u2014 see techcampus.org for details.",
+      "is_summer": false
+    },
+    {
+      "code": "VOC511/VOC512",
+      "name": "Construction Skills and Management 1",
+      "division": "Applied Arts",
+      "department": "Lake County Tech Campus",
+      "description": "",
+      "credit_value": 1.0,
+      "duration": "full_year",
+      "grade_levels": [
+        11,
+        12
+      ],
+      "credit_type": "CP",
+      "prerequisites": null,
+      "prerequisite_codes": [],
+      "corequisites": null,
+      "is_ap": false,
+      "is_dual_credit": true,
+      "gpa_waiver": false,
+      "semesters_offered": null,
+      "notes": "Lake County Tech Campus \u2014 see techcampus.org for details.",
+      "is_summer": false
+    },
+    {
+      "code": "VOC531/VOC532",
+      "name": "Construction Skills and Management 2",
+      "division": "Applied Arts",
+      "department": "Lake County Tech Campus",
+      "description": "",
+      "credit_value": 1.0,
+      "duration": "full_year",
+      "grade_levels": [
+        11,
+        12
+      ],
+      "credit_type": "CP",
+      "prerequisites": null,
+      "prerequisite_codes": [],
+      "corequisites": null,
+      "is_ap": false,
+      "is_dual_credit": true,
+      "gpa_waiver": false,
+      "semesters_offered": null,
+      "notes": "Lake County Tech Campus \u2014 see techcampus.org for details.",
+      "is_summer": false
+    },
+    {
+      "code": "VOC591/VOC592",
+      "name": "Cosmetology 1",
+      "division": "Applied Arts",
+      "department": "Lake County Tech Campus",
+      "description": "",
+      "credit_value": 1.0,
+      "duration": "full_year",
+      "grade_levels": [
+        11,
+        12
+      ],
+      "credit_type": "CP",
+      "prerequisites": null,
+      "prerequisite_codes": [],
+      "corequisites": null,
+      "is_ap": false,
+      "is_dual_credit": true,
+      "gpa_waiver": false,
+      "semesters_offered": null,
+      "notes": "Lake County Tech Campus \u2014 see techcampus.org for details.",
+      "is_summer": false
+    },
+    {
+      "code": "VOC611/VOC612",
+      "name": "Cosmetology 2",
+      "division": "Applied Arts",
+      "department": "Lake County Tech Campus",
+      "description": "",
+      "credit_value": 1.0,
+      "duration": "full_year",
+      "grade_levels": [
+        11,
+        12
+      ],
+      "credit_type": "CP",
+      "prerequisites": null,
+      "prerequisite_codes": [],
+      "corequisites": null,
+      "is_ap": false,
+      "is_dual_credit": true,
+      "gpa_waiver": false,
+      "semesters_offered": null,
+      "notes": "Lake County Tech Campus \u2014 see techcampus.org for details.",
+      "is_summer": false
+    },
+    {
+      "code": "VOC671/VOC672",
+      "name": "Multimedia Design 1",
+      "division": "Applied Arts",
+      "department": "Lake County Tech Campus",
+      "description": "",
+      "credit_value": 1.0,
+      "duration": "full_year",
+      "grade_levels": [
+        11,
+        12
+      ],
+      "credit_type": "CP",
+      "prerequisites": null,
+      "prerequisite_codes": [],
+      "corequisites": null,
+      "is_ap": false,
+      "is_dual_credit": true,
+      "gpa_waiver": false,
+      "semesters_offered": null,
+      "notes": "Lake County Tech Campus \u2014 see techcampus.org for details.",
+      "is_summer": false
+    },
+    {
+      "code": "VOC691/VOC692",
+      "name": "Multimedia Design 2",
+      "division": "Applied Arts",
+      "department": "Lake County Tech Campus",
+      "description": "",
+      "credit_value": 1.0,
+      "duration": "full_year",
+      "grade_levels": [
+        11,
+        12
+      ],
+      "credit_type": "CP",
+      "prerequisites": null,
+      "prerequisite_codes": [],
+      "corequisites": null,
+      "is_ap": false,
+      "is_dual_credit": true,
+      "gpa_waiver": false,
+      "semesters_offered": null,
+      "notes": "Lake County Tech Campus \u2014 see techcampus.org for details.",
+      "is_summer": false
+    },
+    {
+      "code": "VOC711/VOC712",
+      "name": "Principles of Biomedical Science",
+      "division": "Applied Arts",
+      "department": "Lake County Tech Campus",
+      "description": "",
+      "credit_value": 1.0,
+      "duration": "full_year",
+      "grade_levels": [
+        11,
+        12
+      ],
+      "credit_type": "CP",
+      "prerequisites": null,
+      "prerequisite_codes": [],
+      "corequisites": null,
+      "is_ap": false,
+      "is_dual_credit": true,
+      "gpa_waiver": false,
+      "semesters_offered": null,
+      "notes": "Lake County Tech Campus \u2014 see techcampus.org for details.",
+      "is_summer": false
+    },
+    {
+      "code": "VOC871/VOC872",
+      "name": "Welding and Fabrication 1",
+      "division": "Applied Arts",
+      "department": "Lake County Tech Campus",
+      "description": "",
+      "credit_value": 1.0,
+      "duration": "full_year",
+      "grade_levels": [
+        11,
+        12
+      ],
+      "credit_type": "CP",
+      "prerequisites": null,
+      "prerequisite_codes": [],
+      "corequisites": null,
+      "is_ap": false,
+      "is_dual_credit": true,
+      "gpa_waiver": false,
+      "semesters_offered": null,
+      "notes": "Lake County Tech Campus \u2014 see techcampus.org for details.",
+      "is_summer": false
+    },
+    {
+      "code": "VOC891/VOC892",
+      "name": "Welding and Fabrication 2",
+      "division": "Applied Arts",
+      "department": "Lake County Tech Campus",
+      "description": "",
+      "credit_value": 1.0,
+      "duration": "full_year",
+      "grade_levels": [
+        11,
+        12
+      ],
+      "credit_type": "CP",
+      "prerequisites": null,
+      "prerequisite_codes": [],
+      "corequisites": null,
+      "is_ap": false,
+      "is_dual_credit": true,
+      "gpa_waiver": false,
+      "semesters_offered": null,
+      "notes": "Lake County Tech Campus \u2014 see techcampus.org for details.",
+      "is_summer": false
+    },
+    {
+      "code": "VOC911/VOC912",
+      "name": "Early Education and Teaching 1",
+      "division": "Applied Arts",
+      "department": "Lake County Tech Campus",
+      "description": "",
+      "credit_value": 1.0,
+      "duration": "full_year",
+      "grade_levels": [
+        11,
+        12
+      ],
+      "credit_type": "CP",
+      "prerequisites": null,
+      "prerequisite_codes": [],
+      "corequisites": null,
+      "is_ap": false,
+      "is_dual_credit": true,
+      "gpa_waiver": false,
+      "semesters_offered": null,
+      "notes": "Lake County Tech Campus \u2014 see techcampus.org for details.",
+      "is_summer": false
+    },
+    {
+      "code": "VOC931/VOC932",
+      "name": "Early Education and Teaching 2",
+      "division": "Applied Arts",
+      "department": "Lake County Tech Campus",
+      "description": "",
+      "credit_value": 1.0,
+      "duration": "full_year",
+      "grade_levels": [
+        11,
+        12
+      ],
+      "credit_type": "CP",
+      "prerequisites": null,
+      "prerequisite_codes": [],
+      "corequisites": null,
+      "is_ap": false,
+      "is_dual_credit": true,
+      "gpa_waiver": false,
+      "semesters_offered": null,
+      "notes": "Lake County Tech Campus \u2014 see techcampus.org for details.",
+      "is_summer": false
+    },
+    {
+      "code": "VOC951/VOC952",
+      "name": "Culinary Arts 1",
+      "division": "Applied Arts",
+      "department": "Lake County Tech Campus",
+      "description": "",
+      "credit_value": 1.0,
+      "duration": "full_year",
+      "grade_levels": [
+        11,
+        12
+      ],
+      "credit_type": "CP",
+      "prerequisites": null,
+      "prerequisite_codes": [],
+      "corequisites": null,
+      "is_ap": false,
+      "is_dual_credit": true,
+      "gpa_waiver": false,
+      "semesters_offered": null,
+      "notes": "Lake County Tech Campus \u2014 see techcampus.org for details.",
+      "is_summer": false
+    },
+    {
+      "code": "VOC971/VOC972",
+      "name": "Culinary Arts 2",
+      "division": "Applied Arts",
+      "department": "Lake County Tech Campus",
+      "description": "",
+      "credit_value": 1.0,
+      "duration": "full_year",
+      "grade_levels": [
+        11,
+        12
+      ],
+      "credit_type": "CP",
+      "prerequisites": null,
+      "prerequisite_codes": [],
+      "corequisites": null,
+      "is_ap": false,
+      "is_dual_credit": true,
+      "gpa_waiver": false,
+      "semesters_offered": null,
+      "notes": "Lake County Tech Campus \u2014 see techcampus.org for details.",
+      "is_summer": false
     },
     {
       "code": "D/E21S",
@@ -11171,5 +12211,6 @@
       "prerequisite_groups": [],
       "cost": "150"
     }
-  ]
+  ],
+  "total_courses": 391
 }

@@ -78,6 +78,10 @@ MANUAL_NAME_OVERRIDES: dict[str, str] = {
     "SCI65E2": "AP Chemistry Early Bird",
     "PED031": "Choice P.E. Early Bird",
     "PED032": "Choice P.E. Early Bird",
+    "CHI351": "Intermediate Mandarin Chinese Language Arts",
+    "CHI352": "Intermediate Mandarin Chinese Language Arts",
+    "SPA351": "Intermediate Spanish Language Arts",
+    "SPA352": "Intermediate Spanish Language Arts",
     "PED41L": "Alternative Physical Education Leadership",
     "PED42L": "Alternative Physical Education Leadership",
     "PED61L": "Physical Education Leadership",
@@ -117,13 +121,18 @@ MANUAL_NAME_OVERRIDES: dict[str, str] = {
 COURSE_CODE_RE = re.compile(r"\b([A-Z][A-Z/]{1,4}\d{2,4}[A-Z]?\d?)\b")
 
 # Matches a line containing "CODE–Semester N" patterns (one or two codes).
+# Allows an optional parenthetical between the code and the dash
+# (e.g. "PED031 (early bird)–Semester 1") and matches "Semester"/"Only"
+# case-insensitively (some sections use ALL-CAPS like "CHI351-SEMESTER 1").
 SEMESTER_LINE_RE = re.compile(
     r"([A-Z][A-Z/]{1,4}\d{2,4}[A-Z]?\d?)"
-    r"[\u2013\u2014\-–—]\s*Semester\s+[12]"
-    r"(?:\s+[Oo]nly)?"
+    r"(?:\s*\([^)]+\))?"
+    r"\s*[\u2013\u2014\-–—]\s*(?i:Semester)\s+[12]"
+    r"(?:\s+(?i:Only))?"
     r"(?:\s+([A-Z][A-Z/]{1,4}\d{2,4}[A-Z]?\d?)"
-    r"[\u2013\u2014\-–—]\s*Semester\s+[12]"
-    r"(?:\s+[Oo]nly)?)?"
+    r"(?:\s*\([^)]+\))?"
+    r"\s*[\u2013\u2014\-–—]\s*(?i:Semester)\s+[12]"
+    r"(?:\s+(?i:Only))?)?"
 )
 
 OPEN_TO_RE = re.compile(r"Open\s+to:\s*([\d\-–—]+)", re.IGNORECASE)
@@ -361,7 +370,73 @@ def extract_courses_from_pdf(
             seen_codes.add(code)
             courses.append(course)
 
+    # Lake County Tech Campus (VOC) courses use a different layout that the
+    # main parser doesn't recognize. Pull them from the dedicated section.
+    for course in extract_voc_courses(pdf_path, name_map):
+        if course["code"] in seen_codes:
+            continue
+        seen_codes.add(course["code"])
+        courses.append(course)
+
     return courses, warnings, heuristic_fallbacks
+
+
+# The Tech Campus list lives in the right column of its page; cropping
+# to that column gives us "<Name> VOC###/###" with reliable spacing.
+VOC_LINE_RE = re.compile(r"^(.+?)\s+VOC(\d{3})/(\d{3})\s*$", re.MULTILINE)
+
+
+def extract_voc_courses(pdf_path: str, name_map: dict[str, str]) -> list[dict]:
+    """Parse Lake County Tech Campus (VOC) courses from the dedicated section.
+
+    These courses appear in a compact "Name  VOC###/###" layout that the
+    standard semester-line parser doesn't see. Per the section preamble
+    (page 26 of the 2026-27 catalog), all VOC courses are full-year,
+    college-prep, junior/senior, with dual credit through the College of
+    Lake County. Descriptions live on techcampus.org and are left blank.
+    """
+    pdf = pdfplumber.open(pdf_path)
+    right_text = ""
+    for page in pdf.pages:
+        full_text = page.extract_text() or ""
+        if "TECHNOLOGY CAMPUS" in full_text.upper() and re.search(r"VOC\d{3}/\d{3}", full_text):
+            mid = page.width / 2
+            right_text = page.crop((mid - 5, 0, page.width, page.height)).extract_text() or ""
+            break
+    pdf.close()
+
+    if not right_text:
+        return []
+
+    courses: list[dict] = []
+    for match in VOC_LINE_RE.finditer(right_text):
+        raw_name = match.group(1).strip()
+        code1 = f"VOC{match.group(2)}"
+        code2 = f"VOC{match.group(3)}"
+
+        # Skip program-area headings if they accidentally match.
+        if raw_name.endswith("PROGRAMS"):
+            continue
+
+        courses.append(_build(
+            code=f"{code1}/{code2}",
+            name=raw_name,
+            division="Applied Arts",
+            department="Lake County Tech Campus",
+            description="",
+            credit_value=1.0,
+            duration="full_year",
+            grade_levels=[11, 12],
+            credit_type="CP",
+            prerequisites=None,
+            prerequisite_codes=[],
+            corequisites=None,
+            is_ap=False,
+            is_dual_credit=True,
+            notes="Lake County Tech Campus — see techcampus.org for details.",
+            semesters_offered=None,
+        ))
+    return courses
 
 
 def extract_courses_from_text(
@@ -547,7 +622,9 @@ def parse_course_entry(
     sem1_offered = False
     sem2_offered = False
     sem_matches = re.findall(
-        r"([A-Z][A-Z/]{1,4}\d{2,4}[A-Z]?\d?)[\u2013\u2014\-–—]\s*Semester\s+([12])(\s+[Oo]nly)?",
+        r"([A-Z][A-Z/]{1,4}\d{2,4}[A-Z]?\d?)"
+        r"(?:\s*\([^)]+\))?"
+        r"\s*[\u2013\u2014\-–—]\s*(?i:Semester)\s+([12])(\s+(?i:Only))?",
         code_line,
     )
     sem_by_code: dict[str, int] = {}

@@ -333,6 +333,105 @@ class TestKnownCourses:
 
 
 # ---------------------------------------------------------------------------
+# Regression: format-mismatch gaps fixed in this PR
+# ---------------------------------------------------------------------------
+
+class TestFormatMismatchGaps:
+    """Courses whose source format previously slipped past the extractor."""
+
+    def _find(self, courses, code):
+        return next((c for c in courses if c["code"] == code), None)
+
+    def test_choice_pe_early_bird_present(self, courses):
+        # Page 87 line: "PED031 (early bird)–Semester 1  PED032 (early bird)–Semester 2"
+        # The `(early bird)` annotation between code and dash used to break the regex.
+        for code in ("PED031", "PED032"):
+            assert self._find(courses, code) is not None, (
+                f"Choice P.E. Early Bird ({code}) missing — regex did not handle "
+                "the parenthetical annotation between code and dash"
+            )
+
+    def test_intermediate_mandarin_present(self, courses):
+        # Page 78 uses "CHI351-SEMESTER 1  CHI352-SEMESTER 2" (uppercase SEMESTER).
+        c = self._find(courses, "CHI351/CHI352")
+        assert c is not None, (
+            "Intermediate Mandarin (CHI351/CHI352) missing — regex was "
+            "case-sensitive on the literal 'Semester'"
+        )
+
+    def test_intermediate_spanish_present(self, courses):
+        # Same uppercase-SEMESTER format on page 80.
+        c = self._find(courses, "SPA351/SPA352")
+        assert c is not None, "Intermediate Spanish (SPA351/SPA352) missing"
+
+    def test_voc_courses_loaded(self, courses):
+        # Page 26 uses a compact "Name VOC###/###" format with no Semester keyword;
+        # a dedicated parser pulls them from the right column of that page.
+        voc = [c for c in courses if c["code"].startswith("VOC")]
+        assert len(voc) >= 25, (
+            f"Expected ~26 Lake County Tech Campus (VOC) course pairs, got {len(voc)}"
+        )
+
+    def test_voc_courses_have_section_defaults(self, courses):
+        for course in courses:
+            if not course["code"].startswith("VOC"):
+                continue
+            assert course["division"] == "Applied Arts"
+            assert course["department"] == "Lake County Tech Campus"
+            assert course["duration"] == "full_year"
+            assert course["credit_type"] == "CP"
+            assert course["grade_levels"] == [11, 12]
+            assert course["is_dual_credit"] is True
+
+    def test_voc_specific_course_present(self, courses):
+        c = self._find(courses, "VOC591/VOC592")
+        assert c is not None, "Cosmetology 1 (VOC591/VOC592) missing"
+        assert "cosmetology" in c["name"].lower()
+
+
+# ---------------------------------------------------------------------------
+# Regex unit tests for SEMESTER_LINE_RE
+# ---------------------------------------------------------------------------
+
+class TestSemesterLineRegex:
+    """Direct regex coverage so future edits don't regress these fixes."""
+
+    @pytest.fixture(scope="module")
+    def regex(self):
+        from extract import SEMESTER_LINE_RE
+        return SEMESTER_LINE_RE
+
+    def test_matches_standard_two_code_line(self, regex):
+        m = regex.search("BUS411–Semester 1 BUS412–Semester 2")
+        assert m is not None
+        assert m.group(1) == "BUS411"
+        assert m.group(2) == "BUS412"
+
+    def test_matches_uppercase_semester(self, regex):
+        # CHI/SPA Intermediate sections use ALL-CAPS "SEMESTER".
+        m = regex.search("CHI351-SEMESTER 1 CHI352-SEMESTER 2")
+        assert m is not None
+        assert m.group(1) == "CHI351"
+        assert m.group(2) == "CHI352"
+
+    def test_matches_parenthetical_annotation(self, regex):
+        # PED031 line has "(early bird)" between the code and the dash.
+        m = regex.search("PED031 (early bird)–Semester 1 PED032 (early bird)–Semester 2")
+        assert m is not None
+        assert m.group(1) == "PED031"
+        assert m.group(2) == "PED032"
+
+    def test_matches_only_suffix(self, regex):
+        m = regex.search("BUS252–Semester 2 Only")
+        assert m is not None
+        assert m.group(1) == "BUS252"
+
+    def test_matches_uppercase_only_suffix(self, regex):
+        m = regex.search("PED501–SEMESTER 1 ONLY")
+        assert m is not None
+
+
+# ---------------------------------------------------------------------------
 # Summer course tests
 # ---------------------------------------------------------------------------
 

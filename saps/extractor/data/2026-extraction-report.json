@@ -1,21 +1,21 @@
 {
   "catalog_year": 2026,
-  "extracted_at": "2026-03-23T01:40:43.176743+00:00",
+  "extracted_at": "2026-05-04T22:19:06.391337+00:00",
   "pdf_path": "/Users/arun/nithya/Krishna/course-extractor/data/Coursebook2026-27INTERACTIVE012826.pdf",
-  "total_courses": 315,
+  "total_courses": 345,
   "validation_passed": true,
   "validation_errors": [],
   "warnings": [],
   "unresolved_prerequisite_references": [],
   "stats": {
     "by_division": {
-      "Applied Arts": 44,
+      "Applied Arts": 70,
       "Communication Arts": 32,
       "Computer Science, Engineering and Technology": 34,
       "Fine Arts": 80,
       "Mathematics": 16,
-      "Multilingual Learning": 37,
-      "Physical Welfare": 16,
+      "Multilingual Learning": 39,
+      "Physical Welfare": 18,
       "Science": 18,
       "Social Studies": 38
     },
@@ -32,25 +32,26 @@
       "German": 4,
       "Hebrew": 4,
       "Journalism": 7,
+      "Lake County Tech Campus": 26,
       "Latin": 4,
-      "Mandarin Chinese": 6,
+      "Mandarin Chinese": 7,
       "Mathematics": 16,
       "Music": 22,
-      "Physical Education": 16,
+      "Physical Education": 18,
       "Science": 18,
       "Social Studies": 38,
-      "Spanish": 9,
+      "Spanish": 10,
       "Theatre": 14,
       "Visual Arts": 34
     },
     "by_credit_type": {
       "AP": 45,
-      "Accelerated": 32,
-      "CP": 217,
+      "Accelerated": 34,
+      "CP": 245,
       "Honors": 21
     },
     "ap_courses": 45,
-    "dual_credit_courses": 33
+    "dual_credit_courses": 60
   },
   "heuristic_fallback_courses": []
 }

@@ -663,7 +663,7 @@ The dashboard uses a 3-row, 2-column grid layout:
 | F-CB-05 | "Add to plan" button on course detail — opens plan selector if student has multiple plans. | Must |
 | F-CB-06 | Filter by department within a selected division. Department dropdown appears only when a division with multiple departments is selected. | Must |
 | F-CB-07 | Filter by GPA waiver status (checkbox: "GPA waiver available"). | Should |
-| F-CB-08 | GPA waiver badge displayed on course cards and course detail view for courses where GPA waiver is available (159 of 315 courses). | Must |
+| F-CB-08 | GPA waiver badge displayed on course cards and course detail view for courses where GPA waiver is available (159 of 345 courses). | Must |
 | F-CB-09 | Course cards displayed in a 2-column responsive grid (single column on mobile, 2 columns on md+ screens). Fixed card height (140px) with truncated names and 1-line description for consistent layout. | Must |
 | F-CB-10 | Cursor-based pagination with Previous/Next controls, page counter, and "Showing X–Y of Z courses" info. Total count returned from API. | Must |
 | F-CB-11 | Semester Offered radio filter: All, Sem 1, Sem 2, Sem 1 & 2, Full Year. "Sem 1"/"Sem 2" filters to courses exclusively offered in that semester (excludes courses with a same-name partner in the other semester). "Sem 1 & 2" filters to semester courses where a same-name partner exists in the other semester. | Must |

@@ -15,6 +15,23 @@ if (
   );
 }
 
+// Guard: PostHog init in lib/analytics/posthog.ts gates on
+// NEXT_PUBLIC_VERCEL_ENV === "production". Vercel's "Automatically expose
+// System Environment Variables" mirrors VERCEL_ENV → NEXT_PUBLIC_VERCEL_ENV;
+// if that toggle gets disabled, prod telemetry silently goes dark. Fail the
+// build loudly instead.
+if (
+  process.env.VERCEL_ENV === "production" &&
+  process.env.NEXT_PUBLIC_VERCEL_ENV !== "production"
+) {
+  throw new Error(
+    "VERCEL_ENV=production but NEXT_PUBLIC_VERCEL_ENV is not. PostHog init " +
+      "gates on the public var and would silently skip event capture. Re-enable " +
+      "'Automatically expose System Environment Variables' in the Vercel " +
+      "project settings.",
+  );
+}
+
 const isDev = process.env.NODE_ENV === "development";
 
 // In E2E we run a production build pointed at the local Supabase emulator

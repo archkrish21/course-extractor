@@ -7,7 +7,8 @@ export function initPostHog() {
     typeof window === "undefined" ||
     initialized ||
     !process.env.NEXT_PUBLIC_POSTHOG_KEY ||
-    process.env.NEXT_PUBLIC_E2E_DISABLE_TELEMETRY
+    process.env.NEXT_PUBLIC_E2E_DISABLE_TELEMETRY ||
+    process.env.NEXT_PUBLIC_VERCEL_ENV !== "production"
   ) {
     return;
   }

@@ -1,11 +1,12 @@
 "use client";
 
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useMemo, useRef, useCallback } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { creditTypeBadgeVariant, creditTypeLabel } from "@/lib/badge-utils";
 import { Spinner } from "@/components/ui/spinner";
+import { useDivisions } from "@/lib/hooks/use-divisions";
 import { findEquivalentInPlan } from "@/config/summer-equivalents";
 import { isSummerSemester } from "@/config/semesters";
 import { isRepeatableCourse } from "@/config/grade-scale";
@@ -62,31 +63,6 @@ const CREDIT_TYPES = [
   "Dual Credit",
 ];
 
-const DIVISIONS = [
-  "All Divisions",
-  "Applied Arts",
-  "Communication Arts",
-  "Computer Science, Engineering and Technology",
-  "Fine Arts",
-  "Mathematics",
-  "Multilingual Learning",
-  "Physical Welfare",
-  "Science",
-  "Social Studies",
-];
-
-const DEPARTMENTS_BY_DIVISION: Record<string, string[]> = {
-  "Applied Arts": ["Business Education", "Driver Education", "Family and Consumer Sciences"],
-  "Communication Arts": ["English", "Journalism"],
-  "Computer Science, Engineering and Technology": ["Computer Science", "Engineering and Technology"],
-  "Fine Arts": ["Dance", "Music", "Theatre", "Visual Arts"],
-  "Mathematics": ["Mathematics"],
-  "Multilingual Learning": ["English Language Development", "French", "German", "Hebrew", "Latin", "Mandarin Chinese", "Spanish"],
-  "Physical Welfare": ["Physical Education"],
-  "Science": ["Science"],
-  "Social Studies": ["Social Studies"],
-};
-
 const EMPTY_STRING_SET = new Set<string>();
 
 export function CoursePicker({
@@ -117,9 +93,18 @@ export function CoursePicker({
   const [currentPage, setCurrentPage] = useState(1);
   const COURSES_PER_PAGE = 4;
 
-  const availableDepartments = divisionFilter !== "All Divisions"
-    ? DEPARTMENTS_BY_DIVISION[divisionFilter] ?? []
-    : [];
+  // Division/department options come from the catalog (live), so newly added
+  // departments like "Lake County Tech Campus" appear without a code change.
+  const { divisions: divisionData } = useDivisions();
+  const divisionOptions = useMemo(
+    () => ["All Divisions", ...divisionData.map((d) => d.name)],
+    [divisionData],
+  );
+  const availableDepartments = useMemo(() => {
+    if (divisionFilter === "All Divisions") return [];
+    const div = divisionData.find((d) => d.name === divisionFilter);
+    return div ? div.departments.map((d) => d.name) : [];
+  }, [divisionFilter, divisionData]);
   const [loading, setLoading] = useState(false);
   const [addingCourseId, setAddingCourseId] = useState<string | null>(null);
   const [justAdded, setJustAdded] = useState<string | null>(null);
@@ -517,7 +502,7 @@ export function CoursePicker({
               aria-label="Filter by division"
               className="h-9 min-h-[44px] flex-1 rounded-lg border border-border bg-background px-2 text-xs text-foreground focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
             >
-              {DIVISIONS.map((d) => (
+              {divisionOptions.map((d) => (
                 <option key={d} value={d}>{d}</option>
               ))}
             </select>

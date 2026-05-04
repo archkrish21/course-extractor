@@ -8,6 +8,7 @@ import { CourseDetail } from "@/components/course-detail";
 import { creditTypeBadgeVariant, creditTypeLabel } from "@/lib/badge-utils";
 import { apiFetch } from "@/lib/api-client";
 import { useTour } from "@/lib/hooks/use-tour";
+import { useDivisions } from "@/lib/hooks/use-divisions";
 import { TOUR_IDS, getCoursesTourSteps } from "@/config/tours";
 import { TourInvite } from "@/components/tour-invite";
 
@@ -39,31 +40,6 @@ interface CoursesResponse {
   };
 }
 
-const DIVISIONS = [
-  "All Divisions",
-  "Applied Arts",
-  "Communication Arts",
-  "Computer Science, Engineering and Technology",
-  "Fine Arts",
-  "Mathematics",
-  "Multilingual Learning",
-  "Physical Welfare",
-  "Science",
-  "Social Studies",
-];
-
-const DEPARTMENTS_BY_DIVISION: Record<string, string[]> = {
-  "Applied Arts": ["Business Education", "Driver Education", "Family and Consumer Sciences"],
-  "Communication Arts": ["English", "Journalism"],
-  "Computer Science, Engineering and Technology": ["Computer Science", "Engineering and Technology"],
-  "Fine Arts": ["Dance", "Music", "Theatre", "Visual Arts"],
-  "Mathematics": ["Mathematics"],
-  "Multilingual Learning": ["English Language Development", "French", "German", "Hebrew", "Latin", "Mandarin Chinese", "Spanish"],
-  "Physical Welfare": ["Physical Education"],
-  "Science": ["Science"],
-  "Social Studies": ["Social Studies"],
-};
-
 const CREDIT_TYPES = ["CP", "Accelerated", "Honors", "AP"] as const;
 const GRADE_LEVELS = [9, 10, 11, 12];
 
@@ -89,10 +65,19 @@ export default function CourseBrowserPage() {
   const [gpaWaiverOnly, setGpaWaiverOnly] = useState(false);
   const [semesterFilter, setSemesterFilter] = useState<string>("all"); // "all" | "sem1" | "sem2" | "full_year"
 
-  // Available departments for the selected division
-  const availableDepartments = division !== "All Divisions"
-    ? DEPARTMENTS_BY_DIVISION[division] ?? []
-    : [];
+  // Division and department options come from the catalog (live), so newly
+  // added departments like "Lake County Tech Campus" appear without a code
+  // change. The "All Divisions" sentinel is prepended for the dropdown.
+  const { divisions: divisionData } = useDivisions();
+  const divisionOptions = useMemo(
+    () => ["All Divisions", ...divisionData.map((d) => d.name)],
+    [divisionData],
+  );
+  const availableDepartments = useMemo(() => {
+    if (division === "All Divisions") return [];
+    const div = divisionData.find((d) => d.name === division);
+    return div ? div.departments.map((d) => d.name) : [];
+  }, [division, divisionData]);
 
   // Mobile filter panel
   const [filtersOpen, setFiltersOpen] = useState(false);
@@ -296,7 +281,7 @@ export default function CourseBrowserPage() {
           }}
           className="h-11 min-h-[44px] w-full rounded-lg border border-border bg-background px-3 text-sm text-foreground focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
         >
-          {DIVISIONS.map((d) => (
+          {divisionOptions.map((d) => (
             <option key={d} value={d}>
               {d}
             </option>

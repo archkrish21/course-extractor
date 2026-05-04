@@ -49,6 +49,8 @@
   --color-success-light: #E3F0E8;
   --color-warning: #864C31;
   --color-warning-light: #FBEFE6;
+  --color-info: #2563EB;
+  --color-info-light: #DBEAFE;
 
   /* Course-type colors — planner/app-shell only, out of scope for rebrand */
   --color-ap: #7c3aed;
@@ -143,6 +145,8 @@
     --color-success-light: #203314;
     --color-warning: #C79C4E;
     --color-warning-light: #301A1E;
+    --color-info: #60A5FA;
+    --color-info-light: #1E3A5F;
 
     --color-ap: #A78BFA;
     --color-ap-light: #2E1065;

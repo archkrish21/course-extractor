@@ -43,6 +43,7 @@ describe("Badge", () => {
       { name: "dual-credit" as const, bgClass: "bg-dual-credit-light", textClass: "text-dual-credit" },
       { name: "accelerated" as const, bgClass: "bg-accelerated-light", textClass: "text-accelerated" },
       { name: "success" as const, bgClass: "bg-success-light", textClass: "text-success" },
+      { name: "info" as const, bgClass: "bg-info-light", textClass: "text-info" },
       { name: "warning" as const, bgClass: "bg-warning-light", textClass: "text-warning" },
       { name: "destructive" as const, bgClass: "bg-destructive-light", textClass: "text-destructive" },
     ];

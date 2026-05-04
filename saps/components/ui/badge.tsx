@@ -7,6 +7,7 @@ type BadgeVariant =
   | "dual-credit"
   | "accelerated"
   | "success"
+  | "info"
   | "warning"
   | "destructive";
 
@@ -21,6 +22,7 @@ const variantClasses: Record<BadgeVariant, string> = {
   "dual-credit": "bg-dual-credit-light text-dual-credit",
   accelerated: "bg-accelerated-light text-accelerated",
   success: "bg-success-light text-success",
+  info: "bg-info-light text-info",
   warning: "bg-warning-light text-warning",
   destructive: "bg-destructive-light text-destructive",
 };

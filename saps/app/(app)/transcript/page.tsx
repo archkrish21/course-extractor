@@ -9,6 +9,7 @@ import { creditTypeBadgeVariant, creditTypeLabel } from "@/lib/badge-utils";
 import { useAccount } from "@/lib/account-context";
 import { apiFetch } from "@/lib/api-client";
 import { calculateGPA, formatGPA } from "@/lib/gpa/calc";
+import { gradeToneTextColor } from "@/lib/grade-tone";
 import { UNOFFICIAL_DISCLAIMER } from "@/config/disclaimers";
 import { canPrint } from "@/lib/subscription/can-print";
 import { PrintWatermark } from "@/components/print-watermark";
@@ -498,7 +499,7 @@ export default function GradesPage() {
                               {/* Mobile: grade + credits inline */}
                               <div className="flex items-center gap-4 sm:hidden">
                                 <span className="text-xs text-muted-foreground">Grade:</span>
-                                <span className={`text-sm font-bold ${course.plannedGrade ? "text-success" : "text-muted-foreground"}`}>
+                                <span className={`text-sm font-bold ${gradeToneTextColor(course.plannedGrade)}`}>
                                   {course.plannedGrade ?? "\u2014"}
                                 </span>
                                 <span className="text-xs text-muted-foreground ml-auto">Credits:</span>
@@ -508,7 +509,7 @@ export default function GradesPage() {
                               </div>
                               {/* Desktop: Grade column */}
                               <div className="hidden sm:flex sm:justify-center">
-                                <span className={`text-sm font-bold ${course.plannedGrade ? "text-success" : "text-muted-foreground"}`}>
+                                <span className={`text-sm font-bold ${gradeToneTextColor(course.plannedGrade)}`}>
                                   {course.plannedGrade ?? "\u2014"}
                                 </span>
                               </div>

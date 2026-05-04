@@ -62,6 +62,20 @@ export function isPassFailCourse(code: string, creditType?: string): boolean {
   return false;
 }
 
+/**
+ * Determine if a course can be taken in multiple semesters/grades within the same plan.
+ *
+ * Stevenson's PE requirement is 3.5 credits earned across all four years, so
+ * regular P/F PE courses (e.g. CHOICE P.E. PED452) are taken every semester and
+ * must be selectable in multiple slots. The single-take PED exceptions
+ * (Health PED201/202, Applied Health PED231/232, Lifeguard PED501, Leadership
+ * PED###L) are letter-graded and therefore correctly excluded by the
+ * `isPassFailCourse` check.
+ */
+export function isRepeatableCourse(code: string, creditType?: string): boolean {
+  return code.startsWith("PED") && isPassFailCourse(code, creditType);
+}
+
 /** Grade type for TypeScript */
 export type Grade = (typeof ALL_GRADES)[number];
 export type GpaGrade = (typeof GPA_GRADES)[number];

@@ -7,6 +7,7 @@ import {
 } from "@/lib/db/schema";
 import { eq, and, sql, inArray } from "drizzle-orm";
 import { findEquivalentInPlan } from "@/config/summer-equivalents";
+import { isRepeatableCourse } from "@/config/grade-scale";
 
 // ─── Types ─────────────────────────────────────────────────────────────────
 
@@ -142,6 +143,7 @@ export async function validateCourseAddition(
       code: courses.code,
       name: courses.name,
       duration: courses.duration,
+      creditType: courses.creditType,
       gradeLevels: courses.gradeLevels,
       semestersOffered: courses.semestersOffered,
       catalogVersionId: courses.catalogVersionId,
@@ -189,11 +191,13 @@ export async function validateCourseAddition(
 
   // 3. Check duplicate: same course in the plan
   // For full-year courses: allow same courseId at same grade in different semesters (expected pattern)
+  // Repeatable PE courses (e.g. CHOICE P.E.) count toward the 3.5-credit PE
+  // requirement each semester they're taken, so they're allowed in multiple
+  // slots — but never twice in the exact same grade+semester.
   // Block: same courseId at a different grade, or same courseId+grade+semester
+  const repeatable = isRepeatableCourse(targetCourse.code, targetCourse.creditType);
   const duplicates = existingPlanCourses.filter(
-    (pc) =>
-      pc.courseId === courseId &&
-      pc.status !== "dropped"
+    (pc) => pc.courseId === courseId && pc.status !== "dropped"
   );
   for (const dup of duplicates) {
     const isSameGradeDiffSemester =
@@ -203,6 +207,14 @@ export async function validateCourseAddition(
 
     if (isSameGradeDiffSemester) {
       // This is expected for full-year courses (sem 1 + sem 2 at same grade) — not a duplicate
+      continue;
+    }
+
+    // Repeatable courses: only block exact same grade+semester; allow re-add in any other slot.
+    if (
+      repeatable &&
+      !(dup.gradeLevel === gradeLevel && dup.semester === semester)
+    ) {
       continue;
     }
 

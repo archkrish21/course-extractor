@@ -20,6 +20,7 @@ import {
   unlockGrade,
   validatePlan,
   bulkOverridePrereqs,
+  findCourseByCode,
   type Course,
   type Plan,
 } from "../helpers/api-client";
@@ -135,6 +136,38 @@ test.describe("Course mutations", () => {
       forceAdd: true,
     });
     expect([409, 422, 400]).toContain(second.status());
+  });
+
+  test("repeatable PE course can be added to multiple grade/semester slots", async ({ request }) => {
+    // PED452 (CHOICE P.E.) counts toward Stevenson's 3.5-credit PE requirement
+    // each semester taken — students take a PE course every semester.
+    const choicePe = await findCourseByCode(request, "PED452");
+    expect(choicePe, "catalog missing PED452 — re-run db:seed").toBeTruthy();
+
+    // Same course, three different slots — all should succeed.
+    const slots = [
+      { gradeLevel: 11, semester: 1 },
+      { gradeLevel: 11, semester: 2 },
+      { gradeLevel: 12, semester: 1 },
+    ] as const;
+    for (const slot of slots) {
+      const res = await addCourseToPlan(request, scratchPlan.id, {
+        courseId: choicePe!.id,
+        gradeLevel: slot.gradeLevel,
+        semester: slot.semester,
+        forceAdd: true,
+      });
+      expect(res.status(), `add PED452 to G${slot.gradeLevel}S${slot.semester}`).toBe(201);
+    }
+
+    // …but adding it to the *same* slot still 409s — exact-slot dupes are blocked.
+    const dup = await addCourseToPlan(request, scratchPlan.id, {
+      courseId: choicePe!.id,
+      gradeLevel: 11,
+      semester: 1,
+      forceAdd: true,
+    });
+    expect([409, 422, 400]).toContain(dup.status());
   });
 
   test("updating a course's status persists", async ({ request }) => {

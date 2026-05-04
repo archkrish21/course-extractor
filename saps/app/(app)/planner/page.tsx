@@ -2785,6 +2785,18 @@ export default function PlannerPage() {
         const existingIds = new Set(activeCourses.map((c) => c.courseId));
         const existingNames = new Set(activeCourses.map((c) => c.name));
         const existingCodes = activeCourses.map((c) => c.code);
+        // Course IDs already occupying the slot the picker is opening — used
+        // to keep repeatable courses (PE) from being re-offered into a slot
+        // they already occupy.
+        const currentSlotIds = new Set(
+          activeCourses
+            .filter(
+              (c) =>
+                c.gradeLevel === pickerTarget.gradeLevel &&
+                (c.semester === pickerTarget.semester || c.semester === null)
+            )
+            .map((c) => c.courseId)
+        );
 
         return (
           <CoursePicker
@@ -2797,6 +2809,7 @@ export default function PlannerPage() {
             existingCourseIds={existingIds}
             existingCourseNames={existingNames}
             existingCourseCodes={existingCodes}
+            currentSlotCourseIds={currentSlotIds}
             onAddCourse={handlePickerAddCourse}
             onViewDetails={(courseId) => setDetailCourseId(courseId)}
             lastViewedCourseId={lastViewedCourseId}

@@ -1,7 +1,7 @@
 {
   "catalog_year": 2026,
   "school": "Adlai E. Stevenson High School",
-  "extracted_at": "2026-05-05T02:55:49.397474+00:00",
+  "extracted_at": "2026-05-05T03:16:12.863441+00:00",
   "total_courses": 391,
   "courses": [
     {
@@ -635,13 +635,7 @@
         "ART401",
         "ART402",
         "ART411",
-        "ART412",
-        "FCS251",
-        "FCS252",
-        "ART501",
-        "ART502",
-        "ART531",
-        "ART532"
+        "ART412"
       ],
       "corequisites": null,
       "is_ap": false,
@@ -664,30 +658,6 @@
           "codes": [
             "ART411",
             "ART412"
-          ]
-        },
-        {
-          "group": 3,
-          "type": "or",
-          "codes": [
-            "FCS251",
-            "FCS252"
-          ]
-        },
-        {
-          "group": 4,
-          "type": "or",
-          "codes": [
-            "ART501",
-            "ART502"
-          ]
-        },
-        {
-          "group": 5,
-          "type": "or",
-          "codes": [
-            "ART531",
-            "ART532"
           ]
         }
       ]
@@ -760,12 +730,7 @@
       ],
       "credit_type": "CP",
       "prerequisites": "Digital Art and Design 1",
-      "prerequisite_codes": [
-        "ART501",
-        "ART502",
-        "FCS251",
-        "FCS252"
-      ],
+      "prerequisite_codes": [],
       "corequisites": null,
       "is_ap": false,
       "is_dual_credit": false,
@@ -774,24 +739,7 @@
         1
       ],
       "notes": "GPA waiver option available",
-      "prerequisite_groups": [
-        {
-          "group": 1,
-          "type": "or",
-          "codes": [
-            "ART501",
-            "ART502"
-          ]
-        },
-        {
-          "group": 2,
-          "type": "or",
-          "codes": [
-            "FCS251",
-            "FCS252"
-          ]
-        }
-      ]
+      "prerequisite_groups": []
     },
     {
       "code": "ART512",
@@ -809,12 +757,7 @@
       ],
       "credit_type": "CP",
       "prerequisites": "Digital Art and Design 1",
-      "prerequisite_codes": [
-        "ART501",
-        "ART502",
-        "FCS251",
-        "FCS252"
-      ],
+      "prerequisite_codes": [],
       "corequisites": null,
       "is_ap": false,
       "is_dual_credit": false,
@@ -823,24 +766,7 @@
         2
       ],
       "notes": "GPA waiver option available",
-      "prerequisite_groups": [
-        {
-          "group": 1,
-          "type": "or",
-          "codes": [
-            "ART501",
-            "ART502"
-          ]
-        },
-        {
-          "group": 2,
-          "type": "or",
-          "codes": [
-            "FCS251",
-            "FCS252"
-          ]
-        }
-      ]
+      "prerequisite_groups": []
     },
     {
       "code": "ART51S",
@@ -912,12 +838,7 @@
       ],
       "credit_type": "CP",
       "prerequisites": "Digital Art and Design 1",
-      "prerequisite_codes": [
-        "ART501",
-        "ART502",
-        "FCS251",
-        "FCS252"
-      ],
+      "prerequisite_codes": [],
       "corequisites": null,
       "is_ap": false,
       "is_dual_credit": false,
@@ -926,24 +847,7 @@
         1
       ],
       "notes": "GPA waiver option available",
-      "prerequisite_groups": [
-        {
-          "group": 1,
-          "type": "or",
-          "codes": [
-            "ART501",
-            "ART502"
-          ]
-        },
-        {
-          "group": 2,
-          "type": "or",
-          "codes": [
-            "FCS251",
-            "FCS252"
-          ]
-        }
-      ]
+      "prerequisite_groups": []
     },
     {
       "code": "ART532",
@@ -961,12 +865,7 @@
       ],
       "credit_type": "CP",
       "prerequisites": "Digital Art and Design 1",
-      "prerequisite_codes": [
-        "ART501",
-        "ART502",
-        "FCS251",
-        "FCS252"
-      ],
+      "prerequisite_codes": [],
       "corequisites": null,
       "is_ap": false,
       "is_dual_credit": false,
@@ -975,24 +874,7 @@
         2
       ],
       "notes": "GPA waiver option available",
-      "prerequisite_groups": [
-        {
-          "group": 1,
-          "type": "or",
-          "codes": [
-            "ART501",
-            "ART502"
-          ]
-        },
-        {
-          "group": 2,
-          "type": "or",
-          "codes": [
-            "FCS251",
-            "FCS252"
-          ]
-        }
-      ]
+      "prerequisite_groups": []
     },
     {
       "code": "ART541",
@@ -1324,10 +1206,14 @@
       "credit_type": "AP",
       "prerequisites": "Advanced Drawing, Painting and MIXED MEDIA or Advanced CERAMICS, METALS AND SCULPTURE",
       "prerequisite_codes": [
+        "ART621",
+        "ART622",
         "ART261",
         "ART262",
         "ART611",
         "ART612",
+        "ART631",
+        "ART632",
         "ART281",
         "ART282"
       ],
@@ -1342,10 +1228,14 @@
           "group": 1,
           "type": "or",
           "codes": [
+            "ART621",
+            "ART622",
             "ART261",
             "ART262",
             "ART611",
             "ART612",
+            "ART631",
+            "ART632",
             "ART281",
             "ART282"
           ]
@@ -4470,10 +4360,7 @@
       ],
       "credit_type": "CP",
       "prerequisites": "Clothing and Design 1",
-      "prerequisite_codes": [
-        "FCS251",
-        "FCS252"
-      ],
+      "prerequisite_codes": [],
       "corequisites": null,
       "is_ap": false,
       "is_dual_credit": true,
@@ -4482,16 +4369,7 @@
         1
       ],
       "notes": "GPA waiver option available; Dual credit available with HARPER COLLEGE",
-      "prerequisite_groups": [
-        {
-          "group": 1,
-          "type": "or",
-          "codes": [
-            "FCS251",
-            "FCS252"
-          ]
-        }
-      ]
+      "prerequisite_groups": []
     },
     {
       "code": "FCS292",
@@ -4509,10 +4387,7 @@
       ],
       "credit_type": "CP",
       "prerequisites": "Clothing and Design 1",
-      "prerequisite_codes": [
-        "FCS251",
-        "FCS252"
-      ],
+      "prerequisite_codes": [],
       "corequisites": null,
       "is_ap": false,
       "is_dual_credit": true,
@@ -4521,16 +4396,7 @@
         2
       ],
       "notes": "GPA waiver option available; Dual credit available with HARPER COLLEGE",
-      "prerequisite_groups": [
-        {
-          "group": 1,
-          "type": "or",
-          "codes": [
-            "FCS251",
-            "FCS252"
-          ]
-        }
-      ]
+      "prerequisite_groups": []
     },
     {
       "code": "FCS311",
@@ -7202,24 +7068,14 @@
       ],
       "credit_type": "CP",
       "prerequisites": "Admission based on written application submitted to and approved by the Alternative Physical Education Coordinator during Sophomore year. (Applications are available on the Physical Welfare webpage.) The Alternative Physical Education leadership program is a two-year commitment.",
-      "prerequisite_codes": [
-        "PED61L/PED62L"
-      ],
+      "prerequisite_codes": [],
       "corequisites": null,
       "is_ap": false,
       "is_dual_credit": false,
       "gpa_waiver": true,
       "semesters_offered": null,
       "notes": "GPA waiver option available",
-      "prerequisite_groups": [
-        {
-          "group": 1,
-          "type": "or",
-          "codes": [
-            "PED61L/PED62L"
-          ]
-        }
-      ]
+      "prerequisite_groups": []
     },
     {
       "code": "PED451",
@@ -10046,8 +9902,8 @@
       "credit_type": "CP",
       "prerequisites": "Game Development 1 (TEC501 or TEC502)",
       "prerequisite_codes": [
-        "TEC502",
-        "TEC501"
+        "TEC501",
+        "TEC502"
       ],
       "corequisites": null,
       "is_ap": false,
@@ -10062,8 +9918,8 @@
           "group": 1,
           "type": "or",
           "codes": [
-            "TEC502",
-            "TEC501"
+            "TEC501",
+            "TEC502"
           ]
         }
       ]
@@ -10085,8 +9941,8 @@
       "credit_type": "CP",
       "prerequisites": "Game Development 1 (TEC501 or TEC502)",
       "prerequisite_codes": [
-        "TEC502",
-        "TEC501"
+        "TEC501",
+        "TEC502"
       ],
       "corequisites": null,
       "is_ap": false,
@@ -10101,8 +9957,8 @@
           "group": 1,
           "type": "or",
           "codes": [
-            "TEC502",
-            "TEC501"
+            "TEC501",
+            "TEC502"
           ]
         }
       ]
@@ -10238,7 +10094,6 @@
       "prerequisites": "introduction to Engineering Design–PLTW OR Engineering Design or Architectural Design",
       "prerequisite_codes": [
         "TEC151/TEC152",
-        "TEC401/TEC402",
         "TEC141/TEC142"
       ],
       "corequisites": null,
@@ -10253,7 +10108,6 @@
           "type": "or",
           "codes": [
             "TEC151/TEC152",
-            "TEC401/TEC402",
             "TEC141/TEC142"
           ]
         }
@@ -10353,8 +10207,7 @@
       "credit_type": "Honors",
       "prerequisites": "Introduction to Engineering Design–PLTW or Engineering Design",
       "prerequisite_codes": [
-        "TEC151/TEC152",
-        "TEC401/TEC402"
+        "TEC151/TEC152"
       ],
       "corequisites": null,
       "is_ap": false,
@@ -10367,8 +10220,7 @@
           "group": 1,
           "type": "or",
           "codes": [
-            "TEC151/TEC152",
-            "TEC401/TEC402"
+            "TEC151/TEC152"
           ]
         }
       ]
@@ -10389,8 +10241,7 @@
       "credit_type": "Honors",
       "prerequisites": "introduction to Engineering Design–PLTW OR Engineering Design",
       "prerequisite_codes": [
-        "TEC151/TEC152",
-        "TEC401/TEC402"
+        "TEC151/TEC152"
       ],
       "corequisites": null,
       "is_ap": false,
@@ -10403,8 +10254,7 @@
           "group": 1,
           "type": "or",
           "codes": [
-            "TEC151/TEC152",
-            "TEC401/TEC402"
+            "TEC151/TEC152"
           ]
         }
       ]
@@ -10425,8 +10275,7 @@
       "credit_type": "Honors",
       "prerequisites": "introduction to Engineering Design–PLTW OR Engineering Design",
       "prerequisite_codes": [
-        "TEC151/TEC152",
-        "TEC401/TEC402"
+        "TEC151/TEC152"
       ],
       "corequisites": null,
       "is_ap": false,
@@ -10439,8 +10288,7 @@
           "group": 1,
           "type": "or",
           "codes": [
-            "TEC151/TEC152",
-            "TEC401/TEC402"
+            "TEC151/TEC152"
           ]
         }
       ]

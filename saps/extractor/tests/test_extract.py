@@ -924,6 +924,49 @@ def summer_courses(summer_data):
     return summer_data["courses"]
 
 
+class TestSummerDescriptionsAreVerbatim:
+    """Regression for issue #147: summer descriptions must reflect the
+    full PDF text, not 1-2 sentence hand-summaries."""
+
+    @pytest.fixture(scope="module")
+    def by_code(self, summer_courses):
+        return {c["code"]: c for c in summer_courses}
+
+    def test_audited_descriptions_meet_min_length(self, by_code):
+        # The audit specifically called out CAR53S and ACTPREPS as
+        # 2-3x shorter than the source PDF. The verbatim versions are
+        # comfortably above 350 characters.
+        for code, min_len in [
+            ("CAR53S", 350),
+            ("ACTPREPS", 350),
+            ("BUS71S", 400),
+            ("MTH15S/MTH16S", 700),
+            ("D/E21S", 800),
+        ]:
+            c = by_code.get(code)
+            assert c is not None, f"{code} missing from summer JSON"
+            assert len(c["description"]) >= min_len, (
+                f"{code} description is {len(c['description'])} chars, "
+                f"expected ≥{min_len} (verbatim PDF text)"
+            )
+
+    def test_car53s_has_marketplace_phrase(self, by_code):
+        # PDF: "Business careers continue to be among the most in-demand,
+        # diverse and highest paying jobs in today's marketplace."
+        c = by_code.get("CAR53S")
+        assert c is not None
+        assert "in-demand" in c["description"]
+        assert "marketplace" in c["description"]
+
+    def test_actpreps_has_test_taking_strategies(self, by_code):
+        # PDF mentions test-taking strategies and ACT scoring — the old
+        # 2-sentence summary dropped both.
+        c = by_code.get("ACTPREPS")
+        assert c is not None
+        assert "test-taking strategies" in c["description"]
+        assert "ACT is scored" in c["description"]
+
+
 class TestSummerCourseSchema:
     def test_summer_json_exists(self):
         assert os.path.isfile(SUMMER_COURSES_JSON), (

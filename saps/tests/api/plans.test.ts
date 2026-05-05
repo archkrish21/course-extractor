@@ -93,6 +93,10 @@ vi.mock("@/lib/subscription/middleware", () => ({
   }),
 }));
 
+vi.mock("@/lib/audit/log", () => ({
+  audit: vi.fn().mockResolvedValue(undefined),
+}));
+
 vi.mock("@/lib/prereq/validator", () => ({
   validatePlanIntegrity: vi.fn().mockResolvedValue({
     valid: true,

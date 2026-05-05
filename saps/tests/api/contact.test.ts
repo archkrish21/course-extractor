@@ -100,6 +100,8 @@ describe("POST /api/v1/contact", () => {
 
   it("still succeeds when email notification fails", async () => {
     mockSendEmail.mockRejectedValueOnce(new Error("Resend down"));
+    // Route logs the non-fatal email failure via console.log — silence it for this test
+    const logSpy = vi.spyOn(console, "log").mockImplementation(() => {});
     const request = makeJsonRequest(
       "http://localhost:3000/api/v1/contact",
       { name: "Jane Doe", email: "jane@example.com", message: "Hello there" }
@@ -110,6 +112,7 @@ describe("POST /api/v1/contact", () => {
     expect(response.status).toBe(201);
     expect(body.data.received).toBe(true);
     expect(mockExecute).toHaveBeenCalledTimes(1);
+    logSpy.mockRestore();
   });
 
   it("returns 400 for missing name", async () => {

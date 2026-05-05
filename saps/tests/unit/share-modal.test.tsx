@@ -49,15 +49,15 @@ describe("ShareModal", () => {
     onUpdated: vi.fn(),
   };
 
-  it("renders the share title", () => {
+  it("renders the share title", async () => {
     render(<ShareModal {...defaultProps} />);
-    // The title uses &ldquo; and &rdquo; around the plan name
-    expect(screen.getByText(/Share/)).toBeInTheDocument();
+    // findBy* awaits the post-mount fetch effect so its setState lands inside act
+    expect(await screen.findByText(/Share/)).toBeInTheDocument();
   });
 
-  it("has a close button with aria-label", () => {
+  it("has a close button with aria-label", async () => {
     render(<ShareModal {...defaultProps} />);
-    expect(screen.getByLabelText("Close share dialog")).toBeInTheDocument();
+    expect(await screen.findByLabelText("Close share dialog")).toBeInTheDocument();
   });
 
   it("calls onClose when close button is clicked", async () => {
@@ -77,9 +77,9 @@ describe("ShareModal", () => {
     expect(onClose).toHaveBeenCalledOnce();
   });
 
-  it("has a dialog role with aria-modal", () => {
+  it("has a dialog role with aria-modal", async () => {
     render(<ShareModal {...defaultProps} />);
-    const dialog = screen.getByRole("dialog");
+    const dialog = await screen.findByRole("dialog");
     expect(dialog).toHaveAttribute("aria-modal", "true");
   });
 

@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { NextRequest } from "next/server";
 
 // ── Mocks ───────────────────────────────────────────────────────────────────
@@ -48,6 +48,10 @@ vi.mock("@/lib/api/rate-limit", () => ({
   rateLimit: vi.fn().mockResolvedValue({ success: true }),
 }));
 
+vi.mock("@/lib/audit/log", () => ({
+  audit: vi.fn().mockResolvedValue(undefined),
+}));
+
 vi.mock("drizzle-orm", () => ({
   eq: vi.fn((...args: unknown[]) => ({ type: "eq", args })),
   and: vi.fn((...args: unknown[]) => ({ type: "and", args })),
@@ -80,9 +84,16 @@ vi.mock("@/lib/supabase/admin", () => ({
 // ── Tests: /auth/confirm route ─────────────────────────────────────────────
 
 describe("Email confirmation — /auth/confirm", () => {
+  let errorSpy: ReturnType<typeof vi.spyOn>;
+
   beforeEach(() => {
     vi.clearAllMocks();
     dbChain = createQueryChain();
+    errorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+  });
+
+  afterEach(() => {
+    errorSpy.mockRestore();
   });
 
   // ── No valid params ──
@@ -266,9 +277,16 @@ describe("Email confirmation — /auth/confirm", () => {
 // ── Tests: Recovery (password reset) flow via /auth/confirm ───────────────
 
 describe("Password reset — /auth/confirm recovery flow", () => {
+  let errorSpy: ReturnType<typeof vi.spyOn>;
+
   beforeEach(() => {
     vi.clearAllMocks();
     dbChain = createQueryChain();
+    errorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+  });
+
+  afterEach(() => {
+    errorSpy.mockRestore();
   });
 
   it("redirects to /update-password when PKCE code exchange succeeds with type=recovery", async () => {

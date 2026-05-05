@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import { render, screen, act } from "@testing-library/react";
+import { render, screen, act, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { ToastProvider, useToast } from "@/components/ui/toast";
 
@@ -84,9 +84,10 @@ describe("Toast", () => {
     expect(screen.getByText("Close me")).toBeInTheDocument();
 
     await user.click(screen.getByLabelText("Dismiss"));
-    // Wait for exit animation (200ms)
-    await new Promise((r) => setTimeout(r, 300));
-    expect(screen.queryByText("Close me")).not.toBeInTheDocument();
+    // Wait for exit animation (200ms) — waitFor auto-wraps in act()
+    await waitFor(() => {
+      expect(screen.queryByText("Close me")).not.toBeInTheDocument();
+    });
   });
 
   // ── Undo action ───────────────────────────────────────────────────

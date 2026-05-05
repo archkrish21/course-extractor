@@ -50,6 +50,7 @@ import {
 import { SUBSCRIPTION_PLANS } from "../config/subscription-plans";
 import { PLAN_TEMPLATES } from "../config/seeds/plan-templates";
 import { getEquivalents } from "../config/summer-equivalents";
+import { getHigherOrEqualRigorSiblings } from "../config/course-families";
 import { seedLegalDocuments, LEGAL_DOCUMENT_SEEDS } from "./seeds/legal-documents";
 
 // ─── Safety ─────────────────────────────────────────────────────────────────
@@ -327,13 +328,18 @@ async function main() {
               return null;
             }
 
-            // Expand a prereq to include summer/regular equivalents so either path
-            // satisfies the requirement (same requirement_group → OR semantics).
+            // Expand a prereq to include both lateral summer/regular equivalents
+            // and same-or-higher-rigor family siblings so any path satisfies the
+            // requirement (same requirement_group → OR semantics).
             function expandWithEquivalents(prereqId: string, prereqCanonical: string): string[] {
               const ids = new Set<string>([prereqId]);
               for (const eqCode of getEquivalents(prereqCanonical)) {
                 const eqId = courseIds[eqCode];
                 if (eqId) ids.add(eqId);
+              }
+              for (const sibCode of getHigherOrEqualRigorSiblings(prereqCanonical)) {
+                const sibId = courseIds[sibCode];
+                if (sibId) ids.add(sibId);
               }
               return Array.from(ids);
             }
@@ -384,7 +390,7 @@ async function main() {
               }
             }
 
-            log("2/7", `Inserted ${prereqCount} prerequisite links (incl. summer/regular equivalents).`);
+            log("2/7", `Inserted ${prereqCount} prerequisite links (incl. summer/regular equivalents and rigor-ladder siblings).`);
 
             await client.query("COMMIT");
           } catch (err) {

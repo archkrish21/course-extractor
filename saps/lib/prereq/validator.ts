@@ -7,6 +7,7 @@ import {
 } from "@/lib/db/schema";
 import { eq, and, sql, inArray } from "drizzle-orm";
 import { findEquivalentInPlan, areEquivalent } from "@/config/summer-equivalents";
+import { satisfiesByRigor } from "@/config/course-families";
 import { isRepeatableCourse } from "@/config/grade-scale";
 
 // ─── Types ─────────────────────────────────────────────────────────────────
@@ -370,7 +371,8 @@ export async function validateCourseAddition(
       return existingPlanCourses.some(
         (pc) =>
           (pc.courseId === p.prerequisiteId ||
-            areEquivalent(pc.course.code, p.prereqCode)) &&
+            areEquivalent(pc.course.code, p.prereqCode) ||
+            satisfiesByRigor(pc.course.code, p.prereqCode)) &&
           pc.status !== "dropped" &&
           isEarlierSlot(pc.gradeLevel, pc.semester, gradeLevel, semester)
       );
@@ -591,7 +593,8 @@ export async function validatePlanIntegrity(
         return allPlanCourses.some(
           (other) =>
             (other.courseId === p.prerequisiteId ||
-              areEquivalent(other.course.code, p.prereqCode)) &&
+              areEquivalent(other.course.code, p.prereqCode) ||
+              satisfiesByRigor(other.course.code, p.prereqCode)) &&
             other.status !== "dropped" &&
             isEarlierSlot(
               other.gradeLevel,

@@ -1,7 +1,7 @@
 {
   "catalog_year": 2026,
   "school": "Adlai E. Stevenson High School",
-  "extracted_at": "2026-05-05T01:57:57.614838+00:00",
+  "extracted_at": "2026-05-05T02:55:49.397474+00:00",
   "total_courses": 345,
   "courses": [
     {
@@ -1666,7 +1666,18 @@
       "prerequisites": "One course required from: and One course required from: ■ Introduction to Business ■ Investment Management ■ Business Law ■ Accounting 1 ■ Marketing ■ Accounting 2 Honors ■ Entrepreneurship ■ Advanced Accounting Honors",
       "prerequisite_codes": [
         "BUS171",
-        "BUS172"
+        "BUS172",
+        "BUS371",
+        "BUS372",
+        "BUS281",
+        "BUS282",
+        "BUS231",
+        "BUS232",
+        "BUS361",
+        "BUS362",
+        "BUS251",
+        "BUS252",
+        "BUS351"
       ],
       "corequisites": null,
       "is_ap": false,
@@ -1720,7 +1731,18 @@
       "prerequisites": "One course required from: and One course required from: ■ Introduction to Business ■ Investment Management ■ Business Law ■ Accounting 1 ■ Marketing ■ Accounting 2 Honors ■ Entrepreneurship ■ Advanced Accounting Honors",
       "prerequisite_codes": [
         "BUS171",
-        "BUS172"
+        "BUS172",
+        "BUS371",
+        "BUS372",
+        "BUS281",
+        "BUS282",
+        "BUS231",
+        "BUS232",
+        "BUS361",
+        "BUS362",
+        "BUS251",
+        "BUS252",
+        "BUS351"
       ],
       "corequisites": null,
       "is_ap": false,
@@ -2046,8 +2068,8 @@
       "credit_type": "CP",
       "prerequisites": "Computer Programming 1 (CSC161/162) or Web Development 2 (TEC281/282) or Principles of Engineering (TEC301/302), or AP Computer Science Principles (CSC371/372)",
       "prerequisite_codes": [
-        "TEC281",
         "CSC161",
+        "TEC281",
         "TEC301/TEC302",
         "CSC371/CSC372",
         "CSC162",
@@ -2066,8 +2088,8 @@
           "group": 1,
           "type": "or",
           "codes": [
-            "TEC281",
             "CSC161",
+            "TEC281",
             "TEC301/TEC302",
             "CSC371/CSC372",
             "CSC162",
@@ -2093,8 +2115,8 @@
       "credit_type": "CP",
       "prerequisites": "Computer Programming 1 (CSC161/162) or Web Development 2 (TEC281/282) or Principles of Engineering (TEC301/302), or AP Computer Science Principles (CSC371/372)",
       "prerequisite_codes": [
-        "TEC281",
         "CSC161",
+        "TEC281",
         "TEC301/TEC302",
         "CSC371/CSC372",
         "CSC162",
@@ -2113,8 +2135,8 @@
           "group": 1,
           "type": "or",
           "codes": [
-            "TEC281",
             "CSC161",
+            "TEC281",
             "TEC301/TEC302",
             "CSC371/CSC372",
             "CSC162",
@@ -2140,8 +2162,8 @@
       "credit_type": "CP",
       "prerequisites": "Computer Programming 1 (CSC161/162), or Web Development 2 (TEC281/282), or Principles of Engineering (TEC301/302) or AP Computer Science Principles (CSC371/372)",
       "prerequisite_codes": [
-        "TEC281",
         "CSC161",
+        "TEC281",
         "TEC301/TEC302",
         "CSC371/CSC372",
         "CSC162",
@@ -2158,8 +2180,8 @@
           "group": 1,
           "type": "or",
           "codes": [
-            "TEC281",
             "CSC161",
+            "TEC281",
             "TEC301/TEC302",
             "CSC371/CSC372",
             "CSC162",

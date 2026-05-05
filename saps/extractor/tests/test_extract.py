@@ -1014,6 +1014,68 @@ class TestSummerDescriptionsAreVerbatim:
         assert "ACT is scored" in c["description"]
 
 
+class TestSemesterPairRepresentation:
+    """Locks in the canonical pair-representation rule (issue #148):
+
+    - A two-code semester course (e.g. ART AND DESIGN, ART101 sem 1 +
+      ART102 sem 2) is stored as **two separate entries**, each with its
+      own ``semesters_offered`` value.
+    - A two-code full-year course (e.g. AP ART HISTORY, ART721 sem 1 +
+      ART722 sem 2) is stored as **one paired entry** with the slashed
+      code ``ART721/ART722`` and ``semesters_offered=null``.
+
+    The course-detail modal queries linked courses by name, so the modal
+    surfaces partner courses correctly under both representations: split
+    entries find each other via the shared name; paired entries don't
+    need a partner because both codes are in the same row.
+
+    The audit identified the appearance of "two representations" as an
+    inconsistency, but each representation maps exclusively to one
+    duration. Mixing them within a single name would be the actual bug.
+    """
+
+    @pytest.fixture(scope="module")
+    def by_name(self, courses):
+        from collections import defaultdict
+        result = defaultdict(list)
+        for c in courses:
+            result[c["name"]].append(c)
+        return result
+
+    def test_semester_pairs_are_split(self, by_name):
+        for name, entries in by_name.items():
+            if len(entries) <= 1:
+                continue
+            durations = {e["duration"] for e in entries}
+            if durations != {"semester"}:
+                continue
+            for e in entries:
+                # D/E codes legitimately contain a "/" inside the prefix.
+                assert "/" not in e["code"] or e["code"].startswith("D/E"), (
+                    f"Semester course {name!r} has paired code {e['code']!r}; "
+                    f"expected split entries (one per semester)"
+                )
+
+    def test_no_name_has_mixed_representations(self, by_name):
+        # If a name has both a paired entry AND split entries, that's a
+        # real inconsistency. The only acceptable case is the same name
+        # spanning regular (paired full_year) + summer (split semester).
+        for name, entries in by_name.items():
+            if len(entries) <= 1:
+                continue
+            paired = [e for e in entries
+                      if "/" in e["code"] and not e["code"].startswith("D/E")]
+            split = [e for e in entries
+                     if "/" not in e["code"] or e["code"].startswith("D/E")]
+            if paired and split:
+                paired_durations = {e["duration"] for e in paired}
+                split_durations = {e["duration"] for e in split}
+                assert paired_durations == {"full_year"} and split_durations == {"semester"}, (
+                    f"{name!r} mixes representations within the same duration: "
+                    f"paired={[e['code'] for e in paired]} split={[e['code'] for e in split]}"
+                )
+
+
 class TestSummerCourseSchema:
     def test_summer_json_exists(self):
         assert os.path.isfile(SUMMER_COURSES_JSON), (

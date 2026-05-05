@@ -915,48 +915,67 @@ def find_course_name(
 def extract_description(below_lines: list[str]) -> str:
     desc_lines = []
     past_metadata = False
-    in_prereq_block = False
+    in_metadata_block = False  # inside a wrapped prereq/note/etc. value
+    prev_ended_sentence = False  # previous line ended with . ! ?
     # Metadata header prefixes. The colon is REQUIRED for "prerequisite" so
     # the wrapped tail of a description ending with the word "prerequisite"
     # ("This course serves as a prerequisite for all advanced art classes.")
     # is not mistaken for a metadata header.
     meta_kw = ("open to:", "prerequisite:", "prerequisites:", "note:", "early bird")
 
+    def _ends_sentence(s: str) -> bool:
+        return s.endswith((".", "!", "?"))
+
     for line in below_lines:
         stripped = line.strip()
         lower = stripped.lower()
         if not stripped:
+            in_metadata_block = False
+            prev_ended_sentence = False
             continue
-        # "Credit:" always closes the prereq block and marks the start of
-        # the description region.
+        # "Credit:" always closes the metadata block and marks the start
+        # of the description region.
         if lower.startswith("credit:"):
             past_metadata = True
-            in_prereq_block = False
+            in_metadata_block = False
+            prev_ended_sentence = _ends_sentence(stripped)
             continue
         if any(lower.startswith(p) for p in meta_kw):
             past_metadata = True
-            # Multi-line prereq blocks span until a separate "Credit:" line.
-            # If "credit:" appears on the same line (e.g. "Prerequisite:
-            # None credit: College prep") the block is already self-contained
-            # and shouldn't swallow the following paragraph as continuation.
-            if lower.startswith("prerequisite"):
-                in_prereq_block = "credit:" not in lower
+            # Multi-line metadata blocks (Prereq, Note, Open to) span until
+            # a separate "Credit:" line or until we detect the description
+            # paragraph start. If "credit:" appears on the same line as
+            # the metadata header (e.g. "Prerequisite: None credit:
+            # College prep") the block is self-contained.
+            in_metadata_block = "credit:" not in lower
+            prev_ended_sentence = _ends_sentence(stripped)
             continue
-        if in_prereq_block:
-            # Wrapped continuation of a multi-line prerequisite block (e.g.
-            # "education class or director approval" on the line below
-            # "Prerequisite: A Foundational Fitness course, any physical").
-            # Skip until "Credit:" or the next metadata header ends the block.
-            continue
+        if in_metadata_block:
+            # End of metadata heuristic: a new line starting with a capital
+            # letter immediately after a sentence-ending period is the
+            # start of the description paragraph. Catches the ART401-style
+            # layout where a multi-line "Note: Students may use their own
+            # DSLR; however, students may / check out school-owned cameras
+            # for assignments." sits between Credit: and the description
+            # with no blank line separator in the cropped column text.
+            if prev_ended_sentence and stripped[0].isupper():
+                in_metadata_block = False
+                # fall through to append this line as description
+            else:
+                prev_ended_sentence = _ends_sentence(stripped)
+                continue
         if not past_metadata:
+            prev_ended_sentence = _ends_sentence(stripped)
             continue
         if re.match(r"^\d+\s+[A-Z]", stripped) or re.match(r"^[A-Z\s\-–—]+\d+$", stripped):
+            prev_ended_sentence = _ends_sentence(stripped)
             continue
         if "COURSE OFFERINGS" in stripped.upper():
             break
         if SEMESTER_LINE_RE.search(stripped):
             break
         desc_lines.append(stripped)
+        prev_ended_sentence = _ends_sentence(stripped)
 
     desc = re.sub(r"\s{2,}", " ", " ".join(desc_lines)).strip()
     # Remove leading single-character noise from column cropping artifacts

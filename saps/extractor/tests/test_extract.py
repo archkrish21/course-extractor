@@ -620,6 +620,51 @@ class TestPrereqBleedIntoDescription:
         assert desc.startswith("Entrepreneurial Tactics is a capstone course")
 
 
+class TestNoteBlockBleedIntoDescription:
+    """A multi-line "Note:" header (e.g. ART401's "Note: Students may use
+    their own DSLR; however, students may / check out school-owned
+    cameras for assignments.") used to bleed its wrapped continuation
+    into the start of the description.
+
+    The cropped column text doesn't preserve blank-line separators, so
+    the fix detects the description-paragraph boundary heuristically:
+    a line starting with a capital letter immediately after a line
+    ending with a sentence-ending period exits the metadata block.
+    """
+
+    @pytest.fixture(scope="module")
+    def by_code(self, courses):
+        return {c["code"]: c for c in courses}
+
+    def test_art401_starts_with_actual_description(self, by_code):
+        c = by_code.get("ART401")
+        assert c is not None
+        assert c["description"].startswith("This foundational course"), (
+            f"ART401 should start with the real description, got "
+            f"{c['description'][:80]!r}"
+        )
+        # The Note: continuation must NOT be in the description.
+        assert "check out school-owned cameras" not in c["description"]
+
+    def test_art411_starts_with_actual_description(self, by_code):
+        c = by_code.get("ART411")
+        assert c is not None
+        assert c["description"].startswith("This course is designed to refine"), (
+            f"ART411 should start with the real description, got "
+            f"{c['description'][:80]!r}"
+        )
+        assert "however, students may check out" not in c["description"]
+
+    def test_art501_starts_with_actual_description(self, by_code):
+        c = by_code.get("ART501")
+        assert c is not None
+        assert c["description"].startswith("This course is designed to introduce"), (
+            f"ART501 should start with the real description, got "
+            f"{c['description'][:80]!r}"
+        )
+        assert "may check out a school-owned" not in c["description"]
+
+
 class TestPrereqBleedFixedInJson:
     """Whole-pipeline assertions: descriptions should not start with the
     tail of the prerequisite block for any of the audited courses."""

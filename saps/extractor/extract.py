@@ -833,15 +833,38 @@ def find_course_name(
 def extract_description(below_lines: list[str]) -> str:
     desc_lines = []
     past_metadata = False
-    meta_kw = ("open to:", "prerequisite", "credit:", "note:", "early bird")
+    in_prereq_block = False
+    # Metadata header prefixes. The colon is REQUIRED for "prerequisite" so
+    # the wrapped tail of a description ending with the word "prerequisite"
+    # ("This course serves as a prerequisite for all advanced art classes.")
+    # is not mistaken for a metadata header.
+    meta_kw = ("open to:", "prerequisite:", "prerequisites:", "note:", "early bird")
 
     for line in below_lines:
         stripped = line.strip()
         lower = stripped.lower()
         if not stripped:
             continue
+        # "Credit:" always closes the prereq block and marks the start of
+        # the description region.
+        if lower.startswith("credit:"):
+            past_metadata = True
+            in_prereq_block = False
+            continue
         if any(lower.startswith(p) for p in meta_kw):
             past_metadata = True
+            # Multi-line prereq blocks span until a separate "Credit:" line.
+            # If "credit:" appears on the same line (e.g. "Prerequisite:
+            # None credit: College prep") the block is already self-contained
+            # and shouldn't swallow the following paragraph as continuation.
+            if lower.startswith("prerequisite"):
+                in_prereq_block = "credit:" not in lower
+            continue
+        if in_prereq_block:
+            # Wrapped continuation of a multi-line prerequisite block (e.g.
+            # "education class or director approval" on the line below
+            # "Prerequisite: A Foundational Fitness course, any physical").
+            # Skip until "Credit:" or the next metadata header ends the block.
             continue
         if not past_metadata:
             continue

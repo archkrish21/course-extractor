@@ -223,6 +223,31 @@ def determine_credit_value(duration: str) -> float:
     return 2.0 if duration == "full_year" else 1.0
 
 
+def _names_match_strictly(frag: str, stored_name: str) -> bool:
+    """Whether a prereq-text fragment refers to a stored course name.
+
+    Both inputs are already lower-cased. Single-word fragments only match
+    by exact equality (so "culture" doesn't fuzzy-match "Stories, Culture
+    and Possibility"). Multi-word fragments may also match a longer
+    stored name when the shorter side appears at word boundaries inside
+    the longer one and is at least 2 words long — covering cases like
+    "ap chinese language" → "AP Chinese Language and Culture".
+    """
+    if frag == stored_name:
+        return True
+    short, long = (frag, stored_name) if len(frag) <= len(stored_name) else (stored_name, frag)
+    if len(short) < 5:
+        return False
+    # Require the shorter side to be at least 2 words — single-word
+    # fragments are too generic to match safely.
+    if " " not in short:
+        return False
+    # Word-boundary containment.
+    if not re.search(r"(^|\s)" + re.escape(short) + r"(\s|$)", long):
+        return False
+    return True
+
+
 def extract_prerequisite_codes(prereq_text: str) -> list[str]:
     if not prereq_text:
         return []
@@ -1104,8 +1129,12 @@ def main():
                 new_codes.append(pc)
 
         # 2. Match prerequisite names to course names
-        # Clean up the prereq text: split on "or", "and", commas
-        prereq_fragments = re.split(r"\s+(?:or|and|,)\s+", prereq_text.lower())
+        # Split on conjunctions and commas. Commas commonly hug the
+        # preceding word (e.g. "Mandarin Chinese 4, THREE YEARS..."), so
+        # the comma form does NOT require leading whitespace.
+        prereq_fragments = re.split(
+            r"(?:\s+(?:or|and)\s+|\s*,\s*)", prereq_text.lower()
+        )
         for frag in prereq_fragments:
             frag = frag.strip().rstrip(".")
             # Remove qualifiers like "passing the placement exam for"
@@ -1119,12 +1148,19 @@ def main():
                     new_codes.append(code)
                 continue
 
-            # Try matching with common suffixes stripped
+            # Strict containment: the fragment must equal the stored name
+            # OR be a prefix/suffix matching at word boundaries that covers
+            # at least 70% of the longer side. This blocks the previous
+            # "any-substring" fuzzy match that wrongly attributed e.g.
+            # "culture" → "Stories, Culture and Possibility" (ENG141) for
+            # AP Chinese, or "intermediate" → "Intermediate Mandarin
+            # Chinese Language Arts" (CHI351) for Intermediate Spanish.
             for stored_name, codes in name_to_codes.items():
-                if frag in stored_name or stored_name in frag:
-                    for code in codes:
-                        new_codes.append(code)
-                    break
+                if not _names_match_strictly(frag, stored_name):
+                    continue
+                for code in codes:
+                    new_codes.append(code)
+                break
 
         # Dedupe and remove self-references + semester-pair siblings (same name)
         own_codes = {c["code"]}
@@ -1166,11 +1202,12 @@ def main():
                 item_lower = item.lower()
                 matched_codes: list[str] = []
                 for name_key, codes_list in name_to_codes.items():
-                    if item_lower == name_key or item_lower in name_key or name_key in item_lower:
-                        for code in codes_list:
-                            if code in all_codes and code not in own_codes:
-                                matched_codes.append(code)
-                        break
+                    if not _names_match_strictly(item_lower, name_key):
+                        continue
+                    for code in codes_list:
+                        if code in all_codes and code not in own_codes:
+                            matched_codes.append(code)
+                    break
                 if matched_codes:
                     if idx % 2 == 0:
                         group1_codes.extend(matched_codes)

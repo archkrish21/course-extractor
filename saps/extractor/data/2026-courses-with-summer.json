@@ -1,7 +1,7 @@
 {
   "catalog_year": 2026,
   "school": "Adlai E. Stevenson High School",
-  "extracted_at": "2026-05-05T01:49:57.314996+00:00",
+  "extracted_at": "2026-05-05T01:57:57.614838+00:00",
   "total_courses": 391,
   "courses": [
     {
@@ -178,10 +178,7 @@
       ],
       "credit_type": "CP",
       "prerequisites": "Art and Design",
-      "prerequisite_codes": [
-        "FCS251",
-        "FCS252"
-      ],
+      "prerequisite_codes": [],
       "corequisites": null,
       "is_ap": false,
       "is_dual_credit": false,
@@ -190,16 +187,7 @@
         1
       ],
       "notes": "GPA waiver option available",
-      "prerequisite_groups": [
-        {
-          "group": 1,
-          "type": "or",
-          "codes": [
-            "FCS251",
-            "FCS252"
-          ]
-        }
-      ]
+      "prerequisite_groups": []
     },
     {
       "code": "ART202",
@@ -217,10 +205,7 @@
       ],
       "credit_type": "CP",
       "prerequisites": "Art and Design",
-      "prerequisite_codes": [
-        "FCS251",
-        "FCS252"
-      ],
+      "prerequisite_codes": [],
       "corequisites": null,
       "is_ap": false,
       "is_dual_credit": false,
@@ -229,16 +214,7 @@
         2
       ],
       "notes": "GPA waiver option available",
-      "prerequisite_groups": [
-        {
-          "group": 1,
-          "type": "or",
-          "codes": [
-            "FCS251",
-            "FCS252"
-          ]
-        }
-      ]
+      "prerequisite_groups": []
     },
     {
       "code": "ART221",
@@ -256,10 +232,7 @@
       ],
       "credit_type": "CP",
       "prerequisites": "Art and Design",
-      "prerequisite_codes": [
-        "FCS251",
-        "FCS252"
-      ],
+      "prerequisite_codes": [],
       "corequisites": null,
       "is_ap": false,
       "is_dual_credit": false,
@@ -268,16 +241,7 @@
         1
       ],
       "notes": "GPA waiver option available",
-      "prerequisite_groups": [
-        {
-          "group": 1,
-          "type": "or",
-          "codes": [
-            "FCS251",
-            "FCS252"
-          ]
-        }
-      ]
+      "prerequisite_groups": []
     },
     {
       "code": "ART222",
@@ -295,10 +259,7 @@
       ],
       "credit_type": "CP",
       "prerequisites": "Art and Design",
-      "prerequisite_codes": [
-        "FCS251",
-        "FCS252"
-      ],
+      "prerequisite_codes": [],
       "corequisites": null,
       "is_ap": false,
       "is_dual_credit": false,
@@ -307,16 +268,7 @@
         2
       ],
       "notes": "GPA waiver option available",
-      "prerequisite_groups": [
-        {
-          "group": 1,
-          "type": "or",
-          "codes": [
-            "FCS251",
-            "FCS252"
-          ]
-        }
-      ]
+      "prerequisite_groups": []
     },
     {
       "code": "ART241",
@@ -334,10 +286,7 @@
       ],
       "credit_type": "CP",
       "prerequisites": "Art and Design",
-      "prerequisite_codes": [
-        "FCS251",
-        "FCS252"
-      ],
+      "prerequisite_codes": [],
       "corequisites": null,
       "is_ap": false,
       "is_dual_credit": false,
@@ -346,16 +295,7 @@
         1
       ],
       "notes": "GPA waiver option available",
-      "prerequisite_groups": [
-        {
-          "group": 1,
-          "type": "or",
-          "codes": [
-            "FCS251",
-            "FCS252"
-          ]
-        }
-      ]
+      "prerequisite_groups": []
     },
     {
       "code": "ART242",
@@ -373,10 +313,7 @@
       ],
       "credit_type": "CP",
       "prerequisites": "Art and Design",
-      "prerequisite_codes": [
-        "FCS251",
-        "FCS252"
-      ],
+      "prerequisite_codes": [],
       "corequisites": null,
       "is_ap": false,
       "is_dual_credit": false,
@@ -385,16 +322,7 @@
         2
       ],
       "notes": "GPA waiver option available",
-      "prerequisite_groups": [
-        {
-          "group": 1,
-          "type": "or",
-          "codes": [
-            "FCS251",
-            "FCS252"
-          ]
-        }
-      ]
+      "prerequisite_groups": []
     },
     {
       "code": "ART261",
@@ -412,10 +340,7 @@
       ],
       "credit_type": "CP",
       "prerequisites": "Art and Design",
-      "prerequisite_codes": [
-        "FCS251",
-        "FCS252"
-      ],
+      "prerequisite_codes": [],
       "corequisites": null,
       "is_ap": false,
       "is_dual_credit": false,
@@ -424,16 +349,7 @@
         1
       ],
       "notes": "GPA waiver option available",
-      "prerequisite_groups": [
-        {
-          "group": 1,
-          "type": "or",
-          "codes": [
-            "FCS251",
-            "FCS252"
-          ]
-        }
-      ]
+      "prerequisite_groups": []
     },
     {
       "code": "ART262",
@@ -451,10 +367,7 @@
       ],
       "credit_type": "CP",
       "prerequisites": "Art and Design",
-      "prerequisite_codes": [
-        "FCS251",
-        "FCS252"
-      ],
+      "prerequisite_codes": [],
       "corequisites": null,
       "is_ap": false,
       "is_dual_credit": false,
@@ -463,16 +376,7 @@
         2
       ],
       "notes": "GPA waiver option available",
-      "prerequisite_groups": [
-        {
-          "group": 1,
-          "type": "or",
-          "codes": [
-            "FCS251",
-            "FCS252"
-          ]
-        }
-      ]
+      "prerequisite_groups": []
     },
     {
       "code": "ART281",
@@ -490,10 +394,7 @@
       ],
       "credit_type": "CP",
       "prerequisites": "Art and Design",
-      "prerequisite_codes": [
-        "FCS251",
-        "FCS252"
-      ],
+      "prerequisite_codes": [],
       "corequisites": null,
       "is_ap": false,
       "is_dual_credit": false,
@@ -502,16 +403,7 @@
         1
       ],
       "notes": "GPA waiver option available",
-      "prerequisite_groups": [
-        {
-          "group": 1,
-          "type": "or",
-          "codes": [
-            "FCS251",
-            "FCS252"
-          ]
-        }
-      ]
+      "prerequisite_groups": []
     },
     {
       "code": "ART282",
@@ -529,10 +421,7 @@
       ],
       "credit_type": "CP",
       "prerequisites": "Art and Design",
-      "prerequisite_codes": [
-        "FCS251",
-        "FCS252"
-      ],
+      "prerequisite_codes": [],
       "corequisites": null,
       "is_ap": false,
       "is_dual_credit": false,
@@ -541,16 +430,7 @@
         2
       ],
       "notes": "GPA waiver option available",
-      "prerequisite_groups": [
-        {
-          "group": 1,
-          "type": "or",
-          "codes": [
-            "FCS251",
-            "FCS252"
-          ]
-        }
-      ]
+      "prerequisite_groups": []
     },
     {
       "code": "ART31S",
@@ -754,6 +634,12 @@
       "prerequisite_codes": [
         "ART401",
         "ART402",
+        "ART411",
+        "ART412",
+        "FCS251",
+        "FCS252",
+        "ART501",
+        "ART502",
         "ART531",
         "ART532"
       ],
@@ -774,6 +660,30 @@
         },
         {
           "group": 2,
+          "type": "or",
+          "codes": [
+            "ART411",
+            "ART412"
+          ]
+        },
+        {
+          "group": 3,
+          "type": "or",
+          "codes": [
+            "FCS251",
+            "FCS252"
+          ]
+        },
+        {
+          "group": 4,
+          "type": "or",
+          "codes": [
+            "ART501",
+            "ART502"
+          ]
+        },
+        {
+          "group": 5,
           "type": "or",
           "codes": [
             "ART531",
@@ -1178,10 +1088,7 @@
       ],
       "credit_type": "CP",
       "prerequisites": "Art and Design",
-      "prerequisite_codes": [
-        "FCS251",
-        "FCS252"
-      ],
+      "prerequisite_codes": [],
       "corequisites": null,
       "is_ap": false,
       "is_dual_credit": false,
@@ -1190,16 +1097,7 @@
         1
       ],
       "notes": "GPA waiver option available",
-      "prerequisite_groups": [
-        {
-          "group": 1,
-          "type": "or",
-          "codes": [
-            "FCS251",
-            "FCS252"
-          ]
-        }
-      ]
+      "prerequisite_groups": []
     },
     {
       "code": "ART612",
@@ -1217,10 +1115,7 @@
       ],
       "credit_type": "CP",
       "prerequisites": "Art and Design",
-      "prerequisite_codes": [
-        "FCS251",
-        "FCS252"
-      ],
+      "prerequisite_codes": [],
       "corequisites": null,
       "is_ap": false,
       "is_dual_credit": false,
@@ -1229,16 +1124,7 @@
         2
       ],
       "notes": "GPA waiver option available",
-      "prerequisite_groups": [
-        {
-          "group": 1,
-          "type": "or",
-          "codes": [
-            "FCS251",
-            "FCS252"
-          ]
-        }
-      ]
+      "prerequisite_groups": []
     },
     {
       "code": "ART621",
@@ -1256,10 +1142,8 @@
       "credit_type": "CP",
       "prerequisites": "Art and Design and two of the following courses: Drawing, Painting, Studio Art or MIXED MEDIA",
       "prerequisite_codes": [
-        "FCS251",
-        "FCS252",
-        "ART221",
-        "ART222",
+        "ART261",
+        "ART262",
         "ART611",
         "ART612"
       ],
@@ -1276,10 +1160,8 @@
           "group": 1,
           "type": "or",
           "codes": [
-            "FCS251",
-            "FCS252",
-            "ART221",
-            "ART222",
+            "ART261",
+            "ART262",
             "ART611",
             "ART612"
           ]
@@ -1302,10 +1184,8 @@
       "credit_type": "CP",
       "prerequisites": "Art and Design and two of the following courses: Drawing, Painting, Studio Art or MIXED MEDIA",
       "prerequisite_codes": [
-        "FCS251",
-        "FCS252",
-        "ART221",
-        "ART222",
+        "ART261",
+        "ART262",
         "ART611",
         "ART612"
       ],
@@ -1322,10 +1202,8 @@
           "group": 1,
           "type": "or",
           "codes": [
-            "FCS251",
-            "FCS252",
-            "ART221",
-            "ART222",
+            "ART261",
+            "ART262",
             "ART611",
             "ART612"
           ]
@@ -1348,12 +1226,6 @@
       "credit_type": "CP",
       "prerequisites": "Art and Design and two of the following courses: Ceramics, Metals and Jewelry or Sculpture",
       "prerequisite_codes": [
-        "FCS251",
-        "FCS252",
-        "ART201",
-        "ART202",
-        "ART241",
-        "ART242",
         "ART281",
         "ART282"
       ],
@@ -1370,12 +1242,6 @@
           "group": 1,
           "type": "or",
           "codes": [
-            "FCS251",
-            "FCS252",
-            "ART201",
-            "ART202",
-            "ART241",
-            "ART242",
             "ART281",
             "ART282"
           ]
@@ -1398,12 +1264,6 @@
       "credit_type": "CP",
       "prerequisites": "Art and Design and two of the following courses: Ceramics, Metals and Jewelry or Sculpture",
       "prerequisite_codes": [
-        "FCS251",
-        "FCS252",
-        "ART201",
-        "ART202",
-        "ART241",
-        "ART242",
         "ART281",
         "ART282"
       ],
@@ -1420,12 +1280,6 @@
           "group": 1,
           "type": "or",
           "codes": [
-            "FCS251",
-            "FCS252",
-            "ART201",
-            "ART202",
-            "ART241",
-            "ART242",
             "ART281",
             "ART282"
           ]
@@ -1470,12 +1324,10 @@
       "credit_type": "AP",
       "prerequisites": "Advanced Drawing, Painting and MIXED MEDIA or Advanced CERAMICS, METALS AND SCULPTURE",
       "prerequisite_codes": [
-        "ART221",
-        "ART222",
+        "ART261",
+        "ART262",
         "ART611",
         "ART612",
-        "ART201",
-        "ART202",
         "ART281",
         "ART282"
       ],
@@ -1490,12 +1342,10 @@
           "group": 1,
           "type": "or",
           "codes": [
-            "ART221",
-            "ART222",
+            "ART261",
+            "ART262",
             "ART611",
             "ART612",
-            "ART201",
-            "ART202",
             "ART281",
             "ART282"
           ]
@@ -2418,24 +2268,14 @@
       ],
       "credit_type": "Accelerated",
       "prerequisites": "Intermediate or higher proficiency in the domains of speaking and listening as demonstrated on Mandarin Chinese language proficiency assessment (e.g., AAPPL), teacher recommendation, or director approval",
-      "prerequisite_codes": [
-        "ELD361/ELD362"
-      ],
+      "prerequisite_codes": [],
       "corequisites": null,
       "is_ap": false,
       "is_dual_credit": false,
       "gpa_waiver": false,
       "semesters_offered": null,
       "notes": null,
-      "prerequisite_groups": [
-        {
-          "group": 1,
-          "type": "or",
-          "codes": [
-            "ELD361/ELD362"
-          ]
-        }
-      ]
+      "prerequisite_groups": []
     },
     {
       "code": "CHI411/CHI412",
@@ -2486,8 +2326,7 @@
       "credit_type": "AP",
       "prerequisites": "Mandarin Chinese 4, THREE YEARS OF HIGH SCHOOL MANDARIN STUDY, or passing the placement exam for AP Chinese Language and Culture and approval of director",
       "prerequisite_codes": [
-        "CHI411/CHI412",
-        "ENG141/ENG142"
+        "CHI411/CHI412"
       ],
       "corequisites": null,
       "is_ap": true,
@@ -2500,8 +2339,7 @@
           "group": 1,
           "type": "or",
           "codes": [
-            "CHI411/CHI412",
-            "ENG141/ENG142"
+            "CHI411/CHI412"
           ]
         }
       ]
@@ -2521,8 +2359,7 @@
       "credit_type": "Honors",
       "prerequisites": "AP Chinese Language and Culture or placement test",
       "prerequisite_codes": [
-        "CHI601/CHI602",
-        "ENG141/ENG142"
+        "CHI601/CHI602"
       ],
       "corequisites": null,
       "is_ap": false,
@@ -2535,8 +2372,7 @@
           "group": 1,
           "type": "or",
           "codes": [
-            "CHI601/CHI602",
-            "ENG141/ENG142"
+            "CHI601/CHI602"
           ]
         }
       ]
@@ -3513,24 +3349,14 @@
       ],
       "credit_type": "CP",
       "prerequisites": "Proficiency as demonstrated on WIDA-screener/ ACCESS exam COMPOSITE 4.0-4.8 OR successful completion of ELD 3: Language and/or ELD 3: Literature, teacher recommendation or director approval.",
-      "prerequisite_codes": [
-        "ELD361/ELD362"
-      ],
+      "prerequisite_codes": [],
       "corequisites": null,
       "is_ap": false,
       "is_dual_credit": false,
       "gpa_waiver": false,
       "semesters_offered": null,
       "notes": null,
-      "prerequisite_groups": [
-        {
-          "group": 1,
-          "type": "or",
-          "codes": [
-            "ELD361/ELD362"
-          ]
-        }
-      ]
+      "prerequisite_groups": []
     },
     {
       "code": "ELD561/ELD562",
@@ -6087,24 +5913,14 @@
       ],
       "credit_type": "CP",
       "prerequisites": "ANY PRECALCULUS COURSE",
-      "prerequisite_codes": [
-        "MTH451/MTH452"
-      ],
+      "prerequisite_codes": [],
       "corequisites": null,
       "is_ap": false,
       "is_dual_credit": false,
       "gpa_waiver": false,
       "semesters_offered": null,
       "notes": null,
-      "prerequisite_groups": [
-        {
-          "group": 1,
-          "type": "or",
-          "codes": [
-            "MTH451/MTH452"
-          ]
-        }
-      ]
+      "prerequisite_groups": []
     },
     {
       "code": "MTH441/MTH442",
@@ -6189,7 +6005,7 @@
       "credit_type": "AP",
       "prerequisites": "Completion or concurrent enrollment in AP Precalculus AB or AP Precalculus BC",
       "prerequisite_codes": [
-        "MTH451/MTH452",
+        "MTH411/MTH412",
         "MTH421/MTH422"
       ],
       "corequisites": null,
@@ -6203,7 +6019,7 @@
           "group": 1,
           "type": "or",
           "codes": [
-            "MTH451/MTH452",
+            "MTH411/MTH412",
             "MTH421/MTH422"
           ]
         }
@@ -6223,24 +6039,14 @@
       ],
       "credit_type": "AP",
       "prerequisites": "ANY AP PRECALCULUS COURSE",
-      "prerequisite_codes": [
-        "MTH451/MTH452"
-      ],
+      "prerequisite_codes": [],
       "corequisites": null,
       "is_ap": true,
       "is_dual_credit": false,
       "gpa_waiver": false,
       "semesters_offered": null,
       "notes": null,
-      "prerequisite_groups": [
-        {
-          "group": 1,
-          "type": "or",
-          "codes": [
-            "MTH451/MTH452"
-          ]
-        }
-      ]
+      "prerequisite_groups": []
     },
     {
       "code": "MTH481/MTH482",
@@ -7942,7 +7748,7 @@
       "prerequisites": "AP Physics 1 or AP Physics 2, and completion or concurrent enrollment in AP Calculus AB or BC, or approval of director",
       "prerequisite_codes": [
         "SCI611/SCI612",
-        "SCI401/SCI402",
+        "SCI681/SCI682",
         "MTH471/MTH472"
       ],
       "corequisites": null,
@@ -7957,7 +7763,7 @@
           "type": "or",
           "codes": [
             "SCI611/SCI612",
-            "SCI401/SCI402",
+            "SCI681/SCI682",
             "MTH471/MTH472"
           ]
         }
@@ -9740,26 +9546,14 @@
       ],
       "credit_type": "Accelerated",
       "prerequisites": "Intermediate or higher proficiency as demonstrated on Spanish language proficiency assessment (e.g., AAPPL), teacher recommendation, or director approval",
-      "prerequisite_codes": [
-        "CHI351/CHI352",
-        "ELD361/ELD362"
-      ],
+      "prerequisite_codes": [],
       "corequisites": null,
       "is_ap": false,
       "is_dual_credit": false,
       "gpa_waiver": false,
       "semesters_offered": null,
       "notes": null,
-      "prerequisite_groups": [
-        {
-          "group": 1,
-          "type": "or",
-          "codes": [
-            "CHI351/CHI352",
-            "ELD361/ELD362"
-          ]
-        }
-      ]
+      "prerequisite_groups": []
     },
     {
       "code": "SPA401/SPA402",
@@ -9810,9 +9604,9 @@
       "credit_type": "CP",
       "prerequisites": "Spanish 3-4, Spanish 4 or AP Spanish Language and Culture",
       "prerequisite_codes": [
-        "SPA301/SPA302",
-        "SPA601/SPA602",
-        "ENG141/ENG142"
+        "SPA311/SPA312",
+        "SPA401/SPA402",
+        "SPA601/SPA602"
       ],
       "corequisites": null,
       "is_ap": false,
@@ -9825,9 +9619,9 @@
           "group": 1,
           "type": "or",
           "codes": [
-            "SPA301/SPA302",
-            "SPA601/SPA602",
-            "ENG141/ENG142"
+            "SPA311/SPA312",
+            "SPA401/SPA402",
+            "SPA601/SPA602"
           ]
         }
       ]
@@ -9849,6 +9643,7 @@
       "prerequisites": "INTERMEDIATE SPANISH LANGUAGE ARTS, Spanish 4 or Spanish 3-4",
       "prerequisite_codes": [
         "SPA351/SPA352",
+        "SPA401/SPA402",
         "SPA311/SPA312"
       ],
       "corequisites": null,
@@ -9863,6 +9658,7 @@
           "type": "or",
           "codes": [
             "SPA351/SPA352",
+            "SPA401/SPA402",
             "SPA311/SPA312"
           ]
         }
@@ -9883,8 +9679,7 @@
       "credit_type": "AP",
       "prerequisites": "AP Spanish Language and Culture",
       "prerequisite_codes": [
-        "SPA601/SPA602",
-        "ENG141/ENG142"
+        "SPA601/SPA602"
       ],
       "corequisites": null,
       "is_ap": true,
@@ -9898,13 +9693,6 @@
           "type": "or",
           "codes": [
             "SPA601/SPA602"
-          ]
-        },
-        {
-          "group": 2,
-          "type": "or",
-          "codes": [
-            "ENG141/ENG142"
           ]
         }
       ]
@@ -10428,6 +10216,7 @@
       "prerequisites": "introduction to Engineering Design–PLTW OR Engineering Design or Architectural Design",
       "prerequisite_codes": [
         "TEC151/TEC152",
+        "TEC401/TEC402",
         "TEC141/TEC142"
       ],
       "corequisites": null,
@@ -10442,6 +10231,7 @@
           "type": "or",
           "codes": [
             "TEC151/TEC152",
+            "TEC401/TEC402",
             "TEC141/TEC142"
           ]
         }
@@ -10541,7 +10331,8 @@
       "credit_type": "Honors",
       "prerequisites": "Introduction to Engineering Design–PLTW or Engineering Design",
       "prerequisite_codes": [
-        "TEC151/TEC152"
+        "TEC151/TEC152",
+        "TEC401/TEC402"
       ],
       "corequisites": null,
       "is_ap": false,
@@ -10554,7 +10345,8 @@
           "group": 1,
           "type": "or",
           "codes": [
-            "TEC151/TEC152"
+            "TEC151/TEC152",
+            "TEC401/TEC402"
           ]
         }
       ]
@@ -10575,7 +10367,8 @@
       "credit_type": "Honors",
       "prerequisites": "introduction to Engineering Design–PLTW OR Engineering Design",
       "prerequisite_codes": [
-        "TEC151/TEC152"
+        "TEC151/TEC152",
+        "TEC401/TEC402"
       ],
       "corequisites": null,
       "is_ap": false,
@@ -10588,7 +10381,8 @@
           "group": 1,
           "type": "or",
           "codes": [
-            "TEC151/TEC152"
+            "TEC151/TEC152",
+            "TEC401/TEC402"
           ]
         }
       ]
@@ -10609,7 +10403,8 @@
       "credit_type": "Honors",
       "prerequisites": "introduction to Engineering Design–PLTW OR Engineering Design",
       "prerequisite_codes": [
-        "TEC151/TEC152"
+        "TEC151/TEC152",
+        "TEC401/TEC402"
       ],
       "corequisites": null,
       "is_ap": false,
@@ -10622,7 +10417,8 @@
           "group": 1,
           "type": "or",
           "codes": [
-            "TEC151/TEC152"
+            "TEC151/TEC152",
+            "TEC401/TEC402"
           ]
         }
       ]
@@ -10642,7 +10438,9 @@
       "credit_type": "Honors",
       "prerequisites": "PLTW Digital Electronics or Electrical engineering–PLTW, Principles of Engineering–PLTW, Computer Integrated Manufacturing–PLTW or Civil Engineering and Architecture–PLTW",
       "prerequisite_codes": [
+        "TEC291/TEC292",
         "TEC301/TEC302",
+        "TEC351/TEC352",
         "TEC261/TEC262"
       ],
       "corequisites": null,
@@ -10656,7 +10454,9 @@
           "group": 1,
           "type": "or",
           "codes": [
+            "TEC291/TEC292",
             "TEC301/TEC302",
+            "TEC351/TEC352",
             "TEC261/TEC262"
           ]
         }
@@ -11091,9 +10891,7 @@
       "prerequisites": "Acting 4 Or Entertainment Production and Design and Instructor Approval",
       "prerequisite_codes": [
         "THR121",
-        "THR122",
-        "FCS251",
-        "FCS252"
+        "THR122"
       ],
       "corequisites": null,
       "is_ap": false,
@@ -11109,9 +10907,7 @@
           "type": "or",
           "codes": [
             "THR121",
-            "THR122",
-            "FCS251",
-            "FCS252"
+            "THR122"
           ]
         }
       ]
@@ -11132,9 +10928,7 @@
       "prerequisites": "Acting 4 Or Entertainment Production and Design and Instructor Approval",
       "prerequisite_codes": [
         "THR121",
-        "THR122",
-        "FCS251",
-        "FCS252"
+        "THR122"
       ],
       "corequisites": null,
       "is_ap": false,
@@ -11150,9 +10944,7 @@
           "type": "or",
           "codes": [
             "THR121",
-            "THR122",
-            "FCS251",
-            "FCS252"
+            "THR122"
           ]
         }
       ]
@@ -11223,9 +11015,7 @@
       "prerequisites": "Acting 4 OR ENTERTAINMENT PRODUCTION AND DESIGN and Instructor approval",
       "prerequisite_codes": [
         "THR121",
-        "THR122",
-        "FCS251",
-        "FCS252"
+        "THR122"
       ],
       "corequisites": null,
       "is_ap": false,
@@ -11241,9 +11031,7 @@
           "type": "or",
           "codes": [
             "THR121",
-            "THR122",
-            "FCS251",
-            "FCS252"
+            "THR122"
           ]
         }
       ]
@@ -11264,9 +11052,7 @@
       "prerequisites": "Acting 4 OR ENTERTAINMENT PRODUCTION AND DESIGN and Instructor approval",
       "prerequisite_codes": [
         "THR121",
-        "THR122",
-        "FCS251",
-        "FCS252"
+        "THR122"
       ],
       "corequisites": null,
       "is_ap": false,
@@ -11282,9 +11068,7 @@
           "type": "or",
           "codes": [
             "THR121",
-            "THR122",
-            "FCS251",
-            "FCS252"
+            "THR122"
           ]
         }
       ]

@@ -669,6 +669,100 @@ class TestPrereqBleedFixedInJson:
         )
 
 
+class TestPrereqMatcherStrictness:
+    """Direct unit coverage for `_names_match_strictly` (issue #146).
+
+    The previous matcher used `frag in stored_name or stored_name in
+    frag`, which let a single-word fragment fuzzy-match against any
+    course name containing that word — e.g. "culture" matched "Stories,
+    Culture and Possibility" (ENG141), so AP Chinese ended up with
+    freshman English as a prereq.
+    """
+
+    @pytest.fixture(scope="module")
+    def matches(self):
+        from extract import _names_match_strictly
+        return _names_match_strictly
+
+    def test_exact_name_matches(self, matches):
+        assert matches("algebra 1", "algebra 1")
+
+    def test_single_word_fragment_does_not_fuzzy_match(self, matches):
+        # The CHI601-vs-ENG141 false positive: "culture" alone must NOT
+        # match "stories, culture and possibility".
+        assert not matches("culture", "stories, culture and possibility")
+
+    def test_intermediate_does_not_fuzzy_match(self, matches):
+        # The SPA351-vs-CHI351 false positive: "intermediate" alone must
+        # NOT match "intermediate mandarin chinese language arts".
+        assert not matches("intermediate", "intermediate mandarin chinese language arts")
+
+    def test_multiword_prefix_match(self, matches):
+        # CHI601's prereq mentions "AP Chinese Language and Culture";
+        # the stripped fragment "ap chinese language" should still match
+        # the full course name as a multi-word substring.
+        assert matches("ap chinese language", "ap chinese language and culture")
+
+    def test_multiword_does_not_match_unrelated_course(self, matches):
+        # "ap chinese language" must not fuzzy-match an unrelated course.
+        assert not matches("ap chinese language", "stories, culture and possibility")
+
+    def test_short_fragment_excluded(self, matches):
+        # Fragments shorter than 5 chars are noise.
+        assert not matches("ap", "ap calculus bc")
+
+    def test_word_boundary_required(self, matches):
+        # The fragment must align on word boundaries — "intermed" inside
+        # "intermediate" should not match.
+        assert not matches("intermed", "intermediate mandarin chinese")
+
+
+class TestPrereqCodesFixedInJson:
+    """Whole-pipeline assertions for the false-positive prereq codes."""
+
+    @pytest.fixture(scope="module")
+    def by_code(self, courses):
+        return {c["code"]: c for c in courses}
+
+    def test_chi601_does_not_list_eng141(self, by_code):
+        c = by_code.get("CHI601/CHI602")
+        assert c is not None
+        assert "ENG141/ENG142" not in c.get("prerequisite_codes", []), (
+            "AP Chinese should not list freshman English as a prereq — "
+            "fuzzy-match on 'culture' was the bug"
+        )
+
+    def test_chi601_still_lists_mandarin_4(self, by_code):
+        c = by_code.get("CHI601/CHI602")
+        assert c is not None
+        assert "CHI411/CHI412" in c.get("prerequisite_codes", [])
+
+    def test_spa351_does_not_list_chi351(self, by_code):
+        c = by_code.get("SPA351/SPA352")
+        assert c is not None
+        assert "CHI351/CHI352" not in c.get("prerequisite_codes", []), (
+            "Intermediate Spanish should not list Intermediate Mandarin "
+            "as a prereq — fuzzy-match on 'intermediate' was the bug"
+        )
+
+    def test_chi351_does_not_list_eld361(self, by_code):
+        c = by_code.get("CHI351/CHI352")
+        assert c is not None
+        assert "ELD361/ELD362" not in c.get("prerequisite_codes", [])
+
+    def test_bus411_groups_still_resolve_all_options(self, by_code):
+        # BUS411 lists 13 prereq options across two AND'd OR-groups; the
+        # bullet-list matcher must still resolve them after the strict
+        # tightening.
+        c = by_code.get("BUS411")
+        assert c is not None
+        groups = c.get("prerequisite_groups", [])
+        all_codes = {code for g in groups for code in g.get("codes", [])}
+        # Each of these is a real Business course referenced in the bullet list.
+        for code in ("BUS171", "BUS371", "BUS281", "BUS231", "BUS361", "BUS251", "BUS351"):
+            assert code in all_codes, f"BUS411 prereq groups missing {code}"
+
+
 class TestColumnBleedScrapsRemoved:
     """Whole-pipeline assertions for the column-bleed fix (issue #143).
 

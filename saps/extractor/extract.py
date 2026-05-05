@@ -819,6 +819,14 @@ def parse_course_entry(
             sem2_offered = True
 
     # --- Build course objects ---
+    # Canonical pair representation (issue #148):
+    #   * Full-year course with two codes → ONE paired entry like "ART721/ART722"
+    #     with semesters_offered=null (spans both semesters as a single course).
+    #   * Semester course with two codes → TWO split entries, one per semester
+    #     (e.g. ART101 with semesters_offered=[1] + ART102 with [2]).
+    # The course-detail modal queries linked-course partners by name, so split
+    # entries find each other and paired entries already contain both halves.
+    # Mixing these representations within a single name would be the bug.
     results = []
     if duration == "full_year" and code2:
         results.append(_build(

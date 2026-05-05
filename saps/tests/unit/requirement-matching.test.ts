@@ -1,5 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { isPassFailCourse, isRepeatableCourse } from "@/config/grade-scale";
+import { isSummerSemester } from "@/config/semesters";
 
 /**
  * Unit tests for graduation requirement matching logic.
@@ -494,6 +495,25 @@ describe("GPA waiver eligibility", () => {
   it("fails when fewer than 4 GPA-counted courses exist", () => {
     const gpaCounted = 3;
     expect(gpaCounted).toBeLessThan(4);
+  });
+
+  it("skips summer semesters — waivering a Pre-Summer course does not flag the 4-course minimum", () => {
+    // Mirrors the route's eligibility loop: only regular semesters (1, 2) seed
+    // `semestersWithWaivers`. A waivered course in sem -2/-1 should be ignored.
+    const planCourses = [
+      { gradeLevel: 10, semester: -2, gpaWaiverApplied: true },  // Pre-Summer Session 1
+      { gradeLevel: 10, semester: -1, gpaWaiverApplied: true },  // Pre-Summer Session 2
+      { gradeLevel: 10, semester: 1, gpaWaiverApplied: true },   // regular sem — should flag
+    ];
+    const semestersWithWaivers = new Set<string>();
+    for (const pc of planCourses) {
+      if (pc.gpaWaiverApplied && !isSummerSemester(pc.semester)) {
+        semestersWithWaivers.add(`${pc.gradeLevel}-${pc.semester}`);
+      }
+    }
+    expect(semestersWithWaivers.has("10--2")).toBe(false);
+    expect(semestersWithWaivers.has("10--1")).toBe(false);
+    expect(semestersWithWaivers.has("10-1")).toBe(true);
   });
 });
 

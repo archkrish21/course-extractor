@@ -239,6 +239,118 @@ describe("validatePlanIntegrity — prereq override", () => {
     expect(result.ignoredViolations.some((v) => v.type === "corequisite")).toBe(true);
   });
 
+  it("treats summer/regular equivalent as a satisfying prereq", async () => {
+    // Regression: prior to defense-in-depth, the validator only matched
+    // prereqs by exact course_id against the DAG. If the seed pipeline
+    // hadn't fanned out a sibling edge (e.g. prod hadn't been re-seeded
+    // since summer-equivalents.ts changed), placing SOC13S/SOC14S in
+    // Gr 9 wouldn't satisfy SOC621/SOC622's SOC101/SOC102 prereq in Gr 11.
+    // Now the validator also checks code-level equivalence as a fallback,
+    // so either offering satisfies the requirement regardless of DAG state.
+    const SOC621_ID = "course-soc621";
+    const SOC101_ID = "course-soc101";
+    const SOC13S_ID = "course-soc13s";
+
+    const planRows = [
+      {
+        // Equivalent placed in Gr 9 — should satisfy the SOC101/SOC102 prereq.
+        id: "pc-equiv",
+        courseId: SOC13S_ID,
+        gradeLevel: 9,
+        semester: -1,
+        status: "completed",
+        prereqOverridden: false,
+        course: {
+          id: SOC13S_ID,
+          code: "SOC13S/SOC14S",
+          name: "World History and Geography",
+          duration: "full_year",
+          gradeLevels: [9, 10, 11, 12],
+          semestersOffered: [-2, -1],
+          catalogVersionId: "cv-1",
+        },
+      },
+      {
+        id: "pc-target",
+        courseId: SOC621_ID,
+        gradeLevel: 11,
+        semester: 1,
+        status: "planned",
+        prereqOverridden: false,
+        course: {
+          id: SOC621_ID,
+          code: "SOC621/SOC622",
+          name: "AP U.S. History",
+          duration: "full_year",
+          gradeLevels: [11],
+          semestersOffered: [1, 2],
+          catalogVersionId: "cv-1",
+        },
+      },
+    ];
+    const PREREQ_EDGE_ONLY_REGULAR = {
+      // The DAG only carries the regular-school-year edge — no sibling fanout.
+      courseId: SOC621_ID,
+      prerequisiteId: SOC101_ID,
+      relationshipType: "prerequisite",
+      requirementGroup: 1,
+      isRecommended: false,
+      prereqCode: "SOC101/SOC102",
+      prereqName: "World History and Geography",
+    };
+
+    queryQueue.push(planRows);
+    queryQueue.push([PREREQ_EDGE_ONLY_REGULAR]);
+
+    const result = await validatePlanIntegrity("plan-1");
+
+    expect(result.violations.filter((v) => v.type === "prerequisite")).toHaveLength(0);
+    expect(result.ignoredViolations.filter((v) => v.type === "prerequisite")).toHaveLength(0);
+  });
+
+  it("still flags a prereq violation when no equivalent is in the plan", async () => {
+    // Negative case: the equivalence check must not relax legitimate
+    // violations. Same target row as above but no SOC13S/SOC14S in the plan.
+    const SOC621_ID = "course-soc621";
+    const SOC101_ID = "course-soc101";
+
+    const planRows = [
+      {
+        id: "pc-target",
+        courseId: SOC621_ID,
+        gradeLevel: 11,
+        semester: 1,
+        status: "planned",
+        prereqOverridden: false,
+        course: {
+          id: SOC621_ID,
+          code: "SOC621/SOC622",
+          name: "AP U.S. History",
+          duration: "full_year",
+          gradeLevels: [11],
+          semestersOffered: [1, 2],
+          catalogVersionId: "cv-1",
+        },
+      },
+    ];
+    const PREREQ_ROW_NO_MATCH = {
+      courseId: SOC621_ID,
+      prerequisiteId: SOC101_ID,
+      relationshipType: "prerequisite",
+      requirementGroup: 1,
+      isRecommended: false,
+      prereqCode: "SOC101/SOC102",
+      prereqName: "World History and Geography",
+    };
+
+    queryQueue.push(planRows);
+    queryQueue.push([PREREQ_ROW_NO_MATCH]);
+
+    const result = await validatePlanIntegrity("plan-1");
+
+    expect(result.violations.some((v) => v.type === "prerequisite")).toBe(true);
+  });
+
   it("respects prereqOverridden for duplicate violations", async () => {
     // Two rows for the same course in the same cell — the validator emits a
     // duplicate violation from the alphabetically-earlier id only. Both

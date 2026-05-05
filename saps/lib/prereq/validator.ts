@@ -6,7 +6,7 @@ import {
   fourYearPlans,
 } from "@/lib/db/schema";
 import { eq, and, sql, inArray } from "drizzle-orm";
-import { findEquivalentInPlan } from "@/config/summer-equivalents";
+import { findEquivalentInPlan, areEquivalent } from "@/config/summer-equivalents";
 import { isRepeatableCourse } from "@/config/grade-scale";
 
 // ─── Types ─────────────────────────────────────────────────────────────────
@@ -361,12 +361,16 @@ export async function validateCourseAddition(
     prereqGroups.set(p.requirementGroup, group);
   }
 
-  // For each group, check if at least one prerequisite is in the plan at an earlier slot
+  // For each group, check if at least one prerequisite is in the plan at an earlier slot.
+  // A summer/regular equivalent (e.g. SOC13S/SOC14S for SOC101/SOC102) also
+  // satisfies the prereq — independent of whether the seed pipeline fanned out
+  // a sibling DAG edge for it.
   for (const [groupNum, groupPrereqs] of prereqGroups) {
     const satisfied = groupPrereqs.some((p) => {
       return existingPlanCourses.some(
         (pc) =>
-          pc.courseId === p.prerequisiteId &&
+          (pc.courseId === p.prerequisiteId ||
+            areEquivalent(pc.course.code, p.prereqCode)) &&
           pc.status !== "dropped" &&
           isEarlierSlot(pc.gradeLevel, pc.semester, gradeLevel, semester)
       );
@@ -586,7 +590,8 @@ export async function validatePlanIntegrity(
       const satisfied = groupPrereqs.some((p) => {
         return allPlanCourses.some(
           (other) =>
-            other.courseId === p.prerequisiteId &&
+            (other.courseId === p.prerequisiteId ||
+              areEquivalent(other.course.code, p.prereqCode)) &&
             other.status !== "dropped" &&
             isEarlierSlot(
               other.gradeLevel,

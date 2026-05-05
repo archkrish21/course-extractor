@@ -61,6 +61,10 @@ vi.mock("@/lib/email/client", () => ({
   sendEmail: vi.fn().mockResolvedValue(true),
 }));
 
+vi.mock("@/lib/audit/log", () => ({
+  audit: vi.fn().mockResolvedValue(undefined),
+}));
+
 vi.mock("@/lib/email/templates", () => ({
   inviteEmail: vi.fn().mockReturnValue({ subject: "", html: "" }),
   newUserInviteEmail: vi.fn().mockReturnValue({ subject: "Invite", html: "<p>New user invite</p>" }),

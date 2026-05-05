@@ -50,6 +50,10 @@ vi.mock("@/lib/auth/get-user", () => ({
   getAccountContext: vi.fn(),
 }));
 
+vi.mock("@/lib/audit/log", () => ({
+  audit: vi.fn().mockResolvedValue(undefined),
+}));
+
 vi.mock("@/lib/db/schema", () => ({
   accounts: { id: "a_id", studentUserId: "a_studentUserId" },
   accountMembers: { accountId: "am_accountId", userId: "am_userId" },

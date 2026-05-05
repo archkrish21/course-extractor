@@ -58,6 +58,10 @@ vi.mock("@/lib/auth/get-user", () => ({
   requireAuth: vi.fn(),
 }));
 
+vi.mock("@/lib/audit/log", () => ({
+  audit: vi.fn().mockResolvedValue(undefined),
+}));
+
 vi.mock("@/lib/db/schema", () => ({
   accountMembers: { accountId: "am_accountId", userId: "am_userId", role: "am_role", canEdit: "am_canEdit" },
   accountInviteCodes: { id: "aic_id", accountId: "aic_accountId", code: "aic_code", targetRole: "aic_targetRole", expiresAt: "aic_expiresAt", claimedBy: "aic_claimedBy", createdBy: "aic_createdBy" },

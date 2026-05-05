@@ -17,6 +17,10 @@ vi.mock("drizzle-orm", () => ({
   sql: vi.fn(),
 }));
 
+vi.mock("@/lib/email/client", () => ({
+  sendEmail: vi.fn().mockResolvedValue({ ok: true }),
+}));
+
 // ── Tests ───────────────────────────────────────────────────────────────────
 
 describe("POST /api/v1/contact — rate limiting", () => {

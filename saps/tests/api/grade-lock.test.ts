@@ -133,6 +133,7 @@ vi.mock("drizzle-orm", () => ({
   eq: vi.fn((...args: unknown[]) => ({ type: "eq", args })),
   and: vi.fn((...args: unknown[]) => ({ type: "and", args })),
   or: vi.fn((...args: unknown[]) => ({ type: "or", args })),
+  gte: vi.fn((...args: unknown[]) => ({ type: "gte", args })),
   sql: Object.assign(
     (strings: TemplateStringsArray, ..._values: unknown[]) => ({
       type: "sql",

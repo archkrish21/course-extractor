@@ -60,6 +60,10 @@ vi.mock("@/lib/api/rate-limit", () => ({
   rateLimit: vi.fn().mockResolvedValue({ success: true }),
 }));
 
+vi.mock("@/lib/audit/log", () => ({
+  audit: vi.fn().mockResolvedValue(undefined),
+}));
+
 // Supabase signUp() returns user.identities populated for fresh signups.
 // When the email already exists, identities is empty (anti-enumeration).
 // See app/api/v1/auth/signup/route.ts for the duplicate-email detection.

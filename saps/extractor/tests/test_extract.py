@@ -669,6 +669,83 @@ class TestPrereqBleedFixedInJson:
         )
 
 
+class TestColumnBleedScrapsRemoved:
+    """Whole-pipeline assertions for the column-bleed fix (issue #143).
+
+    Catalog pages have two-column layouts where the gutter location varies
+    per page (Math at x≈306, Multilingual at x≈324, etc.). A fixed
+    page-midpoint crop with overlap let the next column's narrow word
+    fragments leak in as 1-3 character scraps inside descriptions.
+
+    The fix detects the gutter dynamically per page and discards isolated
+    short-line scraps after cropping.
+    """
+
+    @pytest.fixture(scope="module")
+    def by_code(self, courses):
+        return {c["code"]: c for c in courses}
+
+    def test_art101_description_has_no_inline_scraps(self, by_code):
+        # Pre-fix: "ad This foundational course... w techniques... gl will
+        # explore... of through hands-on..."
+        c = by_code.get("ART101")
+        assert c is not None
+        d = c["description"]
+        assert d.startswith("This foundational course"), (
+            f"ART101 should start cleanly, got {d[:60]!r}"
+        )
+        for scrap in (" ad ", " gl ", " of through", " w techniques"):
+            assert scrap not in d, f"ART101 description still contains scrap: {scrap!r}"
+
+    def test_csc371_description_has_no_inline_scraps(self, by_code):
+        # Pre-fix: "AP Computer Science Principles is a college-level Pr De
+        # computing course... breadth of (T the computer science field..."
+        c = by_code.get("CSC371/CSC372")
+        assert c is not None
+        d = c["description"]
+        for scrap in ("Pr De", "(T the", "Cr computing", "qu exam"):
+            assert scrap not in d, f"CSC371 still contains scrap: {scrap!r}"
+
+    def test_soc101_description_has_no_inline_scraps(self, by_code):
+        # Pre-fix: "...Social Studies. Th Students taking World History
+        # and Geography develop co core academic skills..."
+        c = by_code.get("SOC101/SOC102")
+        assert c is not None
+        d = c["description"]
+        for scrap in ("Studies. Th Students", "develop co core", "present. th Patterns"):
+            assert scrap not in d, f"SOC101 still contains scrap: {scrap!r}"
+
+    def test_mth151_description_has_no_inline_scraps(self, by_code):
+        c = by_code.get("MTH151/MTH152")
+        assert c is not None
+        d = c["description"]
+        # Pre-fix sample: "develop proficiency re in algebraic thinking",
+        # "ideas ab of patterns of change"
+        for scrap in (" re in algebraic", " ab of patterns", " th mathematical"):
+            assert scrap not in d, f"MTH151 still contains scrap: {scrap!r}"
+
+    def test_no_standalone_short_line_scraps(self, by_code):
+        # Spot-check a sample of courses across divisions: their descriptions
+        # should not contain the standalone-line scrap patterns ("ad",
+        # "(M", etc.) joined as " X " between sentences.
+        sample = ["ART101", "MTH151/MTH152", "SCI111/SCI112",
+                  "CHI601/CHI602", "BUS411", "PED031"]
+        for code in sample:
+            c = by_code.get(code)
+            if not c:
+                continue
+            # No 1-2 char alpha tokens between two real words (catches " ad ",
+            # " gl ", " co " etc. when they're sentence-separated).
+            d = c["description"]
+            inline_scraps = [m for m in
+                             ["ad This", "w techniques", "gl will",
+                              "of through", "co core", "th mathematical"]
+                             if m in d]
+            assert not inline_scraps, (
+                f"{code} description still contains scraps: {inline_scraps}"
+            )
+
+
 class TestNextBlockBleedFixedInJson:
     """Whole-pipeline assertions against the freshly-extracted catalog.
 

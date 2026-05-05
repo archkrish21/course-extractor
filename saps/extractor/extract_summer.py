@@ -23,6 +23,8 @@ import os
 import sys
 from datetime import datetime, timezone
 
+from extract import normalize_course_name, normalize_description
+
 
 def _load_curated_data(year: int) -> list[dict]:
     """Dynamically import curated data for the given year."""
@@ -133,10 +135,12 @@ def main():
             {
                 "code": c["code"],
                 "all_codes": c["all_codes"],
-                "name": c["name"],
+                "name": normalize_course_name(c["name"]),
                 "division": c["division"],
                 "department": c["department"],
-                "description": DESCRIPTIONS.get(c["all_codes"][0] if len(c["all_codes"]) == 1 else c["code"].split("/")[0], ""),
+                "description": normalize_description(
+                    DESCRIPTIONS.get(c["all_codes"][0] if len(c["all_codes"]) == 1 else c["code"].split("/")[0], "")
+                ),
                 "credit_value": c["credit_value"],
                 "duration": c["duration"],
                 "credit_type": c["credit_type"],

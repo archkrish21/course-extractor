@@ -273,6 +273,76 @@ def lookup_division_department(code: str) -> tuple[str, str]:
     return ("Unknown", "Unknown")
 
 
+# Acronyms whose canonical form is uppercase. Title-casing must preserve them
+# rather than degrading "AP CHINESE" → "Ap Chinese" or "PLTW" → "Pltw".
+NAME_ACRONYMS = frozenset({
+    "AP", "IB", "PLTW", "ELD", "STEM", "CSI", "ACT", "SAT",
+    "AB", "BC", "U.S.", "P.E.", "AED", "CPR", "CSET",
+    "AAPPL", "DSLR", "GPA",
+    "2D", "3D", "4D",
+})
+
+# Short English words that stay lowercase in title-cased names — except when
+# they're the first word of the name.
+NAME_SMALL_WORDS = frozenset({
+    "a", "an", "and", "as", "at", "but", "by", "for", "in", "of",
+    "on", "or", "the", "to", "vs", "via",
+})
+
+
+def _normalize_name_word(word: str, is_first: bool) -> str:
+    """Title-case a single token, preserving known acronyms and small words."""
+    if not any(c.isalpha() for c in word):
+        return word
+    upper = word.upper()
+    if upper in NAME_ACRONYMS:
+        return upper
+    # Mixed-case words (e.g. names that were already extracted from the
+    # appendix in title case) are left alone.
+    if word != upper:
+        return word
+    # All-caps non-acronym → title case (or lowercased small word).
+    lower = word.lower()
+    if not is_first and lower in NAME_SMALL_WORDS:
+        return lower
+    return word.capitalize()
+
+
+def normalize_course_name(name: str) -> str:
+    """Title-case a course name with acronym preservation.
+
+    The catalog mixes ALL-CAPS section-header names ("ART AND DESIGN") with
+    title-case appendix names ("ACT Preparatory Course"). Normalize so the
+    UI shows consistent casing while preserving "AP", "PLTW", "U.S.",
+    "AB/BC", "2D"/"3D", and similar acronyms.
+    """
+    parts = re.split(r"(\s+|[–—\-/])", name)
+    out = []
+    is_first = True
+    for part in parts:
+        if not part:
+            continue
+        if part.isspace() or re.fullmatch(r"[–—\-/]", part):
+            out.append(part)
+            continue
+        out.append(_normalize_name_word(part, is_first))
+        if any(c.isalpha() for c in part):
+            is_first = False
+    return "".join(out)
+
+
+def normalize_description(desc: str) -> str:
+    """Whitespace cleanup for descriptions; preserves quotes and dashes.
+
+    Just collapses runs of whitespace and trims. The extractor produces
+    descriptions with the catalog's punctuation intact (curly quotes,
+    en-dashes, etc.); altering those would change the surface form
+    students see in the modal versus the printed catalog."""
+    if not desc:
+        return desc
+    return re.sub(r"\s+", " ", desc).strip()
+
+
 def clean_name(name: str) -> str:
     # Remove appendix-style noise: dotted lines + page numbers + trailing course codes
     name = re.sub(r"\s*[\.…]{3,}.*$", "", name)
@@ -288,7 +358,8 @@ def clean_name(name: str) -> str:
     name = re.sub(r"\s+Pr\s*$", "", name)
     name = re.sub(r"\s+Cr\s*$", "", name)
     name = re.sub(r"\s+", " ", name)
-    return name.strip("–—- \t")
+    name = name.strip("–—- \t")
+    return normalize_course_name(name)
 
 
 # ---------------------------------------------------------------------------
@@ -993,6 +1064,8 @@ def _build(
     # Detect GPA waiver from description or notes
     combined_text = ((description or "") + " " + (notes or "")).upper()
     gpa_waiver = "GPA WAIVER" in combined_text
+
+    description = normalize_description(description)
 
     return {
         "code": code,

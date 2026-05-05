@@ -1116,6 +1116,85 @@ class TestSummerDescriptionsAreVerbatim:
         assert "ACT is scored" in c["description"]
 
 
+class TestNameNormalization:
+    """`normalize_course_name` title-cases catalog names while preserving
+    known acronyms. The catalog mixes ALL-CAPS section-header names
+    ("ART AND DESIGN") with appendix title-case names ("ACT Preparatory
+    Course"); normalization gives the modal a single consistent style.
+    """
+
+    @pytest.fixture(scope="module")
+    def normalize(self):
+        from extract import normalize_course_name
+        return normalize_course_name
+
+    def test_all_caps_becomes_title_case(self, normalize):
+        assert normalize("ART AND DESIGN") == "Art and Design"
+        assert normalize("MANDARIN CHINESE 4") == "Mandarin Chinese 4"
+
+    def test_ap_acronym_preserved(self, normalize):
+        assert normalize("AP CHINESE LANGUAGE AND CULTURE") == "AP Chinese Language and Culture"
+
+    def test_pltw_suffix_preserved(self, normalize):
+        assert normalize("INTRODUCTION TO ENGINEERING DESIGN–PLTW") == "Introduction to Engineering Design–PLTW"
+
+    def test_us_with_periods_preserved(self, normalize):
+        assert normalize("U.S. HISTORY") == "U.S. History"
+
+    def test_ab_bc_track_preserved(self, normalize):
+        assert normalize("ALGEBRA 2 AB/BC") == "Algebra 2 AB/BC"
+
+    def test_2d_3d_preserved(self, normalize):
+        assert normalize("2D ANIMATION") == "2D Animation"
+        # Mixed-case input with 2D/3D embedded must also survive.
+        assert normalize("AP Art: Drawing, 2D and 3D Design") == "AP Art: Drawing, 2D and 3D Design"
+
+    def test_already_mixed_case_unchanged(self, normalize):
+        assert normalize("ACT Preparatory Course") == "ACT Preparatory Course"
+        assert normalize("Choice P.E. Early Bird") == "Choice P.E. Early Bird"
+
+    def test_first_word_always_capitalized(self, normalize):
+        # A small word like "AND" stays lowercase except when it's the
+        # FIRST word of the name.
+        assert normalize("AND OTHER STUFF") == "And Other Stuff"
+        assert normalize("OTHER AND STUFF") == "Other and Stuff"
+
+
+class TestNoAllCapsNamesInJson:
+    """Whole-pipeline guard: zero remaining all-uppercase names after
+    normalization runs over the full catalog."""
+
+    def test_no_all_caps_names(self, courses):
+        offenders = [
+            c["code"] for c in courses
+            if c["name"] == c["name"].upper()
+            and any(ch.isalpha() for ch in c["name"])
+        ]
+        assert not offenders, (
+            f"Found {len(offenders)} courses with all-uppercase names after "
+            f"normalization: {offenders[:8]}"
+        )
+
+    def test_same_name_consistent_across_regular_and_summer(self, courses):
+        # ART101 (regular) and ART11S (summer) are both "Art and Design".
+        # MTH151/152 (regular) and MTH15S/16S (summer) are both "Algebra 1".
+        # They must store identical strings post-normalization.
+        from collections import defaultdict
+        by_code = {c["code"]: c for c in courses}
+        for reg, summer in [
+            ("ART101", "ART11S"),
+            ("MTH151/MTH152", "MTH15S/MTH16S"),
+            ("SOC101/SOC102", "SOC13S/SOC14S"),
+        ]:
+            r, s = by_code.get(reg), by_code.get(summer)
+            if not r or not s:
+                continue  # course pair doesn't exist this year
+            assert r["name"] == s["name"], (
+                f"Same-concept courses have different names: "
+                f"{reg}={r['name']!r} vs {summer}={s['name']!r}"
+            )
+
+
 class TestSemesterPairRepresentation:
     """Locks in the canonical pair-representation rule (issue #148):
 

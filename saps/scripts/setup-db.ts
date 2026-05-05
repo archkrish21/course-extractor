@@ -49,8 +49,7 @@ import {
 } from "../lib/db/schema";
 import { SUBSCRIPTION_PLANS } from "../config/subscription-plans";
 import { PLAN_TEMPLATES } from "../config/seeds/plan-templates";
-import { getEquivalents } from "../config/summer-equivalents";
-import { getHigherOrEqualRigorSiblings } from "../config/course-families";
+import { expandWithEquivalents } from "../lib/prereq/expand-prereqs";
 import { seedLegalDocuments, LEGAL_DOCUMENT_SEEDS } from "./seeds/legal-documents";
 
 // ─── Safety ─────────────────────────────────────────────────────────────────
@@ -328,22 +327,6 @@ async function main() {
               return null;
             }
 
-            // Expand a prereq to include both lateral summer/regular equivalents
-            // and same-or-higher-rigor family siblings so any path satisfies the
-            // requirement (same requirement_group → OR semantics).
-            function expandWithEquivalents(prereqId: string, prereqCanonical: string): string[] {
-              const ids = new Set<string>([prereqId]);
-              for (const eqCode of getEquivalents(prereqCanonical)) {
-                const eqId = courseIds[eqCode];
-                if (eqId) ids.add(eqId);
-              }
-              for (const sibCode of getHigherOrEqualRigorSiblings(prereqCanonical)) {
-                const sibId = courseIds[sibCode];
-                if (sibId) ids.add(sibId);
-              }
-              return Array.from(ids);
-            }
-
             async function insertPrereqEdges(
               courseId: string,
               prereqId: string,
@@ -351,7 +334,7 @@ async function main() {
               group: number
             ): Promise<number> {
               let inserted = 0;
-              for (const id of expandWithEquivalents(prereqId, prereqCanonical)) {
+              for (const id of expandWithEquivalents(prereqId, prereqCanonical, courseIds)) {
                 if (id === courseId) continue;
                 await client.query(
                   `INSERT INTO course_prerequisites

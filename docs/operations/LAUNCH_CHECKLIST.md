@@ -14,7 +14,7 @@ Each item links to the authoritative doc so details don't get duplicated here.
 - [x] Supabase project created (choose region close to users)
 - [x] Credentials collected: `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`, `DATABASE_URL`
 - [x] Schema applied: `npm run db:setup` + `db:migrate` against the hosted DB (done 2026-04-15)
-- [x] Course catalog loaded and verified (361 active courses — 315 base + 46 summer, matches `saps/extractor/data/2026-courses-with-summer.json`. Backfilled 2026-04-15 after switching default catalog JSON.)
+- [x] Course catalog loaded and verified (391 active courses — 345 base + 46 summer, matches `saps/extractor/data/2026-courses-with-summer.json`. Re-loaded 2026-05-05 after the extractor fidelity audit landed PRs #150–#158: 215 of 391 descriptions cleaner, 15 wrong gpa_waiver/dual_credit flags corrected, 46 false-positive prereq links removed, prereq DAG validates with 0 cycles. Original load: 2026-04-15.)
 - [x] Legal documents seeded (3 rows — ToS, Privacy, Age Attestation, verified 2026-04-15)
 
 ### Auth configuration — Supabase dashboard

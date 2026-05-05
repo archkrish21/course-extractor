@@ -1,7 +1,7 @@
 {
   "catalog_year": 2026,
   "school": "Adlai E. Stevenson High School",
-  "extracted_at": "2026-05-05T03:16:12.863441+00:00",
+  "extracted_at": "2026-05-05T03:39:57.513254+00:00",
   "total_courses": 345,
   "courses": [
     {
@@ -331,7 +331,7 @@
       "name": "PHOTOGRAPHY 1",
       "division": "Fine Arts",
       "department": "Visual Arts",
-      "description": "check out school-owned cameras for assignments. This foundational course covers basic concepts and practice of digital photography, including understanding and use of the camera, lenses and other basic photographic equipment. The course will address aesthetic principles as they relate to composition, space, exposure, light and color. An introduction to Adobe Photoshop will be studied in this course. Technological requirements of digital formats will be addressed. Basic digital manipulations of images will be taught in preparation for creating finished art.",
+      "description": "This foundational course covers basic concepts and practice of digital photography, including understanding and use of the camera, lenses and other basic photographic equipment. The course will address aesthetic principles as they relate to composition, space, exposure, light and color. An introduction to Adobe Photoshop will be studied in this course. Technological requirements of digital formats will be addressed. Basic digital manipulations of images will be taught in preparation for creating finished art.",
       "credit_value": 1.0,
       "duration": "semester",
       "grade_levels": [
@@ -357,7 +357,7 @@
       "name": "PHOTOGRAPHY 1",
       "division": "Fine Arts",
       "department": "Visual Arts",
-      "description": "check out school-owned cameras for assignments. This foundational course covers basic concepts and practice of digital photography, including understanding and use of the camera, lenses and other basic photographic equipment. The course will address aesthetic principles as they relate to composition, space, exposure, light and color. An introduction to Adobe Photoshop will be studied in this course. Technological requirements of digital formats will be addressed. Basic digital manipulations of images will be taught in preparation for creating finished art.",
+      "description": "This foundational course covers basic concepts and practice of digital photography, including understanding and use of the camera, lenses and other basic photographic equipment. The course will address aesthetic principles as they relate to composition, space, exposure, light and color. An introduction to Adobe Photoshop will be studied in this course. Technological requirements of digital formats will be addressed. Basic digital manipulations of images will be taught in preparation for creating finished art.",
       "credit_value": 1.0,
       "duration": "semester",
       "grade_levels": [
@@ -383,7 +383,7 @@
       "name": "PHOTOGRAPHY 2",
       "division": "Fine Arts",
       "department": "Visual Arts",
-      "description": "however, students may check out a school-owned DSLR, Apple Pencil and/or tripod for assignments. This course is designed to refine students’ digital photographic skills and aesthetic judgment as they relate to composition, space, exposure, light and color. Special effects, studio lighting, portraiture, night photography, use of Adobe Photoshop, the Creative Suite and Procreate are areas studied in this course. Technological requirements of digital formats and printing will be addressed.",
+      "description": "This course is designed to refine students’ digital photographic skills and aesthetic judgment as they relate to composition, space, exposure, light and color. Special effects, studio lighting, portraiture, night photography, use of Adobe Photoshop, the Creative Suite and Procreate are areas studied in this course. Technological requirements of digital formats and printing will be addressed.",
       "credit_value": 1.0,
       "duration": "semester",
       "grade_levels": [
@@ -422,7 +422,7 @@
       "name": "PHOTOGRAPHY 2",
       "division": "Fine Arts",
       "department": "Visual Arts",
-      "description": "however, students may check out a school-owned DSLR, Apple Pencil and/or tripod for assignments. This course is designed to refine students’ digital photographic skills and aesthetic judgment as they relate to composition, space, exposure, light and color. Special effects, studio lighting, portraiture, night photography, use of Adobe Photoshop, the Creative Suite and Procreate are areas studied in this course. Technological requirements of digital formats and printing will be addressed.",
+      "description": "This course is designed to refine students’ digital photographic skills and aesthetic judgment as they relate to composition, space, exposure, light and color. Special effects, studio lighting, portraiture, night photography, use of Adobe Photoshop, the Creative Suite and Procreate are areas studied in this course. Technological requirements of digital formats and printing will be addressed.",
       "credit_value": 1.0,
       "duration": "semester",
       "grade_levels": [
@@ -461,7 +461,7 @@
       "name": "ADVANCED PHOTOGRAPHY AND COMMUNITY AND SOCIAL DYNAMICS",
       "division": "Fine Arts",
       "department": "Visual Arts",
-      "description": "however, students may check out a school-owned DSLR, Apple Pencil and/or tripod for assignments. This course offers an advanced study of photography and/or digital design for students who want to pursue image making in a serious manner. Students on the photography track are introduced to large format printing, DSLR camera handling skills and advanced techniques using Adobe Photoshop and the Creative Suite. Students on the design track will be developing a portfolio of digital drawings and designs using the Adobe Creative Suite and the Procreate drawing app. Design students will also explore methods of digital photography to enhance their layout, formatting and design skills. Students will explore brainstorming methods to develop stronger concepts and common visual connections through the development of a series of work. Students will compile a portfolio and assemble a one-person show to be exhibited in the spring.",
+      "description": "This course offers an advanced study of photography and/or digital design for students who want to pursue image making in a serious manner. Students on the photography track are introduced to large format printing, DSLR camera handling skills and advanced techniques using Adobe Photoshop and the Creative Suite. Students on the design track will be developing a portfolio of digital drawings and designs using the Adobe Creative Suite and the Procreate drawing app. Design students will also explore methods of digital photography to enhance their layout, formatting and design skills. Students will explore brainstorming methods to develop stronger concepts and common visual connections through the development of a series of work. Students will compile a portfolio and assemble a one-person show to be exhibited in the spring.",
       "credit_value": 2.0,
       "duration": "full_year",
       "grade_levels": [
@@ -507,7 +507,7 @@
       "name": "Digital Art and Design 1",
       "division": "Fine Arts",
       "department": "Visual Arts",
-      "description": "may check out a school-owned Apple Pencil for assignments. This course is designed to introduce students to Adobe Photoshop and Procreate as drawing and graphic design tools and as a means of producing finished artwork. Students will have the opportunity to develop skills and be creative while digitally drawing, painting and manipulating photographic images with both Wacom tablets as well as the iPad and Apple Pencil. Projects will have fine arts, photography, media arts and graphic design components.",
+      "description": "This course is designed to introduce students to Adobe Photoshop and Procreate as drawing and graphic design tools and as a means of producing finished artwork. Students will have the opportunity to develop skills and be creative while digitally drawing, painting and manipulating photographic images with both Wacom tablets as well as the iPad and Apple Pencil. Projects will have fine arts, photography, media arts and graphic design components.",
       "credit_value": 1.0,
       "duration": "semester",
       "grade_levels": [
@@ -533,7 +533,7 @@
       "name": "Digital Art and Design 1",
       "division": "Fine Arts",
       "department": "Visual Arts",
-      "description": "may check out a school-owned Apple Pencil for assignments. This course is designed to introduce students to Adobe Photoshop and Procreate as drawing and graphic design tools and as a means of producing finished artwork. Students will have the opportunity to develop skills and be creative while digitally drawing, painting and manipulating photographic images with both Wacom tablets as well as the iPad and Apple Pencil. Projects will have fine arts, photography, media arts and graphic design components.",
+      "description": "This course is designed to introduce students to Adobe Photoshop and Procreate as drawing and graphic design tools and as a means of producing finished artwork. Students will have the opportunity to develop skills and be creative while digitally drawing, painting and manipulating photographic images with both Wacom tablets as well as the iPad and Apple Pencil. Projects will have fine arts, photography, media arts and graphic design components.",
       "credit_value": 1.0,
       "duration": "semester",
       "grade_levels": [
@@ -559,7 +559,7 @@
       "name": "Digital Art and Design 2",
       "division": "Fine Arts",
       "department": "Visual Arts",
-      "description": "may check out a school-owned Apple Pencil for assignments. This course is designed to be an advanced or second level for students interested in furthering their study and exploration of using Adobe Photoshop as well as Procreate as a drawing and graphic design tool. Students will have the opportunity to develop skills and be creative while digitally drawing, painting and manipulating photographic images with both Wacom tablets as well as the iPad and Apple Pencil. Students will be introduced to more complex concepts and techniques of media arts and graphic design. The course will have fine arts, photographic and commercial art components. 2D ANIMATION",
+      "description": "This course is designed to be an advanced or second level for students interested in furthering their study and exploration of using Adobe Photoshop as well as Procreate as a drawing and graphic design tool. Students will have the opportunity to develop skills and be creative while digitally drawing, painting and manipulating photographic images with both Wacom tablets as well as the iPad and Apple Pencil. Students will be introduced to more complex concepts and techniques of media arts and graphic design. The course will have fine arts, photographic and commercial art components. 2D ANIMATION",
       "credit_value": 1.0,
       "duration": "semester",
       "grade_levels": [
@@ -586,7 +586,7 @@
       "name": "Digital Art and Design 2",
       "division": "Fine Arts",
       "department": "Visual Arts",
-      "description": "may check out a school-owned Apple Pencil for assignments. This course is designed to be an advanced or second level for students interested in furthering their study and exploration of using Adobe Photoshop as well as Procreate as a drawing and graphic design tool. Students will have the opportunity to develop skills and be creative while digitally drawing, painting and manipulating photographic images with both Wacom tablets as well as the iPad and Apple Pencil. Students will be introduced to more complex concepts and techniques of media arts and graphic design. The course will have fine arts, photographic and commercial art components. 2D ANIMATION",
+      "description": "This course is designed to be an advanced or second level for students interested in furthering their study and exploration of using Adobe Photoshop as well as Procreate as a drawing and graphic design tool. Students will have the opportunity to develop skills and be creative while digitally drawing, painting and manipulating photographic images with both Wacom tablets as well as the iPad and Apple Pencil. Students will be introduced to more complex concepts and techniques of media arts and graphic design. The course will have fine arts, photographic and commercial art components. 2D ANIMATION",
       "credit_value": 1.0,
       "duration": "semester",
       "grade_levels": [
@@ -1033,7 +1033,7 @@
       "name": "AP Photography and Digital Design",
       "division": "Fine Arts",
       "department": "Visual Arts",
-      "description": "however, students may check out a school-owned DSLR, Apple Pencil and/or tripod for assignments. This course offers digital 2D design drawing and painting students a concentrated program, which enables them to apply for college credit in art. Emphasis is centered on studio work, the preparation of a portfolio and the submission of portfolio for potential AP credit. In the spring, each student will exhibit their work in a one-person show. This course may be repeated for credit.",
+      "description": "This course offers digital 2D design drawing and painting students a concentrated program, which enables them to apply for college credit in art. Emphasis is centered on studio work, the preparation of a portfolio and the submission of portfolio for potential AP credit. In the spring, each student will exhibit their work in a one-person show. This course may be repeated for credit.",
       "credit_value": 2.0,
       "duration": "full_year",
       "grade_levels": [
@@ -2188,7 +2188,7 @@
       "name": "DRIVER EDUCATION",
       "division": "Applied Arts",
       "department": "Driver Education",
-      "description": "Other requirements: This course is normally taken during one semester of ■ Students must be 15 years old to obtain an Illinois permit. sophomore or junior year. Students are enrolled in this ■ Students must hold an Illinois permit for nine months course based on chronological age. For the 2026-27 school before receiving a license. year, students may request enrollment in the course for first semester if they were born on or before Nov. 1, 2010 ■ Students must be enrolled in a Driver Education course and for second semester if they were born on or before to obtain an Illinois permit. March 1, 2011. Students must take and pass both the ■ Freshmen (regardless of age) are ineligible to take classroom phase and the behind-the-wheel phase of Driver Driver Education until the summer between freshman Education if they wish to receive a license prior to their and sophomore year. 18th birthday. Passing the classroom phase of the ■ A Driver Education teacher will contact students prior course is required for graduation. to the start of the Driver Education class to begin the The course is a two-phase program consisting of classroom permit process. and behind-the-wheel instruction. The course prepares ■ If a student drops Driver Education, their permit will students for safe motor vehicle operation in a suburban be canceled. driving environment. Among the topics taught in this course are the rules of the road, defensive driving, natural laws and ■ If a student chooses to select the classroom only their effects on vehicle control, driver responsibility and option, they will not be able to complete the impaired and distracted driving. Students must also meet all behind-the-wheel phase at a later time. the essential course requirements as mandated by the Illinois Driver Education fees: $400 and an additional $20 check to State Board of Education and the Secretary of State’s Office. the Secretary of State. This includes 50 hours of at-home practice, done concurrently Parents/Guardians will be informed if their student has been while taking the class. The grades earned in this course are enrolled in Driver Education by March 8. not included in the student’s grade point average.",
+      "description": "THE PREVIOUS TWO SEMESTERS. Students in the ELD program must Students will receive an email notification in birth date order. be enrolled in ELD 2 or higher to register for Driver Education. Other requirements: This course is normally taken during one semester of ■ Students must be 15 years old to obtain an Illinois permit. sophomore or junior year. Students are enrolled in this ■ Students must hold an Illinois permit for nine months course based on chronological age. For the 2026-27 school before receiving a license. year, students may request enrollment in the course for first semester if they were born on or before Nov. 1, 2010 ■ Students must be enrolled in a Driver Education course and for second semester if they were born on or before to obtain an Illinois permit. March 1, 2011. Students must take and pass both the ■ Freshmen (regardless of age) are ineligible to take classroom phase and the behind-the-wheel phase of Driver Driver Education until the summer between freshman Education if they wish to receive a license prior to their and sophomore year. 18th birthday. Passing the classroom phase of the ■ A Driver Education teacher will contact students prior course is required for graduation. to the start of the Driver Education class to begin the The course is a two-phase program consisting of classroom permit process. and behind-the-wheel instruction. The course prepares ■ If a student drops Driver Education, their permit will students for safe motor vehicle operation in a suburban be canceled. driving environment. Among the topics taught in this course are the rules of the road, defensive driving, natural laws and ■ If a student chooses to select the classroom only their effects on vehicle control, driver responsibility and option, they will not be able to complete the impaired and distracted driving. Students must also meet all behind-the-wheel phase at a later time. the essential course requirements as mandated by the Illinois Driver Education fees: $400 and an additional $20 check to State Board of Education and the Secretary of State’s Office. the Secretary of State. This includes 50 hours of at-home practice, done concurrently Parents/Guardians will be informed if their student has been while taking the class. The grades earned in this course are enrolled in Driver Education by March 8. not included in the student’s grade point average.",
       "credit_value": 1.0,
       "duration": "semester",
       "grade_levels": [
@@ -2214,7 +2214,7 @@
       "name": "DRIVER EDUCATION",
       "division": "Applied Arts",
       "department": "Driver Education",
-      "description": "Other requirements: This course is normally taken during one semester of ■ Students must be 15 years old to obtain an Illinois permit. sophomore or junior year. Students are enrolled in this ■ Students must hold an Illinois permit for nine months course based on chronological age. For the 2026-27 school before receiving a license. year, students may request enrollment in the course for first semester if they were born on or before Nov. 1, 2010 ■ Students must be enrolled in a Driver Education course and for second semester if they were born on or before to obtain an Illinois permit. March 1, 2011. Students must take and pass both the ■ Freshmen (regardless of age) are ineligible to take classroom phase and the behind-the-wheel phase of Driver Driver Education until the summer between freshman Education if they wish to receive a license prior to their and sophomore year. 18th birthday. Passing the classroom phase of the ■ A Driver Education teacher will contact students prior course is required for graduation. to the start of the Driver Education class to begin the The course is a two-phase program consisting of classroom permit process. and behind-the-wheel instruction. The course prepares ■ If a student drops Driver Education, their permit will students for safe motor vehicle operation in a suburban be canceled. driving environment. Among the topics taught in this course are the rules of the road, defensive driving, natural laws and ■ If a student chooses to select the classroom only their effects on vehicle control, driver responsibility and option, they will not be able to complete the impaired and distracted driving. Students must also meet all behind-the-wheel phase at a later time. the essential course requirements as mandated by the Illinois Driver Education fees: $400 and an additional $20 check to State Board of Education and the Secretary of State’s Office. the Secretary of State. This includes 50 hours of at-home practice, done concurrently Parents/Guardians will be informed if their student has been while taking the class. The grades earned in this course are enrolled in Driver Education by March 8. not included in the student’s grade point average.",
+      "description": "THE PREVIOUS TWO SEMESTERS. Students in the ELD program must Students will receive an email notification in birth date order. be enrolled in ELD 2 or higher to register for Driver Education. Other requirements: This course is normally taken during one semester of ■ Students must be 15 years old to obtain an Illinois permit. sophomore or junior year. Students are enrolled in this ■ Students must hold an Illinois permit for nine months course based on chronological age. For the 2026-27 school before receiving a license. year, students may request enrollment in the course for first semester if they were born on or before Nov. 1, 2010 ■ Students must be enrolled in a Driver Education course and for second semester if they were born on or before to obtain an Illinois permit. March 1, 2011. Students must take and pass both the ■ Freshmen (regardless of age) are ineligible to take classroom phase and the behind-the-wheel phase of Driver Driver Education until the summer between freshman Education if they wish to receive a license prior to their and sophomore year. 18th birthday. Passing the classroom phase of the ■ A Driver Education teacher will contact students prior course is required for graduation. to the start of the Driver Education class to begin the The course is a two-phase program consisting of classroom permit process. and behind-the-wheel instruction. The course prepares ■ If a student drops Driver Education, their permit will students for safe motor vehicle operation in a suburban be canceled. driving environment. Among the topics taught in this course are the rules of the road, defensive driving, natural laws and ■ If a student chooses to select the classroom only their effects on vehicle control, driver responsibility and option, they will not be able to complete the impaired and distracted driving. Students must also meet all behind-the-wheel phase at a later time. the essential course requirements as mandated by the Illinois Driver Education fees: $400 and an additional $20 check to State Board of Education and the Secretary of State’s Office. the Secretary of State. This includes 50 hours of at-home practice, done concurrently Parents/Guardians will be informed if their student has been while taking the class. The grades earned in this course are enrolled in Driver Education by March 8. not included in the student’s grade point average.",
       "credit_value": 1.0,
       "duration": "semester",
       "grade_levels": [
@@ -2613,7 +2613,7 @@
       "name": "LANGUAGE",
       "division": "Multilingual Learning",
       "department": "English Language Development",
-      "description": "(ELD) 3 Literature This is one of two courses available for students in the ELD program at the advanced level. This course may be taken concurrently with English Language Development (ELD) 3 Literature (ELD371/372) or may be taken alone. Students will leverage their own cultural and linguistic assets as they work to expand their English language proficiency. In addition to a focus on the development of advanced literacy skills, including argumentative writing and literary analysis, students will foster their listening and speaking skills by participating in discussions, debates and oral presentations.",
+      "description": "",
       "credit_value": 2.0,
       "duration": "full_year",
       "grade_levels": [
@@ -2638,7 +2638,7 @@
       "name": "English Language Development (ELD) 3",
       "division": "Multilingual Learning",
       "department": "English Language Development",
-      "description": "(ELD) 3 Language This is one of two courses available for students in the ELD program at the advanced level. This course may be taken concurrently with English Language Development (ELD) 3 Language (ELD361/362) or may be taken alone. Students will leverage their own cultural and linguistic assets as they work to expand their English language proficiency. Students will explore both fiction and nonfiction literature through both common and independent reading tasks. Students will make text-to-self connections as they engage in literary analysis and argumentative writing, including multi-page process writing.",
+      "description": "",
       "credit_value": 2.0,
       "duration": "full_year",
       "grade_levels": [
@@ -2859,7 +2859,7 @@
       "name": "American Studies (AP English Language and Composition and AP U.S. History)",
       "division": "Communication Arts",
       "department": "English",
-      "description": "Students are scheduled for consecutive periods of history and English, allowing for an integrated study of the two disciplines, development of skills for informed citizenship and thematic movements in our country’s history and literature. This course fulfills the College Board’s objectives for both AP English Language and Composition and AP U.S. History, with attention to how a shared focus on both content and skills reinforces the development of the common and separate course objectives, including preparation for both AP exams. The AP U.S. History component focuses on the development of historical thinking skills (chronological reasoning, comparing and contextualizing, crafting historical arguments using historical evidence and interpreting and synthesizing historical narrative) and an understanding of content objectives and themes. The AP English Language component features the study of primary source documents, contemporary and historical nonfiction and fiction. Students read to deepen their analysis of rhetoric and to develop their perspective of both history and contemporary society. Students write and orally present original arguments— both with and without sources. All forms of writing—analysis, argument, synthesis, creative prose—are influenced by students’ awareness of the interdisciplinary content. COLLEGE PREP WITH ACCELERATED OPTION The Accelerated Option is a way for any student to access challenges and engage with our excellent curriculum, there is a several-week open windo English rigor. Regardless of what level of course they initially intended to by participating in the accelerated requirements of each assessment. Wh accelerated credit for the course. This does not affect college admissions. This option is available only for Creative Writing Seminar, Media Analysis and Film Genres.",
+      "description": "Students are scheduled for consecutive periods of history and English, allowing for an integrated study of the two disciplines, development of skills for informed citizenship and thematic movements in our country’s history and literature. This course fulfills the College Board’s objectives for both AP English Language and Composition and AP U.S. History, with attention to how a shared focus on both content and skills reinforces the development of the common and separate course objectives, including preparation for both AP exams. The AP U.S. History component focuses on the development of historical thinking skills (chronological reasoning, comparing and contextualizing, crafting historical arguments using historical evidence and interpreting and synthesizing historical narrative) and an understanding of content objectives and themes. The AP English Language component features the study of primary source documents, contemporary and historical nonfiction and fiction. Students read to deepen their analysis of rhetoric and to develop their perspective of both history and contemporary society. Students write and orally present original arguments— both with and without sources. All forms of writing—analysis, argument, synthesis, creative prose—are influenced by students’ awareness of the interdisciplinary content. COLLEGE PREP WITH ACCELERATED OPTION The Accelerated Option is a way for any student to access challenges and engage with our excellent curriculum, there is a several-week open windo English rigor. Regardless of what level of course they initially intended to by participating in the accelerated requirements of each assessment. Wh accelerated credit for the course.",
       "credit_value": 2.0,
       "duration": "full_year",
       "grade_levels": [
@@ -3255,7 +3255,7 @@
       "name": "Topics in Composition: Film Genres",
       "division": "Communication Arts",
       "department": "English",
-      "description": "This one-semester composition course is designed to lead students to an understanding of the art of film through the world of film genre, including suspense, comedy, horror, among others. Topics of composition include film techniques, film history, film analysis and elements of genre conventions. Students will be required to write weekly response papers, view a variety of films, participate in class discussions and complete four analytical projects. COLLEGE PREP WITH ACCELERATED OPTION The Accelerated Option is a way for any student to access challenges and engage with our excellent curriculum, there is a several-week open windo English rigor. Regardless of what level of course they initially intended to by participating in the accelerated requirements of each assessment. Wh accelerated credit for the course. This does not affect college admissions. This option is available only for Creative Writing Seminar, Media Analysis and Film Genres.",
+      "description": "This one-semester composition course is designed to lead students to an understanding of the art of film through the world of film genre, including suspense, comedy, horror, among others. Topics of composition include film techniques, film history, film analysis and elements of genre conventions. Students will be required to write weekly response papers, view a variety of films, participate in class discussions and complete four analytical projects. COLLEGE PREP WITH ACCELERATED OPTION The Accelerated Option is a way for any student to access challenges and engage with our excellent curriculum, there is a several-week open windo English rigor. Regardless of what level of course they initially intended to by participating in the accelerated requirements of each assessment. Wh accelerated credit for the course.",
       "credit_value": 1.0,
       "duration": "semester",
       "grade_levels": [
@@ -4451,7 +4451,7 @@
       "name": "ADVANCED JOURNALISTIC WRITING",
       "division": "Communication Arts",
       "department": "Journalism",
-      "description": "Not an English graduation credit Units in opinion writing (editorial, personal column, reviews), feature writing, sports writing and in-depth reporting, along with hands-on production of pages, prepare students for positions in student publications. Students will build on the reporting and writing skills learned in Journalistic Writing. As in the prerequisite course, communication and problem- solving will be stressed.",
+      "description": "Units in opinion writing (editorial, personal column, reviews), feature writing, sports writing and in-depth reporting, along with hands-on production of pages, prepare students for positions in student publications. Students will build on the reporting and writing skills learned in Journalistic Writing. As in the prerequisite course, communication and problem- solving will be stressed.",
       "credit_value": 1.0,
       "duration": "semester",
       "grade_levels": [
@@ -4490,7 +4490,7 @@
       "name": "ADVANCED JOURNALISTIC WRITING",
       "division": "Communication Arts",
       "department": "Journalism",
-      "description": "Not an English graduation credit Units in opinion writing (editorial, personal column, reviews), feature writing, sports writing and in-depth reporting, along with hands-on production of pages, prepare students for positions in student publications. Students will build on the reporting and writing skills learned in Journalistic Writing. As in the prerequisite course, communication and problem- solving will be stressed.",
+      "description": "Units in opinion writing (editorial, personal column, reviews), feature writing, sports writing and in-depth reporting, along with hands-on production of pages, prepare students for positions in student publications. Students will build on the reporting and writing skills learned in Journalistic Writing. As in the prerequisite course, communication and problem- solving will be stressed.",
       "credit_value": 1.0,
       "duration": "semester",
       "grade_levels": [
@@ -4529,7 +4529,7 @@
       "name": "PUBLICATION DESIGN AND PRODUCTION",
       "division": "Communication Arts",
       "department": "Journalism",
-      "description": "Not an English graduation credit Students do all the work necessary to produce the Statesman (newspaper and website). Staff positions include executive editors, copy editors, design editors, advertising manager, section editors (news, opinions, sports, in-depth and feature) and reporter. Staff members gather news, research and write copy and help complete pages. Because this is student publication, all responsibilities—from the planning of the content, to the design of an issue, to the processing of photos and the completion of pages—are handled by students. After-school work is necessary for these publications. This course may be repeated for credit.",
+      "description": "Students do all the work necessary to produce the Statesman (newspaper and website). Staff positions include executive editors, copy editors, design editors, advertising manager, section editors (news, opinions, sports, in-depth and feature) and reporter. Staff members gather news, research and write copy and help complete pages. Because this is student publication, all responsibilities—from the planning of the content, to the design of an issue, to the processing of photos and the completion of pages—are handled by students. After-school work is necessary for these publications. This course may be repeated for credit.",
       "credit_value": 2.0,
       "duration": "full_year",
       "grade_levels": [
@@ -5205,7 +5205,7 @@
       "name": "FRESHMAN BAND",
       "division": "Fine Arts",
       "department": "Music",
-      "description": "CONCEPTUALIZING, MAKING VALUE JUDGMENTS AND AND PROVIDES UNIQUE OPPORTUNITIES FOR All incoming freshmen with middle school band experience SELF-EXPRESSION AND CREATIVITY. THE STEVENSON may enroll in Freshman Band to continue work on their MUSIC DEPARTMENT OFFERS A VARIETY OF CLASSES comprehensive musicianship skills. Freshman Band members also perform in three formal concerts throughout the year. THAT ALLOW STUDENTS TO BEGIN—OR CONTINUE— For the first eight to nine weeks of the first semester, band A STRONG, SEQUENTIAL PROGRAM OF MUSIC STUDY. students may choose to perform in the highly acclaimed COURSES ARE OFFERED IN INSTRUMENTAL MUSIC, Marching Patriots with members of the Symphonic Band, Wind Symphony and Wind Ensemble. Students electing to VOCAL MUSIC AND NON-PERFORMANCE CLASSES. participate in Marching Band may receive a P.E. waiver for the first semester.",
+      "description": "AND PROVIDES UNIQUE OPPORTUNITIES FOR All incoming freshmen with middle school band experience SELF-EXPRESSION AND CREATIVITY. THE STEVENSON may enroll in Freshman Band to continue work on their MUSIC DEPARTMENT OFFERS A VARIETY OF CLASSES comprehensive musicianship skills. Freshman Band members also perform in three formal concerts throughout the year. THAT ALLOW STUDENTS TO BEGIN—OR CONTINUE— For the first eight to nine weeks of the first semester, band A STRONG, SEQUENTIAL PROGRAM OF MUSIC STUDY. students may choose to perform in the highly acclaimed COURSES ARE OFFERED IN INSTRUMENTAL MUSIC, Marching Patriots with members of the Symphonic Band, Wind Symphony and Wind Ensemble. Students electing to VOCAL MUSIC AND NON-PERFORMANCE CLASSES. participate in Marching Band may receive a P.E. waiver for the first semester.",
       "credit_value": 2.0,
       "duration": "full_year",
       "grade_levels": [
@@ -5227,7 +5227,7 @@
       "name": "SYMPHONIC BAND",
       "division": "Fine Arts",
       "department": "Music",
-      "description": "ACCOMPLISHMENTS THROUGH CONCERTS, RECITALS,",
+      "description": "Wind Symphony and Wind Ensemble. Students electing to participate in Marching Band may receive a P.E. waiver for the first semester. This course may be repeated for credit. * IMPORTANT NOTE FOR ALL BAND CLASSES: In order to earn a P.E. waiver, all band students who participate in the Marching Patriots must be available for rehearsals during summer and fall evenings. Students must also obtain all necessary GPA waiver approvals.",
       "credit_value": 2.0,
       "duration": "full_year",
       "grade_levels": [
@@ -5275,7 +5275,7 @@
       "name": "Wind Ensemble",
       "division": "Fine Arts",
       "department": "Music",
-      "description": "Students in grades 10-12 with band experience may audition to enroll in Wind Ensemble to continue work on comprehensive musicianship skills. Wind Ensemble also performs in five annual concerts at Stevenson High School and may also participate in additional performance opportunities or festivals. For the first eight to nine weeks of the first semester, band students may choose to perform in the highly acclaimed Marching Patriots with members of the Freshman Band, Symphonic Band and Wind Symphony. Students electing to participate in Marching Band may receive a P.E. waiver for the first semester. This course may be repeated for credit. Patriot Guitar Ensemble, Patriot Singers and Advanced Chorus and have been active for four semesters in performing ensembles, earn accelerated-level grade points unless requesting a GPA waiver. Band students participating in Marching Band are offered a P.E. waiver for the first semester.",
+      "description": "Students in grades 10-12 with band experience may audition to enroll in Wind Ensemble to continue work on comprehensive musicianship skills. Wind Ensemble also performs in five annual concerts at Stevenson High School and may also participate in additional performance opportunities or festivals. For the first eight to nine weeks of the first semester, band students may choose to perform in the highly acclaimed Marching Patriots with members of the Freshman Band, Symphonic Band and Wind Symphony. Students electing to participate in Marching Band may receive a P.E. waiver for the first semester. This course may be repeated for credit.",
       "credit_value": 2.0,
       "duration": "full_year",
       "grade_levels": [
@@ -5381,7 +5381,7 @@
       "name": "Stevenson Orchestra",
       "division": "Fine Arts",
       "department": "Music",
-      "description": "an instrument for home use, although cello and bass students may use school instruments for daily rehearsals. This course is open to students in grade 9, as well as transfer students who demonstrate the appropriate level of technical preparedness on violin, viola, cello, bass or harp. Students will continue developing foundational and intermediate performance techniques while expanding their knowledge of music theory and comprehensive musicianship skills. The ensemble will study and perform a variety of string orchestra and chamber music repertoire. Students are required to attend scheduled rehearsals and performances outside of the school day. Performance commitments include four formal concerts and additional curricular string events throughout the school year. Incoming students in grade 9 and transfer students are encouraged to attend a one-day summer strings camp in August to become familiar with the strings program and facilities. This course may be repeated for credit.",
+      "description": "This course is open to students in grade 9, as well as transfer students who demonstrate the appropriate level of technical preparedness on violin, viola, cello, bass or harp. Students will continue developing foundational and intermediate performance techniques while expanding their knowledge of music theory and comprehensive musicianship skills. The ensemble will study and perform a variety of string orchestra and chamber music repertoire. Students are required to attend scheduled rehearsals and performances outside of the school day. Performance commitments include four formal concerts and additional curricular string events throughout the school year. Incoming students in grade 9 and transfer students are encouraged to attend a one-day summer strings camp in August to become familiar with the strings program and facilities. This course may be repeated for credit.",
       "credit_value": 2.0,
       "duration": "full_year",
       "grade_levels": [
@@ -5403,7 +5403,7 @@
       "name": "CONCERT ORCHESTRA",
       "division": "Fine Arts",
       "department": "Music",
-      "description": "an instrument for home use, although cello and bass students may use school instruments for daily rehearsals. This course is designed for students in grades 10–12 who play violin, viola, cello, bass or harp with advanced string technique. Students will study two- and three-octave scales and arpeggios while developing advanced performance techniques, music theory knowledge and comprehensive musicianship skills. The orchestra will perform a wide range of intermediate to advanced string orchestra and chamber music repertoire. Students will participate in four formal concerts as well as additional curricular string events throughout the school year. This course may be repeated for credit.",
+      "description": "This course is designed for students in grades 10–12 who play violin, viola, cello, bass or harp with advanced string technique. Students will study two- and three-octave scales and arpeggios while developing advanced performance techniques, music theory knowledge and comprehensive musicianship skills. The orchestra will perform a wide range of intermediate to advanced string orchestra and chamber music repertoire. Students will participate in four formal concerts as well as additional curricular string events throughout the school year. This course may be repeated for credit.",
       "credit_value": 2.0,
       "duration": "full_year",
       "grade_levels": [
@@ -5427,7 +5427,7 @@
       "name": "PATRIOT ORCHESTRA",
       "division": "Fine Arts",
       "department": "Music",
-      "description": "an instrument for home use, although cello and bass students may use school instruments for daily rehearsals. This course is designed for students in grades 10–12 who play violin, viola, cello, bass or harp and demonstrate advanced string technique. Repertoire includes works for chamber ensemble, string orchestra and full orchestra with a focus on advanced literature ranging from the mid-19th century to contemporary composers. Students will be expected to demonstrate mastery of all three-octave major and minor scales and arpeggios, concerto repertoire, music theory concepts and comprehensive musicianship skills. In addition to performing advanced repertoire, members of this ensemble collaborate annually with the Wind Ensemble to study and present full-orchestra literature. Students are required to attend scheduled rehearsals and performances outside of the school day. Performance commitments include five formal concerts and additional curricular string events throughout the year. Seniors may earn accelerated credit for this course. This course may be repeated for credit.",
+      "description": "This course is designed for students in grades 10–12 who play violin, viola, cello, bass or harp and demonstrate advanced string technique. Repertoire includes works for chamber ensemble, string orchestra and full orchestra with a focus on advanced literature ranging from the mid-19th century to contemporary composers. Students will be expected to demonstrate mastery of all three-octave major and minor scales and arpeggios, concerto repertoire, music theory concepts and comprehensive musicianship skills. In addition to performing advanced repertoire, members of this ensemble collaborate annually with the Wind Ensemble to study and present full-orchestra literature. Students are required to attend scheduled rehearsals and performances outside of the school day. Performance commitments include five formal concerts and additional curricular string events throughout the year. Seniors may earn accelerated credit for this course. This course may be repeated for credit.",
       "credit_value": 2.0,
       "duration": "full_year",
       "grade_levels": [
@@ -5461,7 +5461,7 @@
       "name": "SYMPHONIC ORCHESTRA",
       "division": "Fine Arts",
       "department": "Music",
-      "description": "an instrument for home use, although cello and bass students may use school instruments for daily rehearsals. This course is designed for advanced violin, viola, cello, bass and harp string students. The repertoire in this class includes works for chamber groups, string ensemble and full orchestra. Musical works highlight repertoire of the Baroque, Classical and early Romantic eras with performances on five formal concerts throughout the school year. Students in this class will work towards mastery of three-octave major and minor scales and arpeggios, concerto-level repertoire, music theory concepts and comprehensive musicianship skills. The students in this ensemble collaborate with members of Wind Symphony each year for an exploration of the full orchestra repertoire. This course may be repeated for credit.",
+      "description": "This course is designed for advanced violin, viola, cello, bass and harp string students. The repertoire in this class includes works for chamber groups, string ensemble and full orchestra. Musical works highlight repertoire of the Baroque, Classical and early Romantic eras with performances on five formal concerts throughout the school year. Students in this class will work towards mastery of three-octave major and minor scales and arpeggios, concerto-level repertoire, music theory concepts and comprehensive musicianship skills. The students in this ensemble collaborate with members of Wind Symphony each year for an exploration of the full orchestra repertoire. This course may be repeated for credit.",
       "credit_value": 2.0,
       "duration": "full_year",
       "grade_levels": [
@@ -5716,7 +5716,7 @@
       "name": "AP Music Theory",
       "division": "Fine Arts",
       "department": "Music",
-      "description": "This course is designed for guitarists who are interested in advancing their guitar abilities. Students will refine and further develop musicianship to develop a high level of performance on guitar. Emphasis is placed on the development of technique, music-reading skills, sight-reading more technical chords throughout the neck of the guitar, and expressive performance, solo repertoire and ensemble skills. Nylon string, classical guitars are provided for class use. It is recommended to have an additional guitar at home to practice. Students perform two concerts throughout the year. This class may be repeated for credit. Students repeating this course or students with guitar experiences will receive a more tailored curriculum to help develop their skills and musicianship. Patriot Guitar Ensemble, Patriot Singers and Advanced Chorus and have been active for four semesters in performing ensembles, earn accelerated-level grade points unless requesting a GPA waiver. Band students participating in Marching Band are offered a P.E. waiver for the first semester.",
+      "description": "This course is designed for guitarists who are interested in advancing their guitar abilities. Students will refine and further develop musicianship to develop a high level of performance on guitar. Emphasis is placed on the development of technique, music-reading skills, sight-reading more technical chords throughout the neck of the guitar, and expressive performance, solo repertoire and ensemble skills. Nylon string, classical guitars are provided for class use. It is recommended to have an additional guitar at home to practice. Students perform two concerts throughout the year. This class may be repeated for credit. Students repeating this course or students with guitar experiences will receive a more tailored curriculum to help develop their skills and musicianship.",
       "credit_value": 2.0,
       "duration": "full_year",
       "grade_levels": [
@@ -5887,7 +5887,7 @@
       "name": "PHYSICAL EDUCATION FRESHMAN FOUNDATIONAL FITNESS CHOICE P.E.",
       "division": "Physical Welfare",
       "department": "Physical Education",
-      "description": "THE PHYSICAL EDUCATION DEPARTMENT OFFERS A HEALTH-RELATED, MOVEMENT-BASED PROGRAM. Freshman Foundational Fitness Choice P.E. is designed for STUDENTS WILL ACQUIRE THE PRACTICAL EXPERIENCES students to learn to develop and maintain physical fitness in a variety of self-selected activities. The course begins with the AND KNOWLEDGE REQUIRED TO ESTABLISH A HEALTHY Foundations of Fitness, where students learn how to develop LIFESTYLE, BOTH AS AN ADOLESCENT AND AS A and apply a personal fitness plan, how to perform basic lifting MATURING ADULT. techniques and how to utilize a fitness center safely. Students who are able to demonstrate safety in and around the water EXCESSIVE ABSENTEEISM OR NON-PARTICIPATION MUST will choose activities in which they will participate and apply their fitness plan. (Students needing additional support for BE MADE UP. MAKE-UP CARDS ARE ISSUED TO STUDENTS achieving swimming proficiency will participate in American AND THEY CAN USE THE WEST FITNESS CENTER OR Red Cross Learn to Swim lessons.)",
+      "description": "HEALTH-RELATED, MOVEMENT-BASED PROGRAM. Freshman Foundational Fitness Choice P.E. is designed for STUDENTS WILL ACQUIRE THE PRACTICAL EXPERIENCES students to learn to develop and maintain physical fitness in a variety of self-selected activities. The course begins with the AND KNOWLEDGE REQUIRED TO ESTABLISH A HEALTHY Foundations of Fitness, where students learn how to develop LIFESTYLE, BOTH AS AN ADOLESCENT AND AS A and apply a personal fitness plan, how to perform basic lifting MATURING ADULT. techniques and how to utilize a fitness center safely. Students who are able to demonstrate safety in and around the water EXCESSIVE ABSENTEEISM OR NON-PARTICIPATION MUST will choose activities in which they will participate and apply their fitness plan. (Students needing additional support for BE MADE UP. MAKE-UP CARDS ARE ISSUED TO STUDENTS achieving swimming proficiency will participate in American AND THEY CAN USE THE WEST FITNESS CENTER OR Red Cross Learn to Swim lessons.)",
       "credit_value": 1.0,
       "duration": "semester",
       "grade_levels": [
@@ -5910,7 +5910,7 @@
       "name": "PHYSICAL EDUCATION FRESHMAN FOUNDATIONAL FITNESS CHOICE P.E.",
       "division": "Physical Welfare",
       "department": "Physical Education",
-      "description": "THE PHYSICAL EDUCATION DEPARTMENT OFFERS A HEALTH-RELATED, MOVEMENT-BASED PROGRAM. Freshman Foundational Fitness Choice P.E. is designed for STUDENTS WILL ACQUIRE THE PRACTICAL EXPERIENCES students to learn to develop and maintain physical fitness in a variety of self-selected activities. The course begins with the AND KNOWLEDGE REQUIRED TO ESTABLISH A HEALTHY Foundations of Fitness, where students learn how to develop LIFESTYLE, BOTH AS AN ADOLESCENT AND AS A and apply a personal fitness plan, how to perform basic lifting MATURING ADULT. techniques and how to utilize a fitness center safely. Students who are able to demonstrate safety in and around the water EXCESSIVE ABSENTEEISM OR NON-PARTICIPATION MUST will choose activities in which they will participate and apply their fitness plan. (Students needing additional support for BE MADE UP. MAKE-UP CARDS ARE ISSUED TO STUDENTS achieving swimming proficiency will participate in American AND THEY CAN USE THE WEST FITNESS CENTER OR Red Cross Learn to Swim lessons.)",
+      "description": "HEALTH-RELATED, MOVEMENT-BASED PROGRAM. Freshman Foundational Fitness Choice P.E. is designed for STUDENTS WILL ACQUIRE THE PRACTICAL EXPERIENCES students to learn to develop and maintain physical fitness in a variety of self-selected activities. The course begins with the AND KNOWLEDGE REQUIRED TO ESTABLISH A HEALTHY Foundations of Fitness, where students learn how to develop LIFESTYLE, BOTH AS AN ADOLESCENT AND AS A and apply a personal fitness plan, how to perform basic lifting MATURING ADULT. techniques and how to utilize a fitness center safely. Students who are able to demonstrate safety in and around the water EXCESSIVE ABSENTEEISM OR NON-PARTICIPATION MUST will choose activities in which they will participate and apply their fitness plan. (Students needing additional support for BE MADE UP. MAKE-UP CARDS ARE ISSUED TO STUDENTS achieving swimming proficiency will participate in American AND THEY CAN USE THE WEST FITNESS CENTER OR Red Cross Learn to Swim lessons.)",
       "credit_value": 1.0,
       "duration": "semester",
       "grade_levels": [
@@ -6186,7 +6186,7 @@
       "name": "LIFEGUARD TRAINING AND CERTIFICATION",
       "division": "Physical Welfare",
       "department": "Physical Education",
-      "description": "This course is designed to provide students with the ability to earn American Red Cross Lifeguarding and First Aid certification. Students will also learn skills in oxygen administration, preventing disease transmission and CPR/AED. Students will be charged a fee if they wish to receive their American Red Cross certification. Students taking this class will be encouraged to participate in our Pool Leadership program. (Materials for the course are available in the Patriot Superstore.)",
+      "description": "Students must be at least 15 years old by the end of the course. Additional fee to receive AMERICAN RED CROSS certificate. This course is designed to provide students with the ability to earn American Red Cross Lifeguarding and First Aid certification. Students will also learn skills in oxygen administration, preventing disease transmission and CPR/AED. Students will be charged a fee if they wish to receive their American Red Cross certification. Students taking this class will be encouraged to participate in our Pool Leadership program. (Materials for the course are available in the Patriot Superstore.)",
       "credit_value": 2.0,
       "duration": "full_year",
       "grade_levels": [
@@ -6212,7 +6212,7 @@
       "name": "Physical Education Leadership",
       "division": "Physical Welfare",
       "department": "Physical Education",
-      "description": "two-year commitment The first year of the Leadership Program is designed for students to become effective teacher aides and strong leaders. There will be active participation in all activities offered within the Stevenson Physical Education program. Students will learn to lead group activities, to develop skill progression and to study methods and techniques of teaching physical education. The focus of this program is to develop and expand on leadership skills in group and individual led discussions or teaching opportunities where students will be asked to continually reflect on their leadership experience. Students will have the opportunity to apply the skills they learn by assisting Physical Education classes and planning two field days for junior high students. Failure to comply with the Stevenson High School Student Guidebook Code of Conduct and P.E. Leader Code of Conduct can result in immediate dismissal.",
+      "description": "There will be active participation in all activities offered within the Stevenson Physical Education program. Students will learn to lead group activities, to develop skill progression and to study methods and techniques of teaching physical education. The focus of this program is to develop and expand on leadership skills in group and individual led discussions or teaching opportunities where students will be asked to continually reflect on their leadership experience. Students will have the opportunity to apply the skills they learn by assisting Physical Education classes and planning two field days for junior high students. Failure to comply with the Stevenson High School Student Guidebook Code of Conduct and P.E. Leader Code of Conduct can result in immediate dismissal.",
       "credit_value": 2.0,
       "duration": "full_year",
       "grade_levels": [

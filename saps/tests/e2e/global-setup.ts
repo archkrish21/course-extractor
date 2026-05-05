@@ -73,6 +73,28 @@ const TEST_USERS: TestUser[] = [
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
 
+// Matches postgres://... and http(s)://... URLs whose host is the local
+// loopback (127.0.0.1, localhost, or the Docker host alias). The userinfo
+// portion is optional so the same regex covers Supabase URLs (no `@`) and
+// Postgres URLs (with `user:pass@`).
+const LOCAL_URL_RE =
+  /^(postgres(ql)?|https?):\/\/(?:[^@]*@)?(127\.0\.0\.1|localhost|host\.docker\.internal)(:|\/|$)/;
+
+export function isLocalUrl(url: string | undefined): boolean {
+  return Boolean(url) && LOCAL_URL_RE.test(url as string);
+}
+
+function abortIfNotLocal(name: string, url: string | undefined): void {
+  if (isLocalUrl(url)) return;
+  const redacted = (url ?? "<unset>").replace(/:[^:@/]*@/, ":***@");
+  console.error(
+    `[e2e-setup] ABORT: ${name} is not local — refusing to seed test fixtures.\n` +
+      `  Host must be 127.0.0.1, localhost, or host.docker.internal.\n` +
+      `  Got: ${redacted}`,
+  );
+  process.exit(1);
+}
+
 async function ensureAccountMember(
   client: pg.Client, accountId: string, userId: string,
   role: string, canEdit: boolean, invitedBy: string,
@@ -112,22 +134,13 @@ async function globalSetup() {
     auth: { autoRefreshToken: false, persistSession: false },
   });
 
-  // Safety: refuse to seed test fixtures against a non-local database.
-  // E2E setup writes test users (student@test.com, parent@test.com, etc.)
-  // and would pollute any real environment. Local-only check is the right
-  // guard here — NODE_ENV is unreliable since dev shells rarely set it.
-  const isLocalDb = /^postgres(ql)?:\/\/[^@]*@(127\.0\.0\.1|localhost|host\.docker\.internal)(:|\/)/.test(
-    DATABASE_URL,
-  );
-  if (!isLocalDb) {
-    const redacted = DATABASE_URL.replace(/:[^:@/]*@/, ":***@");
-    console.error(
-      `[e2e-setup] ABORT: DATABASE_URL is not local — refusing to seed test fixtures.\n` +
-        `  Host must be 127.0.0.1, localhost, or host.docker.internal.\n` +
-        `  Got: ${redacted}`,
-    );
-    process.exit(1);
-  }
+  // Safety: refuse to seed test fixtures against any non-local environment.
+  // We check BOTH the Postgres URL and the Supabase URL — split-brain
+  // configs (e.g. local DATABASE_URL but prod NEXT_PUBLIC_SUPABASE_URL)
+  // would otherwise create test users in the prod auth.users table even
+  // though no rows reach prod public.users.
+  abortIfNotLocal("DATABASE_URL", DATABASE_URL);
+  abortIfNotLocal("NEXT_PUBLIC_SUPABASE_URL", SUPABASE_URL);
 
   const client = new pg.Client({ connectionString: DATABASE_URL });
   await client.connect();

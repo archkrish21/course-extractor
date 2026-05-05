@@ -1,7 +1,7 @@
 {
   "metadata": {
     "source": "summer_courses_2026.py (manually curated)",
-    "extracted_at": "2026-04-09T05:56:10.192143+00:00",
+    "extracted_at": "2026-05-05T02:20:50.143181+00:00",
     "year": 2026,
     "type": "summer",
     "total_courses": 46
@@ -15,7 +15,7 @@
       "name": "Driver Education",
       "division": "Applied Arts",
       "department": "Driver Education",
-      "description": "This course is a two-phase program consisting of classroom and behind-the-wheel instruction. The course prepares students for safe motor vehicle operation in a suburban driving environment. Among the topics taught are: the rules of the road, defensive driving, natural laws and their effects on vehicle control, driver responsibility and impaired and distracted driving.",
+      "description": "This course is a two-phase program consisting of classroom and behind-the-wheel instruction. The course prepares students for safe motor vehicle operation in a suburban driving environment. Among the topics taught in this course are: the rules of the road, defensive driving, natural laws and their effects on vehicle control, driver responsibility and impaired and distracted driving. Students must also meet all of the essential course requirements as mandated by the Illinois State Board of Education and the Secretary of State's Office. This includes 50 hours of at-home practice, completed concurrently while taking the course. The grade earned in this course is not included in the student's grade point average. Driver Education enrollment for all registrations received by the sectioning deadline of May 1 will be based upon student age and student fulfillment of the prerequisites. After the registration deadline, the course will be filled on a first-come, first-served basis for students meeting all requirements.",
       "credit_value": 1.0,
       "duration": "semester",
       "credit_type": "CP",
@@ -31,7 +31,7 @@
       "is_summer": true,
       "prerequisite_text": "Age 15 before first day, parental consent, instruction permit, 8+ credits in previous two semesters",
       "prerequisite_groups": [],
-      "cost": "425"
+      "cost": 425
     },
     {
       "code": "D/E22S",
@@ -57,7 +57,7 @@
       "is_summer": true,
       "prerequisite_text": "Age 15 before first day, parental consent, instruction permit, 8+ credits in previous two semesters",
       "prerequisite_groups": [],
-      "cost": "425"
+      "cost": 425
     },
     {
       "code": "BUS71S",
@@ -67,7 +67,7 @@
       "name": "Introduction to Business",
       "division": "Applied Arts",
       "department": "Business Education",
-      "description": "Introduction to Business provides students with a foundational understanding of the business world. This course explores key topics including marketing, accounting, international business and entrepreneurship, giving students insight into how businesses operate locally and globally.",
+      "description": "Introduction to Business provides students with a foundational understanding of the business world. This course explores key topics including marketing, accounting, international business and entrepreneurship, giving students insight into how businesses operate locally and globally. Through real-world examples and hands-on projects, students will develop critical thinking and problem-solving skills essential for future success in business. Whether planning to start a business or pursue a business career, students will gain valuable knowledge to build their path forward.",
       "credit_value": 1.0,
       "duration": "semester",
       "credit_type": "CP",
@@ -84,7 +84,7 @@
       "is_summer": true,
       "prerequisite_text": null,
       "prerequisite_groups": [],
-      "cost": "425"
+      "cost": 425
     },
     {
       "code": "BUS72S",
@@ -111,7 +111,7 @@
       "is_summer": true,
       "prerequisite_text": null,
       "prerequisite_groups": [],
-      "cost": "425"
+      "cost": 425
     },
     {
       "code": "BUS12S",
@@ -121,7 +121,7 @@
       "name": "Business Applications and Technology 1",
       "division": "Applied Arts",
       "department": "Business Education",
-      "description": "This course focuses on developing essential technology skills needed for success in the business world, emphasizing proficiency in widely-used business applications including spreadsheets, presentations and word processing.",
+      "description": "To live, learn and work successfully in an increasingly complex and information-rich society, students must be able to use technology effectively. Business Applications and Technology 1 is a course designed to teach students how to use a variety of software programs and multimedia platforms as they create a business concept. Students will strengthen their knowledge of both business operations and technology usage in the workplace as they develop communications, marketing materials, financial proposals and presentations for their proposed business.",
       "credit_value": 1.0,
       "duration": "semester",
       "credit_type": "CP",
@@ -138,7 +138,7 @@
       "is_summer": true,
       "prerequisite_text": null,
       "prerequisite_groups": [],
-      "cost": "425"
+      "cost": 425
     },
     {
       "code": "CAR53S",
@@ -148,7 +148,7 @@
       "name": "Careers in Business",
       "division": "Student Learning Programs",
       "department": "Career Exploration",
-      "description": "Careers in Business is a two-week course designed for students interested in learning more about careers in business through classroom visits by professionals, activities and field trips.",
+      "description": "Careers in Business is a two-week course designed for students interested in learning more about careers in business. Business careers continue to be among the most in-demand, diverse and highest paying jobs in today's marketplace. Students will learn about areas such as finance, digital marketing, entrepreneurship, management and trending careers in this field through classroom visits by professionals, activities and field trips.",
       "credit_value": 0.5,
       "duration": "semester",
       "credit_type": "Pass/Fail",
@@ -164,7 +164,7 @@
       "is_summer": true,
       "prerequisite_text": null,
       "prerequisite_groups": [],
-      "cost": "225"
+      "cost": 225
     },
     {
       "code": "CAR35S",
@@ -174,7 +174,7 @@
       "name": "Careers in Law",
       "division": "Student Learning Programs",
       "department": "Career Exploration",
-      "description": "Careers in Law is a two-week course for students wishing to explore careers in law through classroom visits by professionals, activities and field trips.",
+      "description": "Careers in Law is a two-week course for those students wishing to explore careers in law. Students will learn about becoming an attorney and other career paths, such as being employed by a government agency or working in policy and politics through classroom visits by professionals, activities and field trips.",
       "credit_value": 0.5,
       "duration": "semester",
       "credit_type": "Pass/Fail",
@@ -190,7 +190,7 @@
       "is_summer": true,
       "prerequisite_text": null,
       "prerequisite_groups": [],
-      "cost": "225"
+      "cost": 225
     },
     {
       "code": "CAR31S",
@@ -201,7 +201,7 @@
       "name": "Careers in Healthcare and Medicine",
       "division": "Student Learning Programs",
       "department": "Career Exploration",
-      "description": "Careers in Healthcare and Medicine is a two-week course designed for students who want to explore careers in healthcare through classroom visits by professionals, activities and field trips.",
+      "description": "Careers in Healthcare and Medicine is a two-week course designed for those students who want to explore careers in healthcare. A variety of careers, including some of the fastest and up and coming healthcare professions will be highlighted. Students will learn the necessary education, skills and training for these occupations through classroom visits by professionals, activities and field trips.",
       "credit_value": 0.5,
       "duration": "semester",
       "credit_type": "Pass/Fail",
@@ -217,7 +217,7 @@
       "is_summer": true,
       "prerequisite_text": null,
       "prerequisite_groups": [],
-      "cost": "225"
+      "cost": 225
     },
     {
       "code": "CAR62S",
@@ -227,7 +227,7 @@
       "name": "Careers in STEM",
       "division": "Student Learning Programs",
       "department": "Career Exploration",
-      "description": "Careers in STEM is a two-week course designed for students wishing to explore careers in Science, Technology, Engineering and Math through classroom visits by professionals, activities and field trips.",
+      "description": "Careers in STEM is a two-week course designed for those students wishing to explore careers in STEM (Science, Technology, Engineering, Math). Careers in STEM continue to experience huge growth, and students will get the chance to learn about new technologies and trends through classroom visits by professionals, activities and field trips.",
       "credit_value": 0.5,
       "duration": "semester",
       "credit_type": "Pass/Fail",
@@ -243,7 +243,7 @@
       "is_summer": true,
       "prerequisite_text": null,
       "prerequisite_groups": [],
-      "cost": "225"
+      "cost": 225
     },
     {
       "code": "ENG51S",
@@ -253,7 +253,7 @@
       "name": "College Essay Workshop",
       "division": "Communication Arts",
       "department": "English",
-      "description": "Students will write college essays/personal statements for multiple college applications. Students will examine model essays, respond to various prompts and discover their writing voices as they develop content and style.",
+      "description": "Students will write college essays/personal statements for multiple college applications similar to those typically written during the summer and fall of senior year. Students will examine model essays, respond to various prompts and discover their \"writing voices\" as they develop content and style. The majority of time will focus on the writing and revision of essays for use during students' senior year college application process.",
       "credit_value": 0.0,
       "duration": "semester",
       "credit_type": "Pass/Fail",
@@ -268,7 +268,7 @@
       "is_summer": true,
       "prerequisite_text": null,
       "prerequisite_groups": [],
-      "cost": "100"
+      "cost": 100
     },
     {
       "code": "ENG53S",
@@ -293,7 +293,7 @@
       "is_summer": true,
       "prerequisite_text": null,
       "prerequisite_groups": [],
-      "cost": "100"
+      "cost": 100
     },
     {
       "code": "ENG25S",
@@ -303,7 +303,7 @@
       "name": "English Failure Credit Recovery",
       "division": "Communication Arts",
       "department": "English",
-      "description": "This writing-intensive course is for students who need to earn English credit due to a failure of either first or second semester. Students will perform a well-rounded set of skills in various activities or remediate particular weaknesses.",
+      "description": "This writing-intensive one-semester course is for students who need to earn Freshman, Sophomore, Junior or Senior English credit due to a failure of either first or second semester. Students will perform a well-rounded set of skills in various activities or remediate particular weaknesses in a skill or skills that led to their earlier no credit in a course, as directed by their summer school teacher. They may also cover an ACT English unit in grammar usage, punctuation and style. Since the course is open to students in various grades, there will be some variation in activities and assessments to meet the grade-level needs of students. This course cannot replace a grade except for an \"F\".",
       "credit_value": 1.0,
       "duration": "semester",
       "credit_type": "CP",
@@ -319,7 +319,7 @@
       "is_summer": true,
       "prerequisite_text": "Prior enrollment in Freshman, Sophomore, Junior and/or Senior English",
       "prerequisite_groups": [],
-      "cost": "425"
+      "cost": 425
     },
     {
       "code": "ENG71S",
@@ -329,7 +329,7 @@
       "name": "Reading for College",
       "division": "Communication Arts",
       "department": "English",
-      "description": "This course emphasizes close analytical reading. Students will read a variety of fiction and nonfiction texts and prepare to discuss, analyze and write about those texts for college-level coursework.",
+      "description": "This course is designed for students wanting to improve their reading and analysis skills for diverse content types or simply to better prepare for the ACT and SAT. In addition to a main novel or non-fiction work, which helps establish an area of class inquiry, students will develop skills in answering multiple choice and essay questions to aid comprehension and interpretation. Vocabulary building and reading strategies also will be integrated into the class work.",
       "credit_value": 1.0,
       "duration": "semester",
       "credit_type": "CP",
@@ -345,7 +345,7 @@
       "is_summer": true,
       "prerequisite_text": null,
       "prerequisite_groups": [],
-      "cost": "425"
+      "cost": 425
     },
     {
       "code": "ENG57S",
@@ -355,7 +355,7 @@
       "name": "Creative Writing",
       "division": "Communication Arts",
       "department": "English",
-      "description": "Creative Writing is designed for students wanting to develop their creative writing skills. Students will write in multiple genres including poetry, fiction, creative nonfiction and screenwriting.",
+      "description": "Students learn to express their thoughts through writing short stories, poems and plays. Class discussions analyze and implement different writing styles including, but not limited to, fiction, poetry and drama. The course format is a workshop that includes daily writing. Students will give and receive feedback and peer edit in small and full-class groups. Students are also required to read and annotate fiction. The reading will be assessed in a manner that engages students in a process through which they become more aware of how their reading improves over time. All students participate in a variety of approaches to literacy development and to apply what they learn to the art of writing creatively.",
       "credit_value": 1.0,
       "duration": "semester",
       "credit_type": "CP",
@@ -370,7 +370,7 @@
       "is_summer": true,
       "prerequisite_text": null,
       "prerequisite_groups": [],
-      "cost": "425"
+      "cost": 425
     },
     {
       "code": "CSC61S",
@@ -380,7 +380,7 @@
       "name": "Computer Programming 1",
       "division": "Computer Science, Engineering and Technology",
       "department": "Computer Science",
-      "description": "This course introduces students to the foundations of computer programming using Python. Python's syntax is easy to read and write, making it an ideal language for an introduction to computer science.",
+      "description": "This one-semester course introduces students to the foundations of computer programming using Python. Python's syntax is easy to read and write for those with limited experience with programming, making it an ideal language for those looking for an introduction to the field of computer science. In addition, Python is widely used across a range of industries such as business, web application development, project management, data analysis and machine learning. Python is an excellent choice for anyone who wants to be prepared for the technical demands their career might include. The course introduces students to the foundational ideas of computer programming and computational thinking with an emphasis on problem-solving. Students will learn both how to read and write computer programs for a variety of applications. Topics for this course include input and output commands, making decisions with conditional statements and Boolean logic, repeating a set of steps with looping structures and simplifying/organizing code with the help of functions. Successful completion of this one-semester course prepares the student for Computer Programming 2 (CSC181/182) and other computer science offerings.",
       "credit_value": 1.0,
       "duration": "semester",
       "credit_type": "CP",
@@ -397,7 +397,7 @@
       "is_summer": true,
       "prerequisite_text": null,
       "prerequisite_groups": [],
-      "cost": "425"
+      "cost": 425
     },
     {
       "code": "CSC82S",
@@ -407,7 +407,7 @@
       "name": "Computer Programming 2",
       "division": "Computer Science, Engineering and Technology",
       "department": "Computer Science",
-      "description": "This course is intended for students who possess some programming experience and seek a deeper understanding of computer programming concepts using the Java language.",
+      "description": "This one-semester course is intended for students who possess some programming experience or who have successfully completed Computer Programming 1 (CSC161 or CSC162) and seek a deeper understanding of computer programming concepts. The Java language continues to enjoy worldwide popularity. Due to Java's longevity, available support for Java is extensive and many industries make use of Java-based applications. Java developers continue to be in high demand. Java is highly portable (as it can run on many computer platforms) and provides an easy-to-learn introduction to the world of object-oriented program design.",
       "credit_value": 1.0,
       "duration": "semester",
       "credit_type": "CP",
@@ -424,7 +424,7 @@
       "is_summer": true,
       "prerequisite_text": "Computer Programming 1 (CSC161/162) or Web Development 2 (TEC281/282) or Principles of Engineering (TEC301/302) or AP Computer Science Principles (CSC371/372)",
       "prerequisite_groups": [],
-      "cost": "425"
+      "cost": 425
     },
     {
       "code": "ART11S",
@@ -434,7 +434,7 @@
       "name": "Art and Design",
       "division": "Fine Arts",
       "department": "Visual Arts",
-      "description": "Students will explore a variety of tools, techniques and media which provides them with the foundation necessary to expand into more specialized areas. Studio activities focus on developing skills in drawing, painting, sculpture and ceramics.",
+      "description": "In this course, students will explore a variety of tools, techniques and media which provides them with the foundation necessary to expand into more specialized areas. The studio activities will focus on developing skills in drawing, painting, sculpture and ceramics. All students in this class will exhibit in the Summer Art Fest.",
       "credit_value": 1.0,
       "duration": "semester",
       "credit_type": "CP",
@@ -451,7 +451,7 @@
       "is_summer": true,
       "prerequisite_text": null,
       "prerequisite_groups": [],
-      "cost": "425"
+      "cost": 425
     },
     {
       "code": "ART12S",
@@ -478,7 +478,7 @@
       "is_summer": true,
       "prerequisite_text": null,
       "prerequisite_groups": [],
-      "cost": "425"
+      "cost": 425
     },
     {
       "code": "ART31S",
@@ -488,7 +488,7 @@
       "name": "Photography 1",
       "division": "Fine Arts",
       "department": "Visual Arts",
-      "description": "Photography 1 covers basic concepts and practice of digital photography, including understanding and use of the camera, lenses and other basic photographic equipment.",
+      "description": "Photography 1 covers basic concepts and practice of digital photography, including understanding and use of the camera, lenses and other basic photographic equipment. The course will address aesthetic principles as they relate to composition, space, exposure, light and color. Technological requirements of digital formats will be addressed, such as formats and resolution. Basic digital manipulations of images will be taught in preparation for creating finished art. All students in this class will exhibit in the Summer Art Fest.",
       "credit_value": 1.0,
       "duration": "semester",
       "credit_type": "CP",
@@ -505,7 +505,7 @@
       "is_summer": true,
       "prerequisite_text": null,
       "prerequisite_groups": [],
-      "cost": "425"
+      "cost": 425
     },
     {
       "code": "ART32S",
@@ -532,7 +532,7 @@
       "is_summer": true,
       "prerequisite_text": null,
       "prerequisite_groups": [],
-      "cost": "425"
+      "cost": 425
     },
     {
       "code": "ART51S",
@@ -542,7 +542,7 @@
       "name": "Digital Art and Design 1",
       "division": "Fine Arts",
       "department": "Visual Arts",
-      "description": "This course introduces students to Adobe Photoshop and Procreate as drawing and graphic design tools and as a means of producing finished artwork.",
+      "description": "This course is designed to introduce students to Adobe Photoshop and Procreate as drawing and graphic design tools and as a means of producing finished artwork. Students will have the opportunity to develop skills and be creative while digitally drawing, painting and manipulating photographic images with both Wacom tablets, as well as iPad and Apple pencil. Projects will have fine arts, photography, media arts and graphic design components. All students in this class will exhibit in the Summer Art Fest.",
       "credit_value": 1.0,
       "duration": "semester",
       "credit_type": "CP",
@@ -559,7 +559,7 @@
       "is_summer": true,
       "prerequisite_text": null,
       "prerequisite_groups": [],
-      "cost": "425"
+      "cost": 425
     },
     {
       "code": "ART52S",
@@ -586,7 +586,7 @@
       "is_summer": true,
       "prerequisite_text": null,
       "prerequisite_groups": [],
-      "cost": "425"
+      "cost": 425
     },
     {
       "code": "THR11S",
@@ -596,7 +596,7 @@
       "name": "Theatre Arts",
       "division": "Fine Arts",
       "department": "Theatre",
-      "description": "Theatre Arts introduces students to the fundamentals of theatre including acting, improvisation, movement, voice and basic stagecraft through performance-based activities.",
+      "description": "This course is designed as an introduction to creative dramatics and stagecraft. Students will practice and develop skills through participation and hands-on experiences. Attendance at a professional theatrical production as a field trip will be required.",
       "credit_value": 1.0,
       "duration": "semester",
       "credit_type": "CP",
@@ -613,7 +613,7 @@
       "is_summer": true,
       "prerequisite_text": null,
       "prerequisite_groups": [],
-      "cost": "425"
+      "cost": 425
     },
     {
       "code": "MTH15S/MTH16S",
@@ -624,7 +624,7 @@
       "name": "Algebra 1",
       "division": "Mathematics",
       "department": "Mathematics",
-      "description": "Algebra 1 helps students develop proficiency in algebraic thinking. Students will explore overarching ideas of patterns of change, mathematical representations, models and solutions.",
+      "description": "Algebra 1 (MTH15S/16S) helps students develop proficiency in algebraic thinking. Students will explore overarching ideas of patterns of change (constant, linear and multiplicative), mathematical representations (verbal, algebraic, graphical and numeric), models (real-world scenarios in and out of context) and solutions (that validate equalities/inequalities). Creating equivalence through strategic and purposeful manipulation of algebraic forms will support students' procedural fluency. Conceptual understanding is developed by creating and connecting representations when exploring linear, exponential and quadratic functions. Students will begin to explain and perform transformations on these functions. This course also develops students' statistical literacy through the descriptive and analytic critique of data. Successfully completing this course will prepare students for Geometry (MTH251/252).",
       "credit_value": 1.0,
       "duration": "full_year",
       "credit_type": "CP",
@@ -642,7 +642,7 @@
       "is_summer": true,
       "prerequisite_text": "Algebra 1 (MTH151/152)",
       "prerequisite_groups": [],
-      "cost": "425"
+      "cost": 425
     },
     {
       "code": "MTH25S/MTH26S",
@@ -653,7 +653,7 @@
       "name": "Geometry",
       "division": "Mathematics",
       "department": "Mathematics",
-      "description": "Geometry helps students develop proficiency in deductive reasoning and geometric thinking. Students will rely on exploration, conjecture, deduction, justification and abstraction to strengthen their reasoning skills.",
+      "description": "Geometry (MTH25S/26S) helps students develop proficiency in deductive reasoning and geometric thinking. Students will rely on exploration, conjecture, deduction, justification and abstraction to strengthen their reasoning skills. Geometric thinking is supported by exploring the idea of measures (geometric magnitudes, lengths, areas and volumes), transformations (effects on congruence, scaling and symmetry on geometric properties) and composition (the role simple objects play in constructing and deconstructing complex objects). This course leverages algebra to explore the properties of triangles, quadrilaterals, polygons, circles, right triangle trigonometry and conic sections. Working with 2D objects and 3D solids in kinesthetic and digital environments strengthens students' spatial reasoning. Communicating understanding leans on writing explanations and justifying reasoning using informal and formal proof structures. Focusing on terminology, notation and clarity in writing helps prepare students for future studies. Successfully completing Geometry (MTH25S/26S) will prepare students for Algebra 2 (MTH351/352). Algebra 2 AB/BC (MTH171/172) is an option with consistently demonstrated proficiency in all the course skills of Geometry (MTH25S/26S).",
       "credit_value": 1.0,
       "duration": "full_year",
       "credit_type": "CP",
@@ -670,7 +670,7 @@
       "is_summer": true,
       "prerequisite_text": "Approval of Director and completion of Algebra 1 (MTH151/152)",
       "prerequisite_groups": [],
-      "cost": "425"
+      "cost": 425
     },
     {
       "code": "MTH51S/MTH52S",
@@ -681,7 +681,7 @@
       "name": "Algebra 2",
       "division": "Mathematics",
       "department": "Mathematics",
-      "description": "Algebra 2 builds upon students' prior experiences in geometric relationships and deductive reasoning to deepen students' fluency with algebraic thinking.",
+      "description": "Algebra 2 (MTH51S/52S) builds upon students' prior experiences in geometric relationships and deductive reasoning to deepen students' fluency with algebraic thinking. Overarching ideas from Algebra 1 around patterns of change, mathematical representations, models and solutions are further extended in scope and depth. Students' prior exposure to linear relationships will be strengthened. Students will delve deeper into understanding the value of non-real imaginary numbers, inverse operations and overlapping transformations of previously studied linear, quadratic and exponential functions. These skills will be applied to understand the characteristics of absolute, polynomial, rational, exponential, logarithmic and trigonometric functions. Students' mathematical reasoning skills will be further strengthened in verbal and written forms. Successfully completing Algebra 2 (MTH51S/52S) will prepare students for Advanced Mathematical Decision Making (MTH441/442), Data Science (MTH481/482) and Precalculus (MTH451/452).",
       "credit_value": 1.0,
       "duration": "full_year",
       "credit_type": "CP",
@@ -698,7 +698,7 @@
       "is_summer": true,
       "prerequisite_text": "Algebra 2 (MTH351/352)",
       "prerequisite_groups": [],
-      "cost": "425"
+      "cost": 425
     },
     {
       "code": "MTH37S/MTH38S",
@@ -709,7 +709,7 @@
       "name": "Algebra 2 AB/BC",
       "division": "Mathematics",
       "department": "Mathematics",
-      "description": "Algebra 2 AB/BC attends to all the learning outcomes of Algebra 2. All topics will be substantially extended and students will be introduced to additional mathematical concepts.",
+      "description": "Algebra 2 AB/BC (MTH37S/38S) attends to all the learning outcomes of Algebra 2 (MTH51S/52S). All of the topics will be substantially extended and students will be introduced to the study of rational functions. Students will routinely apply prior learning to unique, non-routine and novel contexts. The course design emphasizes students' growth in making connections and transferring knowledge between units of study while extending their learning in preparation for a future calculus course in high school. Successfully completing Algebra 2 AB/BC (MTH37S/38S) will prepare students for AP Precalculus AB (MTH411/412). AP Precalculus BC (MTH421/422) is an option with consistently demonstrated proficiency in all the course skills of Algebra 2 AB/BC (MTH37S/38S) and have had in-class demonstrated success with extension level-4 opportunities.",
       "credit_value": 1.0,
       "duration": "full_year",
       "credit_type": "CP",
@@ -726,7 +726,7 @@
       "is_summer": true,
       "prerequisite_text": "Approval of Director and completion of Geometry AB/BC (MTH271/272)",
       "prerequisite_groups": [],
-      "cost": "425"
+      "cost": 425
     },
     {
       "code": "ELD11S",
@@ -736,7 +736,7 @@
       "name": "ELD Skills in Focus: Oracy and Literacy",
       "division": "Multilingual Learning",
       "department": "ELD",
-      "description": "This course is designed to strengthen the literacy and oracy skills of students who are taking or have taken more advanced ELD coursework through an exploration of various texts.",
+      "description": "This one-semester course is designed to strengthen the literacy and oracy skills of students who are taking or have taken more advanced ELD coursework. Reading, writing, speaking and listening in English will be strengthened through an exploration of various texts, with an emphasis on self-reflection and cultural exploration.",
       "credit_value": 1.0,
       "duration": "semester",
       "credit_type": "Pass/Fail",
@@ -753,7 +753,7 @@
       "is_summer": true,
       "prerequisite_text": "Multilingual Advanced Literature or Language (ELL361/362 or ELL371/372) or ELD World and Contemporary Literature (ELL461/462)",
       "prerequisite_groups": [],
-      "cost": "225"
+      "cost": 225
     },
     {
       "code": "ELD21S",
@@ -763,7 +763,7 @@
       "name": "ELD English Enrichment",
       "division": "Multilingual Learning",
       "department": "ELD",
-      "description": "This course is designed to enrich the academic English skills of incoming students in the ELD program. Students will focus on becoming stronger readers and writers through explorations of supported texts.",
+      "description": "This one-semester course is designed to enrich the academic English skills of incoming students in our ELD program, as well as those currently enrolled in the ELD program at Stevenson High School. Students will focus on becoming stronger readers and writers through the explorations of supported texts. Students will also strengthen their listening and speaking skills as they actively participate in the small-group sessions. A special emphasis will be placed on the acquisition of vocabulary and functional grammar.",
       "credit_value": 1.0,
       "duration": "semester",
       "credit_type": "Pass/Fail",
@@ -780,7 +780,7 @@
       "is_summer": true,
       "prerequisite_text": "Enrollment in ELD Program (going into Intermediate or Advanced) or Approval of Director",
       "prerequisite_groups": [],
-      "cost": "225"
+      "cost": 225
     },
     {
       "code": "ELD32S",
@@ -790,7 +790,7 @@
       "name": "ELD Study Skills",
       "division": "Multilingual Learning",
       "department": "ELD",
-      "description": "This course for incoming students in the ELD program is designed to build and enrich English skills applicable across content areas and reinforce essential study skills and work habits.",
+      "description": "This course for incoming students in our ELD program is designed to build and enrich English skills that are applicable across content areas and reinforce those essential study skills and work habits that will form the basis of students' learning experiences during their first academic year at Stevenson.",
       "credit_value": 0.5,
       "duration": "semester",
       "credit_type": "Pass/Fail",
@@ -807,7 +807,7 @@
       "is_summer": true,
       "prerequisite_text": "Enrollment in ELD Program or Approval of Director",
       "prerequisite_groups": [],
-      "cost": "100"
+      "cost": 100
     },
     {
       "code": "PED21S",
@@ -817,7 +817,7 @@
       "name": "Health Education",
       "division": "Physical Welfare",
       "department": "Physical Education",
-      "description": "Health Education covers wellness and mental health, adult CPR and AED, fitness and personal health, reality of drugs, and social health. This course is required for graduation.",
+      "description": "The following Health Education units are taught: Wellness and Mental Health; Adult CPR and AED; Fitness and Personal Health; Reality of Drugs; and Social Health. This course is required for graduation. Students taking summer school Health will not be certified in Adult CPR. The emphasis in Health Education is on choices to empower personal wellness through experiential activities. During the Reality of Drugs unit, students will be prepared for the graduation-required 46th Credit exam.",
       "credit_value": 1.0,
       "duration": "semester",
       "credit_type": "CP",
@@ -831,7 +831,7 @@
       "is_summer": true,
       "prerequisite_text": null,
       "prerequisite_groups": [],
-      "cost": "425"
+      "cost": 425
     },
     {
       "code": "PED22S",
@@ -855,7 +855,7 @@
       "is_summer": true,
       "prerequisite_text": null,
       "prerequisite_groups": [],
-      "cost": "425"
+      "cost": 425
     },
     {
       "code": "SCI21S",
@@ -865,7 +865,7 @@
       "name": "Astronomy",
       "division": "Science",
       "department": "Science",
-      "description": "Astronomy is the scientific study of the origin, structure and evolution of the universe and the objects in it. Topics include patterns and motions in the sky, gravity and orbits, telescopes and light, planetary systems, and the birth and death of stars.",
+      "description": "Astronomy is the scientific study of the origin, structure and evolution of the universe and the objects in it. Topics may include patterns and motions in the sky, gravity and orbits, telescopes and light, planetary systems, the birth and death of stars, galaxies, the Big Bang and the fate of the universe. This course will include opportunities for observation, including field trips to local astronomy facilities. Evening sessions for viewing celestial bodies may be available to students.",
       "credit_value": 1.0,
       "duration": "semester",
       "credit_type": "CP",
@@ -881,7 +881,7 @@
       "is_summer": true,
       "prerequisite_text": "Successful completion of one year of high school science",
       "prerequisite_groups": [],
-      "cost": "425"
+      "cost": 425
     },
     {
       "code": "SCI31S",
@@ -892,7 +892,7 @@
       "name": "Introduction to Biotechnology",
       "division": "Science",
       "department": "Science",
-      "description": "Introduction to Biotechnology is a two-week course where students will conduct a variety of labs including the use of PCR, gel electrophoresis, bacterial transformation and CRISPR.",
+      "description": "Introduction to Biotechnology is a two-week course designed for students who want to learn and practice skills and techniques used in the field of biotechnology. Students will conduct a variety of labs including the use of PCR, gel electrophoresis, bacterial transformation and CRISPR.",
       "credit_value": 0.5,
       "duration": "semester",
       "credit_type": "Pass/Fail",
@@ -909,7 +909,7 @@
       "is_summer": true,
       "prerequisite_text": null,
       "prerequisite_groups": [],
-      "cost": "225"
+      "cost": 225
     },
     {
       "code": "SOC13S/SOC14S",
@@ -920,7 +920,7 @@
       "name": "World History and Geography",
       "division": "Social Studies",
       "department": "Social Studies",
-      "description": "World History and Geography focuses on disciplinary skills of comprehension, analysis and argumentation while exploring historical and geographic patterns, themes and concepts.",
+      "description": "World History and Geography focuses on disciplinary skills of comprehension, analysis and argumentation using a framework for the intensified eight-week curriculum in which historical and geographic patterns, themes and concepts are explored while developing disciplinary literacy skills. The same assessment expectations will be met during the summer as during the regular year. Assessments focus on comprehension, analysis (reading text and interpreting data) and argumentation (verbal and written) skills reflected in course standards. Significant nightly reading and writing assignments are required. Students will need to utilize and develop reading and writing skills on a daily basis. Students will find ample reason to appreciate both the diversity of the human past and the commonalities in each stage of history. Basic literacy skills will be refined into history and geography-specific skill sets during this course. Social Emotional Learning skills in cooperative group work, debate and class discussions will also be taught. Similar to the regular-year option, completion of both semesters is a graduation requirement.",
       "credit_value": 1.0,
       "duration": "full_year",
       "credit_type": "CP",
@@ -938,7 +938,7 @@
       "is_summer": true,
       "prerequisite_text": null,
       "prerequisite_groups": [],
-      "cost": "425"
+      "cost": 425
     },
     {
       "code": "SOC41S",
@@ -949,7 +949,7 @@
       "name": "U.S. History",
       "division": "Social Studies",
       "department": "Social Studies",
-      "description": "U.S. History explores the political, social, cultural and economic development of the United States through critical analysis of primary and secondary sources.",
+      "description": "This sequence fulfills the graduation requirement of one year of U.S. history as established by the state of Illinois. With an emphasis on the 20th century, the overriding goal of this course is to give students the opportunity to understand how the current domestic and international status of the United States developed. It is designed to help students to identify causes and effects, events, philosophies and individuals that led to the contemporary situation and provide them with an historical basis for decision-making. This course builds on the skills associated with historical inquiry introduced in World History and Geography (SOC101/102). Geographic themes such as location, mobility and interaction with the environment are stressed within this historical treatment.",
       "credit_value": 1.0,
       "duration": "semester",
       "credit_type": "CP",
@@ -963,7 +963,7 @@
       "is_summer": true,
       "prerequisite_text": null,
       "prerequisite_groups": [],
-      "cost": "425"
+      "cost": 425
     },
     {
       "code": "SOC33S/SOC34S",
@@ -974,7 +974,7 @@
       "name": "U.S. Government",
       "division": "Social Studies",
       "department": "Social Studies",
-      "description": "U.S. Government examines the concepts and structure of federal, state and local government. Students develop critical thinking skills for understanding government processes.",
+      "description": "Topics considered in this course include the fundamental concepts and structure of federal, state and local government; methods of selecting candidates for office; methods by which individuals and groups may influence government officials and mechanics of voting. Instruction and assessment will address the principles of representative government, as enunciated in the American Declaration of Independence, the Constitution of the U.S.A. and the Constitution of the State of Illinois. This course satisfies the Illinois civics requirement for high school graduation and Stevenson's graduation requirement of one semester of government.",
       "credit_value": 1.0,
       "duration": "full_year",
       "credit_type": "CP",
@@ -990,7 +990,7 @@
       "is_summer": true,
       "prerequisite_text": null,
       "prerequisite_groups": [],
-      "cost": "425"
+      "cost": 425
     },
     {
       "code": "SOC43S",
@@ -1000,7 +1000,7 @@
       "name": "Economics",
       "division": "Social Studies",
       "department": "Social Studies",
-      "description": "Economics is designed to acquaint students with the economic knowledge and decision-making skills they will need to make rational decisions as informed citizens, responsible consumers and productive workers.",
+      "description": "This course is designed to acquaint students with the economic knowledge and decision-making skills they will need to make rational decisions as informed citizens, responsible consumers and productive workers. Students will develop an understanding of basic economic concepts. They will understand the potential fluctuations in an economy and will be able to articulate the role of government in the U.S. economy and our role in the increasingly significant global economy. Students will be able to incorporate financial literacy into their daily decisions. They will use math skills to express and understand economic concepts. Students will develop critical thinking skills that will help them understand world events and participate as global citizens. Successful completion of this class fulfills the Economics/Personal Finance graduation requirement.",
       "credit_value": 1.0,
       "duration": "semester",
       "credit_type": "CP",
@@ -1015,7 +1015,7 @@
       "is_summer": true,
       "prerequisite_text": null,
       "prerequisite_groups": [],
-      "cost": "425"
+      "cost": 425
     },
     {
       "code": "SOC44S",
@@ -1040,7 +1040,7 @@
       "is_summer": true,
       "prerequisite_text": null,
       "prerequisite_groups": [],
-      "cost": "425"
+      "cost": 425
     },
     {
       "code": "IEN51S",
@@ -1050,7 +1050,7 @@
       "name": "Reading and Writing for Stevenson",
       "division": "Special Education",
       "department": "Special Education",
-      "description": "This survey course will familiarize and instruct special education students in the many reading and writing assignments they will encounter in their coursework at Stevenson.",
+      "description": "This survey course will familiarize and instruct special education students in the many reading and writing assignments they will encounter in their coursework at Stevenson. Units will include strategies to improve reading comprehension, vocabulary development, annotations, essay organization and writing and study skills. Students will be required to complete a summer reading novel.",
       "credit_value": 1.0,
       "duration": "semester",
       "credit_type": "CP",
@@ -1064,7 +1064,7 @@
       "is_summer": true,
       "prerequisite_text": "Special Education Identification and Approval of Director",
       "prerequisite_groups": [],
-      "cost": "425"
+      "cost": 425
     },
     {
       "code": "IEN52S",
@@ -1088,7 +1088,7 @@
       "is_summer": true,
       "prerequisite_text": "Special Education Identification and Approval of Director",
       "prerequisite_groups": [],
-      "cost": "425"
+      "cost": 425
     },
     {
       "code": "IJOB2S",
@@ -1098,7 +1098,7 @@
       "name": "Preparing for Life",
       "division": "Special Education",
       "department": "Special Education",
-      "description": "Preparing for Life is designed to provide students with a variety of hands-on learning opportunities to help them acquire the necessary life skills to be as independent as possible.",
+      "description": "This course is designed to provide students (at their individualized level) with a variety of hands-on learning opportunities to help them acquire the necessary life skills to be as independent as possible. Students will practice life skills in the areas of cooking, gardening, budgeting and self-care. Community-Based Instruction (CBI) opportunities are also provided to practice life skills at the grocery store, department store and at various recreational facilities to connect them with individualized and appropriate transition activities.",
       "credit_value": 1.0,
       "duration": "semester",
       "credit_type": "CP",
@@ -1115,7 +1115,7 @@
       "is_summer": true,
       "prerequisite_text": "Special Education Identification and Approval of Director",
       "prerequisite_groups": [],
-      "cost": "425"
+      "cost": 425
     },
     {
       "code": "TCH91S",
@@ -1125,7 +1125,7 @@
       "name": "Keys to Success",
       "division": "Student Services",
       "department": "Student Services",
-      "description": "Keys to Success will prepare students to cope with the academic expectations of high school and beyond. Specific study skills and strategies for test taking, note taking, research, organization and time management will be applied.",
+      "description": "This course will prepare students to cope with the academic expectations of high school and beyond. Specific study skills and study strategies for test taking, note taking, research (with an emphasis on using the Internet), organization and time management will be applied to academic classes in communication arts, social studies and science.",
       "credit_value": 0.5,
       "duration": "semester",
       "credit_type": "Pass/Fail",
@@ -1142,7 +1142,7 @@
       "is_summer": true,
       "prerequisite_text": null,
       "prerequisite_groups": [],
-      "cost": "225"
+      "cost": 225
     },
     {
       "code": "TCH92S",
@@ -1169,7 +1169,7 @@
       "is_summer": true,
       "prerequisite_text": null,
       "prerequisite_groups": [],
-      "cost": "225"
+      "cost": 225
     },
     {
       "code": "ACTPREPS",
@@ -1179,7 +1179,7 @@
       "name": "ACT Preparatory Course",
       "division": "Student Learning Programs",
       "department": "Student Learning Programs",
-      "description": "This five-day course will be taught by subject-area instructors and focus on essential skills assessed on the ACT. Students will take two practice ACT tests with immediate feedback.",
+      "description": "This five-day course will be taught by subject-area instructors and focus on essential skills assessed on the ACT. Instructors will provide a comprehensive approach to help prepare students for the ACT and enable students to apply and practice strategic methods that improve results. Students will learn how the ACT is scored and develop test-taking strategies. Students will take two practice ACT tests (without accommodations) on the first and last days of class with immediate feedback providing additional guidance for further practice.",
       "credit_value": 0.0,
       "duration": "semester",
       "credit_type": "Pass/Fail",
@@ -1195,7 +1195,7 @@
       "is_summer": true,
       "prerequisite_text": null,
       "prerequisite_groups": [],
-      "cost": "150"
+      "cost": 150
     },
     {
       "code": "ACTPREPS2",
@@ -1221,7 +1221,7 @@
       "is_summer": true,
       "prerequisite_text": null,
       "prerequisite_groups": [],
-      "cost": "150"
+      "cost": 150
     }
   ]
 }

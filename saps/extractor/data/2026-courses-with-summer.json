@@ -1,7 +1,7 @@
 {
   "catalog_year": 2026,
   "school": "Adlai E. Stevenson High School",
-  "extracted_at": "2026-05-05T01:24:06.081054+00:00",
+  "extracted_at": "2026-05-05T01:32:22.218007+00:00",
   "total_courses": 391,
   "courses": [
     {
@@ -61,7 +61,7 @@
       "name": "ART AND DESIGN",
       "division": "Fine Arts",
       "department": "Visual Arts",
-      "description": "ad This foundational course introduces students to essential w techniques, tools and media across the visual arts. Students gl will explore drawing, painting, sculpture and ceramics of through hands-on studio experiences that emphasize creative thinking and technical development. This course serves as",
+      "description": "ad This foundational course introduces students to essential w techniques, tools and media across the visual arts. Students gl will explore drawing, painting, sculpture and ceramics of through hands-on studio experiences that emphasize creative thinking and technical development. This course serves as prerequisite for all advanced art classes.",
       "credit_value": 1.0,
       "duration": "semester",
       "grade_levels": [
@@ -87,7 +87,7 @@
       "name": "ART AND DESIGN",
       "division": "Fine Arts",
       "department": "Visual Arts",
-      "description": "ad This foundational course introduces students to essential w techniques, tools and media across the visual arts. Students gl will explore drawing, painting, sculpture and ceramics of through hands-on studio experiences that emphasize creative thinking and technical development. This course serves as",
+      "description": "ad This foundational course introduces students to essential w techniques, tools and media across the visual arts. Students gl will explore drawing, painting, sculpture and ceramics of through hands-on studio experiences that emphasize creative thinking and technical development. This course serves as prerequisite for all advanced art classes.",
       "credit_value": 1.0,
       "duration": "semester",
       "grade_levels": [
@@ -741,7 +741,7 @@
       "name": "ADVANCED PHOTOGRAPHY AND COMMUNITY AND SOCIAL DYNAMICS",
       "division": "Fine Arts",
       "department": "Visual Arts",
-      "description": "or Digital Art and Design 1, Digital Art and Design 2 or 2d ANIMATION AND/OR 3D ANIMATION however, students may check out a school-owned DSLR, Apple Pencil and/or tripod for assignments. This course offers an advanced study of photography and/or digital design for students who want to pursue image making in a serious manner. Students on the photography track are introduced to large format printing, DSLR camera handling skills and advanced techniques using Adobe Photoshop and the Creative Suite. Students on the design track will be developing a portfolio of digital drawings and designs using the Adobe Creative Suite and the Procreate drawing app. Design students will also explore methods of digital photography to enhance their layout, formatting and design skills. Students will explore brainstorming methods to develop stronger concepts and common visual connections through the development of a series of work. Students will compile a portfolio and assemble a one-person show to be exhibited in the spring.",
+      "description": "however, students may check out a school-owned DSLR, Apple Pencil and/or tripod for assignments. This course offers an advanced study of photography and/or digital design for students who want to pursue image making in a serious manner. Students on the photography track are introduced to large format printing, DSLR camera handling skills and advanced techniques using Adobe Photoshop and the Creative Suite. Students on the design track will be developing a portfolio of digital drawings and designs using the Adobe Creative Suite and the Procreate drawing app. Design students will also explore methods of digital photography to enhance their layout, formatting and design skills. Students will explore brainstorming methods to develop stronger concepts and common visual connections through the development of a series of work. Students will compile a portfolio and assemble a one-person show to be exhibited in the spring.",
       "credit_value": 2.0,
       "duration": "full_year",
       "grade_levels": [
@@ -1247,7 +1247,7 @@
       "name": "ADVANCED DRAWING, PAINTING AND MIXED MEDIA",
       "division": "Fine Arts",
       "department": "Visual Arts",
-      "description": "Drawing, Painting, Studio Art or MIXED MEDIA This course is designed to give students advanced experiences in creative thinking and problem-solving using 2D art media. In this class, students will build upon the concepts and skills learned in their Drawing, Painting, Studio Art and/or Mixed Media classes. Students can choose to focus on drawing, painting or mixed media either in representational or expressive style, to produce works of art that relate to specific design issues and themes. This course may be repeated for credit.",
+      "description": "This course is designed to give students advanced experiences in creative thinking and problem-solving using 2D art media. In this class, students will build upon the concepts and skills learned in their Drawing, Painting, Studio Art and/or Mixed Media classes. Students can choose to focus on drawing, painting or mixed media either in representational or expressive style, to produce works of art that relate to specific design issues and themes. This course may be repeated for credit.",
       "credit_value": 1.0,
       "duration": "semester",
       "grade_levels": [
@@ -1293,7 +1293,7 @@
       "name": "ADVANCED DRAWING, PAINTING AND MIXED MEDIA",
       "division": "Fine Arts",
       "department": "Visual Arts",
-      "description": "Drawing, Painting, Studio Art or MIXED MEDIA This course is designed to give students advanced experiences in creative thinking and problem-solving using 2D art media. In this class, students will build upon the concepts and skills learned in their Drawing, Painting, Studio Art and/or Mixed Media classes. Students can choose to focus on drawing, painting or mixed media either in representational or expressive style, to produce works of art that relate to specific design issues and themes. This course may be repeated for credit.",
+      "description": "This course is designed to give students advanced experiences in creative thinking and problem-solving using 2D art media. In this class, students will build upon the concepts and skills learned in their Drawing, Painting, Studio Art and/or Mixed Media classes. Students can choose to focus on drawing, painting or mixed media either in representational or expressive style, to produce works of art that relate to specific design issues and themes. This course may be repeated for credit.",
       "credit_value": 1.0,
       "duration": "semester",
       "grade_levels": [
@@ -1339,7 +1339,7 @@
       "name": "ADVANCED CERAMICS, METALS AND SCULPTURE",
       "division": "Fine Arts",
       "department": "Visual Arts",
-      "description": "Ceramics, Metals and Jewelry or Sculpture This course gives students advanced experiences in creative thinking and problem solving with 3D art issues and 3D art media. In this class, students can focus on ceramics, sculpture or jewelry and metals to produce works of art that relate to specific design issues and themes. This course may be repeated for credit.",
+      "description": "This course gives students advanced experiences in creative thinking and problem solving with 3D art issues and 3D art media. In this class, students can focus on ceramics, sculpture or jewelry and metals to produce works of art that relate to specific design issues and themes. This course may be repeated for credit.",
       "credit_value": 1.0,
       "duration": "semester",
       "grade_levels": [
@@ -1389,7 +1389,7 @@
       "name": "ADVANCED CERAMICS, METALS AND SCULPTURE",
       "division": "Fine Arts",
       "department": "Visual Arts",
-      "description": "Ceramics, Metals and Jewelry or Sculpture This course gives students advanced experiences in creative thinking and problem solving with 3D art issues and 3D art media. In this class, students can focus on ceramics, sculpture or jewelry and metals to produce works of art that relate to specific design issues and themes. This course may be repeated for credit.",
+      "description": "This course gives students advanced experiences in creative thinking and problem solving with 3D art issues and 3D art media. In this class, students can focus on ceramics, sculpture or jewelry and metals to produce works of art that relate to specific design issues and themes. This course may be repeated for credit.",
       "credit_value": 1.0,
       "duration": "semester",
       "grade_levels": [
@@ -1462,7 +1462,7 @@
       "name": "AP Art: Drawing, 2D and 3D Design",
       "division": "Fine Arts",
       "department": "Visual Arts",
-      "description": "or Advanced CERAMICS, METALS AND SCULPTURE s This course offers students a concentrated program which s enables them to apply for college credit in art. Emphasis ll is centered on studio work, the preparation of a portfolio and the submission of a portfolio for potential AP credit. In the spring, each student will exhibit their work in a one-person show. This course may be repeated for credit.",
+      "description": "This course offers students a concentrated program which s enables them to apply for college credit in art. Emphasis ll is centered on studio work, the preparation of a portfolio and the submission of a portfolio for potential AP credit. In the spring, each student will exhibit their work in a one-person show. This course may be repeated for credit.",
       "credit_value": 2.0,
       "duration": "full_year",
       "grade_levels": [
@@ -2048,7 +2048,7 @@
       "name": "ENTREPRENEURIAL TACTICS",
       "division": "Applied Arts",
       "department": "Business Education",
-      "description": "One course required from: and One course required from: ■ Introduction to Business ■ Investment Management ■ Business Law ■ Accounting 1 ■ Marketing ■ Accounting 2 Honors ■ Entrepreneurship ■ Advanced Accounting Honors Entrepreneurial Tactics is a capstone course that ties together all the curricular fundamentals from the Business Education curriculum. This course models the research and concepts of a capstone course at many university business schools. In this project-based course, students work within teams to create a business plan that guides them in developing a business of their choice. Students will learn to work with and have first-hand collaboration with top business professionals from the community. These CFOs, CEOs and other top executives will visit, present and mentor the students in incorporating all the fundamentals of creating a business idea, marketing the product and preparing the finances of their business plan.",
+      "description": "Entrepreneurial Tactics is a capstone course that ties together all the curricular fundamentals from the Business Education curriculum. This course models the research and concepts of a capstone course at many university business schools. In this project-based course, students work within teams to create a business plan that guides them in developing a business of their choice. Students will learn to work with and have first-hand collaboration with top business professionals from the community. These CFOs, CEOs and other top executives will visit, present and mentor the students in incorporating all the fundamentals of creating a business idea, marketing the product and preparing the finances of their business plan.",
       "credit_value": 1.0,
       "duration": "semester",
       "grade_levels": [
@@ -2102,7 +2102,7 @@
       "name": "ENTREPRENEURIAL TACTICS",
       "division": "Applied Arts",
       "department": "Business Education",
-      "description": "One course required from: and One course required from: ■ Introduction to Business ■ Investment Management ■ Business Law ■ Accounting 1 ■ Marketing ■ Accounting 2 Honors ■ Entrepreneurship ■ Advanced Accounting Honors Entrepreneurial Tactics is a capstone course that ties together all the curricular fundamentals from the Business Education curriculum. This course models the research and concepts of a capstone course at many university business schools. In this project-based course, students work within teams to create a business plan that guides them in developing a business of their choice. Students will learn to work with and have first-hand collaboration with top business professionals from the community. These CFOs, CEOs and other top executives will visit, present and mentor the students in incorporating all the fundamentals of creating a business idea, marketing the product and preparing the finances of their business plan.",
+      "description": "Entrepreneurial Tactics is a capstone course that ties together all the curricular fundamentals from the Business Education curriculum. This course models the research and concepts of a capstone course at many university business schools. In this project-based course, students work within teams to create a business plan that guides them in developing a business of their choice. Students will learn to work with and have first-hand collaboration with top business professionals from the community. These CFOs, CEOs and other top executives will visit, present and mentor the students in incorporating all the fundamentals of creating a business idea, marketing the product and preparing the finances of their business plan.",
       "credit_value": 1.0,
       "duration": "semester",
       "grade_levels": [
@@ -2339,7 +2339,7 @@
       "name": "MANDARIN CHINESE 2",
       "division": "Multilingual Learning",
       "department": "Mandarin Chinese",
-      "description": "exam for Mandarin Chinese 2 and approval of director of re In this course, students continue to work to develop Cr their competence in Chinese across the three modes of Th communication in the context of the following AP themes: M Contemporary Life, Families and Communities, Beauty sc and Aesthetics and Science and Technology. Performance- sp based assessments in the presentational and interpersonal sk modes provide the students the opportunity to use the sp language in practiced, familiar contexts with increasing re independence. Interpretive listening and reading are focused on on the acquisition and recognition of key details in the target ch language. Students continue to explore the target culture in al new contexts. The expectation is that the communication in th the classroom (teacher-student and/or student-student) take cu place primarily in Mandarin.",
+      "description": "re In this course, students continue to work to develop Cr their competence in Chinese across the three modes of Th communication in the context of the following AP themes: M Contemporary Life, Families and Communities, Beauty sc and Aesthetics and Science and Technology. Performance- sp based assessments in the presentational and interpersonal sk modes provide the students the opportunity to use the sp language in practiced, familiar contexts with increasing re independence. Interpretive listening and reading are focused on on the acquisition and recognition of key details in the target ch language. Students continue to explore the target culture in al new contexts. The expectation is that the communication in th the classroom (teacher-student and/or student-student) take cu place primarily in Mandarin.",
       "credit_value": 2.0,
       "duration": "full_year",
       "grade_levels": [
@@ -2374,7 +2374,7 @@
       "name": "MANDARIN CHINESE 3",
       "division": "Multilingual Learning",
       "department": "Mandarin Chinese",
-      "description": "Op Pr exam for Mandarin Chinese 3 and approval of director ex Cr This course requires students to engage in interpersonal, St presentational and interpretive tasks at more advanced M proficiency levels. Students continue to work to develop in their competence in Chinese across the three modes as of communication in the context of the six AP themes. la Performance-based assessments in the presentational and lis interpersonal modes provide the students the opportunity co to use the language in familiar contexts independently. pr Interpretive listening and reading tasks are focused on literal C comprehension with increasing emphasis on inferential au interpretation. Students continue to explore the target culture w in new contexts. The expectation is that the communication di in the classroom (teacher-student and/or student-student) ex take place primarily in Mandarin.",
+      "description": "Op Cr This course requires students to engage in interpersonal, St presentational and interpretive tasks at more advanced M proficiency levels. Students continue to work to develop in their competence in Chinese across the three modes as of communication in the context of the six AP themes. la Performance-based assessments in the presentational and lis interpersonal modes provide the students the opportunity co to use the language in familiar contexts independently. pr Interpretive listening and reading tasks are focused on literal C comprehension with increasing emphasis on inferential au interpretation. Students continue to explore the target culture w in new contexts. The expectation is that the communication di in the classroom (teacher-student and/or student-student) ex take place primarily in Mandarin.",
       "credit_value": 2.0,
       "duration": "full_year",
       "grade_levels": [
@@ -2409,7 +2409,7 @@
       "name": "Intermediate Mandarin Chinese Language Arts",
       "division": "Multilingual Learning",
       "department": "Mandarin Chinese",
-      "description": "of speaking and listening as demonstrated on Mandarin Chinese language proficiency assessment (e.g., AAPPL), teacher recommendation, or director approval This course is designed specifically for students with lived Mandarin Chinese language experience, either from prior schooling in a Chinese-speaking country or as native/heritage speakers of Chinese. Students will develop their literacy skills in Chinese as they explore literature from the Chinese- speaking world and engage in focused development of reading and writing skills. While special focus will be placed on developing foundational literacy skills (e.g., Mandarin character decoding and character writing), students will also develop critical thinking and oracy skills in Chinese as they collaboratively explore topics related to current events, culture and media.",
+      "description": "This course is designed specifically for students with lived Mandarin Chinese language experience, either from prior schooling in a Chinese-speaking country or as native/heritage speakers of Chinese. Students will develop their literacy skills in Chinese as they explore literature from the Chinese- speaking world and engage in focused development of reading and writing skills. While special focus will be placed on developing foundational literacy skills (e.g., Mandarin character decoding and character writing), students will also develop critical thinking and oracy skills in Chinese as they collaboratively explore topics related to current events, culture and media.",
       "credit_value": 2.0,
       "duration": "full_year",
       "grade_levels": [
@@ -2444,7 +2444,7 @@
       "name": "MANDARIN CHINESE 4",
       "division": "Multilingual Learning",
       "department": "Mandarin Chinese",
-      "description": "exam for Mandarin Chinese 4 and approval of director Students continue to work to develop their competence in Mandarin Chinese across the three modes of communication in the context of the six AP themes. Performance-based assessments provide the students opportunity to use the language independently in unfamiliar contexts. Interpretive listening and reading tasks are focused on both literal and comprehension and inferential interpretation. Practice is provided regularly, both within the classroom and at home. Cultural information and comparisons are drawn from authentic print, literary works and class discussion. Students will participate in class debates and facilitate classroom discussion through their own student-led presentation. The expectation is that the communication in the classroom take place primarily in Chinese. This course begins preparation for the AP Chinese Language and Culture exam.",
+      "description": "Students continue to work to develop their competence in Mandarin Chinese across the three modes of communication in the context of the six AP themes. Performance-based assessments provide the students opportunity to use the language independently in unfamiliar contexts. Interpretive listening and reading tasks are focused on both literal and comprehension and inferential interpretation. Practice is provided regularly, both within the classroom and at home. Cultural information and comparisons are drawn from authentic print, literary works and class discussion. Students will participate in class debates and facilitate classroom discussion through their own student-led presentation. The expectation is that the communication in the classroom take place primarily in Chinese. This course begins preparation for the AP Chinese Language and Culture exam.",
       "credit_value": 2.0,
       "duration": "full_year",
       "grade_levels": [
@@ -2478,7 +2478,7 @@
       "name": "AP CHINESE LANGUAGE AND CULTURE",
       "division": "Multilingual Learning",
       "department": "Mandarin Chinese",
-      "description": "MANDARIN STUDY, or passing the placement exam for AP Chinese Language and Culture and approval of director This course is designed to prepare students for the AP Chinese Language and Culture exam, i.e. a level comparable to fourth semester (or equivalent) college/ university courses in Mandarin Chinese. The course focuses on language proficiency while dealing with level- and age-appropriate cultural content throughout the course. Students engage in readings, conversation and composition and research projects. The expectation is that all communication in the classroom takes place in the target language. By the end of the year, students will be able to understand the spoken language formally (lectures, news, etc.) and in conversation (dialogues…); to acquire vocabulary and structures that enable students to understand, analyze contextualized materials (advertisement, posters, newspaper, magazine articles, letters, etc.); to describe an event or activity in a cohesive and coherent manner with linguistic accuracy; to write appropriately employing the organization, vocabulary and structure appropriate to the purpose of their writing and to demonstrate cultural appropriateness through spoken and written discourse.",
+      "description": "This course is designed to prepare students for the AP Chinese Language and Culture exam, i.e. a level comparable to fourth semester (or equivalent) college/ university courses in Mandarin Chinese. The course focuses on language proficiency while dealing with level- and age-appropriate cultural content throughout the course. Students engage in readings, conversation and composition and research projects. The expectation is that all communication in the classroom takes place in the target language. By the end of the year, students will be able to understand the spoken language formally (lectures, news, etc.) and in conversation (dialogues…); to acquire vocabulary and structures that enable students to understand, analyze contextualized materials (advertisement, posters, newspaper, magazine articles, letters, etc.); to describe an event or activity in a cohesive and coherent manner with linguistic accuracy; to write appropriately employing the organization, vocabulary and structure appropriate to the purpose of their writing and to demonstrate cultural appropriateness through spoken and written discourse.",
       "credit_value": 2.0,
       "duration": "full_year",
       "grade_levels": [
@@ -2513,7 +2513,7 @@
       "name": "Chinese Literature, Media and Culture",
       "division": "Multilingual Learning",
       "department": "Mandarin Chinese",
-      "description": "placement test Students continue to work to develop their competence in Chinese across the three modes of communication within the context of critical analysis of literature and media, as well as close investigation of culture and social trends. Performance- based assessments provide students the opportunity to use the language independently and collaboratively in both familiar and unfamiliar literary, media and cultural contexts. Interpretive listening, viewing and reading tasks are focused on both literal comprehension and inferential interpretation of both familiar and unfamiliar pieces of literature, media and culture. Practice is provided regularly, both within the classroom and at home. Throughout the course, students continue to explore the target culture as they are invited to situate their own experiences within new contexts.",
+      "description": "Students continue to work to develop their competence in Chinese across the three modes of communication within the context of critical analysis of literature and media, as well as close investigation of culture and social trends. Performance- based assessments provide students the opportunity to use the language independently and collaboratively in both familiar and unfamiliar literary, media and cultural contexts. Interpretive listening, viewing and reading tasks are focused on both literal comprehension and inferential interpretation of both familiar and unfamiliar pieces of literature, media and culture. Practice is provided regularly, both within the classroom and at home. Throughout the course, students continue to explore the target culture as they are invited to situate their own experiences within new contexts.",
       "credit_value": 2.0,
       "duration": "full_year",
       "grade_levels": [
@@ -2600,7 +2600,7 @@
       "name": "Computer Programming 2",
       "division": "Computer Science, Engineering and Technology",
       "department": "Computer Science",
-      "description": "Development 2 (TEC281/282) or Principles of Engineering (TEC301/302), or AP Computer Science Principles (CSC371/372) This one-semester course is intended for students who possess some programming experience or who have successfully completed Computer Programming 1 (CSC161 or CSC162) and seek a deeper understanding of computer programming concepts. The Java language continues to enjoy worldwide popularity. Due to Java’s longevity, available support for Java is extensive and many industries make use of Java-based applications. Java developers continue to be in high demand. Java is highly portable (as it can run on many computer platforms) and provides an easy-to-learn introduction to the world of object-oriented program design. This course reviews foundational coding frameworks and concepts and introduces students to object-oriented design using the Java programming language. Students will explore and work with various data types, input and output d commands, conditional statements, Boolean operators (and, or, not), looping structures, common algorithms and arrays. Successful completion of this one-semester course prepares the student for Mobile App Development (CSC251/252) and AP Computer Science A (CSC391/392).",
+      "description": "This one-semester course is intended for students who possess some programming experience or who have successfully completed Computer Programming 1 (CSC161 or CSC162) and seek a deeper understanding of computer programming concepts. The Java language continues to enjoy worldwide popularity. Due to Java’s longevity, available support for Java is extensive and many industries make use of Java-based applications. Java developers continue to be in high demand. Java is highly portable (as it can run on many computer platforms) and provides an easy-to-learn introduction to the world of object-oriented program design. This course reviews foundational coding frameworks and concepts and introduces students to object-oriented design using the Java programming language. Students will explore and work with various data types, input and output d commands, conditional statements, Boolean operators (and, or, not), looping structures, common algorithms and arrays. Successful completion of this one-semester course prepares the student for Mobile App Development (CSC251/252) and AP Computer Science A (CSC391/392).",
       "credit_value": 1.0,
       "duration": "semester",
       "grade_levels": [
@@ -2612,8 +2612,8 @@
       "credit_type": "CP",
       "prerequisites": "Computer Programming 1 (CSC161/162) or Web Development 2 (TEC281/282) or Principles of Engineering (TEC301/302), or AP Computer Science Principles (CSC371/372)",
       "prerequisite_codes": [
-        "CSC161",
         "TEC281",
+        "CSC161",
         "TEC301/TEC302",
         "CSC371/CSC372",
         "CSC162",
@@ -2632,8 +2632,8 @@
           "group": 1,
           "type": "or",
           "codes": [
-            "CSC161",
             "TEC281",
+            "CSC161",
             "TEC301/TEC302",
             "CSC371/CSC372",
             "CSC162",
@@ -2647,7 +2647,7 @@
       "name": "Computer Programming 2",
       "division": "Computer Science, Engineering and Technology",
       "department": "Computer Science",
-      "description": "Development 2 (TEC281/282) or Principles of Engineering (TEC301/302), or AP Computer Science Principles (CSC371/372) This one-semester course is intended for students who possess some programming experience or who have successfully completed Computer Programming 1 (CSC161 or CSC162) and seek a deeper understanding of computer programming concepts. The Java language continues to enjoy worldwide popularity. Due to Java’s longevity, available support for Java is extensive and many industries make use of Java-based applications. Java developers continue to be in high demand. Java is highly portable (as it can run on many computer platforms) and provides an easy-to-learn introduction to the world of object-oriented program design. This course reviews foundational coding frameworks and concepts and introduces students to object-oriented design using the Java programming language. Students will explore and work with various data types, input and output d commands, conditional statements, Boolean operators (and, or, not), looping structures, common algorithms and arrays. Successful completion of this one-semester course prepares the student for Mobile App Development (CSC251/252) and AP Computer Science A (CSC391/392).",
+      "description": "This one-semester course is intended for students who possess some programming experience or who have successfully completed Computer Programming 1 (CSC161 or CSC162) and seek a deeper understanding of computer programming concepts. The Java language continues to enjoy worldwide popularity. Due to Java’s longevity, available support for Java is extensive and many industries make use of Java-based applications. Java developers continue to be in high demand. Java is highly portable (as it can run on many computer platforms) and provides an easy-to-learn introduction to the world of object-oriented program design. This course reviews foundational coding frameworks and concepts and introduces students to object-oriented design using the Java programming language. Students will explore and work with various data types, input and output d commands, conditional statements, Boolean operators (and, or, not), looping structures, common algorithms and arrays. Successful completion of this one-semester course prepares the student for Mobile App Development (CSC251/252) and AP Computer Science A (CSC391/392).",
       "credit_value": 1.0,
       "duration": "semester",
       "grade_levels": [
@@ -2659,8 +2659,8 @@
       "credit_type": "CP",
       "prerequisites": "Computer Programming 1 (CSC161/162) or Web Development 2 (TEC281/282) or Principles of Engineering (TEC301/302), or AP Computer Science Principles (CSC371/372)",
       "prerequisite_codes": [
-        "CSC161",
         "TEC281",
+        "CSC161",
         "TEC301/TEC302",
         "CSC371/CSC372",
         "CSC162",
@@ -2679,8 +2679,8 @@
           "group": 1,
           "type": "or",
           "codes": [
-            "CSC161",
             "TEC281",
+            "CSC161",
             "TEC301/TEC302",
             "CSC371/CSC372",
             "CSC162",
@@ -2694,7 +2694,7 @@
       "name": "MOBILE APP DEVELOPMENT",
       "division": "Computer Science, Engineering and Technology",
       "department": "Computer Science",
-      "description": "Development 2 (TEC281/282), or Principles of Engineering (TEC301/302) or AP Computer Science Principles (CSC371/372) This full-year course introduces students to the world of app development for mobile devices (such as smartphones and tablets). Students will work in a collaborative, lab-based environment that utilizes industry-standard processes and development strategies similar to those a professional app development company might employ. Each unit begins by introducing students to specific skills and ideas that will be used to modify and redesign existing mobile apps. Each unit concludes with students applying the concepts learned to create an application on their own. Topics include: event- driven programming strategies, app structure, algorithm design and user-interface design. Successful completion of this course provides students with a strong command of the fundamental strategies necessary to develop high quality apps. (CSET)",
+      "description": "This full-year course introduces students to the world of app development for mobile devices (such as smartphones and tablets). Students will work in a collaborative, lab-based environment that utilizes industry-standard processes and development strategies similar to those a professional app development company might employ. Each unit begins by introducing students to specific skills and ideas that will be used to modify and redesign existing mobile apps. Each unit concludes with students applying the concepts learned to create an application on their own. Topics include: event- driven programming strategies, app structure, algorithm design and user-interface design. Successful completion of this course provides students with a strong command of the fundamental strategies necessary to develop high quality apps. (CSET)",
       "credit_value": 2.0,
       "duration": "full_year",
       "grade_levels": [
@@ -2706,8 +2706,8 @@
       "credit_type": "CP",
       "prerequisites": "Computer Programming 1 (CSC161/162), or Web Development 2 (TEC281/282), or Principles of Engineering (TEC301/302) or AP Computer Science Principles (CSC371/372)",
       "prerequisite_codes": [
-        "CSC161",
         "TEC281",
+        "CSC161",
         "TEC301/TEC302",
         "CSC371/CSC372",
         "CSC162",
@@ -2724,8 +2724,8 @@
           "group": 1,
           "type": "or",
           "codes": [
-            "CSC161",
             "TEC281",
+            "CSC161",
             "TEC301/TEC302",
             "CSC371/CSC372",
             "CSC162",
@@ -2948,7 +2948,7 @@
       "name": "DRIVER EDUCATION",
       "division": "Applied Arts",
       "department": "Driver Education",
-      "description": "OF STATE’S OFFICE THROUGH DRIVER EDUCATION, PARENTAL CONSENT, VERIFICATION OF AGE (ENROLLMENT IS BASED ON CHRONOLOGICAL AGE placed in Driver Education first. If the course is full, students and GRADE LEVEL) AND ACCUMULATION OF AT LEAST EIGHT CREDITS IN will be notified via their counselor if a seat becomes available. THE PREVIOUS TWO SEMESTERS. Students in the ELD program must Students will receive an email notification in birth date order. be enrolled in ELD 2 or higher to register for Driver Education. Other requirements: This course is normally taken during one semester of ■ Students must be 15 years old to obtain an Illinois permit. sophomore or junior year. Students are enrolled in this ■ Students must hold an Illinois permit for nine months course based on chronological age. For the 2026-27 school before receiving a license. year, students may request enrollment in the course for first semester if they were born on or before Nov. 1, 2010 ■ Students must be enrolled in a Driver Education course and for second semester if they were born on or before to obtain an Illinois permit. March 1, 2011. Students must take and pass both the ■ Freshmen (regardless of age) are ineligible to take classroom phase and the behind-the-wheel phase of Driver Driver Education until the summer between freshman Education if they wish to receive a license prior to their and sophomore year. 18th birthday. Passing the classroom phase of the ■ A Driver Education teacher will contact students prior course is required for graduation. to the start of the Driver Education class to begin the The course is a two-phase program consisting of classroom permit process. and behind-the-wheel instruction. The course prepares ■ If a student drops Driver Education, their permit will students for safe motor vehicle operation in a suburban be canceled. driving environment. Among the topics taught in this course are the rules of the road, defensive driving, natural laws and ■ If a student chooses to select the classroom only their effects on vehicle control, driver responsibility and option, they will not be able to complete the impaired and distracted driving. Students must also meet all behind-the-wheel phase at a later time. the essential course requirements as mandated by the Illinois Driver Education fees: $400 and an additional $20 check to State Board of Education and the Secretary of State’s Office. the Secretary of State. This includes 50 hours of at-home practice, done concurrently Parents/Guardians will be informed if their student has been while taking the class. The grades earned in this course are enrolled in Driver Education by March 8. not included in the student’s grade point average.",
+      "description": "Other requirements: This course is normally taken during one semester of ■ Students must be 15 years old to obtain an Illinois permit. sophomore or junior year. Students are enrolled in this ■ Students must hold an Illinois permit for nine months course based on chronological age. For the 2026-27 school before receiving a license. year, students may request enrollment in the course for first semester if they were born on or before Nov. 1, 2010 ■ Students must be enrolled in a Driver Education course and for second semester if they were born on or before to obtain an Illinois permit. March 1, 2011. Students must take and pass both the ■ Freshmen (regardless of age) are ineligible to take classroom phase and the behind-the-wheel phase of Driver Driver Education until the summer between freshman Education if they wish to receive a license prior to their and sophomore year. 18th birthday. Passing the classroom phase of the ■ A Driver Education teacher will contact students prior course is required for graduation. to the start of the Driver Education class to begin the The course is a two-phase program consisting of classroom permit process. and behind-the-wheel instruction. The course prepares ■ If a student drops Driver Education, their permit will students for safe motor vehicle operation in a suburban be canceled. driving environment. Among the topics taught in this course are the rules of the road, defensive driving, natural laws and ■ If a student chooses to select the classroom only their effects on vehicle control, driver responsibility and option, they will not be able to complete the impaired and distracted driving. Students must also meet all behind-the-wheel phase at a later time. the essential course requirements as mandated by the Illinois Driver Education fees: $400 and an additional $20 check to State Board of Education and the Secretary of State’s Office. the Secretary of State. This includes 50 hours of at-home practice, done concurrently Parents/Guardians will be informed if their student has been while taking the class. The grades earned in this course are enrolled in Driver Education by March 8. not included in the student’s grade point average.",
       "credit_value": 1.0,
       "duration": "semester",
       "grade_levels": [
@@ -2974,7 +2974,7 @@
       "name": "DRIVER EDUCATION",
       "division": "Applied Arts",
       "department": "Driver Education",
-      "description": "OF STATE’S OFFICE THROUGH DRIVER EDUCATION, PARENTAL CONSENT, VERIFICATION OF AGE (ENROLLMENT IS BASED ON CHRONOLOGICAL AGE placed in Driver Education first. If the course is full, students and GRADE LEVEL) AND ACCUMULATION OF AT LEAST EIGHT CREDITS IN will be notified via their counselor if a seat becomes available. THE PREVIOUS TWO SEMESTERS. Students in the ELD program must Students will receive an email notification in birth date order. be enrolled in ELD 2 or higher to register for Driver Education. Other requirements: This course is normally taken during one semester of ■ Students must be 15 years old to obtain an Illinois permit. sophomore or junior year. Students are enrolled in this ■ Students must hold an Illinois permit for nine months course based on chronological age. For the 2026-27 school before receiving a license. year, students may request enrollment in the course for first semester if they were born on or before Nov. 1, 2010 ■ Students must be enrolled in a Driver Education course and for second semester if they were born on or before to obtain an Illinois permit. March 1, 2011. Students must take and pass both the ■ Freshmen (regardless of age) are ineligible to take classroom phase and the behind-the-wheel phase of Driver Driver Education until the summer between freshman Education if they wish to receive a license prior to their and sophomore year. 18th birthday. Passing the classroom phase of the ■ A Driver Education teacher will contact students prior course is required for graduation. to the start of the Driver Education class to begin the The course is a two-phase program consisting of classroom permit process. and behind-the-wheel instruction. The course prepares ■ If a student drops Driver Education, their permit will students for safe motor vehicle operation in a suburban be canceled. driving environment. Among the topics taught in this course are the rules of the road, defensive driving, natural laws and ■ If a student chooses to select the classroom only their effects on vehicle control, driver responsibility and option, they will not be able to complete the impaired and distracted driving. Students must also meet all behind-the-wheel phase at a later time. the essential course requirements as mandated by the Illinois Driver Education fees: $400 and an additional $20 check to State Board of Education and the Secretary of State’s Office. the Secretary of State. This includes 50 hours of at-home practice, done concurrently Parents/Guardians will be informed if their student has been while taking the class. The grades earned in this course are enrolled in Driver Education by March 8. not included in the student’s grade point average.",
+      "description": "Other requirements: This course is normally taken during one semester of ■ Students must be 15 years old to obtain an Illinois permit. sophomore or junior year. Students are enrolled in this ■ Students must hold an Illinois permit for nine months course based on chronological age. For the 2026-27 school before receiving a license. year, students may request enrollment in the course for first semester if they were born on or before Nov. 1, 2010 ■ Students must be enrolled in a Driver Education course and for second semester if they were born on or before to obtain an Illinois permit. March 1, 2011. Students must take and pass both the ■ Freshmen (regardless of age) are ineligible to take classroom phase and the behind-the-wheel phase of Driver Driver Education until the summer between freshman Education if they wish to receive a license prior to their and sophomore year. 18th birthday. Passing the classroom phase of the ■ A Driver Education teacher will contact students prior course is required for graduation. to the start of the Driver Education class to begin the The course is a two-phase program consisting of classroom permit process. and behind-the-wheel instruction. The course prepares ■ If a student drops Driver Education, their permit will students for safe motor vehicle operation in a suburban be canceled. driving environment. Among the topics taught in this course are the rules of the road, defensive driving, natural laws and ■ If a student chooses to select the classroom only their effects on vehicle control, driver responsibility and option, they will not be able to complete the impaired and distracted driving. Students must also meet all behind-the-wheel phase at a later time. the essential course requirements as mandated by the Illinois Driver Education fees: $400 and an additional $20 check to State Board of Education and the Secretary of State’s Office. the Secretary of State. This includes 50 hours of at-home practice, done concurrently Parents/Guardians will be informed if their student has been while taking the class. The grades earned in this course are enrolled in Driver Education by March 8. not included in the student’s grade point average.",
       "credit_value": 1.0,
       "duration": "semester",
       "grade_levels": [
@@ -3251,7 +3251,7 @@
       "name": "Concert Dance",
       "division": "Fine Arts",
       "department": "Dance",
-      "description": "as da Additional fees for dual credit may be imposed by the college/university. ex This course is designed for students who have had advanced training in contemporary dance, as well as a strong background in ballet, jazz and composition. Concert G dancers are responsible for maintaining a high quality of DN technical skill. The Concert Dance class will work toward Op developing and enhancing performance and choreographic Pr in skills in preparation for college-level dance study and/ Cr or professional studio experience. Concert dancers will D choreograph their own dances and perform in the Winter and in Spring Dance Concerts. Daily and after-school rehearsals will D be scheduled one to two weeks prior to the opening of the co Winter and Spring Concerts and attendance is mandatory. co Students may also audition for guest choreographers. These an rehearsals take place after school and are required, if cast. on Fees are approximately $150 for after-school dance company W expenses. Admission into Concert Dance is based on the in submission of a portfolio submitted to and approved by the th Dance Department. This course may be repeated for credit.",
+      "description": "da Additional fees for dual credit may be imposed by the college/university. ex This course is designed for students who have had advanced training in contemporary dance, as well as a strong background in ballet, jazz and composition. Concert G dancers are responsible for maintaining a high quality of DN technical skill. The Concert Dance class will work toward Op developing and enhancing performance and choreographic Pr in skills in preparation for college-level dance study and/ Cr or professional studio experience. Concert dancers will D choreograph their own dances and perform in the Winter and in Spring Dance Concerts. Daily and after-school rehearsals will D be scheduled one to two weeks prior to the opening of the co Winter and Spring Concerts and attendance is mandatory. co Students may also audition for guest choreographers. These an rehearsals take place after school and are required, if cast. on Fees are approximately $150 for after-school dance company W expenses. Admission into Concert Dance is based on the in submission of a portfolio submitted to and approved by the th Dance Department. This course may be repeated for credit.",
       "credit_value": 2.0,
       "duration": "full_year",
       "grade_levels": [
@@ -3287,7 +3287,7 @@
       "name": "DANCE LEADERSHIP",
       "division": "Fine Arts",
       "department": "Dance",
-      "description": "in Dance 3 or Dance 4 and/or approval of instructors Dance Leadership is a one-year course where students will intern and assist with dance instruction in a technique class. Dance leaders will learn and demonstrate the teacher-created combinations including warm-ups, across the floor and center combinations. Dance leaders will model proper technique and assist students. Dance Leaders will periodically work one-on-one with dance students in a peer mentoring fashion. While taking this course, the Dance Leaders will also meet individually with the teacher outside of class to learn what they will instruct at the end of each semester. They will also create exercises and a lesson that they will instruct at the end of each semester. Dance Leadership applications are available on the Dance website in early November and are due by December 5. This course may be repeated for credit.",
+      "description": "Dance Leadership is a one-year course where students will intern and assist with dance instruction in a technique class. Dance leaders will learn and demonstrate the teacher-created combinations including warm-ups, across the floor and center combinations. Dance leaders will model proper technique and assist students. Dance Leaders will periodically work one-on-one with dance students in a peer mentoring fashion. While taking this course, the Dance Leaders will also meet individually with the teacher outside of class to learn what they will instruct at the end of each semester. They will also create exercises and a lesson that they will instruct at the end of each semester. Dance Leadership applications are available on the Dance website in early November and are due by December 5. This course may be repeated for credit.",
       "credit_value": 2.0,
       "duration": "full_year",
       "grade_levels": [
@@ -3402,7 +3402,7 @@
       "name": "English Language Development (ELD) 2",
       "division": "Multilingual Learning",
       "department": "English Language Development",
-      "description": "ACCESS exam COMPOSITE 2.0-2.9 or successful completion of ELD 1, teacher recommendation or director approval. This is a two-credit course for students in the ELD program at the intermediate level. This course will meet two periods each day and instruction is entirely in English. Students will build on all four language domains (listening, speaking, reading and writing) across thematic units. Their writing skills move beyond paragraph construction to composing, revising and editing essays within various writing genres. Speaking and listening is practiced and assessed as students are expected to have conversational and presentational English speaking skills.",
+      "description": "This is a two-credit course for students in the ELD program at the intermediate level. This course will meet two periods each day and instruction is entirely in English. Students will build on all four language domains (listening, speaking, reading and writing) across thematic units. Their writing skills move beyond paragraph construction to composing, revising and editing essays within various writing genres. Speaking and listening is practiced and assessed as students are expected to have conversational and presentational English speaking skills.",
       "credit_value": 2.0,
       "duration": "full_year",
       "grade_levels": [
@@ -3454,7 +3454,7 @@
       "name": "LANGUAGE",
       "division": "Multilingual Learning",
       "department": "English Language Development",
-      "description": "ACCESS exam COMPOSITE 3.0-3.9 or successful completion of ELD 2, teacher recommendation or director approval (ELD) 3 Literature This is one of two courses available for students in the ELD program at the advanced level. This course may be taken concurrently with English Language Development (ELD) 3 Literature (ELD371/372) or may be taken alone. Students will leverage their own cultural and linguistic assets as they work to expand their English language proficiency. In addition to a focus on the development of advanced literacy skills, including argumentative writing and literary analysis, students will foster their listening and speaking skills by participating in discussions, debates and oral presentations.",
+      "description": "(ELD) 3 Literature This is one of two courses available for students in the ELD program at the advanced level. This course may be taken concurrently with English Language Development (ELD) 3 Literature (ELD371/372) or may be taken alone. Students will leverage their own cultural and linguistic assets as they work to expand their English language proficiency. In addition to a focus on the development of advanced literacy skills, including argumentative writing and literary analysis, students will foster their listening and speaking skills by participating in discussions, debates and oral presentations.",
       "credit_value": 2.0,
       "duration": "full_year",
       "grade_levels": [
@@ -3479,7 +3479,7 @@
       "name": "English Language Development (ELD) 3",
       "division": "Multilingual Learning",
       "department": "English Language Development",
-      "description": "ACCESS exam COMPOSITE 3.0-3.9 or successful completion of ELD 2, teacher recommendation or director approval (ELD) 3 Language This is one of two courses available for students in the ELD program at the advanced level. This course may be taken concurrently with English Language Development (ELD) 3 Language (ELD361/362) or may be taken alone. Students will leverage their own cultural and linguistic assets as they work to expand their English language proficiency. Students will explore both fiction and nonfiction literature through both common and independent reading tasks. Students will make text-to-self connections as they engage in literary analysis and argumentative writing, including multi-page process writing.",
+      "description": "(ELD) 3 Language This is one of two courses available for students in the ELD program at the advanced level. This course may be taken concurrently with English Language Development (ELD) 3 Language (ELD361/362) or may be taken alone. Students will leverage their own cultural and linguistic assets as they work to expand their English language proficiency. Students will explore both fiction and nonfiction literature through both common and independent reading tasks. Students will make text-to-self connections as they engage in literary analysis and argumentative writing, including multi-page process writing.",
       "credit_value": 2.0,
       "duration": "full_year",
       "grade_levels": [
@@ -3504,7 +3504,7 @@
       "name": "English Language Development (ELD) 4",
       "division": "Multilingual Learning",
       "department": "English Language Development",
-      "description": "ACCESS exam COMPOSITE 4.0-4.8 OR successful completion of ELD 3: Language and/or ELD 3: Literature, teacher recommendation or director approval. This is an English course for students who are transitioning out of the ELD program. Students are expected to produce work with ELD support similar to that of a student in a Communication Arts English course. Students’ proficiencies will advance in the areas of literary analysis, writing, grammar, oral communication and research. Students will explore literary works from their own cultural backgrounds and experiences and use literature as a pathway to greater understanding of diverse perspectives and narratives. ts n CURRENT EVENTS",
+      "description": "This is an English course for students who are transitioning out of the ELD program. Students are expected to produce work with ELD support similar to that of a student in a Communication Arts English course. Students’ proficiencies will advance in the areas of literary analysis, writing, grammar, oral communication and research. Students will explore literary works from their own cultural backgrounds and experiences and use literature as a pathway to greater understanding of diverse perspectives and narratives. ts n CURRENT EVENTS",
       "credit_value": 2.0,
       "duration": "full_year",
       "grade_levels": [
@@ -4359,7 +4359,7 @@
       "name": "HUMAN GROWTH AND DEVELOPMENT",
       "division": "Applied Arts",
       "department": "Family and Consumer Sciences",
-      "description": "Human Growth and Development explores the world of the developing individual. Students will examine the physical, intellectual, social, emotional and moral development of humans from prenatal development through adolescence. This course will investigate the psychological concepts that apply to everyday life, while exploring the dynamic interactions between individuals and the diverse contexts that shape our growth and development. This course is a",
+      "description": "Human Growth and Development explores the world of the developing individual. Students will examine the physical, intellectual, social, emotional and moral development of humans from prenatal development through adolescence. This course will investigate the psychological concepts that apply to everyday life, while exploring the dynamic interactions between individuals and the diverse contexts that shape our growth and development. This course is a prerequisite for the course Teaching Young Children 1.",
       "credit_value": 1.0,
       "duration": "semester",
       "grade_levels": [
@@ -4385,7 +4385,7 @@
       "name": "HUMAN GROWTH AND DEVELOPMENT",
       "division": "Applied Arts",
       "department": "Family and Consumer Sciences",
-      "description": "Human Growth and Development explores the world of the developing individual. Students will examine the physical, intellectual, social, emotional and moral development of humans from prenatal development through adolescence. This course will investigate the psychological concepts that apply to everyday life, while exploring the dynamic interactions between individuals and the diverse contexts that shape our growth and development. This course is a",
+      "description": "Human Growth and Development explores the world of the developing individual. Students will examine the physical, intellectual, social, emotional and moral development of humans from prenatal development through adolescence. This course will investigate the psychological concepts that apply to everyday life, while exploring the dynamic interactions between individuals and the diverse contexts that shape our growth and development. This course is a prerequisite for the course Teaching Young Children 1.",
       "credit_value": 1.0,
       "duration": "semester",
       "grade_levels": [
@@ -4993,7 +4993,7 @@
       "name": "FRENCH 2",
       "division": "Multilingual Learning",
       "department": "French",
-      "description": "Cr French 2 and approval of director St This course is the first in the three-year accelerated AP sequence that prepares students for AP French Language. La Students continue to develop their competence in French (s across the three modes of communication in the context of to the six AP themes. Performance-based assessments in the In interpersonal and presentational modes (speaking and so writing) provide the students the opportunity to use the bo language in practiced, familiar contexts as well as occasional, unfamiliar topics with increasing independence. Interpretive pr listening and reading is focused on the recognition of key Fr details and making inferences about the content of authentic an sources. Students continue to explore the cultures of the pr French-speaking world in new contexts. Communication in (t class (teacher-student and/or student-student) is primarily St in French. th",
+      "description": "Cr This course is the first in the three-year accelerated AP sequence that prepares students for AP French Language. La Students continue to develop their competence in French (s across the three modes of communication in the context of to the six AP themes. Performance-based assessments in the In interpersonal and presentational modes (speaking and so writing) provide the students the opportunity to use the bo language in practiced, familiar contexts as well as occasional, unfamiliar topics with increasing independence. Interpretive pr listening and reading is focused on the recognition of key Fr details and making inferences about the content of authentic an sources. Students continue to explore the cultures of the pr French-speaking world in new contexts. Communication in (t class (teacher-student and/or student-student) is primarily St in French. th",
       "credit_value": 2.0,
       "duration": "full_year",
       "grade_levels": [
@@ -5028,7 +5028,7 @@
       "name": "FRENCH 3",
       "division": "Multilingual Learning",
       "department": "French",
-      "description": "French 3 and approval of director This course is the second in the three-year accelerated sequence that prepares students for AP French Language. Students continue to develop their competence in French across the three modes of communication in the context of the six AP themes. Performance-based assessments in the interpersonal and presentational modes (speaking and writing) provide the students the opportunity to use French independently in familiar contexts, with the increasing ability to use the language in unfamiliar contexts. Interpretive listening and reading tasks are focused on both literal comprehension and inferential interpretation. Throughout the course, students continue to explore the cultures of the French-speaking world in new contexts. In this course, students also read authentic literature including poems, short stories and excerpts from novels. Communication in class (teacher-student and/or student-student) is entirely in French.",
+      "description": "This course is the second in the three-year accelerated sequence that prepares students for AP French Language. Students continue to develop their competence in French across the three modes of communication in the context of the six AP themes. Performance-based assessments in the interpersonal and presentational modes (speaking and writing) provide the students the opportunity to use French independently in familiar contexts, with the increasing ability to use the language in unfamiliar contexts. Interpretive listening and reading tasks are focused on both literal comprehension and inferential interpretation. Throughout the course, students continue to explore the cultures of the French-speaking world in new contexts. In this course, students also read authentic literature including poems, short stories and excerpts from novels. Communication in class (teacher-student and/or student-student) is entirely in French.",
       "credit_value": 2.0,
       "duration": "full_year",
       "grade_levels": [
@@ -5062,7 +5062,7 @@
       "name": "AP FRENCH LANGUAGE",
       "division": "Multilingual Learning",
       "department": "French",
-      "description": "AP French Language and approval of director Students continue to work to develop their competence across the three modes of communication in the context of the six AP themes, as they simultaneously prepare for the AP French Language and Culture exam. Performance-based assessments (speaking and writing) provide the students the opportunity to use the language independently in unfamiliar contexts. Interpretive listening and reading tasks involve authentic sources designed for native speakers and are focused on both literal comprehension and inferential interpretation. A variety of authentic print, audio and video materials provide the basis for exploration of the cultures of the French-speaking world. Tasks involve students analyzing and making comparisons with their own cultural products, practices and perspectives. Communication in class (teacher-student and/or student-student) is entirely in French. Students who enroll in this course will be prepared to take the AP French Language and Culture exam in May.",
+      "description": "Students continue to work to develop their competence across the three modes of communication in the context of the six AP themes, as they simultaneously prepare for the AP French Language and Culture exam. Performance-based assessments (speaking and writing) provide the students the opportunity to use the language independently in unfamiliar contexts. Interpretive listening and reading tasks involve authentic sources designed for native speakers and are focused on both literal comprehension and inferential interpretation. A variety of authentic print, audio and video materials provide the basis for exploration of the cultures of the French-speaking world. Tasks involve students analyzing and making comparisons with their own cultural products, practices and perspectives. Communication in class (teacher-student and/or student-student) is entirely in French. Students who enroll in this course will be prepared to take the AP French Language and Culture exam in May.",
       "credit_value": 2.0,
       "duration": "full_year",
       "grade_levels": [
@@ -5119,7 +5119,7 @@
       "name": "GERMAN 2",
       "division": "Multilingual Learning",
       "department": "German",
-      "description": "German 2 and approval of director Students continue to work to develop their competence in German across the three modes of communication in the context of the following AP themes: Contemporary Life, Families and Communities and Science and Technology. Performance-based assessments in the presentational and interpersonal modes provide the students the opportunity to use the language in practiced, familiar contexts with increasing independence. Moreover, they will be able to read and understand more complex stories in German. Interpretive listening and reading are focused on the acquisition and recognition of key details in the target language. Students continue to explore the target culture in new contexts. The expectation is that the communication in the classroom (teacher-student and/or student-student) take place primarily in German. This is the second course in a four course sequence that prepares students for AP German Language and Culture.",
+      "description": "Students continue to work to develop their competence in German across the three modes of communication in the context of the following AP themes: Contemporary Life, Families and Communities and Science and Technology. Performance-based assessments in the presentational and interpersonal modes provide the students the opportunity to use the language in practiced, familiar contexts with increasing independence. Moreover, they will be able to read and understand more complex stories in German. Interpretive listening and reading are focused on the acquisition and recognition of key details in the target language. Students continue to explore the target culture in new contexts. The expectation is that the communication in the classroom (teacher-student and/or student-student) take place primarily in German. This is the second course in a four course sequence that prepares students for AP German Language and Culture.",
       "credit_value": 2.0,
       "duration": "full_year",
       "grade_levels": [
@@ -5188,7 +5188,7 @@
       "name": "AP GERMAN LANGUAGE and culture",
       "division": "Multilingual Learning",
       "department": "German",
-      "description": "AP German and approval of director This AP German course is designed for motivated students who have successfully finished three years of German and who are interested in taking a higher level German course. It is aimed to prepare students who are interested in taking the AP German Language and Culture exam and/or in furthering their study in the German language and culture. Special emphasis is placed on the use of authentic source materials related to culture and current events and the e integration of language skills. Specific work includes: analysis of articles and literature, formal and informal oral presentations, formal and informal writings, a variety of audios/videos related to conversations, announcements, news reports or academic or cultural topics related to y the German-speaking world. The expectation is that all ce communication in the classroom (teacher-student and/or student-student) take place in German. Students who enroll in this course will be prepared to take the AP German Language and Culture exam in May.",
+      "description": "This AP German course is designed for motivated students who have successfully finished three years of German and who are interested in taking a higher level German course. It is aimed to prepare students who are interested in taking the AP German Language and Culture exam and/or in furthering their study in the German language and culture. Special emphasis is placed on the use of authentic source materials related to culture and current events and the e integration of language skills. Specific work includes: analysis of articles and literature, formal and informal oral presentations, formal and informal writings, a variety of audios/videos related to conversations, announcements, news reports or academic or cultural topics related to y the German-speaking world. The expectation is that all ce communication in the classroom (teacher-student and/or student-student) take place in German. Students who enroll in this course will be prepared to take the AP German Language and Culture exam in May.",
       "credit_value": 2.0,
       "duration": "full_year",
       "grade_levels": [
@@ -5245,7 +5245,7 @@
       "name": "HEBREW 2",
       "division": "Multilingual Learning",
       "department": "Hebrew",
-      "description": "Pr Hebrew 2 and approval of director Cr St Students continue to develop their competence in Hebrew in across the three modes of communication: interpersonal, ac presentational and interpretive. Students also continue to an learn in the context of the six AP themes: Global Challenges; en Science and Technology; Contemporary Life; Personal and si Public Identities, Families and Communities and Beauty and C Aesthetics. Performance-based assessments provide the an opportunity to use the language in practiced, familiar contexts ba with increasing independence. Interpretive listening and la reading activities are focused on the acquisition and In recognition of key details in Hebrew. The expectation is that bo the communication in the classroom (teacher-student and/or of student-student) take place primarily in Hebrew. Additionally, de students explore Israeli culture through a variety of contexts co and authentic materials, such as short stories, essays, poems, st songs, news reports, advertising and video clips from Israel.",
+      "description": "Pr St Students continue to develop their competence in Hebrew in across the three modes of communication: interpersonal, ac presentational and interpretive. Students also continue to an learn in the context of the six AP themes: Global Challenges; en Science and Technology; Contemporary Life; Personal and si Public Identities, Families and Communities and Beauty and C Aesthetics. Performance-based assessments provide the an opportunity to use the language in practiced, familiar contexts ba with increasing independence. Interpretive listening and la reading activities are focused on the acquisition and In recognition of key details in Hebrew. The expectation is that bo the communication in the classroom (teacher-student and/or of student-student) take place primarily in Hebrew. Additionally, de students explore Israeli culture through a variety of contexts co and authentic materials, such as short stories, essays, poems, st songs, news reports, advertising and video clips from Israel.",
       "credit_value": 2.0,
       "duration": "full_year",
       "grade_levels": [
@@ -5280,7 +5280,7 @@
       "name": "HEBREW 3",
       "division": "Multilingual Learning",
       "department": "Hebrew",
-      "description": "Hebrew 3 and approval of director Students continue to develop their competence in Hebrew across the three modes of communication: interpersonal, presentational and interpretive in a near-immersion environment. Students also continue to learn in the context of the six AP themes: Global Challenges, Science and Technology, Contemporary Life, Personal and Public Identities, Families and Communities and Beauty and Aesthetics. Performance- based assessments provide us the opportunity to use the language independently in familiar contexts. Interpretive listening and reading activities are focused on the ability to interpret and infer meaning in Hebrew. Practice is provided regularly, both within the classroom and at home. The expectation is that the communication in the classroom (teacher-student and/or student-student) take place primarily in Hebrew. Students continue to explore Israeli culture through a variety of contexts and authentic materials, such as short stories, essays, poems, songs, news reports, advertising, art, video clips and movies from Israel.",
+      "description": "Students continue to develop their competence in Hebrew across the three modes of communication: interpersonal, presentational and interpretive in a near-immersion environment. Students also continue to learn in the context of the six AP themes: Global Challenges, Science and Technology, Contemporary Life, Personal and Public Identities, Families and Communities and Beauty and Aesthetics. Performance- based assessments provide us the opportunity to use the language independently in familiar contexts. Interpretive listening and reading activities are focused on the ability to interpret and infer meaning in Hebrew. Practice is provided regularly, both within the classroom and at home. The expectation is that the communication in the classroom (teacher-student and/or student-student) take place primarily in Hebrew. Students continue to explore Israeli culture through a variety of contexts and authentic materials, such as short stories, essays, poems, songs, news reports, advertising, art, video clips and movies from Israel.",
       "credit_value": 2.0,
       "duration": "full_year",
       "grade_levels": [
@@ -5314,7 +5314,7 @@
       "name": "HEBREW 4",
       "division": "Multilingual Learning",
       "department": "Hebrew",
-      "description": "Hebrew 4 and approval of director Students develop their competence in Hebrew and engage in higher-level reading, writing, listening and speaking activities that align with the interpersonal, presentational and interpretive modes of communication in an immersion environment. Students continue to learn in the context of the six AP themes: Global Challenges, Science and Technology, Contemporary Life, Personal and Public Identities, Families and Communities and Beauty and Aesthetics. Performance- based assessments provide the opportunity to use the language independently even in unfamiliar contexts. Interpretive listening and reading activities are focused on both literal comprehension and inferential interpretation of the language. In Hebrew 4, classroom discussions and debates are led by the students. The expectation is that the communication in the classroom (teacher-student and/or student-student) take place primarily in Hebrew. Israeli culture continues to be explored through a variety of contexts and authentic materials, such as short stories, essays, poems, songs, print and broadcast news reports, advertising, art, video-clips, popular TV sitcoms and movies from Israel.",
+      "description": "Students develop their competence in Hebrew and engage in higher-level reading, writing, listening and speaking activities that align with the interpersonal, presentational and interpretive modes of communication in an immersion environment. Students continue to learn in the context of the six AP themes: Global Challenges, Science and Technology, Contemporary Life, Personal and Public Identities, Families and Communities and Beauty and Aesthetics. Performance- based assessments provide the opportunity to use the language independently even in unfamiliar contexts. Interpretive listening and reading activities are focused on both literal comprehension and inferential interpretation of the language. In Hebrew 4, classroom discussions and debates are led by the students. The expectation is that the communication in the classroom (teacher-student and/or student-student) take place primarily in Hebrew. Israeli culture continues to be explored through a variety of contexts and authentic materials, such as short stories, essays, poems, songs, print and broadcast news reports, advertising, art, video-clips, popular TV sitcoms and movies from Israel.",
       "credit_value": 2.0,
       "duration": "full_year",
       "grade_levels": [
@@ -5666,7 +5666,7 @@
       "name": "LATIN 2",
       "division": "Multilingual Learning",
       "department": "Latin",
-      "description": "Latin 2 and approval of director Latin 2 focuses on refining students’ knowledge of grammar and syntax from Latin 1 in order to facilitate the translation of more complex passages. Readings will focus on daily life in Rome, mythology and the heroic ideal. In addition, students will complete a semester of vocabulary study based on Latin roots, which is designed to increase students’ English vocabulary. Students will also study prescription writing in Latin abbreviations, Latin in modern law and Latin in medicine and anatomy.",
+      "description": "Latin 2 focuses on refining students’ knowledge of grammar and syntax from Latin 1 in order to facilitate the translation of more complex passages. Readings will focus on daily life in Rome, mythology and the heroic ideal. In addition, students will complete a semester of vocabulary study based on Latin roots, which is designed to increase students’ English vocabulary. Students will also study prescription writing in Latin abbreviations, Latin in modern law and Latin in medicine and anatomy.",
       "credit_value": 2.0,
       "duration": "full_year",
       "grade_levels": [
@@ -5701,7 +5701,7 @@
       "name": "LATIN 3",
       "division": "Multilingual Learning",
       "department": "Latin",
-      "description": "Latin 3 and approval of director Students will explore various selections of Latin literature. Students will continue to refine their skills in literal translation, sight translation, scansion and literary analysis both in the target language and in English in order to facilitate greater fluency in the reading of Latin literature. Authors that will be studied include Ovid, Catullus, Cicero, Plautus and Caesar. Caesar is studied in order to provide a bridge to advanced placement in fourth year.",
+      "description": "Students will explore various selections of Latin literature. Students will continue to refine their skills in literal translation, sight translation, scansion and literary analysis both in the target language and in English in order to facilitate greater fluency in the reading of Latin literature. Authors that will be studied include Ovid, Catullus, Cicero, Plautus and Caesar. Caesar is studied in order to provide a bridge to advanced placement in fourth year.",
       "credit_value": 2.0,
       "duration": "full_year",
       "grade_levels": [
@@ -5768,7 +5768,7 @@
       "name": "Algebra 1",
       "division": "Mathematics",
       "department": "Mathematics",
-      "description": "State Standards Mathematics Grade 8 (CCSSM 8) G in Algebra 1 (MTH151/152) helps students develop proficiency re in algebraic thinking. Students will explore overarching ideas ab of patterns of change (constant, linear and multiplicative), th mathematical representations (verbal, algebraic, graphical and (g numeric), models (real-world scenarios in and out of context) tr and solutions (that validate equalities/inequalities). Creating on equivalence through strategic and purposeful manipulation ob of algebraic forms will support students’ procedural fluency. ob Conceptual understanding is developed by creating and pr connecting representations when exploring linear, exponential ri and quadratic functions. Students will begin to explain and w perform transformations on these functions. This course also en develops students’ statistical literacy through the descriptive C and analytic critique of data. Successfully completing this an course will prepare students for Geometry (MTH251/252). st Geometry AB/BC (MTH271/272) is an option with consistently w demonstrated proficiency in all the course skills of Algebra 1.",
+      "description": "in Algebra 1 (MTH151/152) helps students develop proficiency re in algebraic thinking. Students will explore overarching ideas ab of patterns of change (constant, linear and multiplicative), th mathematical representations (verbal, algebraic, graphical and (g numeric), models (real-world scenarios in and out of context) tr and solutions (that validate equalities/inequalities). Creating on equivalence through strategic and purposeful manipulation ob of algebraic forms will support students’ procedural fluency. ob Conceptual understanding is developed by creating and pr connecting representations when exploring linear, exponential ri and quadratic functions. Students will begin to explain and w perform transformations on these functions. This course also en develops students’ statistical literacy through the descriptive C and analytic critique of data. Successfully completing this an course will prepare students for Geometry (MTH251/252). st Geometry AB/BC (MTH271/272) is an option with consistently w demonstrated proficiency in all the course skills of Algebra 1.",
       "credit_value": 2.0,
       "duration": "full_year",
       "grade_levels": [
@@ -6180,7 +6180,7 @@
       "name": "AP Statistics",
       "division": "Mathematics",
       "department": "Mathematics",
-      "description": "AP Precalculus AB or AP Precalculus BC AP Statistics (MTH461/462) is a full-year course designed to be the equivalent of a first-semester college-level non-calculus-based statistics course. This course explores variation and distribution, patterns and uncertainty, and data-based predictions, decisions and conclusions. These skills are widely applicable to various Science, Technology, s Engineering and Mathematics (STEM) disciplines and the study of business, social sciences and data analytics. In this introductory course, students develop statistical literacy by exploring data (describing patterns and departures from patterns), sampling and experimentation (planning and conducting a statistical study), anticipating patterns (exploring random phenomena using probability and simulation) and statistical inference (estimating population parameters and testing hypotheses). After completing this course, students may be interested in exploring modeling and simulations (Mathematical Modeling and Design MTH431/432) and data management and visualizations (Data Science MTH481/482). The course design prepares students for the College Board AP Statistics Exam.",
+      "description": "AP Statistics (MTH461/462) is a full-year course designed to be the equivalent of a first-semester college-level non-calculus-based statistics course. This course explores variation and distribution, patterns and uncertainty, and data-based predictions, decisions and conclusions. These skills are widely applicable to various Science, Technology, s Engineering and Mathematics (STEM) disciplines and the study of business, social sciences and data analytics. In this introductory course, students develop statistical literacy by exploring data (describing patterns and departures from patterns), sampling and experimentation (planning and conducting a statistical study), anticipating patterns (exploring random phenomena using probability and simulation) and statistical inference (estimating population parameters and testing hypotheses). After completing this course, students may be interested in exploring modeling and simulations (Mathematical Modeling and Design MTH431/432) and data management and visualizations (Data Science MTH481/482). The course design prepares students for the College Board AP Statistics Exam.",
       "credit_value": 2.0,
       "duration": "full_year",
       "grade_levels": [
@@ -6284,7 +6284,7 @@
       "name": "AP Calculus BC",
       "division": "Mathematics",
       "department": "Mathematics",
-      "description": "an te AP Calculus BC (MTH491/492) attends to all the learning co outcomes of AP Calculus AB (MTH471/472) and is a full-year pr capstone course designed to be the equivalent of the first st and second semesters of college calculus. In addition, this pr course extends the content and skills of AP Calculus AB to m parametrically defined curves, polar curves and vector-valued in functions, develops additional integration techniques and ei applications, and explores sequences and series. The course qu design prepares students for the College Board AP Calculus w BC Exam. The course is closed to students who have not an completed AP Precalculus BC. Successfully completing this co course will prepare students for a college-level experience in fu College Multivariable Calculus (MTH591) and College Linear w Algebra (MTH592).",
+      "description": "te AP Calculus BC (MTH491/492) attends to all the learning co outcomes of AP Calculus AB (MTH471/472) and is a full-year pr capstone course designed to be the equivalent of the first st and second semesters of college calculus. In addition, this pr course extends the content and skills of AP Calculus AB to m parametrically defined curves, polar curves and vector-valued in functions, develops additional integration techniques and ei applications, and explores sequences and series. The course qu design prepares students for the College Board AP Calculus w BC Exam. The course is closed to students who have not an completed AP Precalculus BC. Successfully completing this co course will prepare students for a college-level experience in fu College Multivariable Calculus (MTH591) and College Linear w Algebra (MTH592).",
       "credit_value": 2.0,
       "duration": "full_year",
       "grade_levels": [
@@ -6415,7 +6415,7 @@
       "name": "FRESHMAN BAND",
       "division": "Fine Arts",
       "department": "Music",
-      "description": "CONCEPTUALIZING, MAKING VALUE JUDGMENTS AND COMMUNICATING. IT PROMOTES CULTURAL AWARENESS of Band FACULTY AND PROVIDES UNIQUE OPPORTUNITIES FOR All incoming freshmen with middle school band experience SELF-EXPRESSION AND CREATIVITY. THE STEVENSON may enroll in Freshman Band to continue work on their MUSIC DEPARTMENT OFFERS A VARIETY OF CLASSES comprehensive musicianship skills. Freshman Band members also perform in three formal concerts throughout the year. THAT ALLOW STUDENTS TO BEGIN—OR CONTINUE— For the first eight to nine weeks of the first semester, band A STRONG, SEQUENTIAL PROGRAM OF MUSIC STUDY. students may choose to perform in the highly acclaimed COURSES ARE OFFERED IN INSTRUMENTAL MUSIC, Marching Patriots with members of the Symphonic Band, Wind Symphony and Wind Ensemble. Students electing to VOCAL MUSIC AND NON-PERFORMANCE CLASSES. participate in Marching Band may receive a P.E. waiver for the first semester.",
+      "description": "CONCEPTUALIZING, MAKING VALUE JUDGMENTS AND AND PROVIDES UNIQUE OPPORTUNITIES FOR All incoming freshmen with middle school band experience SELF-EXPRESSION AND CREATIVITY. THE STEVENSON may enroll in Freshman Band to continue work on their MUSIC DEPARTMENT OFFERS A VARIETY OF CLASSES comprehensive musicianship skills. Freshman Band members also perform in three formal concerts throughout the year. THAT ALLOW STUDENTS TO BEGIN—OR CONTINUE— For the first eight to nine weeks of the first semester, band A STRONG, SEQUENTIAL PROGRAM OF MUSIC STUDY. students may choose to perform in the highly acclaimed COURSES ARE OFFERED IN INSTRUMENTAL MUSIC, Marching Patriots with members of the Symphonic Band, Wind Symphony and Wind Ensemble. Students electing to VOCAL MUSIC AND NON-PERFORMANCE CLASSES. participate in Marching Band may receive a P.E. waiver for the first semester.",
       "credit_value": 2.0,
       "duration": "full_year",
       "grade_levels": [
@@ -6437,7 +6437,7 @@
       "name": "SYMPHONIC BAND",
       "division": "Fine Arts",
       "department": "Music",
-      "description": "ACCOMPLISHMENTS THROUGH CONCERTS, RECITALS, PARADES, FESTIVALS AND OTHER PERFORMANCE Credit: College Prep EXPERIENCES. THESE ARE A DIRECT OUTGROWTH OF Students in grades 10-12 with band experience in Freshman Band may enroll in Symphonic Band to continue work THE NATURE OF THE ART WHICH IS BEING STUDIED. on comprehensive musicianship skills. Symphonic Band THEREFORE, PERFORMING ENSEMBLES INCLUDE AN members also perform in four formal concerts throughout EMPHASIS ON THE IMPORTANCE OF PARTICIPATION the year. For the first eight to nine weeks of the first semester, band students may choose to perform in the highly acclaimed IN OCCASIONAL AFTER-SCHOOL REHEARSALS AND Marching Patriots with members of the Freshman Band, PERFORMANCES. Wind Symphony and Wind Ensemble. Students electing to participate in Marching Band may receive a P.E. waiver for the first semester. This course may be repeated for credit. * IMPORTANT NOTE FOR ALL BAND CLASSES: In order to earn a P.E. waiver, all band students who participate in the Marching Patriots must be available for rehearsals during summer and fall evenings. Students must also obtain all necessary GPA waiver approvals.",
+      "description": "ACCOMPLISHMENTS THROUGH CONCERTS, RECITALS,",
       "credit_value": 2.0,
       "duration": "full_year",
       "grade_levels": [
@@ -6557,7 +6557,7 @@
       "name": "PATRIOT SINGERS",
       "division": "Fine Arts",
       "department": "Music",
-      "description": "have completed one year in Advanced Chorus Experienced students of all voice parts may audition for Patriot Singers. This is an advanced SATB vocal ensemble, where students will be challenged with a wide variety of repertoire, and further develop advanced musicianship skills. The Patriot Singers perform at five school concerts, community events and may also participate in additional performance opportunities or festivals. Seniors may earn accelerated credit in this course. This course may be repeated for credit. * IMPORTANT NOTE FOR ALL BAND CLASSES: In order to earn a P.E. waiver, all band students who participate in the Marching Patriots must be available for rehearsals during summer and fall evenings. Students must also obtain all necessary GPA waiver approvals.",
+      "description": "Experienced students of all voice parts may audition for Patriot Singers. This is an advanced SATB vocal ensemble, where students will be challenged with a wide variety of repertoire, and further develop advanced musicianship skills. The Patriot Singers perform at five school concerts, community events and may also participate in additional performance opportunities or festivals. Seniors may earn accelerated credit in this course. This course may be repeated for credit. * IMPORTANT NOTE FOR ALL BAND CLASSES: In order to earn a P.E. waiver, all band students who participate in the Marching Patriots must be available for rehearsals during summer and fall evenings. Students must also obtain all necessary GPA waiver approvals.",
       "credit_value": 2.0,
       "duration": "full_year",
       "grade_levels": [
@@ -6591,7 +6591,7 @@
       "name": "Stevenson Orchestra",
       "division": "Fine Arts",
       "department": "Music",
-      "description": "an should register for this class us an instrument for home use, although cello and bass students may ba use school instruments for daily rehearsals. in This course is open to students in grade 9, as well as transfer or students who demonstrate the appropriate level of technical preparedness on violin, viola, cello, bass or harp. Students fo will continue developing foundational and intermediate cl performance techniques while expanding their knowledge of music theory and comprehensive musicianship skills. The th ensemble will study and perform a variety of string orchestra st and chamber music repertoire. Students are required to Sy attend scheduled rehearsals and performances outside of the re school day. Performance commitments include four formal concerts and additional curricular string events throughout the school year. Incoming students in grade 9 and transfer G students are encouraged to attend a one-day summer strings MU camp in August to become familiar with the strings program Op and facilities. This course may be repeated for credit. Pr",
+      "description": "an instrument for home use, although cello and bass students may ba use school instruments for daily rehearsals. in This course is open to students in grade 9, as well as transfer or students who demonstrate the appropriate level of technical preparedness on violin, viola, cello, bass or harp. Students fo will continue developing foundational and intermediate cl performance techniques while expanding their knowledge of music theory and comprehensive musicianship skills. The th ensemble will study and perform a variety of string orchestra st and chamber music repertoire. Students are required to Sy attend scheduled rehearsals and performances outside of the re school day. Performance commitments include four formal concerts and additional curricular string events throughout the school year. Incoming students in grade 9 and transfer G students are encouraged to attend a one-day summer strings MU camp in August to become familiar with the strings program Op and facilities. This course may be repeated for credit. Pr",
       "credit_value": 2.0,
       "duration": "full_year",
       "grade_levels": [
@@ -6613,7 +6613,7 @@
       "name": "CONCERT ORCHESTRA",
       "division": "Fine Arts",
       "department": "Music",
-      "description": "of Orchestra FACULTY vi st an instrument for home use, although cello and bass students may en use school instruments for daily rehearsals. on to This course is designed for students in grades 10–12 who de play violin, viola, cello, bass or harp with advanced string sc technique. Students will study two- and three-octave scales co and arpeggios while developing advanced performance to techniques, music theory knowledge and comprehensive co musicianship skills. The orchestra will perform a wide range of pr intermediate to advanced string orchestra and chamber music at repertoire. Students will participate in four formal concerts sc as well as additional curricular string events throughout the co school year. This course may be repeated for credit.",
+      "description": "st an instrument for home use, although cello and bass students may en use school instruments for daily rehearsals. on to This course is designed for students in grades 10–12 who de play violin, viola, cello, bass or harp with advanced string sc technique. Students will study two- and three-octave scales co and arpeggios while developing advanced performance to techniques, music theory knowledge and comprehensive co musicianship skills. The orchestra will perform a wide range of pr intermediate to advanced string orchestra and chamber music at repertoire. Students will participate in four formal concerts sc as well as additional curricular string events throughout the co school year. This course may be repeated for credit.",
       "credit_value": 2.0,
       "duration": "full_year",
       "grade_levels": [
@@ -6637,7 +6637,7 @@
       "name": "PATRIOT ORCHESTRA",
       "division": "Fine Arts",
       "department": "Music",
-      "description": "of Concert or Symphonic Orchestra in addition to a formal audition and approval from the Orchestra faculty an instrument for home use, although cello and bass students may use school instruments for daily rehearsals. This course is designed for students in grades 10–12 who play violin, viola, cello, bass or harp and demonstrate advanced string technique. Repertoire includes works for chamber ensemble, string orchestra and full orchestra with a focus on advanced literature ranging from the mid-19th century to contemporary composers. Students will be expected to demonstrate mastery of all three-octave major and minor scales and arpeggios, concerto repertoire, music theory concepts and comprehensive musicianship skills. In addition to performing advanced repertoire, members of this ensemble collaborate annually with the Wind Ensemble to study and present full-orchestra literature. Students are required to attend scheduled rehearsals and performances outside of the school day. Performance commitments include five formal concerts and additional curricular string events throughout the year. Seniors may earn accelerated credit for this course. This course may be repeated for credit.",
+      "description": "an instrument for home use, although cello and bass students may use school instruments for daily rehearsals. This course is designed for students in grades 10–12 who play violin, viola, cello, bass or harp and demonstrate advanced string technique. Repertoire includes works for chamber ensemble, string orchestra and full orchestra with a focus on advanced literature ranging from the mid-19th century to contemporary composers. Students will be expected to demonstrate mastery of all three-octave major and minor scales and arpeggios, concerto repertoire, music theory concepts and comprehensive musicianship skills. In addition to performing advanced repertoire, members of this ensemble collaborate annually with the Wind Ensemble to study and present full-orchestra literature. Students are required to attend scheduled rehearsals and performances outside of the school day. Performance commitments include five formal concerts and additional curricular string events throughout the year. Seniors may earn accelerated credit for this course. This course may be repeated for credit.",
       "credit_value": 2.0,
       "duration": "full_year",
       "grade_levels": [
@@ -6671,7 +6671,7 @@
       "name": "SYMPHONIC ORCHESTRA",
       "division": "Fine Arts",
       "department": "Music",
-      "description": "orchestra faculty an instrument for home use, although cello and bass students may use school instruments for daily rehearsals. This course is designed for advanced violin, viola, cello, bass and harp string students. The repertoire in this class includes works for chamber groups, string ensemble and full orchestra. Musical works highlight repertoire of the Baroque, Classical and early Romantic eras with performances on five formal concerts throughout the school year. Students in this class will work towards mastery of three-octave major and minor scales and arpeggios, concerto-level repertoire, music theory concepts and comprehensive musicianship skills. The students in this ensemble collaborate with members of Wind Symphony each year for an exploration of the full orchestra repertoire. This course may be repeated for credit.",
+      "description": "an instrument for home use, although cello and bass students may use school instruments for daily rehearsals. This course is designed for advanced violin, viola, cello, bass and harp string students. The repertoire in this class includes works for chamber groups, string ensemble and full orchestra. Musical works highlight repertoire of the Baroque, Classical and early Romantic eras with performances on five formal concerts throughout the school year. Students in this class will work towards mastery of three-octave major and minor scales and arpeggios, concerto-level repertoire, music theory concepts and comprehensive musicianship skills. The students in this ensemble collaborate with members of Wind Symphony each year for an exploration of the full orchestra repertoire. This course may be repeated for credit.",
       "credit_value": 2.0,
       "duration": "full_year",
       "grade_levels": [
@@ -6824,7 +6824,7 @@
       "name": "PATRIOT GUITAR ENSEMBLE",
       "division": "Fine Arts",
       "department": "Music",
-      "description": "GUITAR FACULTY This course is designed for advanced guitarists who are interested in further developing technique and musicianship. The repertoire performed in this class includes chamber works for guitar, large ensemble pieces by composers of varied eras and extensive solo work repertoire. Emphasis is placed on development of technique, music-reading skills, composition, sight-reading, jazz voicings of chords and expressive performance as soloists and ensemble members. Nylon string, classical guitars are provided for class use. It is recommended n, to have an additional guitar at home to practice. Students s. perform three concerts throughout the year. This class may d be repeated for credit. g, g * IMPORTANT NOTE FOR ALL BAND CLASSES: In order to earn a P.E. waiver, all band students who participate in the Marching Patriots must be available for rehearsals during summer and fall evenings. Students must also obtain all necessary GPA waiver approvals.",
+      "description": "This course is designed for advanced guitarists who are interested in further developing technique and musicianship. The repertoire performed in this class includes chamber works for guitar, large ensemble pieces by composers of varied eras and extensive solo work repertoire. Emphasis is placed on development of technique, music-reading skills, composition, sight-reading, jazz voicings of chords and expressive performance as soloists and ensemble members. Nylon string, classical guitars are provided for class use. It is recommended n, to have an additional guitar at home to practice. Students s. perform three concerts throughout the year. This class may d be repeated for credit. g, g * IMPORTANT NOTE FOR ALL BAND CLASSES: In order to earn a P.E. waiver, all band students who participate in the Marching Patriots must be available for rehearsals during summer and fall evenings. Students must also obtain all necessary GPA waiver approvals.",
       "credit_value": 2.0,
       "duration": "full_year",
       "grade_levels": [
@@ -6996,7 +6996,7 @@
       "name": "AP MUSIC THEORY",
       "division": "Fine Arts",
       "department": "Music",
-      "description": "Ensemble or approval of instructor This course is designed for the advanced musician who is interested in enhancing their music ability through a rigorous study of Western music theory. Students learn the basics of tonal harmony, including: chord construction, four-part voice writing, harmonic analysis and harmonic sequence. Students also study ear training, sight singing, melodic, rhythmic and harmonic dictation, 20th century techniques and form/structure. Students who enroll in this course will be prepared to take the AP Music Theory exam in May, as well as entrance examinations given by schools of music for entering music majors/minors.",
+      "description": "This course is designed for the advanced musician who is interested in enhancing their music ability through a rigorous study of Western music theory. Students learn the basics of tonal harmony, including: chord construction, four-part voice writing, harmonic analysis and harmonic sequence. Students also study ear training, sight singing, melodic, rhythmic and harmonic dictation, 20th century techniques and form/structure. Students who enroll in this course will be prepared to take the AP Music Theory exam in May, as well as entrance examinations given by schools of music for entering music majors/minors.",
       "credit_value": 2.0,
       "duration": "full_year",
       "grade_levels": [
@@ -7020,7 +7020,7 @@
       "name": "Choice P.E. Early Bird",
       "division": "Physical Welfare",
       "department": "Physical Education",
-      "description": "education class or director approval (See description for Choice P.E.). Early Bird Physical Education is scheduled from 7-8:25 a.m. on Monday/Wednesday/Friday. Students with excessive absenteeism in this class will be removed from the Early Bird program and placed in a Physical Education class during the regularly scheduled day. This course may be repeated for credit.",
+      "description": "(See description for Choice P.E.). Early Bird Physical Education is scheduled from 7-8:25 a.m. on Monday/Wednesday/Friday. Students with excessive absenteeism in this class will be removed from the Early Bird program and placed in a Physical Education class during the regularly scheduled day. This course may be repeated for credit.",
       "credit_value": 1.0,
       "duration": "semester",
       "grade_levels": [
@@ -7046,7 +7046,7 @@
       "name": "Choice P.E. Early Bird",
       "division": "Physical Welfare",
       "department": "Physical Education",
-      "description": "education class or director approval (See description for Choice P.E.). Early Bird Physical Education is scheduled from 7-8:25 a.m. on Monday/Wednesday/Friday. Students with excessive absenteeism in this class will be removed from the Early Bird program and placed in a Physical Education class during the regularly scheduled day. This course may be repeated for credit.",
+      "description": "(See description for Choice P.E.). Early Bird Physical Education is scheduled from 7-8:25 a.m. on Monday/Wednesday/Friday. Students with excessive absenteeism in this class will be removed from the Early Bird program and placed in a Physical Education class during the regularly scheduled day. This course may be repeated for credit.",
       "credit_value": 1.0,
       "duration": "semester",
       "grade_levels": [
@@ -7072,7 +7072,7 @@
       "name": "ALTERNATIVE PHYSICAL EDUCATION",
       "division": "Physical Welfare",
       "department": "Physical Education",
-      "description": "Ad Cr Th Alternative Physical Education is for students with disabilities sk that merit an adapted curriculum. All curriculum will be co modified and adapted so that all students can participate and cr benefit. The instructor will work with the doctor in an effort co to design a program to meet the individual needs of each he student.",
+      "description": "Ad Th Alternative Physical Education is for students with disabilities sk that merit an adapted curriculum. All curriculum will be co modified and adapted so that all students can participate and cr benefit. The instructor will work with the doctor in an effort co to design a program to meet the individual needs of each he student.",
       "credit_value": 2.0,
       "duration": "full_year",
       "grade_levels": [
@@ -7237,7 +7237,7 @@
       "name": "APPLIED HEALTH",
       "division": "Physical Welfare",
       "department": "Physical Education",
-      "description": "Additional fee to receive AMERICAN RED CROSS certificate The purpose of Applied Health is to develop professional skills that can be applied to a career in healthcare. This course empowers students with real usable skills and credentials in the allied medical health field. Topics in the course include professional rescue skills, injury management, health career exploration, functional anatomy and terminology, long-term wellness and personal/professional social/ emotional life skills. The course is lab-based and highly dependent on attendance and participation. A fee is required for any student who wishes to earn the American Red Cross certification. During the semester that a student takes Applied Health, the student is excused from Physical Education.",
+      "description": "The purpose of Applied Health is to develop professional skills that can be applied to a career in healthcare. This course empowers students with real usable skills and credentials in the allied medical health field. Topics in the course include professional rescue skills, injury management, health career exploration, functional anatomy and terminology, long-term wellness and personal/professional social/ emotional life skills. The course is lab-based and highly dependent on attendance and participation. A fee is required for any student who wishes to earn the American Red Cross certification. During the semester that a student takes Applied Health, the student is excused from Physical Education.",
       "credit_value": 1.0,
       "duration": "semester",
       "grade_levels": [
@@ -7275,7 +7275,7 @@
       "name": "APPLIED HEALTH",
       "division": "Physical Welfare",
       "department": "Physical Education",
-      "description": "Additional fee to receive AMERICAN RED CROSS certificate The purpose of Applied Health is to develop professional skills that can be applied to a career in healthcare. This course empowers students with real usable skills and credentials in the allied medical health field. Topics in the course include professional rescue skills, injury management, health career exploration, functional anatomy and terminology, long-term wellness and personal/professional social/ emotional life skills. The course is lab-based and highly dependent on attendance and participation. A fee is required for any student who wishes to earn the American Red Cross certification. During the semester that a student takes Applied Health, the student is excused from Physical Education.",
+      "description": "The purpose of Applied Health is to develop professional skills that can be applied to a career in healthcare. This course empowers students with real usable skills and credentials in the allied medical health field. Topics in the course include professional rescue skills, injury management, health career exploration, functional anatomy and terminology, long-term wellness and personal/professional social/ emotional life skills. The course is lab-based and highly dependent on attendance and participation. A fee is required for any student who wishes to earn the American Red Cross certification. During the semester that a student takes Applied Health, the student is excused from Physical Education.",
       "credit_value": 1.0,
       "duration": "semester",
       "grade_levels": [
@@ -7313,7 +7313,7 @@
       "name": "ADVENTURE EDUCATION",
       "division": "Physical Welfare",
       "department": "Physical Education",
-      "description": "GUARDIANS FOR UP TO THREE DAYS. EXCUSES OF LONGER physical education course DURATION MUST BE WRITTEN BY A PHYSICIAN. STUDENTS Students in this course will participate in individual, partner WITH PHYSICIANS’ NOTES WILL BE ACCOMMODATED IN AN and team activities to work towards becoming better problem ALTERNATIVE ACTIVITY. IF A PHYSICAL EDUCATION STUDENT solvers and communicators, while learning to trust others and IS ALSO A STUDENT ATHLETE, ANY MEDICAL RESTRICTIONS be trusted. Some units will require students to be in the pool. Activities may include team building, outdoor games, biking, IN PHYSICAL EDUCATION WILL ALSO AFFECT THEIR archery, climbing/rappelling, kayaking and canoeing. Multiple ATHLETIC PARTICIPATION. credits may be earned for this course.",
+      "description": "DURATION MUST BE WRITTEN BY A PHYSICIAN. STUDENTS Students in this course will participate in individual, partner WITH PHYSICIANS’ NOTES WILL BE ACCOMMODATED IN AN and team activities to work towards becoming better problem ALTERNATIVE ACTIVITY. IF A PHYSICAL EDUCATION STUDENT solvers and communicators, while learning to trust others and IS ALSO A STUDENT ATHLETE, ANY MEDICAL RESTRICTIONS be trusted. Some units will require students to be in the pool. Activities may include team building, outdoor games, biking, IN PHYSICAL EDUCATION WILL ALSO AFFECT THEIR archery, climbing/rappelling, kayaking and canoeing. Multiple ATHLETIC PARTICIPATION. credits may be earned for this course.",
       "credit_value": 1.0,
       "duration": "semester",
       "grade_levels": [
@@ -7340,7 +7340,7 @@
       "name": "ADVENTURE EDUCATION",
       "division": "Physical Welfare",
       "department": "Physical Education",
-      "description": "GUARDIANS FOR UP TO THREE DAYS. EXCUSES OF LONGER physical education course DURATION MUST BE WRITTEN BY A PHYSICIAN. STUDENTS Students in this course will participate in individual, partner WITH PHYSICIANS’ NOTES WILL BE ACCOMMODATED IN AN and team activities to work towards becoming better problem ALTERNATIVE ACTIVITY. IF A PHYSICAL EDUCATION STUDENT solvers and communicators, while learning to trust others and IS ALSO A STUDENT ATHLETE, ANY MEDICAL RESTRICTIONS be trusted. Some units will require students to be in the pool. Activities may include team building, outdoor games, biking, IN PHYSICAL EDUCATION WILL ALSO AFFECT THEIR archery, climbing/rappelling, kayaking and canoeing. Multiple ATHLETIC PARTICIPATION. credits may be earned for this course.",
+      "description": "DURATION MUST BE WRITTEN BY A PHYSICIAN. STUDENTS Students in this course will participate in individual, partner WITH PHYSICIANS’ NOTES WILL BE ACCOMMODATED IN AN and team activities to work towards becoming better problem ALTERNATIVE ACTIVITY. IF A PHYSICAL EDUCATION STUDENT solvers and communicators, while learning to trust others and IS ALSO A STUDENT ATHLETE, ANY MEDICAL RESTRICTIONS be trusted. Some units will require students to be in the pool. Activities may include team building, outdoor games, biking, IN PHYSICAL EDUCATION WILL ALSO AFFECT THEIR archery, climbing/rappelling, kayaking and canoeing. Multiple ATHLETIC PARTICIPATION. credits may be earned for this course.",
       "credit_value": 1.0,
       "duration": "semester",
       "grade_levels": [
@@ -7367,7 +7367,7 @@
       "name": "Alternative Physical Education Leadership",
       "division": "Physical Welfare",
       "department": "Physical Education",
-      "description": "to and approved by the Alternative Physical Education Coordinator during Sophomore year. (Applications are available to on the Physical Welfare webpage.) The Alternative Physical Education leadership program is a two-year commitment. ex New students will engage in training which takes place in class during the first semester. Students will perform so one-on-one or in small groups working with individuals who have a variety of special needs. Leaders also participate in Ed work with the students outside of the regular school day. Failure to comply with the Stevenson High School Student gr Guidebook Code of Conduct and P.E. Leader Code of Conduct can result in immediate dismissal.",
+      "description": "New students will engage in training which takes place in class during the first semester. Students will perform so one-on-one or in small groups working with individuals who have a variety of special needs. Leaders also participate in Ed work with the students outside of the regular school day. Failure to comply with the Stevenson High School Student gr Guidebook Code of Conduct and P.E. Leader Code of Conduct can result in immediate dismissal.",
       "credit_value": 2.0,
       "duration": "full_year",
       "grade_levels": [
@@ -7400,7 +7400,7 @@
       "name": "CHOICE P.E.",
       "division": "Physical Welfare",
       "department": "Physical Education",
-      "description": "Physical Education course or director approval This course is designed for students to develop and maintain their lifelong wellness in activities of their choice. Students will choose the activity in which they will participate each semester. (Regardless of activity selected, all students will learn how to apply their fitness plan, reflect on their fitness and build their knowledge of health-related fitness.) This course may be repeated for credit.",
+      "description": "This course is designed for students to develop and maintain their lifelong wellness in activities of their choice. Students will choose the activity in which they will participate each semester. (Regardless of activity selected, all students will learn how to apply their fitness plan, reflect on their fitness and build their knowledge of health-related fitness.) This course may be repeated for credit.",
       "credit_value": 1.0,
       "duration": "semester",
       "grade_levels": [
@@ -7427,7 +7427,7 @@
       "name": "CHOICE P.E.",
       "division": "Physical Welfare",
       "department": "Physical Education",
-      "description": "Physical Education course or director approval This course is designed for students to develop and maintain their lifelong wellness in activities of their choice. Students will choose the activity in which they will participate each semester. (Regardless of activity selected, all students will learn how to apply their fitness plan, reflect on their fitness and build their knowledge of health-related fitness.) This course may be repeated for credit.",
+      "description": "This course is designed for students to develop and maintain their lifelong wellness in activities of their choice. Students will choose the activity in which they will participate each semester. (Regardless of activity selected, all students will learn how to apply their fitness plan, reflect on their fitness and build their knowledge of health-related fitness.) This course may be repeated for credit.",
       "credit_value": 1.0,
       "duration": "semester",
       "grade_levels": [
@@ -7454,7 +7454,7 @@
       "name": "LIFEGUARD TRAINING AND CERTIFICATION",
       "division": "Physical Welfare",
       "department": "Physical Education",
-      "description": "Students must be at least 15 years old by the end of the course. n Additional fee to receive AMERICAN RED CROSS certificate. This course is designed to provide students with the l ability to earn American Red Cross Lifeguarding and First Aid certification. Students will also learn skills in oxygen administration, preventing disease transmission and CPR/AED. Students will be charged a fee if they wish to receive their American Red Cross certification. Students taking this class will be encouraged to participate in our Pool Leadership program. (Materials for the course are available in the Patriot Superstore.)",
+      "description": "This course is designed to provide students with the l ability to earn American Red Cross Lifeguarding and First Aid certification. Students will also learn skills in oxygen administration, preventing disease transmission and CPR/AED. Students will be charged a fee if they wish to receive their American Red Cross certification. Students taking this class will be encouraged to participate in our Pool Leadership program. (Materials for the course are available in the Patriot Superstore.)",
       "credit_value": 2.0,
       "duration": "full_year",
       "grade_levels": [
@@ -7501,7 +7501,7 @@
       "name": "Pool Leadership Training",
       "division": "Physical Welfare",
       "department": "Physical Education",
-      "description": "Lifeguarding certification. AC Students will continue to serve as water safety instructors, TH lifeguards and pool aides to the aquatics program. Each student will receive ongoing Lifeguard In-Service Training H that will keep their certifications current and their skills sharp. At the end of each semester a student must receive a recommendation in their evaluation to continue in the leadership program. Materials for the course are available in PE the Patriot Superstore. Failure to comply with the Stevenson Op High School Student Guidebook Code of Conduct and P.E. Pr Leader Code of Conduct can result in immediate dismissal. Th",
+      "description": "Students will continue to serve as water safety instructors, TH lifeguards and pool aides to the aquatics program. Each student will receive ongoing Lifeguard In-Service Training H that will keep their certifications current and their skills sharp. At the end of each semester a student must receive a recommendation in their evaluation to continue in the leadership program. Materials for the course are available in PE the Patriot Superstore. Failure to comply with the Stevenson Op High School Student Guidebook Code of Conduct and P.E. Pr Leader Code of Conduct can result in immediate dismissal. Th",
       "credit_value": 2.0,
       "duration": "full_year",
       "grade_levels": [
@@ -7773,7 +7773,7 @@
       "name": "AP PHYSICS 1",
       "division": "Science",
       "department": "Science",
-      "description": "Op Pr",
+      "description": "Op",
       "credit_value": 2.0,
       "duration": "full_year",
       "grade_levels": [
@@ -7934,7 +7934,7 @@
       "name": "AP PHYSICS C",
       "division": "Science",
       "department": "Science",
-      "description": "concurrent enrollment in AP Calculus AB or BC, or approval of director",
+      "description": "",
       "credit_value": 2.0,
       "duration": "full_year",
       "grade_levels": [
@@ -7993,7 +7993,7 @@
       "name": "LAKE COUNTY Op",
       "division": "Science",
       "department": "Science",
-      "description": "In ci In this lab-based course, students explore geology, so meteorology and astronomy. Students will work collabora- co tively and engage with the science and engineering practices. pr This course is a dual-credit, college-level science course where m students can earn college credit hours at no cost through the en College of Lake County.",
+      "description": "ci In this lab-based course, students explore geology, so meteorology and astronomy. Students will work collabora- co tively and engage with the science and engineering practices. pr This course is a dual-credit, college-level science course where m students can earn college credit hours at no cost through the en College of Lake County.",
       "credit_value": 2.0,
       "duration": "full_year",
       "grade_levels": [
@@ -9131,7 +9131,7 @@
       "name": "ONLINE",
       "division": "Social Studies",
       "department": "Social Studies",
-      "description": "SO Op Pr AP Comparative Government and Politics is offered in Cr an asynchronous online setting. The primary mode of Th instruction, assessment, feedback and collaboration ye will be online. Instructional activities are adjusted for an Ad asynchronous online instructional setting. There will be no ev regular physical class meeting period or time. Activities and hi assignments will have daily due dates. Students will receive St regular individualized feedback from the teacher. In-person em remediation may be required on an individualized student so basis with the teacher during a lunch or 8th period. Some co assessments will be in-person using the testing center. The ca online version meets the exact same curricular requirements co and students will be prepared to take the AP Comparative st Government and Politics exam in May.",
+      "description": "SO Pr AP Comparative Government and Politics is offered in Cr an asynchronous online setting. The primary mode of Th instruction, assessment, feedback and collaboration ye will be online. Instructional activities are adjusted for an Ad asynchronous online instructional setting. There will be no ev regular physical class meeting period or time. Activities and hi assignments will have daily due dates. Students will receive St regular individualized feedback from the teacher. In-person em remediation may be required on an individualized student so basis with the teacher during a lunch or 8th period. Some co assessments will be in-person using the testing center. The ca online version meets the exact same curricular requirements co and students will be prepared to take the AP Comparative st Government and Politics exam in May.",
       "credit_value": 1.0,
       "duration": "semester",
       "grade_levels": [
@@ -9167,7 +9167,7 @@
       "name": "ONLINE",
       "division": "Social Studies",
       "department": "Social Studies",
-      "description": "SO Op Pr AP Comparative Government and Politics is offered in Cr an asynchronous online setting. The primary mode of Th instruction, assessment, feedback and collaboration ye will be online. Instructional activities are adjusted for an Ad asynchronous online instructional setting. There will be no ev regular physical class meeting period or time. Activities and hi assignments will have daily due dates. Students will receive St regular individualized feedback from the teacher. In-person em remediation may be required on an individualized student so basis with the teacher during a lunch or 8th period. Some co assessments will be in-person using the testing center. The ca online version meets the exact same curricular requirements co and students will be prepared to take the AP Comparative st Government and Politics exam in May.",
+      "description": "SO Pr AP Comparative Government and Politics is offered in Cr an asynchronous online setting. The primary mode of Th instruction, assessment, feedback and collaboration ye will be online. Instructional activities are adjusted for an Ad asynchronous online instructional setting. There will be no ev regular physical class meeting period or time. Activities and hi assignments will have daily due dates. Students will receive St regular individualized feedback from the teacher. In-person em remediation may be required on an individualized student so basis with the teacher during a lunch or 8th period. Some co assessments will be in-person using the testing center. The ca online version meets the exact same curricular requirements co and students will be prepared to take the AP Comparative st Government and Politics exam in May.",
       "credit_value": 1.0,
       "duration": "semester",
       "grade_levels": [
@@ -9595,7 +9595,7 @@
       "name": "SPANISH 2",
       "division": "Multilingual Learning",
       "department": "Spanish",
-      "description": "Spanish 2 and approval of director Students continue to work to develop their competence in Spanish across the three modes of communication in the context of the six AP themes. Performance-based assessments provide the students the opportunity to use e the language in practiced, familiar contexts with increasing a independence. Interpretive listening and reading are focused on the acquisition and recognition of key details in the target language. Practice is provided regularly, both within the classroom and at home. Students continue to explore the target culture in new contexts. The expectation is that the communication in the classroom (teacher-student and/or student-student) take place primarily in Spanish.",
+      "description": "Students continue to work to develop their competence in Spanish across the three modes of communication in the context of the six AP themes. Performance-based assessments provide the students the opportunity to use e the language in practiced, familiar contexts with increasing a independence. Interpretive listening and reading are focused on the acquisition and recognition of key details in the target language. Practice is provided regularly, both within the classroom and at home. Students continue to explore the target culture in new contexts. The expectation is that the communication in the classroom (teacher-student and/or student-student) take place primarily in Spanish.",
       "credit_value": 2.0,
       "duration": "full_year",
       "grade_levels": [
@@ -9630,7 +9630,7 @@
       "name": "SPANISH 2-3",
       "division": "Multilingual Learning",
       "department": "Spanish",
-      "description": "Spanish 2-3 and approval of director Sp In comparison to Spanish 2, Spanish 2-3 has a faster pace and St students are asked to engage in interpersonal, presentational Sp and interpretive tasks at more advanced proficiency levels. co Students continue to work to develop their competence in pr Spanish across the three modes of communication in the in context of the six AP themes. Performance-based assessments an provide the students the opportunity to use the language in an practiced, familiar contexts as well as occasional unfamiliar bo topics with increasing independence. Interpretive listening co and reading are focused on the acquisition and recognition ne of key details with emerging evidence of inference making in of the target language. Practice is provided regularly, both within st the classroom and at home. Students continue to explore an the target culture in new contexts. In this course, students In also begin reading poems and short stories by authors who lit appear on the AP Spanish Literature and Culture reading list. ex The expectation is that the communication in the classroom (t (teacher-student and/or student-student) take place pr primarily in Spanish.",
+      "description": "In comparison to Spanish 2, Spanish 2-3 has a faster pace and St students are asked to engage in interpersonal, presentational Sp and interpretive tasks at more advanced proficiency levels. co Students continue to work to develop their competence in pr Spanish across the three modes of communication in the in context of the six AP themes. Performance-based assessments an provide the students the opportunity to use the language in an practiced, familiar contexts as well as occasional unfamiliar bo topics with increasing independence. Interpretive listening co and reading are focused on the acquisition and recognition ne of key details with emerging evidence of inference making in of the target language. Practice is provided regularly, both within st the classroom and at home. Students continue to explore an the target culture in new contexts. In this course, students In also begin reading poems and short stories by authors who lit appear on the AP Spanish Literature and Culture reading list. ex The expectation is that the communication in the classroom (t (teacher-student and/or student-student) take place pr primarily in Spanish.",
       "credit_value": 2.0,
       "duration": "full_year",
       "grade_levels": [
@@ -9701,7 +9701,7 @@
       "name": "SPANISH 3-4",
       "division": "Multilingual Learning",
       "department": "Spanish",
-      "description": "Spanish 3-4 and approval of director Students continue to work to develop their competence in Spanish across the three modes of communication in the context of the six AP themes. Performance-based assessments provide the students the opportunity to use the language independently in unfamiliar contexts. Interpretive listening and reading tasks are focused on both literal comprehension and inferential interpretation. Practice is provided regularly, both within the classroom and at home. Throughout the course, students continue to explore the target culture in new contexts. In comparison to the college prep sequence of courses, Spanish 3-4 accelerated has a faster pace and students are asked to engage in interpersonal, presentational and interpretive tasks at more advanced proficiency levels. In this course, students also continue reading authentic literature including poems, short stories and plays. The expectation is that the communication in the classroom (teacher-student and/or student-student) take place primarily in Spanish.",
+      "description": "Students continue to work to develop their competence in Spanish across the three modes of communication in the context of the six AP themes. Performance-based assessments provide the students the opportunity to use the language independently in unfamiliar contexts. Interpretive listening and reading tasks are focused on both literal comprehension and inferential interpretation. Practice is provided regularly, both within the classroom and at home. Throughout the course, students continue to explore the target culture in new contexts. In comparison to the college prep sequence of courses, Spanish 3-4 accelerated has a faster pace and students are asked to engage in interpersonal, presentational and interpretive tasks at more advanced proficiency levels. In this course, students also continue reading authentic literature including poems, short stories and plays. The expectation is that the communication in the classroom (teacher-student and/or student-student) take place primarily in Spanish.",
       "credit_value": 2.0,
       "duration": "full_year",
       "grade_levels": [
@@ -9735,7 +9735,7 @@
       "name": "Intermediate Spanish Language Arts",
       "division": "Multilingual Learning",
       "department": "Spanish",
-      "description": "on Spanish language proficiency assessment (e.g., AAPPL), teacher recommendation, or director approval This course is designed specifically for students with lived Spanish language experience, either from prior schooling in a Spanish-speaking country or as native/heritage speakers of Spanish. Students will develop their literacy skills in Spanish as they explore literature from the Spanish-speaking world and engage in focused development of writing skills. Additionally, students will develop critical thinking and oracy skills in Spanish as they collaboratively explore topics related to current events, culture and media.",
+      "description": "This course is designed specifically for students with lived Spanish language experience, either from prior schooling in a Spanish-speaking country or as native/heritage speakers of Spanish. Students will develop their literacy skills in Spanish as they explore literature from the Spanish-speaking world and engage in focused development of writing skills. Additionally, students will develop critical thinking and oracy skills in Spanish as they collaboratively explore topics related to current events, culture and media.",
       "credit_value": 2.0,
       "duration": "full_year",
       "grade_levels": [
@@ -9843,7 +9843,7 @@
       "name": "AP SPANISH LANGUAGE AND CULTURE",
       "division": "Multilingual Learning",
       "department": "Spanish",
-      "description": "or Spanish 3-4 This course is designed to prepare students for the AP Spanish Language and Culture exam and provides a transition to the AP Spanish Literature and Culture course. Students continue to work to develop their competence in Spanish across the three modes of communication: interpretive, interpersonal and presentational, within the context of the six AP themes: Families and Communities, Science and Technology, Global Challenges, Contemporary Life, Personal and Public Identities, Beauty and Aesthetics. Performance-based assessments provide the students the opportunity to use the language independently in familiar and unfamiliar contexts. Interpretive listening and reading tasks are focused on both literal comprehension and inferential interpretation. Practice is provided regularly, both within the classroom and at home. Cultural information and comparisons are drawn from authentic print and audio-visual sources, literary works and class discussion. Students will research a variety of cultural topics and facilitate discussion through their own student-led presentations. The expectation is that the communication in the classroom (teacher-student and/or student-student) take place in Spanish.",
+      "description": "This course is designed to prepare students for the AP Spanish Language and Culture exam and provides a transition to the AP Spanish Literature and Culture course. Students continue to work to develop their competence in Spanish across the three modes of communication: interpretive, interpersonal and presentational, within the context of the six AP themes: Families and Communities, Science and Technology, Global Challenges, Contemporary Life, Personal and Public Identities, Beauty and Aesthetics. Performance-based assessments provide the students the opportunity to use the language independently in familiar and unfamiliar contexts. Interpretive listening and reading tasks are focused on both literal comprehension and inferential interpretation. Practice is provided regularly, both within the classroom and at home. Cultural information and comparisons are drawn from authentic print and audio-visual sources, literary works and class discussion. Students will research a variety of cultural topics and facilitate discussion through their own student-led presentations. The expectation is that the communication in the classroom (teacher-student and/or student-student) take place in Spanish.",
       "credit_value": 2.0,
       "duration": "full_year",
       "grade_levels": [
@@ -10308,7 +10308,7 @@
       "name": "ADVANCED ARCHITECTURAL DESIGN",
       "division": "Computer Science, Engineering and Technology",
       "department": "Engineering and Technology",
-      "description": "Architectural Design Advanced Architectural Design is recommended for students interested in pursuing a career in architecture and/or interior design. Advanced Architectural Design is designed to prepare students for the wide variety of technical and computer software skills needed for higher education courses and within the workforce. Students will use architectural software and technology that is used by professional architects including Autodesk Revit, Autodesk AutoCAD, SketchUp, Adobe InDesign, Adobe Photoshop and a laser printer. Students will use this software to aid them in designing residential and commercial buildings and to create physical laser-cut models of their designs. In addition, students learn about documenting their projects, solving problems and communicating their solutions to their classmates.",
+      "description": "Advanced Architectural Design is recommended for students interested in pursuing a career in architecture and/or interior design. Advanced Architectural Design is designed to prepare students for the wide variety of technical and computer software skills needed for higher education courses and within the workforce. Students will use architectural software and technology that is used by professional architects including Autodesk Revit, Autodesk AutoCAD, SketchUp, Adobe InDesign, Adobe Photoshop and a laser printer. Students will use this software to aid them in designing residential and commercial buildings and to create physical laser-cut models of their designs. In addition, students learn about documenting their projects, solving problems and communicating their solutions to their classmates.",
       "credit_value": 2.0,
       "duration": "full_year",
       "grade_levels": [
@@ -10422,7 +10422,7 @@
       "name": "CIVIL ENGINEERING AND ARCHITECTURE–PLTW",
       "division": "Computer Science, Engineering and Technology",
       "department": "Engineering and Technology",
-      "description": "Engineering Design or Architectural Design Students will learn the art and science of planning, designing and constructing buildings. The major focus of this course is completing long-term projects that involve the design and development of residential and commercial structures. Students use Autodesk Revit, a professional grade software, to design a small structure and a home to learn the basic construction systems such as wall, roof, foundation, water and electrical systems. Students design a commercial structure in the surrounding community following local building codes. Within this project, students will also learn about additional topics such as commercial construction systems, sustainable design, universal design and structural engineering. Students may receive college credit and/or advanced standing for successful completion of this course and a cumulative exam.",
+      "description": "Students will learn the art and science of planning, designing and constructing buildings. The major focus of this course is completing long-term projects that involve the design and development of residential and commercial structures. Students use Autodesk Revit, a professional grade software, to design a small structure and a home to learn the basic construction systems such as wall, roof, foundation, water and electrical systems. Students design a commercial structure in the surrounding community following local building codes. Within this project, students will also learn about additional topics such as commercial construction systems, sustainable design, universal design and structural engineering. Students may receive college credit and/or advanced standing for successful completion of this course and a cumulative exam.",
       "credit_value": 2.0,
       "duration": "full_year",
       "grade_levels": [
@@ -10536,7 +10536,7 @@
       "name": "Electrical Engineering–PLTW",
       "division": "Computer Science, Engineering and Technology",
       "department": "Engineering and Technology",
-      "description": "or Engineering Design This Electrical Engineering (EE) course gives students the chance to explore the technology behind everyday electronics. Students will learn the basics of how digital circuits work and dive into topics like logic gates, integrated circuits and programmable devices. They will also learn how to design your own circuits using both hardware and software. Along the way, students will build teamwork, communication and problem-solving skills while learning how engineers document and share their ideas.",
+      "description": "This Electrical Engineering (EE) course gives students the chance to explore the technology behind everyday electronics. Students will learn the basics of how digital circuits work and dive into topics like logic gates, integrated circuits and programmable devices. They will also learn how to design your own circuits using both hardware and software. Along the way, students will build teamwork, communication and problem-solving skills while learning how engineers document and share their ideas.",
       "credit_value": 2.0,
       "duration": "full_year",
       "grade_levels": [
@@ -10570,7 +10570,7 @@
       "name": "Principles of Engineering–PLTW",
       "division": "Computer Science, Engineering and Technology",
       "department": "Engineering and Technology",
-      "description": "OR Engineering Design Principles of Engineering–PLTW is a survey course in which students will be introduced to several elements of engineering including mechanisms, energy, statics, materials and kinematics. Students in Principles of Engineering–PLTW will develop problem-solving skills and collaborate with others to complete design challenges. Students will be using various engineering programs to research and evaluate designs, create code for robotics and develop virtual models of design solutions. Student projects will include: creating a bridge, designing a robotic material sorter and programming and building a projectile launcher. Students may receive college credit and/or advanced standing for successful completion of this course and a cumulative exam.",
+      "description": "Principles of Engineering–PLTW is a survey course in which students will be introduced to several elements of engineering including mechanisms, energy, statics, materials and kinematics. Students in Principles of Engineering–PLTW will develop problem-solving skills and collaborate with others to complete design challenges. Students will be using various engineering programs to research and evaluate designs, create code for robotics and develop virtual models of design solutions. Student projects will include: creating a bridge, designing a robotic material sorter and programming and building a projectile launcher. Students may receive college credit and/or advanced standing for successful completion of this course and a cumulative exam.",
       "credit_value": 2.0,
       "duration": "full_year",
       "grade_levels": [
@@ -10604,7 +10604,7 @@
       "name": "COMPUTER INTEGRATED MANUFACTURING–PLTW",
       "division": "Computer Science, Engineering and Technology",
       "department": "Engineering and Technology",
-      "description": "OR Engineering Design Computer Integrated Manufacturing is one of the specialization courses in the PLTW Engineering program. The course deepens the skills and knowledge of an engineering student within the context of efficiently creating the products all around us. Students learn about manufacturing processes, product design, robotics and d automation. Students develop their knowledge and skills of Computer Aided Design and Manufacturing to produce products using a Computer Numerical Controlled (CNC) mill. Students apply the knowledge and skills gained in this course as they collaborate to design, build and program factory system models.",
+      "description": "Computer Integrated Manufacturing is one of the specialization courses in the PLTW Engineering program. The course deepens the skills and knowledge of an engineering student within the context of efficiently creating the products all around us. Students learn about manufacturing processes, product design, robotics and d automation. Students develop their knowledge and skills of Computer Aided Design and Manufacturing to produce products using a Computer Numerical Controlled (CNC) mill. Students apply the knowledge and skills gained in this course as they collaborate to design, build and program factory system models.",
       "credit_value": 2.0,
       "duration": "full_year",
       "grade_levels": [
@@ -10638,7 +10638,7 @@
       "name": "ENGINEERING DESIGN AND DEVELOPMENT–PLTW",
       "division": "Computer Science, Engineering and Technology",
       "department": "Engineering and Technology",
-      "description": "engineering–PLTW, Principles of Engineering–PLTW, Computer Integrated Manufacturing–PLTW or Civil Engineering and Architecture–PLTW In this capstone course of the engineering pathway, students take full ownership of the design process as they identify a g real-world problem and develop a meaningful, innovative solution. Drawing on skills from previous engineering classes, students deepen their understanding of design thinking, manufacturing techniques and patterns of innovation. The course begins with a team-based mini-capstone that introduces advanced tools and methods—including 3D printing, laser cutting, CNC machining and traditional fabrication equipment like saws and drills. From there, students explore problem validation, conduct user-focused research and pitch their own project ideas. Once approved, students move from concept to prototype, applying iterative design and testing to refine their solutions. The experience culminates in the Engineering Design Fair, where students present their work to peers and faculty. Projects must focus on creating something that’s both approachable and impactful. Past capstones have included a child-proof knife block to reduce kitchen injuries, mobility crutches designed for athletes and a smart recycling sorter that detects and ce separates overlooked plastics.",
+      "description": "In this capstone course of the engineering pathway, students take full ownership of the design process as they identify a g real-world problem and develop a meaningful, innovative solution. Drawing on skills from previous engineering classes, students deepen their understanding of design thinking, manufacturing techniques and patterns of innovation. The course begins with a team-based mini-capstone that introduces advanced tools and methods—including 3D printing, laser cutting, CNC machining and traditional fabrication equipment like saws and drills. From there, students explore problem validation, conduct user-focused research and pitch their own project ideas. Once approved, students move from concept to prototype, applying iterative design and testing to refine their solutions. The experience culminates in the Engineering Design Fair, where students present their work to peers and faculty. Projects must focus on creating something that’s both approachable and impactful. Past capstones have included a child-proof knife block to reduce kitchen injuries, mobility crutches designed for athletes and a smart recycling sorter that detects and ce separates overlooked plastics.",
       "credit_value": 2.0,
       "duration": "full_year",
       "grade_levels": [
@@ -11086,7 +11086,7 @@
       "name": "Theatre Leadership: Directing and",
       "division": "Fine Arts",
       "department": "Theatre",
-      "description": "and Instructor Approval This directing course focuses on developing leadership skills and artistic directing. In addition to coaching actors, students in this class have the opportunity to put their advanced level theatre collaboration skills to use as they focus on production processes such as stage management, season development and creating community within ensembles. The course also examines innovative theatre practices that push the boundaries of the theatre experience.",
+      "description": "This directing course focuses on developing leadership skills and artistic directing. In addition to coaching actors, students in this class have the opportunity to put their advanced level theatre collaboration skills to use as they focus on production processes such as stage management, season development and creating community within ensembles. The course also examines innovative theatre practices that push the boundaries of the theatre experience.",
       "credit_value": 1.0,
       "duration": "semester",
       "grade_levels": [
@@ -11127,7 +11127,7 @@
       "name": "Theatre Leadership: Directing and",
       "division": "Fine Arts",
       "department": "Theatre",
-      "description": "and Instructor Approval This directing course focuses on developing leadership skills and artistic directing. In addition to coaching actors, students in this class have the opportunity to put their advanced level theatre collaboration skills to use as they focus on production processes such as stage management, season development and creating community within ensembles. The course also examines innovative theatre practices that push the boundaries of the theatre experience.",
+      "description": "This directing course focuses on developing leadership skills and artistic directing. In addition to coaching actors, students in this class have the opportunity to put their advanced level theatre collaboration skills to use as they focus on production processes such as stage management, season development and creating community within ensembles. The course also examines innovative theatre practices that push the boundaries of the theatre experience.",
       "credit_value": 1.0,
       "duration": "semester",
       "grade_levels": [
@@ -11218,7 +11218,7 @@
       "name": "LEADERSHIP IN THEATRE STUDIES",
       "division": "Fine Arts",
       "department": "Theatre",
-      "description": "and Instructor approval Leadership in Theatre Studies is a one-semester course in which students will intern and assist with theatre instruction in Acting 1: Confidence and Collaboration, Acting 2: Character and Comedy, Acting 3, Acting 4 and/or Entertainment Production and Design courses. Student leaders will lead by example, demonstrating superior ensemble behavior, providing critical feedback to their peers and modeling performance expectations. Student leaders will work with individual students and small groups as they prepare for performances. They will also have regular check-ins with their teacher, to set personal goals and plan for instructional opportunities. This course may be repeated for credit.",
+      "description": "Leadership in Theatre Studies is a one-semester course in which students will intern and assist with theatre instruction in Acting 1: Confidence and Collaboration, Acting 2: Character and Comedy, Acting 3, Acting 4 and/or Entertainment Production and Design courses. Student leaders will lead by example, demonstrating superior ensemble behavior, providing critical feedback to their peers and modeling performance expectations. Student leaders will work with individual students and small groups as they prepare for performances. They will also have regular check-ins with their teacher, to set personal goals and plan for instructional opportunities. This course may be repeated for credit.",
       "credit_value": 1.0,
       "duration": "semester",
       "grade_levels": [
@@ -11259,7 +11259,7 @@
       "name": "LEADERSHIP IN THEATRE STUDIES",
       "division": "Fine Arts",
       "department": "Theatre",
-      "description": "and Instructor approval Leadership in Theatre Studies is a one-semester course in which students will intern and assist with theatre instruction in Acting 1: Confidence and Collaboration, Acting 2: Character and Comedy, Acting 3, Acting 4 and/or Entertainment Production and Design courses. Student leaders will lead by example, demonstrating superior ensemble behavior, providing critical feedback to their peers and modeling performance expectations. Student leaders will work with individual students and small groups as they prepare for performances. They will also have regular check-ins with their teacher, to set personal goals and plan for instructional opportunities. This course may be repeated for credit.",
+      "description": "Leadership in Theatre Studies is a one-semester course in which students will intern and assist with theatre instruction in Acting 1: Confidence and Collaboration, Acting 2: Character and Comedy, Acting 3, Acting 4 and/or Entertainment Production and Design courses. Student leaders will lead by example, demonstrating superior ensemble behavior, providing critical feedback to their peers and modeling performance expectations. Student leaders will work with individual students and small groups as they prepare for performances. They will also have regular check-ins with their teacher, to set personal goals and plan for instructional opportunities. This course may be repeated for credit.",
       "credit_value": 1.0,
       "duration": "semester",
       "grade_levels": [

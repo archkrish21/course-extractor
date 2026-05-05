@@ -538,6 +538,137 @@ class TestNextBlockBoundary:
         ]
 
 
+class TestPrereqBleedIntoDescription:
+    """Direct unit coverage for `extract_description` (issue #144).
+
+    Multi-line prerequisite blocks were leaking their tail into the start
+    of the course description, and a wrapped description line beginning
+    with the word "prerequisite" was being mis-classified as a metadata
+    header and skipped entirely.
+    """
+
+    @pytest.fixture(scope="module")
+    def extract_desc(self):
+        from extract import extract_description
+        return extract_description
+
+    def test_does_not_skip_wrapped_description_starting_with_prerequisite(self, extract_desc):
+        # ART101 PDF wraps its closing sentence:
+        #   "...This course serves as
+        #    prerequisite for all advanced art classes."
+        # The lower-cased wrapped line begins with "prerequisite" but is
+        # NOT a metadata header (no colon). The previous heuristic
+        # silently dropped it.
+        below = [
+            "Open to: 9-10-11-12 One Semester",
+            "Prerequisite: None credit: College prep",
+            "This foundational course introduces students to essential",
+            "techniques, tools and media across the visual arts.",
+            "This course serves as",
+            "prerequisite for all advanced art classes.",
+        ]
+        desc = extract_desc(below)
+        assert "prerequisite for all advanced art classes." in desc
+
+    def test_skips_wrapped_prereq_continuation(self, extract_desc):
+        # PED031 layout: a two-line prereq, separate Credit: line, then
+        # description. The second prereq line ("education class or
+        # director approval") used to bleed into the start of the description.
+        below = [
+            "Open to: 10-11-12 One Semester",
+            "Prerequisite: A Foundational Fitness course, any physical",
+            "education class or director approval",
+            "Credit: College prep",
+            "(See description for Choice P.E.). Early Bird Physical Education",
+            "is scheduled from 7-8:25 a.m. on Monday/Wednesday/Friday.",
+        ]
+        desc = extract_desc(below)
+        assert "education class or director approval" not in desc
+        assert desc.startswith("(See description for Choice P.E.).")
+
+    def test_handles_inline_credit_after_prerequisite(self, extract_desc):
+        # ART101 layout puts both prereq and credit on one line:
+        #   "Prerequisite: None credit: College prep"
+        # The fix recognises that the prereq block is self-contained on
+        # this line and doesn't swallow the next paragraph as continuation.
+        below = [
+            "Open to: 9-10-11-12 One Semester",
+            "Prerequisite: None credit: College prep",
+            "This foundational course introduces students to essential",
+            "techniques, tools and media across the visual arts.",
+        ]
+        desc = extract_desc(below)
+        assert desc.startswith("This foundational course")
+
+    def test_skips_bullet_list_prereq_block(self, extract_desc):
+        # BUS411 has a bullet-list prereq block spanning many lines.
+        below = [
+            "Open to: 11-12 One Semester",
+            "Prerequisite:",
+            "One course required from: and One course required from:",
+            "■ Introduction to Business ■ Investment Management",
+            "■ Business Law ■ Accounting 1",
+            "■ Marketing ■ Accounting 2 Honors",
+            "■ Entrepreneurship ■ Advanced Accounting Honors",
+            "Credit: Accelerated",
+            "Entrepreneurial Tactics is a capstone course that ties together",
+            "all the curricular fundamentals from the Business Education curriculum.",
+        ]
+        desc = extract_desc(below)
+        assert "■" not in desc
+        assert "required from" not in desc
+        assert desc.startswith("Entrepreneurial Tactics is a capstone course")
+
+
+class TestPrereqBleedFixedInJson:
+    """Whole-pipeline assertions: descriptions should not start with the
+    tail of the prerequisite block for any of the audited courses."""
+
+    @pytest.fixture(scope="module")
+    def by_code(self, courses):
+        return {c["code"]: c for c in courses}
+
+    def test_ped031_description_starts_correctly(self, by_code):
+        c = by_code.get("PED031")
+        assert c is not None
+        assert c["description"].startswith("(See description for Choice P.E.)."), (
+            f"PED031 polluted by prereq tail: {c['description'][:80]!r}"
+        )
+
+    def test_chi601_description_starts_with_actual_description(self, by_code):
+        c = by_code.get("CHI601/CHI602")
+        assert c is not None
+        assert c["description"].startswith("This course is designed to prepare"), (
+            f"CHI601 polluted: {c['description'][:80]!r}"
+        )
+
+    def test_chi351_description_starts_with_actual_description(self, by_code):
+        c = by_code.get("CHI351/CHI352")
+        assert c is not None
+        assert c["description"].startswith("This course is designed specifically"), (
+            f"CHI351 polluted: {c['description'][:80]!r}"
+        )
+
+    def test_bus411_description_does_not_contain_bullet_list(self, by_code):
+        c = by_code.get("BUS411")
+        assert c is not None
+        assert "■" not in c["description"]
+        assert "required from" not in c["description"]
+        assert c["description"].startswith("Entrepreneurial Tactics is a capstone course"), (
+            f"BUS411 should start with 'Entrepreneurial Tactics is...': {c['description'][:80]!r}"
+        )
+
+    def test_art101_description_includes_closing_sentence(self, by_code):
+        # The closing sentence wraps to a line beginning with "prerequisite";
+        # the previous heuristic dropped it as a fake metadata header.
+        c = by_code.get("ART101")
+        assert c is not None
+        assert "prerequisite for all advanced art classes" in c["description"], (
+            "ART101 should include the closing 'prerequisite for all advanced "
+            "art classes' sentence — wrapped continuation was being dropped"
+        )
+
+
 class TestNextBlockBleedFixedInJson:
     """Whole-pipeline assertions against the freshly-extracted catalog.
 

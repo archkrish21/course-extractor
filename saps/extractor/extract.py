@@ -317,27 +317,68 @@ def is_two_column_course_page(page) -> bool:
     return bool(left_codes) and bool(right_codes)
 
 
+def _detect_column_gutter(page, default: float) -> float:
+    """Detect the x-coordinate of the column gutter on a two-column page.
+
+    Returns the midpoint of the largest gap in word x0-positions found in
+    the central band of the page. Falls back to ``default`` (the page
+    midpoint) if no clear gutter is found — e.g. on single-column pages.
+    """
+    try:
+        words = page.extract_words()
+    except Exception:
+        return default
+    central = sorted({round(w["x0"]) for w in words if 200 <= w["x0"] <= 400})
+    if len(central) < 2:
+        return default
+    best_gap = 0.0
+    best_mid = default
+    for a, b in zip(central, central[1:]):
+        gap = b - a
+        if gap > best_gap:
+            best_gap = gap
+            best_mid = (a + b) / 2
+    # A gutter narrower than ~12pt is unreliable — fall back to default
+    # to avoid splitting wide left-column words like "Leadership".
+    if best_gap < 12:
+        return default
+    return best_mid
+
+
 def extract_column_text(page, column: str) -> str:
-    """Extract text from the left or right column of a page."""
-    mid = page.width / 2
-    # Use slight overlap to avoid cutting words at the boundary
+    """Extract text from the left or right column of a page.
+
+    Uses a dynamically-detected column gutter rather than a fixed
+    page-midpoint crop. The gutter location varies by page (e.g. on
+    Stevenson catalog pages, Mandarin/Spanish overlays sit at x≈324
+    while Math pages sit at x≈306), and a fixed crop with overlap caused
+    the next column's narrow word fragments to leak in as 1-3 char
+    scraps inside descriptions.
+
+    Two safety nets remain after cropping: standalone short-line scraps
+    are dropped, and a trailing single-char column-bleed token at the
+    end of an otherwise-real line is stripped.
+    """
+    default_mid = page.width / 2
+    gutter = _detect_column_gutter(page, default_mid)
     if column == "left":
-        crop = page.crop((0, 0, mid + 5, page.height))
+        crop = page.crop((0, 0, gutter, page.height))
     else:
-        crop = page.crop((mid - 5, 0, page.width, page.height))
+        crop = page.crop((gutter, 0, page.width, page.height))
     text = crop.extract_text() or ""
 
-    if column == "left":
-        # Right-column characters sometimes leak into left column as single chars.
-        # Strip trailing single characters from each line.
-        cleaned_lines = []
-        for line in text.split("\n"):
-            # Remove trailing single character that's likely from the right column
-            cleaned = re.sub(r"\s+[A-Za-z]\s*$", "", line)
-            cleaned_lines.append(cleaned)
-        text = "\n".join(cleaned_lines)
-
-    return text
+    cleaned_lines = []
+    for line in text.split("\n"):
+        # Strip trailing single column-bleed character (residual safety net).
+        line = re.sub(r"\s+[A-Za-z]\s*$", "", line)
+        s = line.strip()
+        # Drop standalone column-bleed scraps. A real description line on
+        # this catalog is always more than 3 characters; isolated 1-3 char
+        # fragments of letters / punctuation are always cross-column noise.
+        if 0 < len(s) <= 3 and re.fullmatch(r"[A-Za-z()\-,.;'\"’]+", s):
+            continue
+        cleaned_lines.append(line)
+    return "\n".join(cleaned_lines)
 
 
 def extract_page_texts(pdf_path: str, start_page: int, end_page: int) -> list[tuple[int, str]]:

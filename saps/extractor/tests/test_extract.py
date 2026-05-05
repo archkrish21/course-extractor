@@ -432,6 +432,171 @@ class TestSemesterLineRegex:
 
 
 # ---------------------------------------------------------------------------
+# Regression: next-block bleed (issue #145)
+# ---------------------------------------------------------------------------
+
+class TestNextBlockBoundary:
+    """Direct unit coverage for `find_next_block_boundary`.
+
+    The previous extractor let the next course's title and decorator tags
+    bleed into the current course's description, notes, and gpa_waiver /
+    is_dual_credit flags. The boundary helper truncates `below_lines` at
+    the next course's header preamble.
+    """
+
+    @pytest.fixture(scope="module")
+    def boundary(self):
+        from extract import find_next_block_boundary
+        return find_next_block_boundary
+
+    def test_strips_trailing_title_tag_and_column_bleed(self, boundary):
+        # ART101 layout (page 48): description ends, then column-bleed scraps
+        # "G" / "Op" / "Pr" surround the next course's title "DRAWING AR" and
+        # tag "GPA WAIVER OPTION Pr" before the next code line ART221.
+        below = [
+            "This course serves as a prerequisite for all advanced art classes.",
+            "G",
+            "DRAWING AR",
+            "Op",
+            "GPA WAIVER OPTION Pr",
+        ]
+        next_code = "ART221–Semester 1 ART222–Semester 2"
+        b = boundary(below, next_code)
+        assert b == 1, f"boundary should strip everything after the description (got {b})"
+        assert below[:b] == [
+            "This course serves as a prerequisite for all advanced art classes.",
+        ]
+
+    def test_strips_next_course_gpa_waiver_tag(self, boundary):
+        # BUS411 had `gpa_waiver: true` because the *next* course (BUS251 /
+        # Accounting 1) has "GPA WAIVER OPTION" above its code line. The
+        # boundary must cut before that tag so the flag isn't mis-attributed.
+        below = [
+            "preparing the finances of their business plan.",
+            "GPA WAIVER OPTION",
+        ]
+        next_code = "BUS251–Semester 1 Only"
+        b = boundary(below, next_code)
+        assert b == 1
+        assert "GPA WAIVER OPTION" not in " ".join(below[:b])
+
+    def test_excludes_metadata_header_from_title_match(self, boundary):
+        # The CHI/SPA Intermediate sections use uppercase metadata
+        # ("OPEN TO: 9-10-11-12 FULL YEAR"). Without a metadata exclusion the
+        # heuristic would mistake this for a course title and truncate the
+        # description — and lose the "FULL YEAR" duration signal.
+        below = [
+            "OPEN TO: 9-10-11-12 FULL YEAR",
+            "Prerequisite: ...",
+            "Credit: Accelerated",
+            "Description body text continues normally.",
+        ]
+        b = boundary(below, "CHI411–Semester 1 CHI412–Semester 2")
+        assert b == len(below), (
+            "OPEN TO: ... FULL YEAR is metadata, not a course title — should "
+            f"not trigger the boundary (got {b})"
+        )
+
+    def test_does_not_match_real_course_title_as_footer(self, boundary):
+        # Page footer "64 MATHEMATICS" must be detected, but the regex must
+        # NOT match real course titles like "MANDARIN CHINESE 4" (single digit
+        # level number, no em-dash) — a previous version of the regex did.
+        from extract import PAGE_FOOTER_RE
+        assert PAGE_FOOTER_RE.match("64 MATHEMATICS")
+        assert PAGE_FOOTER_RE.match("46 FINE ARTS—VISUAL ARTS")
+        assert PAGE_FOOTER_RE.match("MULTILINGUAL LEARNING—LANGUAGE LEARNING 71")
+        assert not PAGE_FOOTER_RE.match("MANDARIN CHINESE 4"), (
+            "MANDARIN CHINESE 4 is a real course title, not a page footer"
+        )
+
+    def test_no_boundary_when_description_ends_cleanly(self, boundary):
+        below = [
+            "This course is the second semester of a two-semester sequence.",
+            "Specialized journal systems and inventory controls are emphasized.",
+        ]
+        # next_code_line is also irrelevant when there's no trailing header.
+        b = boundary(below, "BUS361–Semester 1 BUS362–Semester 2")
+        assert b == len(below)
+
+    def test_strips_trailing_column_bleed_when_last_in_column(self, boundary):
+        # MTH151 is the last code in its column on page 66. Without a next
+        # code line, the trailing 1-3 char column-bleed scraps must still be
+        # stripped so the description doesn't end with garbage like
+        # "co Al op co MT Op Pr G ou be to de an ex ex AB (M".
+        below = [
+            "demonstrated proficiency in all the course skills of Algebra 1.",
+            "co",
+            "Al",
+            "op",
+            "(M",
+            "64 MATHEMATICS",
+        ]
+        b = boundary(below, None)
+        assert b == 1, f"trailing scraps + page footer should be stripped (got {b})"
+        assert below[:b] == [
+            "demonstrated proficiency in all the course skills of Algebra 1.",
+        ]
+
+
+class TestNextBlockBleedFixedInJson:
+    """Whole-pipeline assertions against the freshly-extracted catalog.
+
+    These guard the JSON consumed by the loader, so future regressions are
+    caught against the data the modal actually displays.
+    """
+
+    @pytest.fixture(scope="module")
+    def by_code(self, courses):
+        return {c["code"]: c for c in courses}
+
+    def test_bus411_has_no_gpa_waiver(self, by_code):
+        # BUS411 has no "GPA WAIVER OPTION" in the PDF — the tag belongs to
+        # the next course (BUS251). Mis-attribution showed up as
+        # gpa_waiver=True / notes="GPA waiver option available".
+        c = by_code.get("BUS411")
+        assert c is not None
+        assert c["gpa_waiver"] is False, (
+            "BUS411 has no GPA waiver per PDF — the tag was bleeding from BUS251"
+        )
+
+    def test_chi351_is_not_dual_credit(self, by_code):
+        # The "DUAL CREDIT AVAILABLE WITH NORTH CENTRAL COLLEGE" tag on
+        # page 78 belongs to CHI411 (Mandarin 4), not CHI351 (Intermediate
+        # Mandarin). The bleed previously mis-flagged CHI351.
+        c = by_code.get("CHI351/CHI352")
+        assert c is not None
+        assert c["is_dual_credit"] is False, (
+            "CHI351 is not dual credit — the tag belongs to CHI411 below it"
+        )
+
+    def test_chi411_is_dual_credit(self, by_code):
+        # The mirror of the above: CHI411 *should* have the dual credit flag.
+        c = by_code.get("CHI411/CHI412")
+        assert c is not None
+        assert c["is_dual_credit"] is True
+
+    def test_descriptions_dont_end_in_next_course_titles(self, by_code):
+        # Spot-check: the most blatant bleed cases from the audit. Each
+        # description should NOT end with the next course's title text.
+        bleed_pairs = {
+            "ART101": "DRAWING",
+            "CHI601/CHI602": "CHINESE LITERATURE",
+            "CSC371/CSC372": "COMPUTER SCIENCE ALGORITHMS",
+            "BUS252": "ADVANCED ACCOUNTING",
+            "MTH591": "COLLEGE LINEAR ALGEBRA",
+            "SOC101/SOC102": "CONSTITUTIONAL LAW",
+            "ENG141/ENG142": "ENGLISH 9: THREADS",
+            "PED031": "PHYSICAL EDUCATION LEADERSHIP TRAINING",
+        }
+        for code, bleed in bleed_pairs.items():
+            c = by_code.get(code)
+            assert c is not None, f"{code} missing from extraction"
+            assert bleed not in c["description"], (
+                f"{code} description still contains next-course bleed: {bleed!r}"
+            )
+
+
+# ---------------------------------------------------------------------------
 # Summer course tests
 # ---------------------------------------------------------------------------
 

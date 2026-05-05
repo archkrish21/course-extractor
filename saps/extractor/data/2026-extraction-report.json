@@ -1,6 +1,6 @@
 {
   "catalog_year": 2026,
-  "extracted_at": "2026-05-04T22:19:06.391337+00:00",
+  "extracted_at": "2026-05-05T01:24:06.125993+00:00",
   "pdf_path": "/Users/arun/nithya/Krishna/course-extractor/data/Coursebook2026-27INTERACTIVE012826.pdf",
   "total_courses": 345,
   "validation_passed": true,
@@ -51,7 +51,7 @@
       "Honors": 21
     },
     "ap_courses": 45,
-    "dual_credit_courses": 60
+    "dual_credit_courses": 52
   },
   "heuristic_fallback_courses": []
 }

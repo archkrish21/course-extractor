@@ -149,6 +149,39 @@ NOISE_LINE_RE = re.compile(
     re.IGNORECASE,
 )
 
+# Decorator tags that introduce a course header (always appear *above* the
+# course's code line). When seen in `below_lines` they mark where the next
+# course block begins. Trailing column-bleed garbage like "Pr" / "Op" is
+# allowed after the tag so a left-column line such as
+# "GPA WAIVER OPTION Pr" still matches.
+NEXT_BLOCK_TAG_RE = re.compile(
+    r"^(GPA WAIVER OPTION|"
+    r"DUAL CREDIT(\s+AVAILABLE.*?)?|"
+    r"ARTICULATED CREDIT.*?|"
+    r"EARLY BIRD OPTION|"
+    r"HONORS OPTION)"
+    r"(\s+[A-Za-z]{1,3})?\s*$",
+    re.IGNORECASE,
+)
+
+# Page header/footer pattern. The catalog uses formats like
+# "46 FINE ARTS—VISUAL ARTS" (page-number prefix) or
+# "MULTILINGUAL LEARNING—LANGUAGE LEARNING 71" (page-number suffix).
+# Both variants always contain an em/en-dash separating two section names and
+# a 2-3 digit page number; this is what distinguishes them from real course
+# titles like "MANDARIN CHINESE 4" (single digit, no dash).
+PAGE_FOOTER_RE = re.compile(
+    r"^(\d{2,3}\s+[A-Z][A-Z\s\-–—,]+|[A-Z][A-Z\s\-–—,]+\s+\d{2,3})$"
+)
+
+# Metadata-prefix patterns that should NOT be treated as a course title even
+# when the line is all-caps (e.g. "OPEN TO: 9-10-11-12 FULL YEAR").
+_TITLE_EXCLUDE_RE = re.compile(
+    r"^(Open\s+to|Prerequisite|Credit:|One-Semester|Full-Year|Full\s+Year|"
+    r"Semester\s+[12]|WWW\.|SCAN\s+QR|COURSE\s+OFFERINGS)",
+    re.IGNORECASE,
+)
+
 
 # ---------------------------------------------------------------------------
 # Helpers
@@ -465,17 +498,94 @@ def extract_courses_from_text(
         above_start = code_line_indices[idx - 1] + 1 if idx > 0 else 0
         above_lines = lines[above_start:cli]
 
-        below_end = code_line_indices[idx + 1] if idx + 1 < len(code_line_indices) else len(lines)
+        if idx + 1 < len(code_line_indices):
+            below_end = code_line_indices[idx + 1]
+            next_code_line: str | None = lines[below_end]
+        else:
+            below_end = len(lines)
+            next_code_line = None
         below_lines = lines[cli + 1:below_end]
 
         parsed = parse_course_entry(
             lines[cli], above_lines, below_lines, name_map,
             page_num, warnings, heuristic_fallbacks,
+            next_code_line=next_code_line,
         )
         if parsed:
             results.extend(parsed)
 
     return results
+
+
+def find_next_block_boundary(
+    below_lines: list[str], next_code_line: str | None
+) -> int:
+    """Index in `below_lines` where the next course's header begins.
+
+    Walk backward from the end of `below_lines`, collecting the contiguous
+    trailing region of "header-like" lines:
+
+    - blank lines
+    - page footers (e.g. ``64 MATHEMATICS``)
+    - decorator tags (``GPA WAIVER OPTION``, ``DUAL CREDIT AVAILABLE...``)
+    - all-caps course titles (``DRAWING``, ``MANDARIN CHINESE 4``)
+    - 1-3 character column-bleed scraps (``Op``, ``Pr``, ``AB``, ``(M``)
+
+    The boundary is the first such line. A non-header "body" line stops the
+    walk — everything before it is current-course content.
+
+    `next_code_line` is unused here but kept in the signature for callers
+    that want to validate boundaries; the reverse-walk approach is robust
+    enough not to need it.
+
+    Returns ``len(below_lines)`` if no trailing header region exists.
+    """
+    del next_code_line  # currently unused — see docstring
+    boundary = len(below_lines)
+    for i in range(len(below_lines) - 1, -1, -1):
+        s = below_lines[i].strip()
+        if not s:
+            boundary = i
+            continue
+        if PAGE_FOOTER_RE.match(s):
+            boundary = i
+            continue
+        if NEXT_BLOCK_TAG_RE.match(s):
+            boundary = i
+            continue
+        if _looks_like_course_title(s):
+            boundary = i
+            continue
+        # Short column-bleed scraps: 1-3 char lines that contain at least
+        # one letter (e.g. "Op", "(M", "Pr", "AB").
+        if len(s) <= 3 and any(c.isalpha() for c in s):
+            boundary = i
+            continue
+        # Substantive line — current course's body. Stop walking back.
+        break
+    return boundary
+
+
+def _looks_like_course_title(line: str) -> bool:
+    """Heuristic: an ALL-CAPS course title line.
+
+    Allows up to 15% lowercase letters to tolerate column-bleed artifacts
+    like the trailing "he" in "CONSTITUTIONAL LAW he". Excludes metadata
+    headers such as "OPEN TO: 9-10-11-12 FULL YEAR" but does NOT exclude
+    decorator tags (those are matched by ``NEXT_BLOCK_TAG_RE`` upstream).
+    """
+    s = line.strip()
+    if len(s) < 3 or len(s) > 100:
+        return False
+    if _TITLE_EXCLUDE_RE.match(s):
+        return False
+    letters = [c for c in s if c.isalpha()]
+    if not letters:
+        return False
+    if not s[0].isupper():
+        return False
+    upper_ratio = sum(1 for c in letters if c.isupper()) / len(letters)
+    return upper_ratio >= 0.85
 
 
 def parse_course_entry(
@@ -486,11 +596,18 @@ def parse_course_entry(
     page_num: int,
     warnings: list[str],
     heuristic_fallbacks: list[str],
+    next_code_line: str | None = None,
 ) -> list[dict]:
     m = SEMESTER_LINE_RE.search(code_line)
     if not m:
         return []
     code1, code2 = m.group(1), m.group(2)
+
+    # Truncate `below_lines` at the next course block boundary so description,
+    # notes, and dual-credit/GPA-waiver detection don't pull content from the
+    # next course on the page.
+    boundary = find_next_block_boundary(below_lines, next_code_line)
+    below_lines = below_lines[:boundary]
 
     full_block = code_line + "\n" + "\n".join(below_lines)
     above_text = "\n".join(above_lines)

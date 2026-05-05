@@ -242,8 +242,16 @@ def _names_match_strictly(frag: str, stored_name: str) -> bool:
     # fragments are too generic to match safely.
     if " " not in short:
         return False
-    # Word-boundary containment.
-    if not re.search(r"(^|\s)" + re.escape(short) + r"(\s|$)", long):
+    # Word-boundary containment. Treat punctuation common in catalog names
+    # (en/em-dash, comma, slash, parens, period) as a right-side boundary
+    # too — without this, "engineering design" matches "engineering design
+    # and development–pltw" (space after) but NOT "introduction to
+    # engineering design–pltw" (en-dash after), which means the ambiguity
+    # guard upstream sees only one match and adds the wrong code.
+    if not re.search(
+        r"(^|\s)" + re.escape(short) + r"(\s|$|[–—\-,/().])",
+        long,
+    ):
         return False
     return True
 
@@ -1156,19 +1164,22 @@ def main():
                     new_codes.append(code)
                 continue
 
-            # Strict containment: the fragment must equal the stored name
-            # OR be a prefix/suffix matching at word boundaries that covers
-            # at least 70% of the longer side. This blocks the previous
-            # "any-substring" fuzzy match that wrongly attributed e.g.
-            # "culture" → "Stories, Culture and Possibility" (ENG141) for
-            # AP Chinese, or "intermediate" → "Intermediate Mandarin
-            # Chinese Language Arts" (CHI351) for Intermediate Spanish.
-            for stored_name, codes in name_to_codes.items():
-                if not _names_match_strictly(frag, stored_name):
-                    continue
-                for code in codes:
+            # Strict containment with ambiguity guard: collect all stored
+            # names that the fragment matches at word boundaries; only use
+            # the result when exactly one course name matches. A fragment
+            # like "engineering design" matches both
+            # "INTRODUCTION TO ENGINEERING DESIGN–PLTW" (TEC151) and
+            # "ENGINEERING DESIGN AND DEVELOPMENT–PLTW" (TEC401), so adding
+            # both would create false-positive prereq links and (in this
+            # case) cycles in the graph.
+            matches = [
+                (stored_name, codes)
+                for stored_name, codes in name_to_codes.items()
+                if _names_match_strictly(frag, stored_name)
+            ]
+            if len(matches) == 1:
+                for code in matches[0][1]:
                     new_codes.append(code)
-                break
 
         # Dedupe and remove self-references + semester-pair siblings (same name)
         own_codes = {c["code"]}
@@ -1209,13 +1220,17 @@ def main():
             for idx, item in enumerate(items):
                 item_lower = item.lower()
                 matched_codes: list[str] = []
-                for name_key, codes_list in name_to_codes.items():
-                    if not _names_match_strictly(item_lower, name_key):
-                        continue
-                    for code in codes_list:
+                # Same ambiguity guard as the main resolver: if a bullet
+                # item matches more than one stored name, don't pick any.
+                name_matches = [
+                    (name_key, codes_list)
+                    for name_key, codes_list in name_to_codes.items()
+                    if _names_match_strictly(item_lower, name_key)
+                ]
+                if len(name_matches) == 1:
+                    for code in name_matches[0][1]:
                         if code in all_codes and code not in own_codes:
                             matched_codes.append(code)
-                    break
                 if matched_codes:
                     if idx % 2 == 0:
                         group1_codes.extend(matched_codes)

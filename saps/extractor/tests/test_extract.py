@@ -716,6 +716,63 @@ class TestPrereqMatcherStrictness:
         # "intermediate" should not match.
         assert not matches("intermed", "intermediate mandarin chinese")
 
+    def test_dash_acts_as_right_word_boundary(self, matches):
+        # Catalog course names often end with "–PLTW" or similar tags. A
+        # fragment matching the bare name must still trigger when the
+        # stored name follows it with an en-dash (or other punctuation).
+        # Without this, "engineering design" matched only the longer
+        # "engineering design and development–pltw" (space after) and
+        # missed "introduction to engineering design–pltw" (en-dash
+        # after) — letting the ambiguity guard upstream wrongly add the
+        # capstone TEC401 as a prereq for TEC151's downstream courses.
+        assert matches("engineering design", "introduction to engineering design–pltw")
+        assert matches("engineering design", "engineering design and development–pltw")
+
+
+class TestAmbiguousPrereqMatchesAreDropped:
+    """Whole-pipeline guard against the prereq-graph cycle that surfaced
+    when loading the post-audit JSON into the local DB.
+
+    "Engineering Design" appears in TEC151's full name (Introduction to
+    Engineering Design–PLTW) AND TEC401's full name (Engineering Design
+    and Development–PLTW). The fragment matched both, so TEC151's
+    downstream courses (TEC351, TEC301, TEC291, TEC261) all wrongly
+    listed TEC401 as a prereq — and TEC401 lists THEM as prereqs in
+    turn, producing cycles like TEC401 → TEC351 → TEC401 that crashed
+    the loader's DAG validation.
+
+    The fix: when a multi-word fragment matches more than one stored
+    course name, drop the resolution entirely (better no link than the
+    wrong link).
+    """
+
+    @pytest.fixture(scope="module")
+    def by_code(self, courses):
+        return {c["code"]: c for c in courses}
+
+    def test_tec_intro_courses_do_not_list_capstone_as_prereq(self, by_code):
+        # The capstone (TEC401/TEC402) requires the intro courses, NOT
+        # the other way around. Listing it as a prereq creates cycles.
+        for code in ("TEC351/TEC352", "TEC301/TEC302",
+                     "TEC291/TEC292", "TEC261/TEC262"):
+            c = by_code.get(code)
+            assert c is not None, f"{code} missing from extraction"
+            assert "TEC401/TEC402" not in c.get("prerequisite_codes", []), (
+                f"{code} wrongly lists capstone TEC401/TEC402 as a prereq — "
+                f"creates a cycle in the prereq DAG"
+            )
+
+    def test_tec_intro_courses_still_list_intro_design(self, by_code):
+        # Sanity: the legitimate "Introduction to Engineering Design–PLTW"
+        # prereq must still resolve.
+        for code in ("TEC351/TEC352", "TEC301/TEC302",
+                     "TEC291/TEC292", "TEC261/TEC262"):
+            c = by_code.get(code)
+            assert c is not None
+            assert "TEC151/TEC152" in c.get("prerequisite_codes", []), (
+                f"{code} should list TEC151/TEC152 (Intro to Engineering Design)"
+            )
+
 
 class TestPrereqCodesIsUnionOfGroups:
     """Top-level `prerequisite_codes` must equal the union of codes across

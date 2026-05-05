@@ -1,40 +1,51 @@
 # Extractor Fidelity Plan
 
+**Status: complete (2026-05-05).** All seven audit-discovered issues plus two follow-ups surfaced during DB load are resolved on `main`.
+
 Audit on 2026-05-04 sampled 18 courses across all 12 divisions, all 5 credit types, summer + regular catalog, plus the 4 courses recovered by [#141](https://github.com/archkrish21/course-extractor/pull/141). The course-detail modal pulls course data straight from the DB, which is loaded straight from `saps/extractor/data/2026-courses-with-summer.json` by `saps/extractor/loader.py` — so any defect in that JSON appears verbatim in the modal.
 
-This plan tracks the seven issues opened from that audit and the order in which they will be fixed.
+## Issues and resolutions
 
-## Issues
+| Issue | Title | Closed by |
+|---|---|---|
+| [#143](https://github.com/archkrish21/course-extractor/issues/143) | descriptions corrupted by column-bleed garbage tokens | [#152](https://github.com/archkrish21/course-extractor/pull/152) |
+| [#144](https://github.com/archkrish21/course-extractor/issues/144) | next course title bleeds into end of description | [#150](https://github.com/archkrish21/course-extractor/pull/150) |
+| [#145](https://github.com/archkrish21/course-extractor/issues/145) | prereq tail bleeds into start of description | [#151](https://github.com/archkrish21/course-extractor/pull/151) |
+| [#146](https://github.com/archkrish21/course-extractor/issues/146) | inconsistent semester-pair representation | [#156](https://github.com/archkrish21/course-extractor/pull/156) (doc + tests; rule was already followed) |
+| [#147](https://github.com/archkrish21/course-extractor/issues/147) | top-level `prerequisite_codes` is partial subset of `prerequisite_groups` | [#155](https://github.com/archkrish21/course-extractor/pull/155) |
+| [#148](https://github.com/archkrish21/course-extractor/issues/148) | summer course descriptions are summarized, not extracted verbatim | [#154](https://github.com/archkrish21/course-extractor/pull/154) |
+| [#149](https://github.com/archkrish21/course-extractor/issues/149) | `prerequisite_codes` contains false positives from fuzzy text matching | [#153](https://github.com/archkrish21/course-extractor/pull/153) |
 
-| # | Severity | Title | Fix order |
-|---|---|---|---|
-| [#143](https://github.com/archkrish21/course-extractor/issues/143) | 1 | descriptions corrupted by column-bleed garbage tokens | 3 |
-| [#144](https://github.com/archkrish21/course-extractor/issues/144) | 1 | prereq tail bleeds into start of description | 2 |
-| [#145](https://github.com/archkrish21/course-extractor/issues/145) | 1 | next course title bleeds into end of description (also fixes wrong `gpa_waiver` flags) | **1** |
-| [#146](https://github.com/archkrish21/course-extractor/issues/146) | 1 | `prerequisite_codes` contains false positives from fuzzy text matching | 4 |
-| [#147](https://github.com/archkrish21/course-extractor/issues/147) | 2 | summer course descriptions are summarized, not extracted verbatim | 5 |
-| [#148](https://github.com/archkrish21/course-extractor/issues/148) | 3 | inconsistent semester-pair representation (slashed vs. split entries) | 6 |
-| [#149](https://github.com/archkrish21/course-extractor/issues/149) | 3 | top-level `prerequisite_codes` is partial subset of `prerequisite_groups` | 7 |
+> Note: GitHub auto-close trailers in some PR descriptions referenced the wrong issue number. The mapping above reflects the **content-fix** correspondence verified against PR diffs. Issue [#149](https://github.com/archkrish21/course-extractor/issues/149) may still appear OPEN on GitHub even though [#153](https://github.com/archkrish21/course-extractor/pull/153)'s diff fully addresses it.
 
-## Fix-order rationale
+### Follow-ups discovered after the original audit
 
-- **#145 first** — affects nearly every multi-course-per-page entry (largest blast radius), and fixes the `gpa_waiver` mis-attribution as a side-effect.
-- **#144 next** — likely lives in the same prereq-block parsing region as #145; cheap to land alongside the same regression tests.
-- **#143** — column-cropping is a separate page-layout problem.
-- **#146** — the prereq-text-to-code matcher is a separate code path.
-- **#147** — summer extractor is a different script (or path) entirely.
-- **#148, #149** — structural cleanups; defer until correctness is restored.
+| PR | Surfaced by | Fix |
+|---|---|---|
+| [#157](https://github.com/archkrish21/course-extractor/pull/157) | `loader.py --dry-run` rejected the post-audit catalog with TEC401 ↔ TEC351 cycles | Treat catalog punctuation (`–`, `—`, `,`, `/`, `()`, `.`) as a right-side word boundary in `_names_match_strictly`; drop ambiguous matches (multiple stored-name candidates) instead of picking one. |
+| [#158](https://github.com/archkrish21/course-extractor/pull/158) | User-reported: ART401–512 descriptions started with "check out…" or "however,…" | Multi-line `Note:` block was bleeding its wrap continuation. End the metadata block when a line starting with a capital letter immediately follows a line ending with `. ! ?`. |
+
+## Net catalog impact
+
+Comparing the post-audit `2026-courses-with-summer.json` against the pre-audit baseline:
+
+- **~215 of 391 descriptions** materially cleaner (next-title bleed removed, prereq tail removed, mid-text column scraps removed, `Note:` continuation removed, summer entries 3-4× longer with verbatim PDF text).
+- **15 wrong flags corrected** — 7 `gpa_waiver` (BUS351, BUS411/412, PED031/032, PED201/202) and 8 `is_dual_credit` (CHI351/352, DNC401/402, FCS231/232, FCS311/312, LAT211/212, THR212).
+- **46 false-positive prereq links removed** (CHI601 ↔ ENG141, SPA351 ↔ CHI351, etc.) and **22 missing links restored** for bullet-list courses (BUS411 now lists all 13 options at top level).
+- **Prereq DAG validates** with 734 nodes and zero cycles.
+- **Course count, validation, and existing test suite** all unchanged. ~50 new regression tests guarding the audited cases plus catalog-wide invariants for future extraction runs.
 
 ## Verification harness
 
-After each fix, re-run:
-1. `python extract.py <pdf-path> --year 2026 --out-dir ./data` for the regular catalog
-2. (For #147) the summer extraction
-3. `python loader.py data/2026-courses-with-summer.json --dry-run` against local Supabase
-4. Spot-check the courses listed as examples in the corresponding GitHub issue against the source PDFs in `data/`
+For any future extractor change, re-run:
 
-## Sample courses used in the audit
+1. `python extract.py <pdf-path> --year 2026 --out-dir ./data` (regular catalog)
+2. `python extract_summer.py --year 2026 --out-dir ./data` (summer)
+3. Re-merge into `data/2026-courses-with-summer.json`
+4. `python -m pytest tests/test_extract.py -q` — 100+ tests, 2 pre-existing `credit_value` failures unchanged
+5. `python loader.py data/2026-courses-with-summer.json --dry-run` against local Supabase — DAG must validate cleanly
+6. Spot-check the smoke-test set below against the source PDFs in `data/`
 
-ART101, ART721/ART722, ART511, CHI351/CHI352, CHI601/CHI602, CSC371/CSC372, PED031, MTH151/MTH152, MTH591, BUS252, BUS411, CAR53S, ENG51S, SCI111/SCI112, SOC101/SOC102, ENG141/ENG142, VOC071/VOC072, SPA351/SPA352, ACTPREPS.
+## Smoke-test sample (use this set for any extractor PR review)
 
-These should be the smoke-test set for any extractor PR.
+ART101, ART401, ART411, ART501, ART511, ART721/ART722, BUS252, BUS411, CHI351/CHI352, CHI411/CHI412, CHI601/CHI602, CSC371/CSC372, ENG141/ENG142, MTH151/MTH152, MTH591, PED031, SCI111/SCI112, SOC101/SOC102, SPA351/SPA352, TEC301/TEC302, TEC351/TEC352, VOC071/VOC072, CAR53S, ACTPREPS, ENG51S.

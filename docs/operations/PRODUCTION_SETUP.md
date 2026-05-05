@@ -108,7 +108,7 @@ npm run db:setup
 This single command handles **all remaining database setup** in the correct order:
 
 1. **RLS policies** — applies hand-written migrations `0009` (Row Level Security on all 39 tables) and `0010` (creates `contact_messages` and `school_requests` tables with INSERT-only policies)
-2. **Course catalog** — loads 315 courses from `extractor/data/2026-courses.json` with divisions, departments, and prerequisite links
+2. **Course catalog** — loads 391 courses (345 regular + 46 summer) from `extractor/data/2026-courses-with-summer.json` with divisions, departments, and prerequisite links
 3. **Subscription plans** — seeds 3 plans (starter, plus, elite)
 4. **Graduation requirements** — seeds ~30 requirements tied to the catalog version (depends on courses from step 2)
 5. **Plan templates** — seeds pre-built plan templates with course references (depends on courses from step 2)

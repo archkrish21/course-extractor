@@ -565,3 +565,214 @@ describe("validateCourseAddition — summer/regular equivalent satisfies prereq"
     expect(result.violations.filter((v) => v.type === "duplicate")).toHaveLength(0);
   });
 });
+
+describe("validatePlanIntegrity — rigor-ladder satisfies prereq", () => {
+  // The user-reported scenario behind PR #164: AP Psychology requires CP
+  // U.S. History (SOC321/SOC322), but the student has AP U.S. History
+  // (SOC621/SOC622) instead. Under the rigor-ladder rule (CP < AP, same
+  // family), the AP course must satisfy the CP prereq even when the DAG
+  // hasn't been re-seeded with the sibling fanout edge.
+
+  const SOC661_ID = "course-soc661"; // AP Psychology
+  const SOC621_ID = "course-soc621"; // AP U.S. History
+  const SOC321_ID = "course-soc321"; // CP U.S. History
+
+  beforeEach(() => {
+    dbChain = makeChain();
+    queryQueue = [];
+  });
+
+  it("AP U.S. History in Gr 11 satisfies AP Psychology's CP U.S. History prereq in Gr 12", async () => {
+    const planRows = [
+      {
+        id: "pc-ap-ush",
+        courseId: SOC621_ID,
+        gradeLevel: 11,
+        semester: 1,
+        status: "completed",
+        prereqOverridden: false,
+        course: {
+          id: SOC621_ID,
+          code: "SOC621/SOC622",
+          name: "AP U.S. History",
+          duration: "full_year",
+          gradeLevels: [11],
+          semestersOffered: [1, 2],
+          catalogVersionId: "cv-1",
+        },
+      },
+      {
+        id: "pc-ap-psych",
+        courseId: SOC661_ID,
+        gradeLevel: 12,
+        semester: 1,
+        status: "planned",
+        prereqOverridden: false,
+        course: {
+          id: SOC661_ID,
+          code: "SOC661/SOC662",
+          name: "AP Psychology",
+          duration: "full_year",
+          gradeLevels: [12],
+          semestersOffered: [1, 2],
+          catalogVersionId: "cv-1",
+        },
+      },
+    ];
+    // The DAG carries only the CP edge — no rigor-ladder fanout.
+    // Validator must still accept the AP-level plan course as satisfying.
+    const PREREQ_EDGE_CP_ONLY = {
+      courseId: SOC661_ID,
+      prerequisiteId: SOC321_ID,
+      relationshipType: "prerequisite",
+      requirementGroup: 2,
+      isRecommended: false,
+      prereqCode: "SOC321/SOC322",
+      prereqName: "U.S. History",
+    };
+
+    queryQueue.push(planRows);
+    queryQueue.push([PREREQ_EDGE_CP_ONLY]);
+
+    const result = await validatePlanIntegrity("plan-1");
+
+    expect(result.violations.filter((v) => v.type === "prerequisite")).toHaveLength(0);
+    expect(result.ignoredViolations.filter((v) => v.type === "prerequisite")).toHaveLength(0);
+  });
+
+  it("does NOT relax the inverse: CP U.S. History does not satisfy a hypothetical AP-level prereq", async () => {
+    // Negative case to lock in ladder direction. If a course (mocked here as
+    // "downstream-X") required AP U.S. History specifically, having only the
+    // CP version in the plan must still flag a violation.
+    const DOWNSTREAM_ID = "course-downstream";
+    const planRows = [
+      {
+        id: "pc-cp-ush",
+        courseId: SOC321_ID,
+        gradeLevel: 11,
+        semester: 1,
+        status: "completed",
+        prereqOverridden: false,
+        course: {
+          id: SOC321_ID,
+          code: "SOC321/SOC322",
+          name: "U.S. History",
+          duration: "full_year",
+          gradeLevels: [11],
+          semestersOffered: [1, 2],
+          catalogVersionId: "cv-1",
+        },
+      },
+      {
+        id: "pc-downstream",
+        courseId: DOWNSTREAM_ID,
+        gradeLevel: 12,
+        semester: 1,
+        status: "planned",
+        prereqOverridden: false,
+        course: {
+          id: DOWNSTREAM_ID,
+          code: "ZZZ999",
+          name: "Hypothetical AP-USH-Requiring Course",
+          duration: "full_year",
+          gradeLevels: [12],
+          semestersOffered: [1, 2],
+          catalogVersionId: "cv-1",
+        },
+      },
+    ];
+    const PREREQ_EDGE_AP_REQUIRED = {
+      courseId: DOWNSTREAM_ID,
+      prerequisiteId: SOC621_ID,
+      relationshipType: "prerequisite",
+      requirementGroup: 1,
+      isRecommended: false,
+      prereqCode: "SOC621/SOC622",
+      prereqName: "AP U.S. History",
+    };
+
+    queryQueue.push(planRows);
+    queryQueue.push([PREREQ_EDGE_AP_REQUIRED]);
+
+    const result = await validatePlanIntegrity("plan-1");
+
+    expect(result.violations.some((v) => v.type === "prerequisite")).toBe(true);
+  });
+});
+
+describe("validateCourseAddition — rigor-ladder satisfies prereq", () => {
+  // Add-gate equivalent of the rigor-ladder integration test above. Same
+  // ladder rule must apply when the student tries to add AP Psychology to
+  // Gr 12 with AP U.S. History (not CP U.S. History) already in the plan.
+
+  const SOC661_ID = "course-soc661"; // AP Psychology
+  const SOC621_ID = "course-soc621"; // AP U.S. History
+  const SOC321_ID = "course-soc321"; // CP U.S. History
+
+  const targetCourse = {
+    id: SOC661_ID,
+    code: "SOC661/SOC662",
+    name: "AP Psychology",
+    duration: "full_year",
+    creditType: "AP",
+    gradeLevels: [12],
+    semestersOffered: [1, 2],
+    catalogVersionId: "cv-1",
+  };
+
+  const apUshInGr11 = {
+    id: "pc-ap-ush",
+    courseId: SOC621_ID,
+    gradeLevel: 11,
+    semester: 1,
+    status: "completed",
+    course: {
+      id: SOC621_ID,
+      code: "SOC621/SOC622",
+      name: "AP U.S. History",
+      duration: "full_year",
+      gradeLevels: [11],
+      semestersOffered: [1, 2],
+      catalogVersionId: "cv-1",
+    },
+  };
+
+  const prereqEdgeCpOnly = {
+    prerequisiteId: SOC321_ID,
+    relationshipType: "prerequisite",
+    requirementGroup: 2,
+    isRecommended: false,
+    minimumGrade: null,
+    prereqCode: "SOC321/SOC322",
+    prereqName: "U.S. History",
+  };
+
+  beforeEach(() => {
+    dbChain = makeChain();
+    queryQueue = [];
+  });
+
+  it("accepts the add when an AP sibling is in the plan at an earlier slot", async () => {
+    queryQueue.push([targetCourse]);
+    queryQueue.push([apUshInGr11]);
+    queryQueue.push([prereqEdgeCpOnly]);
+
+    const result = await validateCourseAddition("plan-1", SOC661_ID, 12, 1);
+
+    expect(result.violations.filter((v) => v.type === "prerequisite")).toHaveLength(0);
+    expect(result.valid).toBe(true);
+  });
+
+  it("flags the add when neither the CP version nor any rigor sibling is present", async () => {
+    queryQueue.push([targetCourse]);
+    queryQueue.push([]); // empty plan
+    queryQueue.push([prereqEdgeCpOnly]);
+
+    const result = await validateCourseAddition("plan-1", SOC661_ID, 12, 1);
+
+    expect(result.valid).toBe(false);
+    const prereq = result.violations.find((v) => v.type === "prerequisite");
+    expect(prereq?.courseCode).toBe("SOC661/SOC662");
+    expect(prereq?.details?.missingPrerequisites?.[0]?.code).toBe("SOC321/SOC322");
+  });
+});

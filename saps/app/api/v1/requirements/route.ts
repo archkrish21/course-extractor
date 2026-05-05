@@ -18,6 +18,7 @@ import { requireAuth, getAccountContext } from "@/lib/auth/get-user";
 import { rateLimit } from "@/lib/api/rate-limit";
 import { calculateGPA } from "@/lib/gpa/calc";
 import { isPassFailCourse } from "@/config/grade-scale";
+import { isSummerSemester } from "@/config/semesters";
 
 // ─── Types ─────────────────────────────────────────────────────────────────
 
@@ -662,11 +663,13 @@ export async function GET(request: NextRequest) {
     }
 
     // 9. GPA waiver eligibility check
-    // Per Stevenson policy: must be enrolled in 4+ GPA-counted courses per semester to use a waiver
+    // Per Stevenson policy: must be enrolled in 4+ GPA-counted courses per semester to use a waiver.
+    // Only applies to regular semesters (1, 2) — summer sessions normally carry only 1 course
+    // and are not subject to the 4-course minimum.
     const gpaWaiverWarnings: string[] = [];
     const semestersWithWaivers = new Set<string>();
     for (const pc of allPlanCourses) {
-      if (pc.gpaWaiverApplied) {
+      if (pc.gpaWaiverApplied && !isSummerSemester(pc.semester)) {
         semestersWithWaivers.add(`${pc.gradeLevel}-${pc.semester}`);
       }
     }

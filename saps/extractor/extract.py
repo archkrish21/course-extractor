@@ -1254,6 +1254,22 @@ def main():
             if g
         ]
 
+        # Top-level `prerequisite_codes` MUST be the union of all group
+        # codes (issue #147). The bullet-list pattern (BUS411) used to
+        # populate `prerequisite_groups` while leaving `prerequisite_codes`
+        # at the 1-2 codes from the simple regex pass — downstream
+        # consumers reading the top-level field would see a misleading
+        # subset.
+        if c["prerequisite_groups"]:
+            union: list[str] = []
+            seen: set[str] = set()
+            for g in c["prerequisite_groups"]:
+                for code in g.get("codes", []):
+                    if code not in seen:
+                        seen.add(code)
+                        union.append(code)
+            c["prerequisite_codes"] = union
+
     total_links = sum(len(c.get("prerequisite_codes", [])) for c in courses)
     print(f"Phase 3 (prerequisite resolution): {resolved_count} courses gained new prerequisite links")
     print(f"  Total prerequisite links: {total_links}")

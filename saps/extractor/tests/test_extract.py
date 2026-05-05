@@ -717,6 +717,53 @@ class TestPrereqMatcherStrictness:
         assert not matches("intermed", "intermediate mandarin chinese")
 
 
+class TestPrereqCodesIsUnionOfGroups:
+    """Top-level `prerequisite_codes` must equal the union of codes across
+    `prerequisite_groups` for every course (issue #147).
+
+    Previously the bullet-list pattern (e.g. BUS411's "One course required
+    from: ... and One course required from: ...") populated
+    `prerequisite_groups` with all 13 options across two groups while
+    leaving `prerequisite_codes` at the 1-2 codes from the simple regex
+    pass — so a downstream consumer reading the top-level field saw a
+    misleading subset.
+    """
+
+    @pytest.fixture(scope="module")
+    def by_code(self, courses):
+        return {c["code"]: c for c in courses}
+
+    def test_top_level_equals_group_union_for_all_courses(self, courses):
+        for c in courses:
+            if not c.get("prerequisite_groups"):
+                continue
+            top = set(c.get("prerequisite_codes", []) or [])
+            union = set()
+            for g in c["prerequisite_groups"]:
+                union.update(g.get("codes", []))
+            assert top == union, (
+                f"{c['code']}: top-level prerequisite_codes ({sorted(top)}) "
+                f"does not equal union of prerequisite_groups ({sorted(union)})"
+            )
+
+    def test_bus411_top_level_lists_all_thirteen_options(self, by_code):
+        # Specific example from the audit: BUS411 has two AND'd OR-groups
+        # totaling 13 distinct course options. The top-level field must
+        # surface all of them.
+        c = by_code.get("BUS411")
+        assert c is not None
+        top = set(c.get("prerequisite_codes", []) or [])
+        for code in (
+            "BUS171", "BUS172", "BUS371", "BUS372",
+            "BUS281", "BUS282", "BUS231", "BUS232",
+            "BUS361", "BUS362", "BUS251", "BUS252", "BUS351",
+        ):
+            assert code in top, (
+                f"BUS411 prerequisite_codes missing {code} — should include "
+                f"all 13 bullet-list options"
+            )
+
+
 class TestPrereqCodesFixedInJson:
     """Whole-pipeline assertions for the false-positive prereq codes."""
 

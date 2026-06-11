@@ -196,6 +196,12 @@ export const studentProfiles = pgTable("student_profiles", {
   })
     .notNull()
     .default("pending"),
+  // The first academic year (Jan–Jul = current year; Aug–Dec = next year) in
+  // which this student is eligible for the year-end banner. Null means the
+  // student has never completed a year-end (new user) — banner is suppressed
+  // until they do. Set to currentAcademicYear + 1 after each non-graduating
+  // wrap-up, ensuring the banner cannot re-fire within the same window.
+  yearEndNextEligibleYear: smallint("year_end_next_eligible_year"),
   createdAt: timestamp("created_at", { withTimezone: true }).defaultNow(),
   updatedAt: timestamp("updated_at", { withTimezone: true })
     .defaultNow()

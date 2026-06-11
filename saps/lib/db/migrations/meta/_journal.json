@@ -99,6 +99,13 @@
       "when": 1777585054279,
       "tag": "0013_curved_rocket_racer",
       "breakpoints": true
+    },
+    {
+      "idx": 14,
+      "version": "7",
+      "when": 1781193035045,
+      "tag": "0014_cold_silverclaw",
+      "breakpoints": true
     }
   ]
 }

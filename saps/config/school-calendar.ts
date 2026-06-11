@@ -33,6 +33,18 @@ export function isYearEndBannerActive(now: Date = new Date()): boolean {
 }
 
 /**
+ * Returns the academic year that the given date falls in.
+ * Jan 1 – Jul 31 → the calendar year itself (spring semester of that year)
+ * Aug 1 – Dec 31 → the following calendar year (fall semester leading into it)
+ *
+ * Example: June 2026 → 2026; September 2026 → 2027.
+ */
+export function currentAcademicYear(now: Date = new Date()): number {
+  const month = now.getMonth() + 1; // 1-indexed
+  return month > 7 ? now.getFullYear() + 1 : now.getFullYear();
+}
+
+/**
  * Returns the next date the year-end banner will open, relative to `now`.
  * Used by surfaces like the empty-state transcript to tell users when the
  * window opens so they aren't stranded waiting on a feature they can't see.

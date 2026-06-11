@@ -74,7 +74,7 @@ vi.mock("@/lib/db/schema", () => ({
   courses: { id: "c_id", code: "c_code", name: "c_name", creditValue: "c_creditValue" },
   accounts: { id: "a_id", gradeLevel: "a_gradeLevel", studentUserId: "a_studentUserId" },
   accountMembers: { accountId: "am_accountId", userId: "am_userId" },
-  studentProfiles: { userId: "sp_userId", yearEndTransitionState: "sp_yearEndTransitionState" },
+  studentProfiles: { userId: "sp_userId", yearEndTransitionState: "sp_yearEndTransitionState", yearEndNextEligibleYear: "sp_yearEndNextEligibleYear" },
 }));
 
 vi.mock("@/config/grade-scale", () => ({
@@ -82,8 +82,10 @@ vi.mock("@/config/grade-scale", () => ({
 }));
 
 const mockIsYearEndBannerActive = vi.fn().mockReturnValue(true);
+const mockCurrentAcademicYear = vi.fn().mockReturnValue(2026);
 vi.mock("@/config/school-calendar", () => ({
   isYearEndBannerActive: (...args: unknown[]) => mockIsYearEndBannerActive(...args),
+  currentAcademicYear: (...args: unknown[]) => mockCurrentAcademicYear(...args),
 }));
 
 vi.mock("drizzle-orm", () => ({
@@ -125,12 +127,13 @@ describe("GET /api/v1/year-end", () => {
   it("returns planId alongside year-end state (contract)", async () => {
     // Consumers (dashboard banner, wizard) need planId so they can call
     // /plans/:id/validate without a separate lookup.
+    // nextEligibleYear = 2026 and mockCurrentAcademicYear = 2026 → eligible → "pending".
     let queryIndex = 0;
     dbChain.then = vi.fn().mockImplementation((resolve: (v: unknown) => unknown) => {
       queryIndex++;
       if (queryIndex === 1) return Promise.resolve(resolve([{ accountId: "acc-1" }])); // membership
       if (queryIndex === 2) return Promise.resolve(resolve([{ gradeLevel: 10 }]));      // account
-      if (queryIndex === 3) return Promise.resolve(resolve([{ yearEndTransitionState: "pending" }])); // profile
+      if (queryIndex === 3) return Promise.resolve(resolve([{ yearEndTransitionState: "completed", yearEndNextEligibleYear: 2026 }])); // profile
       if (queryIndex === 4) return Promise.resolve(resolve([{ id: "plan-1" }]));        // primary plan
       if (queryIndex === 5) return Promise.resolve(resolve([]));                          // current year courses
       if (queryIndex === 6) return Promise.resolve(resolve([]));                          // next year courses
@@ -146,13 +149,83 @@ describe("GET /api/v1/year-end", () => {
     expect(body.data.transitionState).toBe("pending");
   });
 
+  it("suppresses banner for new users (null yearEndNextEligibleYear)", async () => {
+    let queryIndex = 0;
+    dbChain.then = vi.fn().mockImplementation((resolve: (v: unknown) => unknown) => {
+      queryIndex++;
+      if (queryIndex === 1) return Promise.resolve(resolve([{ accountId: "acc-1" }]));
+      if (queryIndex === 2) return Promise.resolve(resolve([{ gradeLevel: 9 }]));
+      if (queryIndex === 3) return Promise.resolve(resolve([{ yearEndTransitionState: "pending", yearEndNextEligibleYear: null }]));
+      if (queryIndex === 4) return Promise.resolve(resolve([{ id: "plan-1" }]));
+      if (queryIndex === 5) return Promise.resolve(resolve([
+        { id: "pc-1", courseId: "c1", code: "MTH", name: "Math", gradeLevel: 9, semester: 1, status: "planned", plannedGrade: null, creditValue: "1.0" },
+      ]));
+      if (queryIndex === 6) return Promise.resolve(resolve([]));
+      return Promise.resolve(resolve([]));
+    });
+
+    const response = await GET(makeGetRequest());
+    const body = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(body.data.transitionState).toBe("completed");
+  });
+
+  it("suppresses banner when completed in same banner window", async () => {
+    // nextEligibleYear = 2027, currentAcademicYear = 2026 → not yet eligible
+    mockCurrentAcademicYear.mockReturnValueOnce(2026);
+    let queryIndex = 0;
+    dbChain.then = vi.fn().mockImplementation((resolve: (v: unknown) => unknown) => {
+      queryIndex++;
+      if (queryIndex === 1) return Promise.resolve(resolve([{ accountId: "acc-1" }]));
+      if (queryIndex === 2) return Promise.resolve(resolve([{ gradeLevel: 12 }]));
+      if (queryIndex === 3) return Promise.resolve(resolve([{ yearEndTransitionState: "completed", yearEndNextEligibleYear: 2027 }]));
+      if (queryIndex === 4) return Promise.resolve(resolve([{ id: "plan-1" }]));
+      if (queryIndex === 5) return Promise.resolve(resolve([
+        { id: "pc-1", courseId: "c1", code: "MTH", name: "Math", gradeLevel: 12, semester: 1, status: "enrolled", plannedGrade: null, creditValue: "1.0" },
+      ]));
+      if (queryIndex === 6) return Promise.resolve(resolve([]));
+      return Promise.resolve(resolve([]));
+    });
+
+    const response = await GET(makeGetRequest());
+    const body = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(body.data.transitionState).toBe("completed");
+  });
+
+  it("shows banner in a new academic year when nextEligibleYear has been reached", async () => {
+    // nextEligibleYear = 2027, currentAcademicYear = 2027 → eligible
+    mockCurrentAcademicYear.mockReturnValueOnce(2027);
+    let queryIndex = 0;
+    dbChain.then = vi.fn().mockImplementation((resolve: (v: unknown) => unknown) => {
+      queryIndex++;
+      if (queryIndex === 1) return Promise.resolve(resolve([{ accountId: "acc-1" }]));
+      if (queryIndex === 2) return Promise.resolve(resolve([{ gradeLevel: 12 }]));
+      if (queryIndex === 3) return Promise.resolve(resolve([{ yearEndTransitionState: "completed", yearEndNextEligibleYear: 2027 }]));
+      if (queryIndex === 4) return Promise.resolve(resolve([{ id: "plan-1" }]));
+      if (queryIndex === 5) return Promise.resolve(resolve([
+        { id: "pc-1", courseId: "c1", code: "MTH", name: "Math", gradeLevel: 12, semester: 1, status: "enrolled", plannedGrade: null, creditValue: "1.0" },
+      ]));
+      if (queryIndex === 6) return Promise.resolve(resolve([]));
+      return Promise.resolve(resolve([]));
+    });
+
+    const response = await GET(makeGetRequest());
+    const body = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(body.data.transitionState).toBe("pending");
+  });
+
   it("returns planId as null when the student has no primary plan", async () => {
     let queryIndex = 0;
     dbChain.then = vi.fn().mockImplementation((resolve: (v: unknown) => unknown) => {
       queryIndex++;
       if (queryIndex === 1) return Promise.resolve(resolve([{ accountId: "acc-1" }]));
       if (queryIndex === 2) return Promise.resolve(resolve([{ gradeLevel: 10 }]));
-      if (queryIndex === 3) return Promise.resolve(resolve([{ yearEndTransitionState: "pending" }]));
+      if (queryIndex === 3) return Promise.resolve(resolve([{ yearEndTransitionState: "completed", yearEndNextEligibleYear: 2026 }]));
       if (queryIndex === 4) return Promise.resolve(resolve([])); // no primary plan
       return Promise.resolve(resolve([]));
     });
@@ -164,7 +237,7 @@ describe("GET /api/v1/year-end", () => {
     expect(body.data.planId).toBeNull();
   });
 
-  it("returns empty data when outside the year-end banner window", async () => {
+  it("returns completed state and empty data when outside the year-end banner window", async () => {
     mockIsYearEndBannerActive.mockReturnValueOnce(false);
 
     let queryIndex = 0;
@@ -178,6 +251,7 @@ describe("GET /api/v1/year-end", () => {
     const body = await response.json();
 
     expect(response.status).toBe(200);
+    expect(body.data.transitionState).toBe("completed");
     expect(body.data.currentYearCourses).toEqual([]);
     expect(body.data.planId).toBeNull();
     expect(body.data.gradeLevel).toBeNull();
@@ -193,7 +267,7 @@ describe("GET /api/v1/year-end", () => {
       queryIndex++;
       if (queryIndex === 1) return Promise.resolve(resolve([{ accountId: "acc-1" }]));
       if (queryIndex === 2) return Promise.resolve(resolve([{ gradeLevel: 10 }]));
-      if (queryIndex === 3) return Promise.resolve(resolve([{ yearEndTransitionState: "pending" }]));
+      if (queryIndex === 3) return Promise.resolve(resolve([{ yearEndTransitionState: "completed", yearEndNextEligibleYear: 2026 }]));
       if (queryIndex === 4) return Promise.resolve(resolve([{ id: "plan-1" }]));
       if (queryIndex === 5) return Promise.resolve(resolve([
         { id: "pc-1", courseId: "c1", code: "MTH", name: "Math",      gradeLevel: 10, semester: 1, status: "completed", plannedGrade: "A", creditValue: "1.0" },
@@ -238,26 +312,27 @@ describe("POST /api/v1/year-end", () => {
     });
   }
 
-  it("resets yearEndTransitionState to 'pending' for advancing students", async () => {
-    // Regression: previously the flag was set to 'completed' permanently,
-    // which hid the banner for all future years. Now advancing students
-    // reset to 'pending' so the banner works next year.
+  it("sets yearEndNextEligibleYear to next academic year for advancing students", async () => {
+    // After completing a non-graduating year the banner must not re-fire in the
+    // same May–Jul window. yearEndNextEligibleYear = currentAcademicYear + 1
+    // gates the GET so it only returns "pending" once the following year arrives.
+    mockCurrentAcademicYear.mockReturnValueOnce(2026);
     mockAdvancingStudentChain(10);
 
     const response = await POST(makePostRequest({ grades: [], action: "complete" }));
     expect(response.status).toBe(200);
 
-    // Find the .set() call that targets yearEndTransitionState.
     const transitionSet = mockSet.mock.calls.find(([arg]) =>
       arg && typeof arg === "object" && "yearEndTransitionState" in arg
     );
     expect(transitionSet).toBeDefined();
-    expect(transitionSet![0].yearEndTransitionState).toBe("pending");
+    expect(transitionSet![0].yearEndTransitionState).toBe("completed");
+    expect(transitionSet![0].yearEndNextEligibleYear).toBe(2027);
   });
 
-  it("keeps yearEndTransitionState as 'completed' for graduating students (grade 12)", async () => {
-    // Grade 12 has no next year; the flag is terminal. This is the one
-    // case where 'completed' is correct.
+  it("keeps yearEndTransitionState as 'completed' and does not set nextEligibleYear for graduating students", async () => {
+    // Grade 12 is terminal — no next year-end ever. yearEndNextEligibleYear
+    // must NOT be set so the GET permanently suppresses the banner.
     mockAdvancingStudentChain(12);
 
     const response = await POST(makePostRequest({ grades: [], action: "complete" }));
@@ -268,5 +343,6 @@ describe("POST /api/v1/year-end", () => {
     );
     expect(transitionSet).toBeDefined();
     expect(transitionSet![0].yearEndTransitionState).toBe("completed");
+    expect(transitionSet![0].yearEndNextEligibleYear).toBeUndefined();
   });
 });

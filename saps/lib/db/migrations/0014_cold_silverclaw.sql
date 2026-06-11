@@ -1,0 +1,1 @@
+ALTER TABLE "student_profiles" ADD COLUMN "year_end_next_eligible_year" smallint;

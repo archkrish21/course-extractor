@@ -16,7 +16,7 @@ import { successResponse, errorResponse } from "@/lib/api/response";
 import { requireSameOrigin } from "@/lib/api/require-same-origin";
 import { requireAuth, getAccountContext } from "@/lib/auth/get-user";
 import { rateLimit } from "@/lib/api/rate-limit";
-import { isYearEndBannerActive } from "@/config/school-calendar";
+import { isYearEndBannerActive, currentAcademicYear } from "@/config/school-calendar";
 
 async function resolveAccountId(request: NextRequest, userId: string): Promise<string | null> {
   const headerAccountId = request.headers.get("X-Account-Id");
@@ -47,7 +47,7 @@ export async function GET(request: NextRequest) {
     // Only show year-end data when we're in the banner window
     if (!isYearEndBannerActive()) {
       return successResponse({
-        transitionState: "pending",
+        transitionState: "completed",
         gradeLevel: null,
         isGraduating: false,
         planId: null,
@@ -69,14 +69,29 @@ export async function GET(request: NextRequest) {
     const accountGradeLevel = account?.gradeLevel ?? 9;
     const gradeLevel = gradeParam ? parseInt(gradeParam, 10) : accountGradeLevel;
 
-    // Get transition state
+    // Get transition state and banner eligibility year
     const [profile] = await db
-      .select({ yearEndTransitionState: studentProfiles.yearEndTransitionState })
+      .select({
+        yearEndTransitionState: studentProfiles.yearEndTransitionState,
+        yearEndNextEligibleYear: studentProfiles.yearEndNextEligibleYear,
+      })
       .from(studentProfiles)
       .where(eq(studentProfiles.userId, user.id))
       .limit(1);
 
-    const transitionState = profile?.yearEndTransitionState ?? "pending";
+    // Derive effective banner state:
+    // - null nextEligibleYear → new user, never completed year-end → suppress
+    // - nextEligibleYear > currentAcademicYear → just completed this window → suppress
+    // - nextEligibleYear <= currentAcademicYear → new year due → pending
+    const nextEligibleYear = profile?.yearEndNextEligibleYear ?? null;
+    let transitionState: "pending" | "in_progress" | "completed";
+    if (nextEligibleYear === null) {
+      transitionState = "completed";
+    } else if (nextEligibleYear <= currentAcademicYear()) {
+      transitionState = "pending";
+    } else {
+      transitionState = "completed";
+    }
 
     // Get primary plan
     const [plan] = await db
@@ -312,14 +327,18 @@ export async function POST(request: NextRequest) {
 
     // Update transition state only if completing current grade.
     // Use account's studentUserId — the caller may be a parent.
-    // If the student advanced to a new grade, reset the flag to "pending"
-    // so next year's banner/wizard eligibility works. For graduation there
-    // is no next transition — leave the flag "completed" as a terminal state.
+    // yearEndNextEligibleYear gates the banner: set to currentAcademicYear + 1
+    // so the banner cannot re-fire within the same May–Jul window. For
+    // graduation there is no next transition — leave nextEligibleYear null so
+    // the terminal "completed" transitionState suppresses the banner forever.
     if (isCurrentGrade) {
       const profileUserId = account?.studentUserId ?? user.id;
       await db
         .update(studentProfiles)
-        .set({ yearEndTransitionState: isGraduating ? "completed" : "pending" })
+        .set({
+          yearEndTransitionState: "completed",
+          ...(isGraduating ? {} : { yearEndNextEligibleYear: currentAcademicYear() + 1 }),
+        })
         .where(eq(studentProfiles.userId, profileUserId));
     }
 

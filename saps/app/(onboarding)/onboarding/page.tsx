@@ -39,6 +39,7 @@ const GRADE_LEVELS = [9, 10, 11, 12] as const;
 
 // Import from central config — Stevenson uses A, B, C, D, F (no +/- variants)
 import { GRADE_OPTIONS, PASS_FAIL_OPTIONS, isPassFailCourse } from "@/config/grade-scale";
+import { currentAcademicYear, isYearEndBannerActive } from "@/config/school-calendar";
 const LETTER_GRADES = GRADE_OPTIONS;
 
 // Grade 9 flow: About You → Starting Plan (2 steps).
@@ -775,14 +776,17 @@ function OnboardingPageInner() {
   const [error, setError] = useState<string | null>(null);
 
   // Step 1
-  const currentYear = new Date().getFullYear();
+  // The academic year being planned: during the May 15–Jul 31 year-end window
+  // the current school year has ended, so students onboard for the next one.
+  // A senior (grade 12) in the planning year graduates that same year.
+  const planningYear = currentAcademicYear() + (isYearEndBannerActive() ? 1 : 0);
   const [gradeLevel, setGradeLevel] = useState(9);
-  const [graduationYear, setGraduationYear] = useState(currentYear + 3);
+  const [graduationYear, setGraduationYear] = useState(planningYear + 3);
 
   // Auto-calculate graduation year when grade changes
   function handleGradeLevelChange(g: number) {
     setGradeLevel(g);
-    setGraduationYear(currentYear + (12 - g));
+    setGraduationYear(planningYear + (12 - g));
   }
 
   // Step 2

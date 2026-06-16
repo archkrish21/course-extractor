@@ -30,7 +30,7 @@ export default function AboutPage() {
         <section>
           <h2 className="text-lg font-semibold text-foreground">The story</h2>
           <p className="mt-2">
-            In the fall of 2024, I started 9th grade at Stevenson. Within the first few weeks, I was handed a course
+            In the fall of 2023, I started 9th grade at Stevenson. Within the first few weeks, I was handed a course
             catalog the size of a small novel — hundreds of classes, prerequisite chains, weighted and unweighted
             GPAs, graduation credit minimums — and asked to plan out four years of my life.
           </p>
@@ -51,7 +51,7 @@ export default function AboutPage() {
                 loading="lazy"
               />
               <figcaption className="mt-2 text-center text-xs text-muted-foreground">
-                Where it started — the Google Sheet, 2024
+                Where it started — the Google Sheet, 2023
               </figcaption>
             </div>
             <div>

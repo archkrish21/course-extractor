@@ -349,7 +349,7 @@ function YearEndPageInner() {
                   const semCourses = activeCourses.filter((c) => c.semester === sem);
                   if (semCourses.length === 0) return null;
                   const isSummer = sem < 0;
-                  const label = sem === -2 ? "Pre-Summer Session 1" : sem === -1 ? "Pre-Summer Session 2" : `Semester ${sem}`;
+                  const label = sem === -2 ? "Summer Session 1" : sem === -1 ? "Summer Session 2" : `Semester ${sem}`;
                   return (
                     <div key={sem}>
                       <p className={`mb-2 text-xs font-semibold uppercase tracking-wider ${isSummer ? "text-warning" : "text-muted-foreground"}`}>{label}</p>

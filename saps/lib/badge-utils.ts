@@ -13,7 +13,10 @@ export function creditTypeBadgeVariant(creditType: string): BadgeVariant {
   return "default";
 }
 
-/** Display label for a credit type — collapses "Pass/Fail" to "P/F" for compact badges. */
+/** Display label for a credit type — collapses "Pass/Fail" to "P/F" for compact
+ * badges and expands "CP" to its full "College Prep" name. */
 export function creditTypeLabel(creditType: string): string {
-  return creditType === "Pass/Fail" ? "P/F" : creditType;
+  if (creditType === "Pass/Fail") return "P/F";
+  if (creditType === "CP") return "College Prep";
+  return creditType;
 }

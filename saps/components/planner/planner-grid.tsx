@@ -416,30 +416,30 @@ function DesktopGrid({
             {!isCollapsed && (() => {
               return (
               <div className="border-t border-border bg-card p-3">
-                {/* Pre-summer row */}
+                {/* Summer row */}
                 {!summerExpanded.has(grade) ? (
                   <button
                     type="button"
                     onClick={() => setSummerExpanded((prev) => new Set(prev).add(grade))}
                     className="mb-3 flex min-h-[44px] w-full items-center justify-center gap-2 rounded-xl border-2 border-dashed border-warning/25 bg-warning-light/30 text-sm font-medium text-warning hover:border-warning/40 hover:bg-warning-light/60 transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
-                    aria-label={`Show pre-summer courses for Grade ${grade}`}
+                    aria-label={`Show summer courses for Grade ${grade}`}
                   >
                     <svg aria-hidden="true" className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
                     </svg>
-                    Pre-Summer Courses
+                    Summer Courses
                   </button>
                 ) : (
                   <div className="mb-3">
                     <div className="mb-2 flex items-center justify-between">
                       <p className="text-xs font-semibold uppercase tracking-wider text-warning">
-                        Pre-Summer Courses
+                        Summer Courses
                       </p>
                       <button
                         type="button"
                         onClick={() => setSummerExpanded((prev) => { const n = new Set(prev); n.delete(grade); return n; })}
                         className="min-h-[32px] rounded-lg px-2.5 py-1 text-xs font-medium text-warning/70 hover:bg-warning-light hover:text-warning transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
-                        aria-label={`Hide pre-summer courses for Grade ${grade}`}
+                        aria-label={`Hide summer courses for Grade ${grade}`}
                       >
                         Hide
                       </button>

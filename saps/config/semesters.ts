@@ -16,8 +16,8 @@ export function isSummerSemester(sem: number): boolean {
  */
 export function semesterLabel(sem: number): string {
   switch (sem) {
-    case -2: return "Pre-Summer Session 1";
-    case -1: return "Pre-Summer Session 2";
+    case -2: return "Summer Session 1";
+    case -1: return "Summer Session 2";
     case 1: return "Semester 1";
     case 2: return "Semester 2";
     default: return `Semester ${sem}`;

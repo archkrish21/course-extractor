@@ -333,7 +333,7 @@ export default function CourseBrowserPage() {
                 }
               `}
             >
-              {type}
+              {creditTypeLabel(type)}
             </button>
           ))}
         </div>
@@ -436,7 +436,7 @@ export default function CourseBrowserPage() {
     <div className="mx-auto max-w-6xl">
       <div className="mb-6">
         <h1 className="text-2xl font-bold tracking-tight text-foreground">
-          Course browser
+          Course Browser
         </h1>
         <p className="mt-1 text-sm text-muted-foreground">
           Browse every course by division, level, and type.

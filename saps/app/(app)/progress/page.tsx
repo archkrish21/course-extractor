@@ -244,7 +244,7 @@ export default function ProgressPage() {
   if (loading) {
     return (
       <div className="mx-auto max-w-6xl">
-        <h1 className="mb-1 text-2xl font-bold tracking-tight text-foreground sm:text-3xl">Your progress</h1>
+        <h1 className="mb-1 text-2xl font-bold tracking-tight text-foreground sm:text-3xl">Your Progress</h1>
         <p className="mb-6 text-sm text-muted-foreground">Track your graduation requirements, credits, and GPA over time.</p>
         <div className="animate-pulse space-y-4">
           <div className="h-24 rounded-xl bg-muted" />
@@ -259,7 +259,7 @@ export default function ProgressPage() {
   if (isParentLike && !currentAccount) {
     return (
       <div className="mx-auto max-w-6xl">
-        <h1 className="mb-1 text-2xl font-bold tracking-tight text-foreground sm:text-3xl">Your progress</h1>
+        <h1 className="mb-1 text-2xl font-bold tracking-tight text-foreground sm:text-3xl">Your Progress</h1>
         <p className="mb-6 text-sm text-muted-foreground">Track your graduation requirements, credits, and GPA over time.</p>
         <Card>
           <CardContent>
@@ -286,7 +286,7 @@ export default function ProgressPage() {
   if (error || !data) {
     return (
       <div className="mx-auto max-w-6xl">
-        <h1 className="mb-1 text-2xl font-bold tracking-tight text-foreground sm:text-3xl">Your progress</h1>
+        <h1 className="mb-1 text-2xl font-bold tracking-tight text-foreground sm:text-3xl">Your Progress</h1>
         <p className="mb-6 text-sm text-muted-foreground">Track your graduation requirements, credits, and GPA over time.</p>
         <Card>
           <CardContent>
@@ -305,7 +305,7 @@ export default function ProgressPage() {
   if (hasNoPlan) {
     return (
       <div className="mx-auto max-w-6xl">
-        <h1 className="mb-1 text-2xl font-bold tracking-tight text-foreground sm:text-3xl">Your progress</h1>
+        <h1 className="mb-1 text-2xl font-bold tracking-tight text-foreground sm:text-3xl">Your Progress</h1>
         <p className="mb-6 text-sm text-muted-foreground">Track your graduation requirements, credits, and GPA over time.</p>
         <Card>
           <CardContent>
@@ -329,7 +329,7 @@ export default function ProgressPage() {
     <div className="mx-auto max-w-6xl">
       <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-foreground sm:text-3xl">Your progress</h1>
+          <h1 className="text-2xl font-bold tracking-tight text-foreground sm:text-3xl">Your Progress</h1>
           <p className="mt-1 text-sm text-muted-foreground">Track your graduation requirements, credits, and GPA over time.</p>
         </div>
         <div className="no-print flex items-center gap-2">

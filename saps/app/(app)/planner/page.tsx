@@ -1588,7 +1588,7 @@ export default function PlannerPage() {
       <div className="mx-auto max-w-6xl">
         <div className="mb-6">
           <h1 className="text-2xl font-bold tracking-tight text-foreground">
-            Course planner
+            Course Planner
           </h1>
           <p className="mt-1 text-sm text-muted-foreground">Plan your four-year academic path</p>
         </div>
@@ -1628,7 +1628,7 @@ export default function PlannerPage() {
       <div className="mx-auto max-w-6xl">
         <div className="mb-6">
           <h1 className="text-2xl font-bold tracking-tight text-foreground">
-            Course planner
+            Course Planner
           </h1>
           <p className="mt-1 text-sm text-muted-foreground">Plan your four-year academic path</p>
         </div>
@@ -1674,7 +1674,7 @@ export default function PlannerPage() {
       <div className="mx-auto max-w-6xl">
         <div className="mb-6">
           <h1 className="text-2xl font-bold tracking-tight text-foreground">
-            Course planner
+            Course Planner
           </h1>
           <p className="mt-1 text-sm text-muted-foreground">Plan your four-year academic path</p>
         </div>
@@ -1747,7 +1747,7 @@ export default function PlannerPage() {
       <div className="mb-6 flex flex-wrap items-start justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold tracking-tight text-foreground">
-            Course planner
+            Course Planner
           </h1>
           {selectedPlan && (() => {
             const creatorName = selectedPlan.creatorEmail

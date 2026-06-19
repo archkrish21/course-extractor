@@ -7,7 +7,7 @@ import { test, expect } from "@playwright/test";
 test.beforeEach(async ({ page }) => {
   await page.goto("/progress");
   await expect(
-    page.getByRole("heading", { name: "Your progress" })
+    page.getByRole("heading", { name: "Your Progress", exact: true })
   ).toBeVisible({ timeout: 15_000 });
   // Sidebar "Overall" confirms data loaded
   await expect(page.locator("text=Overall").first()).toBeVisible({ timeout: 10_000 });

@@ -149,6 +149,16 @@ All operations use upserts (`ON CONFLICT`), so the script is **safe to re-run** 
 - `db:setup` is also idempotent (all upserts) but handles a different category of data
 - You might re-run `db:setup` to refresh course data without re-running schema migrations
 
+### Updating plan templates in production
+
+Plan templates are seed data (`four_year_plans`/`plan_courses` rows with `is_template = true`). The seed scripts refuse to run with `NODE_ENV=production`, so refresh templates on a live DB via the **Supabase SQL Editor**:
+
+1. Regenerate the SQL from source: run `helper/gen-template-sql.mjs` from `saps/` (reads `config/seeds/plan-templates.ts`) → produces `templates-update.sql` (committed copy at `saps/helper/templates-update.sql`).
+2. Back up the DB, then run that SQL — a single `BEGIN; … COMMIT;` that re-seeds each template's courses, matched by code within the plan's `catalog_version_id`.
+3. Verify per-template row counts; if any are short, prod's catalog is missing a referenced course — load it first (`npm run db:setup -- --courses-only`), then re-run.
+
+Existing student plans (`is_template = false`) are not affected.
+
 ### Verify
 
 ```sql

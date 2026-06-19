@@ -437,7 +437,7 @@ export default function GradesPage() {
                       if (semCourses.length === 0) return null;
                       const semGpa = calcGPA(semCourses);
                       const isSummer = sem < 0;
-                      const label = sem === -2 ? "Pre-Summer Session 1" : sem === -1 ? "Pre-Summer Session 2" : `Semester ${sem}`;
+                      const label = sem === -2 ? "Summer Session 1" : sem === -1 ? "Summer Session 2" : `Semester ${sem}`;
 
                       return (
                         <div key={sem} className="border-b border-border last:border-b-0">

@@ -74,7 +74,7 @@ test("planner shows P/F badge + P/F-only grade dropdown for catalog and code-rul
 
     await page.goto(`/planner?planId=${plan.id}`);
     await expect(page.locator("text=Loading your plans...")).toBeHidden({ timeout: 15_000 });
-    await expect(page.locator("text=/Course planner/")).toBeVisible({ timeout: 10_000 });
+    await expect(page.locator("text=/Course Planner/")).toBeVisible({ timeout: 10_000 });
 
     // The student is in Gr10, so only Gr10 is expanded by default. Expand
     // Gr11 so the planted P/F cards become visible.

@@ -9,7 +9,7 @@ test.beforeEach(async ({ page }) => {
   await expect(page.locator("text=Loading your plans...")).toBeHidden({
     timeout: 15_000,
   });
-  await expect(page.locator("text=/Course planner/")).toBeVisible({
+  await expect(page.locator("text=/Course Planner/")).toBeVisible({
     timeout: 10_000,
   });
 });

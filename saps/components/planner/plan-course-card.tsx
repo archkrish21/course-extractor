@@ -277,27 +277,27 @@ export function PlanCourseCard({
       </div>
 
       {/* Row 2: badges (left) | status + grade (right) — single line */}
-      <div className="flex items-center gap-2">
-        <div className="flex flex-1 min-w-0 items-center gap-1 overflow-hidden">
-          <Badge variant={creditTypeBadgeVariant(course.creditType)} className="h-5 leading-4 text-[10px] px-1.5 py-0">
+      <div className="flex items-center gap-1">
+        <div className="flex flex-1 min-w-0 items-center gap-0.5 overflow-hidden">
+          <Badge variant={creditTypeBadgeVariant(course.creditType)} className="h-5 leading-4 text-[10px] px-1 py-0">
             {creditTypeLabel(course.creditType)}
           </Badge>
 
           {course.isAp && course.creditType !== "AP" && (
-            <Badge variant="ap" className="h-5 leading-4 text-[10px] px-1.5 py-0">AP</Badge>
+            <Badge variant="ap" className="h-5 leading-4 text-[10px] px-1 py-0">AP</Badge>
           )}
 
           {course.isDualCredit && (
-            <Badge variant="dual-credit" className="h-5 leading-4 text-[10px] px-1.5 py-0">DC</Badge>
+            <Badge variant="dual-credit" className="h-5 leading-4 text-[10px] px-1 py-0">DC</Badge>
           )}
 
           {course.semestersOffered?.some((s: number) => s < 0) && (
-            <Badge variant="warning" className="h-5 leading-4 text-[10px] px-1.5 py-0">Summer</Badge>
+            <Badge variant="warning" className="h-5 leading-4 text-[10px] px-1 py-0">Summer</Badge>
           )}
 
           {/* Static GPA Waiver badge shown in read-only mode */}
           {course.gpaWaiver && (readOnly || !onGpaWaiverToggle) && (
-            <Badge variant="warning" className="h-5 leading-4 text-[10px] px-1.5 py-0">
+            <Badge variant="warning" className="h-5 leading-4 text-[10px] px-1 py-0">
               {waiverApplied ? "GPA Waived" : "GPA Waiver"}
             </Badge>
           )}
@@ -306,7 +306,7 @@ export function PlanCourseCard({
           {course.gpaWaiver && !isPassFailCourse(course.code, course.creditType) && !readOnly && onGpaWaiverToggle && (
             <button
               type="button"
-              className="inline-flex h-5 items-center gap-1 rounded-full px-1.5 py-0 text-[10px] leading-4 font-medium cursor-pointer transition-colors bg-warning/20 text-warning hover:bg-warning/30"
+              className="inline-flex h-5 shrink-0 items-center gap-1 whitespace-nowrap rounded-full px-1 py-0 text-[10px] leading-4 font-medium cursor-pointer transition-colors bg-warning/20 text-warning hover:bg-warning/30"
               title={waiverApplied ? "GPA waiver applied — click to remove" : "Click to apply GPA waiver"}
               onClick={(e) => {
                 e.stopPropagation();

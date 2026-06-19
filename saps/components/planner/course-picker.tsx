@@ -320,7 +320,7 @@ export function CoursePicker({
         ref={panelRef}
         role="dialog"
         aria-modal="true"
-        aria-label={`Add course to Grade ${gradeLevel}, ${semester < 0 ? "Pre-Summer" : `Semester ${semester}`}`}
+        aria-label={`Add course to Grade ${gradeLevel}, ${semester < 0 ? "Summer" : `Semester ${semester}`}`}
         className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto p-4 sm:p-6"
       >
         <div
@@ -353,7 +353,7 @@ export function CoursePicker({
                 {semester < 0 ? "Add summer course" : "Add course"}
               </h2>
               <p className={`text-xs ${semester < 0 ? "text-warning" : "text-muted-foreground"}`}>
-                Grade {gradeLevel}{semester === -2 ? ", Pre-Summer Session 1" : semester === -1 ? ", Pre-Summer Session 2" : `, Semester ${semester}`}
+                Grade {gradeLevel}{semester === -2 ? ", Summer Session 1" : semester === -1 ? ", Summer Session 2" : `, Semester ${semester}`}
               </p>
             </div>
             <div className="flex-1">
@@ -395,7 +395,7 @@ export function CoursePicker({
                   }
                 `}
               >
-                {type}
+                {creditTypeLabel(type)}
               </button>
             ))}
 

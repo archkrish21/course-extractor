@@ -1,0 +1,401 @@
+-- Re-seed plan templates in the Supabase SQL Editor.
+-- Generated from config/seeds/plan-templates.ts.
+-- Affects is_template plans ONLY; student plans (is_template=false) are untouched.
+-- Courses are matched by code within each template plan's catalog_version_id.
+BEGIN;
+
+-- ===== College Prep (General) (48 rows) =====
+DELETE FROM plan_courses
+  WHERE plan_id = (SELECT id FROM four_year_plans WHERE name = 'College Prep (General)' AND is_template = true);
+INSERT INTO plan_courses (plan_id, course_id, grade_level, semester, status, display_order)
+  SELECT p.id, c.id, t.grade_level, t.semester, 'planned', t.ord
+  FROM four_year_plans p
+  JOIN (VALUES
+    ('ENG151/ENG152', 9, 1, 0),
+    ('ENG151/ENG152', 9, 2, 1),
+    ('MTH251/MTH252', 9, 1, 2),
+    ('MTH251/MTH252', 9, 2, 3),
+    ('SCI111/SCI112', 9, 1, 4),
+    ('SCI111/SCI112', 9, 2, 5),
+    ('SOC101/SOC102', 9, 1, 6),
+    ('SOC101/SOC102', 9, 2, 7),
+    ('SPA101/SPA102', 9, 1, 8),
+    ('SPA101/SPA102', 9, 2, 9),
+    ('PED121', 9, 1, 10),
+    ('PED452', 9, 2, 11),
+    ('ENG211/ENG212', 10, 1, 12),
+    ('ENG211/ENG212', 10, 2, 13),
+    ('MTH351/MTH352', 10, 1, 14),
+    ('MTH351/MTH352', 10, 2, 15),
+    ('SCI211/SCI212', 10, 1, 16),
+    ('SCI211/SCI212', 10, 2, 17),
+    ('SPA201/SPA202', 10, 1, 18),
+    ('SPA201/SPA202', 10, 2, 19),
+    ('ART101', 10, 1, 20),
+    ('ART202', 10, 2, 21),
+    ('PED201', 10, 1, 22),
+    ('D/E232', 10, 2, 23),
+    ('ENG311/ENG312', 11, 1, 24),
+    ('ENG311/ENG312', 11, 2, 25),
+    ('MTH451/MTH452', 11, 1, 26),
+    ('MTH451/MTH452', 11, 2, 27),
+    ('SCI401/SCI402', 11, 1, 28),
+    ('SCI401/SCI402', 11, 2, 29),
+    ('SOC321/SOC322', 11, 1, 30),
+    ('SOC321/SOC322', 11, 2, 31),
+    ('SPA301/SPA302', 11, 1, 32),
+    ('SPA301/SPA302', 11, 2, 33),
+    ('PED451', 11, 1, 34),
+    ('PED452', 11, 2, 35),
+    ('ENG431/ENG432', 12, 1, 36),
+    ('ENG431/ENG432', 12, 2, 37),
+    ('MTH481/MTH482', 12, 1, 38),
+    ('MTH481/MTH482', 12, 2, 39),
+    ('SOC411/SOC412', 12, 1, 40),
+    ('SOC411/SOC412', 12, 2, 41),
+    ('SCI271/SCI272', 12, 1, 42),
+    ('SCI271/SCI272', 12, 2, 43),
+    ('SOC401', 12, 1, 44),
+    ('SOC552', 12, 2, 45),
+    ('PED451', 12, 1, 46),
+    ('PED452', 12, 2, 47)
+  ) AS t(code, grade_level, semester, ord) ON TRUE
+  JOIN courses c ON c.code = t.code AND c.catalog_version_id = p.catalog_version_id
+  WHERE p.name = 'College Prep (General)' AND p.is_template = true;
+
+-- ===== STEM Focus (58 rows) =====
+DELETE FROM plan_courses
+  WHERE plan_id = (SELECT id FROM four_year_plans WHERE name = 'STEM Focus' AND is_template = true);
+INSERT INTO plan_courses (plan_id, course_id, grade_level, semester, status, display_order)
+  SELECT p.id, c.id, t.grade_level, t.semester, 'planned', t.ord
+  FROM four_year_plans p
+  JOIN (VALUES
+    ('SOC13S/SOC14S', 9, -2, 0),
+    ('SOC13S/SOC14S', 9, -1, 1),
+    ('ENG151/ENG152', 9, 1, 2),
+    ('ENG151/ENG152', 9, 2, 3),
+    ('MTH271/MTH272', 9, 1, 4),
+    ('MTH271/MTH272', 9, 2, 5),
+    ('SCI111/SCI112', 9, 1, 6),
+    ('SCI111/SCI112', 9, 2, 7),
+    ('SPA101/SPA102', 9, 1, 8),
+    ('SPA101/SPA102', 9, 2, 9),
+    ('TEC151/TEC152', 9, 1, 10),
+    ('TEC151/TEC152', 9, 2, 11),
+    ('CSC161', 9, 1, 12),
+    ('CSC182', 9, 2, 13),
+    ('PED121', 9, 1, 14),
+    ('PED452', 9, 2, 15),
+    ('ENG211/ENG212', 10, 1, 16),
+    ('ENG211/ENG212', 10, 2, 17),
+    ('MTH171/MTH172', 10, 1, 18),
+    ('MTH171/MTH172', 10, 2, 19),
+    ('SCI211/SCI212', 10, 1, 20),
+    ('SCI211/SCI212', 10, 2, 21),
+    ('SPA201/SPA202', 10, 1, 22),
+    ('SPA201/SPA202', 10, 2, 23),
+    ('CSC391/CSC392', 10, 1, 24),
+    ('CSC391/CSC392', 10, 2, 25),
+    ('TEC301/TEC302', 10, 1, 26),
+    ('TEC301/TEC302', 10, 2, 27),
+    ('PED201', 10, 1, 28),
+    ('D/E232', 10, 2, 29),
+    ('ENG311/ENG312', 11, 1, 30),
+    ('ENG311/ENG312', 11, 2, 31),
+    ('MTH421/MTH422', 11, 1, 32),
+    ('MTH421/MTH422', 11, 2, 33),
+    ('SCI611/SCI612', 11, 1, 34),
+    ('SCI611/SCI612', 11, 2, 35),
+    ('SOC321/SOC322', 11, 1, 36),
+    ('SOC321/SOC322', 11, 2, 37),
+    ('SOC411/SOC412', 11, 1, 38),
+    ('SOC411/SOC412', 11, 2, 39),
+    ('CSC371/CSC372', 11, 1, 40),
+    ('CSC371/CSC372', 11, 2, 41),
+    ('PED451', 11, 1, 42),
+    ('PED452', 11, 2, 43),
+    ('ENG431/ENG432', 12, 1, 44),
+    ('ENG431/ENG432', 12, 2, 45),
+    ('MTH491/MTH492', 12, 1, 46),
+    ('MTH491/MTH492', 12, 2, 47),
+    ('SCI651/SCI652', 12, 1, 48),
+    ('SCI651/SCI652', 12, 2, 49),
+    ('CSC421/CSC422', 12, 1, 50),
+    ('CSC421/CSC422', 12, 2, 51),
+    ('SCI641/SCI642', 12, 1, 52),
+    ('SCI641/SCI642', 12, 2, 53),
+    ('SOC401', 12, 1, 54),
+    ('BUS302', 12, 2, 55),
+    ('PED451', 12, 1, 56),
+    ('PED452', 12, 2, 57)
+  ) AS t(code, grade_level, semester, ord) ON TRUE
+  JOIN courses c ON c.code = t.code AND c.catalog_version_id = p.catalog_version_id
+  WHERE p.name = 'STEM Focus' AND p.is_template = true;
+
+-- ===== Pre-Med Track (54 rows) =====
+DELETE FROM plan_courses
+  WHERE plan_id = (SELECT id FROM four_year_plans WHERE name = 'Pre-Med Track' AND is_template = true);
+INSERT INTO plan_courses (plan_id, course_id, grade_level, semester, status, display_order)
+  SELECT p.id, c.id, t.grade_level, t.semester, 'planned', t.ord
+  FROM four_year_plans p
+  JOIN (VALUES
+    ('SOC13S/SOC14S', 9, -2, 0),
+    ('SOC13S/SOC14S', 9, -1, 1),
+    ('ENG151/ENG152', 9, 1, 2),
+    ('ENG151/ENG152', 9, 2, 3),
+    ('MTH271/MTH272', 9, 1, 4),
+    ('MTH271/MTH272', 9, 2, 5),
+    ('SCI111/SCI112', 9, 1, 6),
+    ('SCI111/SCI112', 9, 2, 7),
+    ('SPA101/SPA102', 9, 1, 8),
+    ('SPA101/SPA102', 9, 2, 9),
+    ('ART101', 9, 1, 10),
+    ('ART202', 9, 2, 11),
+    ('CSC161', 9, 1, 12),
+    ('CSC182', 9, 2, 13),
+    ('PED121', 9, 1, 14),
+    ('PED452', 9, 2, 15),
+    ('ENG211/ENG212', 10, 1, 16),
+    ('ENG211/ENG212', 10, 2, 17),
+    ('MTH171/MTH172', 10, 1, 18),
+    ('MTH171/MTH172', 10, 2, 19),
+    ('SCI211/SCI212', 10, 1, 20),
+    ('SCI211/SCI212', 10, 2, 21),
+    ('SPA201/SPA202', 10, 1, 22),
+    ('SPA201/SPA202', 10, 2, 23),
+    ('SCI351/SCI352', 10, 1, 24),
+    ('SCI351/SCI352', 10, 2, 25),
+    ('PED201', 10, 1, 26),
+    ('D/E232', 10, 2, 27),
+    ('ENG311/ENG312', 11, 1, 28),
+    ('ENG311/ENG312', 11, 2, 29),
+    ('MTH411/MTH412', 11, 1, 30),
+    ('MTH411/MTH412', 11, 2, 31),
+    ('SCI631/SCI632', 11, 1, 32),
+    ('SCI631/SCI632', 11, 2, 33),
+    ('SCI651/SCI652', 11, 1, 34),
+    ('SCI651/SCI652', 11, 2, 35),
+    ('SOC321/SOC322', 11, 1, 36),
+    ('SOC321/SOC322', 11, 2, 37),
+    ('SOC411/SOC412', 11, 1, 38),
+    ('SOC411/SOC412', 11, 2, 39),
+    ('PED231', 11, 1, 40),
+    ('PED452', 11, 2, 41),
+    ('ENG431/ENG432', 12, 1, 42),
+    ('ENG431/ENG432', 12, 2, 43),
+    ('MTH471/MTH472', 12, 1, 44),
+    ('MTH471/MTH472', 12, 2, 45),
+    ('SCI521/SCI522', 12, 1, 46),
+    ('SCI521/SCI522', 12, 2, 47),
+    ('SCI401/SCI402', 12, 1, 48),
+    ('SCI401/SCI402', 12, 2, 49),
+    ('SOC401', 12, 1, 50),
+    ('BUS302', 12, 2, 51),
+    ('PED451', 12, 1, 52),
+    ('PED452', 12, 2, 53)
+  ) AS t(code, grade_level, semester, ord) ON TRUE
+  JOIN courses c ON c.code = t.code AND c.catalog_version_id = p.catalog_version_id
+  WHERE p.name = 'Pre-Med Track' AND p.is_template = true;
+
+-- ===== Computer Science Track (58 rows) =====
+DELETE FROM plan_courses
+  WHERE plan_id = (SELECT id FROM four_year_plans WHERE name = 'Computer Science Track' AND is_template = true);
+INSERT INTO plan_courses (plan_id, course_id, grade_level, semester, status, display_order)
+  SELECT p.id, c.id, t.grade_level, t.semester, 'planned', t.ord
+  FROM four_year_plans p
+  JOIN (VALUES
+    ('SOC13S/SOC14S', 9, -2, 0),
+    ('SOC13S/SOC14S', 9, -1, 1),
+    ('ENG151/ENG152', 9, 1, 2),
+    ('ENG151/ENG152', 9, 2, 3),
+    ('MTH271/MTH272', 9, 1, 4),
+    ('MTH271/MTH272', 9, 2, 5),
+    ('SCI111/SCI112', 9, 1, 6),
+    ('SCI111/SCI112', 9, 2, 7),
+    ('SPA101/SPA102', 9, 1, 8),
+    ('SPA101/SPA102', 9, 2, 9),
+    ('TEC151/TEC152', 9, 1, 10),
+    ('TEC151/TEC152', 9, 2, 11),
+    ('CSC161', 9, 1, 12),
+    ('CSC182', 9, 2, 13),
+    ('PED121', 9, 1, 14),
+    ('PED452', 9, 2, 15),
+    ('ENG211/ENG212', 10, 1, 16),
+    ('ENG211/ENG212', 10, 2, 17),
+    ('MTH171/MTH172', 10, 1, 18),
+    ('MTH171/MTH172', 10, 2, 19),
+    ('SCI211/SCI212', 10, 1, 20),
+    ('SCI211/SCI212', 10, 2, 21),
+    ('SPA201/SPA202', 10, 1, 22),
+    ('SPA201/SPA202', 10, 2, 23),
+    ('CSC391/CSC392', 10, 1, 24),
+    ('CSC391/CSC392', 10, 2, 25),
+    ('TEC301/TEC302', 10, 1, 26),
+    ('TEC301/TEC302', 10, 2, 27),
+    ('PED201', 10, 1, 28),
+    ('D/E232', 10, 2, 29),
+    ('ENG311/ENG312', 11, 1, 30),
+    ('ENG311/ENG312', 11, 2, 31),
+    ('MTH421/MTH422', 11, 1, 32),
+    ('MTH421/MTH422', 11, 2, 33),
+    ('SCI401/SCI402', 11, 1, 34),
+    ('SCI401/SCI402', 11, 2, 35),
+    ('SOC321/SOC322', 11, 1, 36),
+    ('SOC321/SOC322', 11, 2, 37),
+    ('SOC411/SOC412', 11, 1, 38),
+    ('SOC411/SOC412', 11, 2, 39),
+    ('CSC371/CSC372', 11, 1, 40),
+    ('CSC371/CSC372', 11, 2, 41),
+    ('PED451', 11, 1, 42),
+    ('PED452', 11, 2, 43),
+    ('ENG431/ENG432', 12, 1, 44),
+    ('ENG431/ENG432', 12, 2, 45),
+    ('MTH491/MTH492', 12, 1, 46),
+    ('MTH491/MTH492', 12, 2, 47),
+    ('CSC421/CSC422', 12, 1, 48),
+    ('CSC421/CSC422', 12, 2, 49),
+    ('CSC251/CSC252', 12, 1, 50),
+    ('CSC251/CSC252', 12, 2, 51),
+    ('SCI641/SCI642', 12, 1, 52),
+    ('SCI641/SCI642', 12, 2, 53),
+    ('SOC401', 12, 1, 54),
+    ('TEC122', 12, 2, 55),
+    ('PED451', 12, 1, 56),
+    ('PED452', 12, 2, 57)
+  ) AS t(code, grade_level, semester, ord) ON TRUE
+  JOIN courses c ON c.code = t.code AND c.catalog_version_id = p.catalog_version_id
+  WHERE p.name = 'Computer Science Track' AND p.is_template = true;
+
+-- ===== Humanities Focus (56 rows) =====
+DELETE FROM plan_courses
+  WHERE plan_id = (SELECT id FROM four_year_plans WHERE name = 'Humanities Focus' AND is_template = true);
+INSERT INTO plan_courses (plan_id, course_id, grade_level, semester, status, display_order)
+  SELECT p.id, c.id, t.grade_level, t.semester, 'planned', t.ord
+  FROM four_year_plans p
+  JOIN (VALUES
+    ('SOC13S/SOC14S', 9, -2, 0),
+    ('SOC13S/SOC14S', 9, -1, 1),
+    ('ENG161/ENG162', 9, 1, 2),
+    ('ENG161/ENG162', 9, 2, 3),
+    ('MTH271/MTH272', 9, 1, 4),
+    ('MTH271/MTH272', 9, 2, 5),
+    ('SCI111/SCI112', 9, 1, 6),
+    ('SCI111/SCI112', 9, 2, 7),
+    ('SPA101/SPA102', 9, 1, 8),
+    ('SPA101/SPA102', 9, 2, 9),
+    ('THR101', 9, 1, 10),
+    ('THR112', 9, 2, 11),
+    ('ART221', 9, 1, 12),
+    ('ART262', 9, 2, 13),
+    ('PED121', 9, 1, 14),
+    ('PED452', 9, 2, 15),
+    ('ENG231/ENG232', 10, 1, 16),
+    ('ENG231/ENG232', 10, 2, 17),
+    ('MTH171/MTH172', 10, 1, 18),
+    ('MTH171/MTH172', 10, 2, 19),
+    ('SCI211/SCI212', 10, 1, 20),
+    ('SCI211/SCI212', 10, 2, 21),
+    ('SOC601/SOC602', 10, 1, 22),
+    ('SOC601/SOC602', 10, 2, 23),
+    ('SPA201/SPA202', 10, 1, 24),
+    ('SPA201/SPA202', 10, 2, 25),
+    ('ART721/ART722', 10, 1, 26),
+    ('ART721/ART722', 10, 2, 27),
+    ('PED201', 10, 1, 28),
+    ('D/E232', 10, 2, 29),
+    ('ENG371/ENG372', 11, 1, 30),
+    ('ENG371/ENG372', 11, 2, 31),
+    ('MTH411/MTH412', 11, 1, 32),
+    ('MTH411/MTH412', 11, 2, 33),
+    ('SCI401/SCI402', 11, 1, 34),
+    ('SCI401/SCI402', 11, 2, 35),
+    ('SOC621/SOC622', 11, 1, 36),
+    ('SOC621/SOC622', 11, 2, 37),
+    ('SOC411/SOC412', 11, 1, 38),
+    ('SOC411/SOC412', 11, 2, 39),
+    ('SPA301/SPA302', 11, 1, 40),
+    ('SPA301/SPA302', 11, 2, 41),
+    ('PED451', 11, 1, 42),
+    ('PED452', 11, 2, 43),
+    ('ENG451/ENG452', 12, 1, 44),
+    ('ENG451/ENG452', 12, 2, 45),
+    ('MTH471/MTH472', 12, 1, 46),
+    ('MTH471/MTH472', 12, 2, 47),
+    ('SPA401/SPA402', 12, 1, 48),
+    ('SPA401/SPA402', 12, 2, 49),
+    ('SOC681', 12, 1, 50),
+    ('SOC652', 12, 2, 51),
+    ('SOC541', 12, 1, 52),
+    ('SOC552', 12, 2, 53),
+    ('PED451', 12, 1, 54),
+    ('PED452', 12, 2, 55)
+  ) AS t(code, grade_level, semester, ord) ON TRUE
+  JOIN courses c ON c.code = t.code AND c.catalog_version_id = p.catalog_version_id
+  WHERE p.name = 'Humanities Focus' AND p.is_template = true;
+
+-- ===== Business/Economics Track (54 rows) =====
+DELETE FROM plan_courses
+  WHERE plan_id = (SELECT id FROM four_year_plans WHERE name = 'Business/Economics Track' AND is_template = true);
+INSERT INTO plan_courses (plan_id, course_id, grade_level, semester, status, display_order)
+  SELECT p.id, c.id, t.grade_level, t.semester, 'planned', t.ord
+  FROM four_year_plans p
+  JOIN (VALUES
+    ('SOC13S/SOC14S', 9, -2, 0),
+    ('SOC13S/SOC14S', 9, -1, 1),
+    ('ENG151/ENG152', 9, 1, 2),
+    ('ENG151/ENG152', 9, 2, 3),
+    ('MTH271/MTH272', 9, 1, 4),
+    ('MTH271/MTH272', 9, 2, 5),
+    ('SCI111/SCI112', 9, 1, 6),
+    ('SCI111/SCI112', 9, 2, 7),
+    ('SPA101/SPA102', 9, 1, 8),
+    ('SPA101/SPA102', 9, 2, 9),
+    ('BUS171', 9, 1, 10),
+    ('BUS132', 9, 2, 11),
+    ('CSC161', 9, 1, 12),
+    ('CSC182', 9, 2, 13),
+    ('PED121', 9, 1, 14),
+    ('PED452', 9, 2, 15),
+    ('ENG211/ENG212', 10, 1, 16),
+    ('ENG211/ENG212', 10, 2, 17),
+    ('MTH171/MTH172', 10, 1, 18),
+    ('MTH171/MTH172', 10, 2, 19),
+    ('SCI211/SCI212', 10, 1, 20),
+    ('SCI211/SCI212', 10, 2, 21),
+    ('SPA201/SPA202', 10, 1, 22),
+    ('SPA201/SPA202', 10, 2, 23),
+    ('BUS281', 10, 1, 24),
+    ('BUS232', 10, 2, 25),
+    ('PED201', 10, 1, 26),
+    ('D/E232', 10, 2, 27),
+    ('ENG311/ENG312', 11, 1, 28),
+    ('ENG311/ENG312', 11, 2, 29),
+    ('MTH411/MTH412', 11, 1, 30),
+    ('MTH411/MTH412', 11, 2, 31),
+    ('SCI401/SCI402', 11, 1, 32),
+    ('SCI401/SCI402', 11, 2, 33),
+    ('SOC321/SOC322', 11, 1, 34),
+    ('SOC321/SOC322', 11, 2, 35),
+    ('SOC411/SOC412', 11, 1, 36),
+    ('SOC411/SOC412', 11, 2, 37),
+    ('BUS251', 11, 1, 38),
+    ('BUS252', 11, 2, 39),
+    ('PED451', 11, 1, 40),
+    ('PED452', 11, 2, 41),
+    ('ENG431/ENG432', 12, 1, 42),
+    ('ENG431/ENG432', 12, 2, 43),
+    ('MTH471/MTH472', 12, 1, 44),
+    ('MTH471/MTH472', 12, 2, 45),
+    ('SOC401', 12, 1, 46),
+    ('BUS301', 12, 1, 47),
+    ('BUS351', 12, 1, 48),
+    ('BUS372', 12, 2, 49),
+    ('BUS362', 12, 2, 50),
+    ('TEC172', 12, 2, 51),
+    ('PED451', 12, 1, 52),
+    ('PED452', 12, 2, 53)
+  ) AS t(code, grade_level, semester, ord) ON TRUE
+  JOIN courses c ON c.code = t.code AND c.catalog_version_id = p.catalog_version_id
+  WHERE p.name = 'Business/Economics Track' AND p.is_template = true;
+
+COMMIT;

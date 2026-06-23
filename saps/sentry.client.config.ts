@@ -22,19 +22,14 @@ Sentry.init({
   // Setting this option to true will print useful information to the console while you're setting up Sentry.
   debug: false,
 
-  integrations: [Sentry.replayIntegration()],
+  integrations: [
+      Sentry.replayIntegration({
+        maskAllText: false,
+        blockAllMedia: false,
+        maskAllInputs: false,
+        networkDetailAllowUrls: ['/api/'],
+        networkRequestHeaders: ['x-custom-header'],
+        networkResponseHeaders: ['content-type'],
+      }),
+    ],
 });
-
-Sentry.replayIntegration({
-  // Text masking (default: true)
-  maskAllText: false,
-  // Block images/videos (default: true)
-  blockAllMedia: false,
-  // Mask specific inputs
-  maskAllInputs: false,
-
-  networkDetailAllowUrls: ['/api/'],
-  networkRequestHeaders: ['x-custom-header'],
-  networkResponseHeaders: ['content-type'],
-}),
-}

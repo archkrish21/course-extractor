@@ -21,5 +21,16 @@ Sentry.init({
 
   // Setting this option to true will print useful information to the console while you're setting up Sentry.
   debug: false,
+
+  integrations: [Sentry.replayIntegration()],
 });
+
+Sentry.replayIntegration({
+  // Text masking (default: true)
+  maskAllText: false,
+  // Block images/videos (default: true)
+  blockAllMedia: false,
+  // Mask specific inputs
+  maskAllInputs: false,
+}),
 }

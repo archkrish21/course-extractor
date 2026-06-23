@@ -32,5 +32,9 @@ Sentry.replayIntegration({
   blockAllMedia: false,
   // Mask specific inputs
   maskAllInputs: false,
+
+  networkDetailAllowUrls: ['/api/'],
+  networkRequestHeaders: ['x-custom-header'],
+  networkResponseHeaders: ['content-type'],
 }),
 }
